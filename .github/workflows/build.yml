@@ -43,6 +43,7 @@ env:
 
 jobs:
   build-linux-x64:
+    name: build-linux (x86_64-unknown-linux-gnu)
     if: ${{ github.event_name == 'push' || inputs.build_linux_x64 }}
     runs-on: ubuntu-24.04
     steps:
@@ -86,17 +87,17 @@ jobs:
       - name: Build Tauri app
         run: cargo tauri build --bundles deb
 
-      - name: Upload Linux x64 artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-amd64
+          name: linux-x64
           path: |
             src-tauri/target/release/bundle/deb/*.deb
           if-no-files-found: error
 
   build-linux-arm64:
+    name: build-linux (aarch64-unknown-linux-gnu)
     if: ${{ github.event_name == 'push' || inputs.build_linux_arm64 }}
-    # Cross-compile ARM64 using Docker with QEMU emulation
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -123,7 +124,7 @@ jobs:
               cargo tauri build --bundles deb
             '
 
-      - name: Upload Linux ARM64 artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-arm64
@@ -132,6 +133,7 @@ jobs:
           if-no-files-found: error
 
   build-macos:
+    name: build-macos (${{ matrix.target }})
     if: ${{ github.event_name == 'push' || inputs.build_macos }}
     strategy:
       fail-fast: false
@@ -174,7 +176,7 @@ jobs:
       - name: Build Tauri app
         run: cargo tauri build --bundles dmg,app
 
-      - name: Upload macOS artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-${{ matrix.arch }}
@@ -184,6 +186,7 @@ jobs:
           if-no-files-found: error
 
   build-windows-x64:
+    name: build-windows (x86_64-pc-windows-msvc)
     if: ${{ github.event_name == 'push' || inputs.build_windows_x64 }}
     runs-on: windows-latest
     steps:
@@ -213,18 +216,19 @@ jobs:
         run: cargo install tauri-cli --version "^2" --locked
 
       - name: Build Tauri app
-        run: cargo tauri build --bundles msi,nsis
+        run: cargo tauri build --target x86_64-pc-windows-msvc --bundles msi,nsis
 
-      - name: Upload Windows x64 artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-x64
           path: |
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
           if-no-files-found: error
 
   build-windows-arm64:
+    name: build-windows (aarch64-pc-windows-msvc)
     if: ${{ github.event_name == 'push' || inputs.build_windows_arm64 }}
     runs-on: windows-latest
     steps:
@@ -255,10 +259,10 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2" --locked
 
-      - name: Build Tauri app (ARM64)
+      - name: Build Tauri app
         run: cargo tauri build --target aarch64-pc-windows-msvc --bundles msi,nsis
 
-      - name: Upload Windows ARM64 artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-arm64
