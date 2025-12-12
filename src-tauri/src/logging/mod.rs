@@ -17,6 +17,7 @@ use crate::utils::get_cache_dir;
 /// Log levels for categorizing messages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LogLevel {
+    #[allow(dead_code)]
     Debug,
     Info,
     Warn,
@@ -180,6 +181,7 @@ pub fn get_current_log_path() -> Option<PathBuf> {
 }
 
 /// Log a debug message
+#[allow(dead_code)]
 pub fn debug(module: &str, message: &str) {
     if let Ok(mut logger) = LOGGER.lock() {
         logger.log(LogLevel::Debug, module, message);

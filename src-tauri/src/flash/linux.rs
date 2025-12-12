@@ -4,9 +4,7 @@
 //! This shows a graphical authentication dialog for the user to enter their password.
 
 use super::{sync_device, unmount_device, FlashState};
-use crate::config;
 use crate::{log_error, log_info};
-use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
