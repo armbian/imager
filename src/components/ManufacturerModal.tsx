@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
@@ -90,6 +90,30 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
     return result;
   }, [boards, search]);
 
+  // Preload all vendor logos
+  const [logosLoaded, setLogosLoaded] = useState(false);
+  useEffect(() => {
+    if (!manufacturers.length || logosLoaded) return;
+
+    const vendorsWithLogos = manufacturers.filter(m => vendorHasLogo(m.id) && m.id !== 'other');
+    if (vendorsWithLogos.length === 0) {
+      setLogosLoaded(true);
+      return;
+    }
+
+    let loaded = 0;
+    vendorsWithLogos.forEach(m => {
+      const img = new Image();
+      img.onload = img.onerror = () => {
+        loaded++;
+        if (loaded >= vendorsWithLogos.length) {
+          setLogosLoaded(true);
+        }
+      };
+      img.src = getVendorLogoUrl(m.id);
+    });
+  }, [manufacturers, logosLoaded]);
+
   const searchBarContent = (
     <div className="modal-search">
       <div className="search-box" style={{ marginBottom: 0 }}>
@@ -108,7 +132,7 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('modal.selectManufacturer')} searchBar={searchBarContent}>
-      {loading ? (
+      {loading || !logosLoaded ? (
         <div className="loading">
           <div className="spinner" />
           <p>{t('modal.loading')}</p>
