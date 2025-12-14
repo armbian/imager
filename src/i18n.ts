@@ -16,6 +16,7 @@ import ja from './locales/ja.json';
 import ko from './locales/ko.json';
 import uk from './locales/uk.json';
 import tr from './locales/tr.json';
+import sl from './locales/sl.json';
 
 const resources = {
   en: { translation: en },
@@ -32,10 +33,11 @@ const resources = {
   ko: { translation: ko },
   uk: { translation: uk },
   tr: { translation: tr },
+  sl: { translation: sl },
 };
 
 // Supported languages
-const supportedLanguages = ['en', 'it', 'de', 'fr', 'es', 'pt', 'nl', 'pl', 'ru', 'zh', 'ja', 'ko', 'uk', 'tr'];
+const supportedLanguages = ['en', 'it', 'de', 'fr', 'es', 'pt', 'nl', 'pl', 'ru', 'zh', 'ja', 'ko', 'uk', 'tr', 'sl'];
 
 /**
  * Extract language code from locale string

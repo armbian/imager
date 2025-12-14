@@ -1,0 +1,113 @@
+{
+  "home": {
+    "manufacturer": "Proizvajalec",
+    "board": "Plošča",
+    "operatingSystem": "Operacijski sistem",
+    "storage": "Shramba",
+    "chooseBrand": "IZBERI ZNAMKO",
+    "chooseBoard": "IZBERI PLOŠČO",
+    "chooseOs": "IZBERI OS",
+    "chooseStorage": "IZBERI SHRAMBO",
+    "useCustomImage": "Uporabi sliko po meri",
+    "changeCustomImage": "Spremeni sliko po meri",
+    "images": "slike",
+    "boards": "plošče"
+  },
+  "flash": {
+    "downloading": "Prenašanje slike...",
+    "decompressing": "Razširjanje slike...",
+    "writing": "Zapisovanje slike na napravo...",
+    "verifying": "Preverjanje zapisanih podatkov...",
+    "complete": "Zapisovanje končano!",
+    "failed": "Prišlo je do napake",
+    "cancelled": "Preklicano",
+    "cancel": "Prekliči",
+    "retry": "Poskusi znova",
+    "back": "Nazaj",
+    "done": "Končano",
+    "flashAnother": "Zapiši drugo",
+    "authorizing": "Zahteva za avtorizacijo...",
+    "authorizingDesc": "Za nadaljevanje potrdite zahtevo za avtorizacijo.",
+    "preparing": "Priprava...",
+    "confirmTitle": "Potrdi izbiro",
+    "confirmText": "Zapisali boste na:",
+    "confirmWarning": "VSI PODATKI BODO TRAJNO IZBRISANI",
+    "eraseAndFlash": "Izbriši in zapiši",
+    "dataWarning": "Vsi podatki na izbrani napravi bodo izbrisani",
+    "successHint": "Vaša SD kartica je pripravljena! Napravo lahko varno odstranite in jo vstavite v {{boardName}}."
+  },
+  "modal": {
+    "selectManufacturer": "Izberi proizvajalca",
+    "selectBoard": "Izberi ploščo",
+    "selectImage": "Izberi operacijski sistem",
+    "selectDevice": "Izberi napravo za shranjevanje",
+    "searchManufacturer": "Išči proizvajalca...",
+    "searchBoard": "Išči plošče...",
+    "searchImage": "Išči slike...",
+    "close": "Zapri",
+    "noResults": "Ni rezultatov",
+    "noManufacturers": "Proizvajalcev ni mogoče najti",
+    "noBoards": "Plošč ni mogoče najti",
+    "noImages": "Slik ni mogoče najti",
+    "noDevices": "Naprav ni mogoče najti",
+    "loading": "Nalaganje...",
+    "error": "Napaka pri nalaganju podatkov",
+    "retry": "Poskusi znova",
+    "promoted": "Priporočeno",
+    "stable": "Stabilna",
+    "nightly": "Nightly",
+    "apps": "Aplikacije",
+    "minimal": "Minimalna",
+    "allImages": "Vse slike",
+    "scanningDevices": "Iskanje naprav...",
+    "insertDevice": "Vstavite SD kartico ali USB pogon",
+    "refreshDevices": "Osveži naprave"
+  },
+  "device": {
+    "removable": "Izmenljiva",
+    "system": "Sistemska",
+    "sdCard": "SD kartica",
+    "usb": "USB",
+    "sata": "SATA",
+    "sas": "SAS",
+    "nvme": "NVMe",
+    "noDevices": "Izmenljivih naprav ni mogoče najti",
+    "refreshing": "Osveževanje...",
+    "refresh": "Osveži"
+  },
+  "header": {
+    "title": "Armbian Imager",
+    "stepManufacturer": "Proizvajalec",
+    "stepBoard": "Plošča",
+    "stepOs": "OS",
+    "stepStorage": "Shramba",
+    "stepImage": "Slika"
+  },
+  "errorDisplay": {
+    "retry": "Poskusi znova",
+    "uploadLogs": "Naloži dnevnike",
+    "uploading": "Nalaganje...",
+    "uploadingLogs": "Nalaganje dnevnikov...",
+    "uploadLogsForSupport": "Naloži dnevnike za podporo",
+    "viewLogs": "Prikaži dnevnike",
+    "scanQrOrShare": "Skenirajte QR ali delite to povezavo:",
+    "uploadFailed": "Nalaganje ni uspelo"
+  },
+  "error": {
+    "downloadFailed": "Prenos ni uspel",
+    "flashFailed": "Zapisovanje ni uspelo",
+    "verifyFailed": "Preverjanje ni uspelo",
+    "cancelled": "Operacija preklicana",
+    "authFailed": "Avtorizacija ni uspela",
+    "authCancelled": "Uporabnik je preklical avtorizacijo",
+    "decompressionFailed": "Razširjanje ni uspelo",
+    "uploadFailed": "Nalaganje ni uspelo",
+    "deviceDisconnected": "Naprava odklopljena"
+  },
+  "custom": {
+    "customImage": "Slika po meri"
+  },
+  "common": {
+    "unknown": "Neznano"
+  }
+}

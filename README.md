@@ -58,7 +58,7 @@ Inspired by the simplicity of [Raspberry Pi Imager](https://github.com/raspberry
 | **Verified Writes** | SHA256 read-back verification ensures your flash is perfect |
 | **Custom Images** | Use your own `.img`, `.img.xz`, `.img.gz`, `.img.bz2`, `.img.zst` files |
 | **Touch ID** | Authenticate with biometrics on macOS |
-| **14 Languages** | Auto-detects system language (EN, IT, DE, FR, ES, PT, NL, PL, RU, ZH, JA, KO, UK, TR) |
+| **15 Languages** | Auto-detects system language (EN, IT, DE, FR, ES, PT, NL, PL, RU, ZH, JA, KO, UK, TR, SL) |
 | **Light/Dark Mode** | Follows your system preference |
 | **Device Hot-Swap** | Automatically detects when devices are connected/disconnected |
 | **Log Upload** | One-click error log upload to paste.armbian.com with QR code |
@@ -113,7 +113,7 @@ Built with modern technologies for optimal performance:
 | **Framework** | Tauri 2 | Native performance, tiny bundle |
 | **Backend** | Rust | Memory-safe, blazing fast I/O |
 | **Async** | Tokio | Efficient concurrent operations |
-| **i18n** | i18next + react-i18next | 14 language translations |
+| **i18n** | i18next + react-i18next | 15 language translations |
 | **Icons** | Lucide React | Modern, consistent icon set |
 
 ### Why Tauri over Electron?
@@ -149,6 +149,7 @@ The app automatically detects your system language:
 | Spanish | `es` | Ukrainian | `uk` |
 | Portuguese | `pt` | Turkish | `tr` |
 | Dutch | `nl` | Polish | `pl` |
+| Slovenian | `sl` | | |
 
 ## Development
 
@@ -217,7 +218,7 @@ armbian-imager/
 │   │   └── shared/               # Shared components (ErrorDisplay)
 │   ├── hooks/                    # React Hooks (useTauri, useAsyncData, useDeviceMonitor)
 │   ├── config/                   # Configuration (manufacturers, badges, OS info)
-│   ├── locales/                  # i18n translations (14 languages)
+│   ├── locales/                  # i18n translations (15 languages)
 │   ├── styles/                   # Modular CSS
 │   ├── types/                    # TypeScript interfaces
 │   ├── assets/                   # Images, logos, OS icons
