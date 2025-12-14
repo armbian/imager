@@ -3,6 +3,7 @@
 //! Uses PowerShell Get-Disk to enumerate block devices.
 
 use std::process::Command;
+use std::collections::HashMap;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -15,16 +16,25 @@ use super::types::BlockDevice;
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
+/// PowerShell script that gets all disk info in a single call
+const PS_SCRIPT: &str = r#"
+$disks = Get-Disk | Select-Object Number, FriendlyName, Size, BusType
+$partitions = Get-Partition | Where-Object { $_.DriveLetter } | Select-Object DiskNumber, DriveLetter
+$systemDisk = (Get-Partition -DriveLetter C -ErrorAction SilentlyContinue | Get-Disk -ErrorAction SilentlyContinue).Number
+
+$result = @{
+    Disks = $disks
+    Partitions = $partitions
+    SystemDisk = $systemDisk
+}
+$result | ConvertTo-Json -Depth 3
+"#;
+
 /// Get list of block devices on Windows
 pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
-
     #[cfg(target_os = "windows")]
     let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            "Get-Disk | Where-Object { $_.BusType -ne 'NVMe' -or $_.IsSystem -eq $false } | Select-Object Number, FriendlyName, Size, BusType | ConvertTo-Json",
-        ])
+        .args(["-NoProfile", "-Command", PS_SCRIPT])
         .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|e| {
@@ -34,11 +44,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
 
     #[cfg(not(target_os = "windows"))]
     let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            "Get-Disk | Where-Object { $_.BusType -ne 'NVMe' -or $_.IsSystem -eq $false } | Select-Object Number, FriendlyName, Size, BusType | ConvertTo-Json",
-        ])
+        .args(["-NoProfile", "-Command", PS_SCRIPT])
         .output()
         .map_err(|e| {
             log_error!("devices", "Failed to run PowerShell: {}", e);
@@ -52,21 +58,40 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    let json: serde_json::Value =
-        serde_json::from_str(&stdout).map_err(|e| {
-            log_error!("devices", "Failed to parse disk info JSON: {}", e);
-            format!("Failed to parse disk info: {}", e)
-        })?;
+    let json: serde_json::Value = serde_json::from_str(&stdout).map_err(|e| {
+        log_error!("devices", "Failed to parse disk info JSON: {}", e);
+        format!("Failed to parse disk info: {}", e)
+    })?;
 
+    // Get system disk number
+    let system_disk = json["SystemDisk"].as_i64();
+
+    // Build a map of disk number -> drive letters
+    let mut drive_letters_map: HashMap<i64, Vec<String>> = HashMap::new();
+    if let Some(partitions) = json["Partitions"].as_array() {
+        for part in partitions {
+            let disk_num = part["DiskNumber"].as_i64().unwrap_or(-1);
+            let letter = part["DriveLetter"].as_str().unwrap_or("");
+            if disk_num >= 0 && !letter.is_empty() {
+                drive_letters_map
+                    .entry(disk_num)
+                    .or_default()
+                    .push(format!("{}:", letter));
+            }
+        }
+    }
+
+    // Parse disks
     let mut devices = Vec::new();
 
-    let disks = if json.is_array() {
-        json.as_array().unwrap().clone()
+    let disks_value = &json["Disks"];
+    let disks: Vec<serde_json::Value> = if disks_value.is_array() {
+        disks_value.as_array().unwrap().clone()
+    } else if disks_value.is_object() {
+        vec![disks_value.clone()]
     } else {
-        vec![json]
+        return Ok(devices);
     };
-
-    let system_disk = get_system_disk();
 
     for disk in disks {
         let number = disk["Number"].as_i64().unwrap_or(-1);
@@ -87,14 +112,15 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
         let bus_type_str = disk["BusType"].as_str().unwrap_or("");
         let is_removable = bus_type_str == "USB" || bus_type_str == "SD";
 
-        // Mark as system disk instead of skipping (consistent with macOS behavior)
+        // Mark as system disk (consistent with macOS/Linux behavior)
         let is_system = system_disk.map(|sys_num| number == sys_num).unwrap_or(false);
 
-        // Get drive letters for user-friendly display
-        let drive_letters = get_drive_letters(number);
-        let name = match drive_letters {
-            Some(letters) => format!("Disk {} ({})", number, letters),
-            None => format!("Disk {}", number),
+        // Get drive letters from our pre-built map
+        let name = match drive_letters_map.get(&number) {
+            Some(letters) if !letters.is_empty() => {
+                format!("Disk {} ({})", number, letters.join(", "))
+            }
+            _ => format!("Disk {}", number),
         };
 
         devices.push(BlockDevice {
@@ -105,79 +131,13 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             model,
             is_removable,
             is_system,
-            bus_type: if bus_type_str.is_empty() { None } else { Some(bus_type_str.to_string()) },
+            bus_type: if bus_type_str.is_empty() {
+                None
+            } else {
+                Some(bus_type_str.to_string())
+            },
         });
     }
 
     Ok(devices)
-}
-
-/// Get the system disk number
-fn get_system_disk() -> Option<i64> {
-    #[cfg(target_os = "windows")]
-    let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            "(Get-Partition -DriveLetter C | Get-Disk).Number",
-        ])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .ok()?;
-
-    #[cfg(not(target_os = "windows"))]
-    let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            "(Get-Partition -DriveLetter C | Get-Disk).Number",
-        ])
-        .output()
-        .ok()?;
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    stdout.trim().parse().ok()
-}
-
-/// Get drive letters for a disk number (e.g., "C:", "D:")
-fn get_drive_letters(disk_number: i64) -> Option<String> {
-    #[cfg(target_os = "windows")]
-    let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            &format!(
-                "Get-Partition -DiskNumber {} | Where-Object {{ $_.DriveLetter }} | Select-Object -ExpandProperty DriveLetter",
-                disk_number
-            ),
-        ])
-        .creation_flags(CREATE_NO_WINDOW)
-        .output()
-        .ok()?;
-
-    #[cfg(not(target_os = "windows"))]
-    let output = Command::new("powershell")
-        .args([
-            "-NoProfile",
-            "-Command",
-            &format!(
-                "Get-Partition -DiskNumber {} | Where-Object {{ $_.DriveLetter }} | Select-Object -ExpandProperty DriveLetter",
-                disk_number
-            ),
-        ])
-        .output()
-        .ok()?;
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let letters: Vec<String> = stdout
-        .lines()
-        .filter(|s| !s.trim().is_empty())
-        .map(|s| format!("{}:", s.trim()))
-        .collect();
-
-    if letters.is_empty() {
-        None
-    } else {
-        Some(letters.join(", "))
-    }
 }
