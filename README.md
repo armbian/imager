@@ -17,8 +17,6 @@
   <img src="images/armbian-imager.png" alt="Armbian Imager" width="700">
 </p>
 
-<br>
-
 ## Features
 
 - **307+ Boards** — Browse every Armbian-supported SBC, organized by manufacturer
@@ -33,8 +31,6 @@
 - **Log Upload** — One-click error log upload to paste.armbian.com with QR code
 - **Tiny Footprint** — ~15MB app size vs 200MB+ for Electron alternatives
 
-<br>
-
 ## Download
 
 <p align="center">
@@ -47,8 +43,6 @@
 
 </p>
 
-<br>
-
 ## How It Works
 
 1. **Select Manufacturer** — Choose from 70+ SBC manufacturers or load a custom image
@@ -56,7 +50,6 @@
 3. **Select Image** — Choose desktop/server, kernel variant, stable/nightly
 4. **Flash** — Download, decompress, write, and verify automatically
 
-<br>
 
 ## Platform Support
 
@@ -73,8 +66,6 @@
 
 English, Italian, German, French, Spanish, Portuguese, Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian
 
-<br>
-
 ## Development
 
 ### Prerequisites
@@ -86,7 +77,7 @@ English, Italian, German, French, Spanish, Portuguese, Dutch, Polish, Russian, C
 ### Quick Start
 
 ```bash
-git clone https://github.com/armbian/armbian-imager.git
+git clone https://github.com/armbian/imager.git armbian-imager
 cd armbian-imager
 npm install
 npm run tauri:dev
@@ -111,8 +102,6 @@ npm run clean            # Clean all build artifacts
 ./scripts/build-all.sh   [--clean] [--dev]   # All platforms
 ```
 
-<br>
-
 ## Tech Stack
 
 | Layer | Technology | Why |
@@ -132,8 +121,6 @@ npm run clean            # Clean all build artifacts
 | RAM Usage | ~50 MB | 200-400 MB |
 | Startup | < 1 second | 2-5 seconds |
 | Native Feel | ✅ Uses system webview | ❌ Bundles Chromium |
-
-<br>
 
 ## Project Structure
 
@@ -168,8 +155,6 @@ armbian-imager/
 
 </details>
 
-<br>
-
 ## Data Sources
 
 | Data | Source |
@@ -179,7 +164,6 @@ armbian-imager/
 | Checksums | Embedded in image metadata (SHA256) |
 | Log Upload | [paste.armbian.com](https://paste.armbian.com) |
 
-<br>
 
 ## Contributing
 
@@ -199,13 +183,9 @@ We welcome contributions!
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-<br>
-
 ## License
 
 GPLv2 — Part of the [Armbian](https://www.armbian.com) ecosystem.
-
-<br>
 
 ## Acknowledgments
 
