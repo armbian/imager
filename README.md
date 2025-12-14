@@ -42,7 +42,7 @@
 | <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apple.svg" width="40"> | <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/windows11.svg" width="40"> | <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/linux.svg" width="40"> |
 |:---:|:---:|:---:|
 | **macOS** | **Windows** | **Linux** |
-| [Intel & Apple Silicon](https://github.com/armbian/armbian-imager/releases) | [x64 & ARM64](https://github.com/armbian/armbian-imager/releases) | [x64 & ARM64](https://github.com/armbian/armbian-imager/releases) |
+| [Intel & Apple Silicon](https://github.com/armbian/imager/releases) | [x64 & ARM64](https://github.com/armbian/imager/releases) | [x64 & ARM64](https://github.com/armbian/imager/releases) |
 | `.dmg` | `.exe` / `.msi` | `.deb` |
 
 </p>
