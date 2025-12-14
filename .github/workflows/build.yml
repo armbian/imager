@@ -98,6 +98,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -168,6 +190,28 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
 
       - name: Install dependencies
         run: |
@@ -251,6 +295,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -342,6 +408,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
+
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -403,6 +492,28 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
