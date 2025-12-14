@@ -185,7 +185,7 @@ armbian-imager/
 
 We welcome contributions!
 
-- **Bug reports** — [Open an issue](https://github.com/armbian/armbian-imager/issues)
+- **Bug reports** — [Open an issue](https://github.com/armbian/imager/issues)
 - **Feature requests** — Let's discuss it
 - **Pull requests** — Code improvements are always welcome
 - **Translations** — Add or improve in `src/locales/`
