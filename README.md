@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/armbian/armbian-imager/releases"><img src="https://img.shields.io/github/v/release/armbian/armbian-imager?style=for-the-badge&color=orange" alt="Release"></a>
-  <a href="https://github.com/armbian/armbian-imager/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPLv2-blue?style=for-the-badge" alt="License"></a>
+  <a href="https://github.com/armbian/imager/releases"><img src="https://img.shields.io/github/v/release/armbian/imager?style=for-the-badge&color=orange" alt="Release"></a>
+  <a href="https://github.com/armbian/imager/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPLv2-blue?style=for-the-badge" alt="License"></a>
 </p>
 
 <p align="center">
