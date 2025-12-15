@@ -292,6 +292,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
+    env:
+      # Ad-hoc signing: allows app to run after "xattr -cr" on macOS
+      APPLE_SIGNING_IDENTITY: "-"
 
     steps:
       - uses: actions/checkout@v4
@@ -359,18 +362,6 @@ jobs:
         shell: bash
         run: |
           cargo tauri build --target "${{ matrix.target }}" --bundles dmg,app
-
-      - name: Ad-hoc sign the app
-        shell: bash
-        env:
-          CARGO_TARGET_DIR: src-tauri/target/${{ matrix.target }}
-        run: |
-
-          APP_PATH=$(find "$CARGO_TARGET_DIR/release/bundle/macos" -name "*.app" -type d | head -1)
-          if [ -n "$APP_PATH" ]; then
-            echo "Ad-hoc signing: $APP_PATH"
-            codesign --force --deep --sign - "$APP_PATH"
-          fi
 
       - name: Zip .app bundle(s)
         shell: bash

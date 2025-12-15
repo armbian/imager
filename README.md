@@ -39,9 +39,22 @@
 |:---:|:---:|:---:|
 | **macOS** | **Windows** | **Linux** |
 | [Intel & Apple Silicon](https://github.com/armbian/imager/releases) | [x64 & ARM64](https://github.com/armbian/imager/releases) | [x64 & ARM64](https://github.com/armbian/imager/releases) |
-| `.dmg` | `.exe` / `.msi` | `.deb` |
+| `.dmg` / `.app.zip` | `.exe` / `.msi` | `.deb` |
 
 </p>
+
+### macOS: First Launch
+
+macOS may show a warning because the app is not signed with an Apple Developer certificate. To open it:
+
+**Option 1:** Right-click the app → **Open** → Click **Open** in the dialog
+
+**Option 2:** Run in Terminal:
+```bash
+xattr -cr "/Applications/Armbian Imager.app"
+```
+
+This only needs to be done once.
 
 ## How It Works
 
