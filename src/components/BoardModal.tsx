@@ -31,20 +31,23 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset state when manufacturer changes
     setSearch('');
     setImagesReady(false);
   }, [manufacturer]);
 
   // Pre-load images for current manufacturer
   useEffect(() => {
-    if (!isOpen || !manufacturer || !boards) return;
+    const manufacturerId = manufacturer?.id;
+    if (!isOpen || !manufacturerId || !boards) return;
 
     const manufacturerBoards = boards.filter((board) => {
       const mfr = getManufacturer(board.slug, board.name);
-      return mfr === manufacturer.id;
+      return mfr === manufacturerId;
     });
 
     if (manufacturerBoards.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Early return case
       setImagesReady(true);
       return;
     }

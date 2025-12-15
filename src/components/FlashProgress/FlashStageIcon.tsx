@@ -41,6 +41,7 @@ export function FlashStageIcon({ stage, size = 32 }: FlashStageIconProps) {
   }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getStageKey(stage: FlashStage): string {
   switch (stage) {
     case 'authorizing':

@@ -58,20 +58,6 @@ export function FlashProgress({
     }
   }
 
-  useEffect(() => {
-    if (hasStartedRef.current) return;
-    hasStartedRef.current = true;
-
-    loadBoardImage();
-    handleAuthorization();
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
   async function loadBoardImage() {
     try {
       const url = await getBoardImageUrl(board.slug);
@@ -106,6 +92,21 @@ export function FlashProgress({
       setStage('error');
     }
   }
+
+  useEffect(() => {
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
+    loadBoardImage();
+    handleAuthorization();
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleCustomImage(customPath: string) {
     try {

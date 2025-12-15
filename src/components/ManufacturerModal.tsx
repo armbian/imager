@@ -169,4 +169,5 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
 }
 
 // Re-export from config for backward compatibility
+// eslint-disable-next-line react-refresh/only-export-components
 export { MANUFACTURERS, getManufacturer } from '../config';

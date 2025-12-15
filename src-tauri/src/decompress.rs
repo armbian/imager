@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use xz2::bufread::XzDecoder;
+use liblzma::read::XzDecoder;
 
 use crate::config;
 use crate::download::DownloadState;

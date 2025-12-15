@@ -145,8 +145,10 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
 
   // Update devices only when they actually change
   useEffect(() => {
-    if (rawDevices && devicesChanged(prevDevicesRef.current, rawDevices)) {
+    if (!rawDevices) return;
+    if (devicesChanged(prevDevicesRef.current, rawDevices)) {
       prevDevicesRef.current = rawDevices;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync external data to state
       setDevices(sortDevices(rawDevices));
     }
   }, [rawDevices]);
