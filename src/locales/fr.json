@@ -11,7 +11,10 @@
     "useCustomImage": "Utiliser une image personnalisée",
     "changeCustomImage": "Changer l'image personnalisée",
     "images": "images",
-    "boards": "cartes"
+    "imageCount_one": "{{count}} image",
+    "imageCount_other": "{{count}} images",
+    "boardCount_one": "{{count}} carte",
+    "boardCount_other": "{{count}} cartes"
   },
   "flash": {
     "downloading": "Téléchargement de l'image...",
@@ -20,21 +23,18 @@
     "verifying": "Vérification des données écrites...",
     "complete": "Flash terminé !",
     "failed": "Une erreur s'est produite",
-    "cancelled": "Annulé",
     "cancel": "Annuler",
     "retry": "Réessayer",
-    "back": "Retour",
     "done": "Terminé",
     "flashAnother": "Flasher une autre",
     "authorizing": "Demande d'autorisation...",
-    "authorizingDesc": "Veuillez approuver la demande d'autorisation pour continuer.",
-    "preparing": "Préparation...",
     "confirmTitle": "Confirmer la sélection",
     "confirmText": "Vous êtes sur le point d'écrire sur :",
     "confirmWarning": "TOUTES LES DONNÉES SERONT DÉFINITIVEMENT EFFACÉES",
     "eraseAndFlash": "Effacer et Flasher",
     "dataWarning": "Toutes les données sur le périphérique sélectionné seront effacées",
-    "successHint": "Votre carte SD est prête ! Vous pouvez retirer le périphérique en toute sécurité et l'insérer dans votre {{boardName}}."
+    "successHint": "Votre carte SD est prête ! Vous pouvez retirer le périphérique en toute sécurité et l'insérer dans votre {{boardName}}.",
+    "successHintCustom": "Votre carte SD est prête ! Vous pouvez retirer le périphérique en toute sécurité."
   },
   "modal": {
     "selectManufacturer": "Sélectionner le fabricant",
@@ -43,40 +43,31 @@
     "selectDevice": "Sélectionner le périphérique de stockage",
     "searchManufacturer": "Rechercher un fabricant...",
     "searchBoard": "Rechercher des cartes...",
-    "searchImage": "Rechercher des images...",
-    "close": "Fermer",
-    "noResults": "Aucun résultat trouvé",
     "noManufacturers": "Aucun fabricant trouvé",
     "noBoards": "Aucune carte trouvée",
     "noImages": "Aucune image trouvée",
     "noDevices": "Aucun périphérique trouvé",
     "loading": "Chargement...",
-    "error": "Erreur de chargement des données",
-    "retry": "Réessayer",
     "promoted": "Recommandé",
     "stable": "Stable",
     "nightly": "Nightly",
     "apps": "Apps",
-    "minimal": "Minimal",
+    "minimal": "Minimale",
     "allImages": "Toutes les images",
     "scanningDevices": "Recherche de périphériques...",
     "insertDevice": "Insérez une carte SD ou une clé USB",
     "refreshDevices": "Actualiser les périphériques"
   },
   "device": {
-    "removable": "Amovible",
     "system": "Système",
     "sdCard": "Carte SD",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "Aucun périphérique amovible trouvé",
-    "refreshing": "Actualisation...",
     "refresh": "Actualiser"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "Fabricant",
     "stepBoard": "Carte",
     "stepOs": "OS",
@@ -90,19 +81,15 @@
     "uploadingLogs": "Téléversement des logs...",
     "uploadLogsForSupport": "Téléverser les logs pour le support",
     "viewLogs": "Voir les logs",
-    "scanQrOrShare": "Scannez le QR ou partagez ce lien :",
-    "uploadFailed": "Échec du téléversement"
+    "scanQrOrShare": "Scannez le QR ou partagez ce lien :"
   },
   "error": {
     "downloadFailed": "Échec du téléchargement",
     "flashFailed": "Échec du flash",
-    "verifyFailed": "Échec de la vérification",
-    "cancelled": "Opération annulée",
     "authFailed": "Échec de l'autorisation",
     "authCancelled": "Autorisation annulée par l'utilisateur",
     "decompressionFailed": "Échec de la décompression",
-    "uploadFailed": "Échec du téléversement",
-    "deviceDisconnected": "Périphérique déconnecté"
+    "uploadFailed": "Échec du téléversement"
   },
   "custom": {
     "customImage": "Image personnalisée"

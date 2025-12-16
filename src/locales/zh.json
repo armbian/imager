@@ -11,7 +11,10 @@
     "useCustomImage": "使用自定义镜像",
     "changeCustomImage": "更换自定义镜像",
     "images": "镜像",
-    "boards": "开发板"
+    "imageCount_one": "{{count}} 镜像",
+    "imageCount_other": "{{count}} 镜像",
+    "boardCount_one": "{{count}} 开发板",
+    "boardCount_other": "{{count}} 开发板"
   },
   "flash": {
     "downloading": "正在下载镜像...",
@@ -20,21 +23,18 @@
     "verifying": "正在验证写入的数据...",
     "complete": "烧录完成！",
     "failed": "发生错误",
-    "cancelled": "已取消",
     "cancel": "取消",
     "retry": "重试",
-    "back": "返回",
     "done": "完成",
     "flashAnother": "烧录另一个",
     "authorizing": "正在请求授权...",
-    "authorizingDesc": "请批准授权请求以继续。",
-    "preparing": "正在准备...",
     "confirmTitle": "确认选择",
     "confirmText": "您即将写入到：",
     "confirmWarning": "所有数据将被永久删除",
     "eraseAndFlash": "擦除并烧录",
     "dataWarning": "所选设备上的所有数据将被删除",
-    "successHint": "您的SD卡已准备就绪！您可以安全地移除设备并将其插入您的{{boardName}}。"
+    "successHint": "您的SD卡已准备就绪！您可以安全地移除设备并将其插入您的{{boardName}}。",
+    "successHintCustom": "您的SD卡已准备就绪！您可以安全地移除设备。"
   },
   "modal": {
     "selectManufacturer": "选择制造商",
@@ -43,16 +43,11 @@
     "selectDevice": "选择存储设备",
     "searchManufacturer": "搜索制造商...",
     "searchBoard": "搜索开发板...",
-    "searchImage": "搜索镜像...",
-    "close": "关闭",
-    "noResults": "未找到结果",
     "noManufacturers": "未找到制造商",
     "noBoards": "未找到开发板",
     "noImages": "未找到镜像",
     "noDevices": "未找到设备",
     "loading": "加载中...",
-    "error": "数据加载错误",
-    "retry": "重试",
     "promoted": "推荐",
     "stable": "稳定版",
     "nightly": "每日构建",
@@ -64,19 +59,15 @@
     "refreshDevices": "刷新设备"
   },
   "device": {
-    "removable": "可移动",
     "system": "系统",
     "sdCard": "SD卡",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "未找到可移动设备",
-    "refreshing": "正在刷新...",
     "refresh": "刷新"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "制造商",
     "stepBoard": "开发板",
     "stepOs": "系统",
@@ -90,19 +81,15 @@
     "uploadingLogs": "正在上传日志...",
     "uploadLogsForSupport": "上传日志以获取支持",
     "viewLogs": "查看日志",
-    "scanQrOrShare": "扫描二维码或分享此链接：",
-    "uploadFailed": "上传失败"
+    "scanQrOrShare": "扫描二维码或分享此链接："
   },
   "error": {
     "downloadFailed": "下载失败",
     "flashFailed": "烧录失败",
-    "verifyFailed": "验证失败",
-    "cancelled": "操作已取消",
     "authFailed": "授权失败",
     "authCancelled": "用户取消了授权",
     "decompressionFailed": "解压失败",
-    "uploadFailed": "上传失败",
-    "deviceDisconnected": "设备已断开连接"
+    "uploadFailed": "上传失败"
   },
   "custom": {
     "customImage": "自定义镜像"

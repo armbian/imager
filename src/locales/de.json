@@ -11,7 +11,10 @@
     "useCustomImage": "Eigenes Image verwenden",
     "changeCustomImage": "Eigenes Image ändern",
     "images": "Images",
-    "boards": "Boards"
+    "imageCount_one": "{{count}} Image",
+    "imageCount_other": "{{count}} Images",
+    "boardCount_one": "{{count}} Board",
+    "boardCount_other": "{{count}} Boards"
   },
   "flash": {
     "downloading": "Image wird heruntergeladen...",
@@ -20,21 +23,18 @@
     "verifying": "Geschriebene Daten werden überprüft...",
     "complete": "Flash abgeschlossen!",
     "failed": "Ein Fehler ist aufgetreten",
-    "cancelled": "Abgebrochen",
     "cancel": "Abbrechen",
     "retry": "Erneut versuchen",
-    "back": "Zurück",
     "done": "Fertig",
     "flashAnother": "Weiteres Image flashen",
     "authorizing": "Autorisierung wird angefordert...",
-    "authorizingDesc": "Bitte bestätigen Sie die Autorisierungsanfrage.",
-    "preparing": "Vorbereitung...",
     "confirmTitle": "Auswahl bestätigen",
     "confirmText": "Sie sind dabei, auf folgendes Gerät zu schreiben:",
     "confirmWarning": "ALLE DATEN WERDEN DAUERHAFT GELÖSCHT",
     "eraseAndFlash": "Löschen & Flashen",
     "dataWarning": "Alle Daten auf dem ausgewählten Gerät werden gelöscht",
-    "successHint": "Ihre SD-Karte ist bereit! Sie können das Gerät sicher entfernen und in Ihr {{boardName}} einsetzen."
+    "successHint": "Ihre SD-Karte ist bereit! Sie können das Gerät sicher entfernen und in Ihr {{boardName}} einsetzen.",
+    "successHintCustom": "Ihre SD-Karte ist bereit! Sie können das Gerät sicher entfernen."
   },
   "modal": {
     "selectManufacturer": "Hersteller auswählen",
@@ -43,16 +43,11 @@
     "selectDevice": "Speichergerät auswählen",
     "searchManufacturer": "Hersteller suchen...",
     "searchBoard": "Boards suchen...",
-    "searchImage": "Images suchen...",
-    "close": "Schließen",
-    "noResults": "Keine Ergebnisse gefunden",
     "noManufacturers": "Keine Hersteller gefunden",
     "noBoards": "Keine Boards gefunden",
     "noImages": "Keine Images gefunden",
     "noDevices": "Keine Geräte gefunden",
     "loading": "Wird geladen...",
-    "error": "Fehler beim Laden",
-    "retry": "Erneut versuchen",
     "promoted": "Empfohlen",
     "stable": "Stabil",
     "nightly": "Nightly",
@@ -64,19 +59,15 @@
     "refreshDevices": "Geräte aktualisieren"
   },
   "device": {
-    "removable": "Wechseldatenträger",
     "system": "System",
     "sdCard": "SD-Karte",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "Keine Wechseldatenträger gefunden",
-    "refreshing": "Wird aktualisiert...",
     "refresh": "Aktualisieren"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "Hersteller",
     "stepBoard": "Board",
     "stepOs": "OS",
@@ -90,19 +81,15 @@
     "uploadingLogs": "Logs werden hochgeladen...",
     "uploadLogsForSupport": "Logs für Support hochladen",
     "viewLogs": "Logs anzeigen",
-    "scanQrOrShare": "QR scannen oder Link teilen:",
-    "uploadFailed": "Hochladen fehlgeschlagen"
+    "scanQrOrShare": "QR scannen oder Link teilen:"
   },
   "error": {
     "downloadFailed": "Download fehlgeschlagen",
     "flashFailed": "Schreiben fehlgeschlagen",
-    "verifyFailed": "Überprüfung fehlgeschlagen",
-    "cancelled": "Vorgang abgebrochen",
     "authFailed": "Autorisierung fehlgeschlagen",
     "authCancelled": "Autorisierung vom Benutzer abgebrochen",
     "decompressionFailed": "Dekomprimierung fehlgeschlagen",
-    "uploadFailed": "Hochladen fehlgeschlagen",
-    "deviceDisconnected": "Gerät getrennt"
+    "uploadFailed": "Hochladen fehlgeschlagen"
   },
   "custom": {
     "customImage": "Benutzerdefiniertes Image"

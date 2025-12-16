@@ -152,7 +152,7 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
                 <ManufacturerIcon id={mfr.id} config={config} />
                 <div className="list-item-content">
                   <div className="list-item-title">{mfr.name}</div>
-                  <div className="list-item-subtitle">{mfr.boardCount} {t('home.boards')}</div>
+                  <div className="list-item-subtitle">{t('home.boardCount', { count: mfr.boardCount })}</div>
                 </div>
               </button>
             );

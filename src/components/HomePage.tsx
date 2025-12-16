@@ -2,6 +2,7 @@ import { Factory, Cpu, Database, HardDrive, FolderOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { BoardInfo, ImageInfo, BlockDevice } from '../types';
 import type { Manufacturer } from './ManufacturerModal';
+import { MarqueeText } from './shared/MarqueeText';
 
 interface HomePageProps {
   selectedManufacturer: Manufacturer | null;
@@ -41,7 +42,7 @@ export function HomePage({
             <Factory size={28} />
             {selectedManufacturer ? (
               <span className="home-button-text-multi">
-                <span className="home-button-title">{selectedManufacturer.name}</span>
+                <MarqueeText text={selectedManufacturer.name} className="home-button-title" />
                 <span className="home-button-subtitle">&nbsp;</span>
               </span>
             ) : (
@@ -60,8 +61,8 @@ export function HomePage({
             <Cpu size={28} />
             {selectedBoard ? (
               <span className="home-button-text-multi">
-                <span className="home-button-title">{selectedBoard.name}</span>
-                <span className="home-button-subtitle">{selectedBoard.image_count} {t('home.images')}</span>
+                <MarqueeText text={selectedBoard.name} className="home-button-title" />
+                <span className="home-button-subtitle">{t('home.imageCount', { count: selectedBoard.image_count })}</span>
               </span>
             ) : (
               <span className="home-button-text">{t('home.chooseBoard')}</span>
@@ -79,11 +80,11 @@ export function HomePage({
             <Database size={28} />
             {selectedImage ? (
               <span className="home-button-text-multi">
-                <span className="home-button-title">
-                  {selectedImage.preinstalled_application || selectedImage.image_variant}
-                </span>
+                <MarqueeText text={selectedImage.preinstalled_application || selectedImage.image_variant || ''} className="home-button-title" />
                 <span className="home-button-subtitle">
-                  {selectedImage.distro_release} · {selectedImage.kernel_branch}
+                  {selectedImage.distro_release && selectedImage.kernel_branch
+                    ? `${selectedImage.distro_release} · ${selectedImage.kernel_branch}`
+                    : selectedImage.distro_release || selectedImage.kernel_branch || '\u00A0'}
                 </span>
               </span>
             ) : (
@@ -102,7 +103,7 @@ export function HomePage({
             <HardDrive size={28} />
             {selectedDevice ? (
               <span className="home-button-text-multi">
-                <span className="home-button-title">{selectedDevice.name}</span>
+                <MarqueeText text={selectedDevice.name} className="home-button-title" />
                 <span className="home-button-subtitle">{selectedDevice.size_formatted}</span>
               </span>
             ) : (

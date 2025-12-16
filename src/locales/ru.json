@@ -11,7 +11,10 @@
     "useCustomImage": "Использовать свой образ",
     "changeCustomImage": "Изменить свой образ",
     "images": "образы",
-    "boards": "платы"
+    "imageCount_one": "{{count}} образ",
+    "imageCount_other": "{{count}} образов",
+    "boardCount_one": "{{count}} плата",
+    "boardCount_other": "{{count}} плат"
   },
   "flash": {
     "downloading": "Загрузка образа...",
@@ -20,21 +23,18 @@
     "verifying": "Проверка записанных данных...",
     "complete": "Запись завершена!",
     "failed": "Произошла ошибка",
-    "cancelled": "Отменено",
     "cancel": "Отмена",
     "retry": "Повторить",
-    "back": "Назад",
     "done": "Готово",
     "flashAnother": "Записать другой",
     "authorizing": "Запрос авторизации...",
-    "authorizingDesc": "Пожалуйста, подтвердите запрос авторизации для продолжения.",
-    "preparing": "Подготовка...",
     "confirmTitle": "Подтвердите выбор",
     "confirmText": "Вы собираетесь записать на:",
     "confirmWarning": "ВСЕ ДАННЫЕ БУДУТ БЕЗВОЗВРАТНО УДАЛЕНЫ",
     "eraseAndFlash": "Стереть и записать",
     "dataWarning": "Все данные на выбранном устройстве будут удалены",
-    "successHint": "Ваша SD-карта готова! Вы можете безопасно извлечь устройство и вставить его в {{boardName}}."
+    "successHint": "Ваша SD-карта готова! Вы можете безопасно извлечь устройство и вставить его в {{boardName}}.",
+    "successHintCustom": "Ваша SD-карта готова! Вы можете безопасно извлечь устройство."
   },
   "modal": {
     "selectManufacturer": "Выберите производителя",
@@ -43,16 +43,11 @@
     "selectDevice": "Выберите устройство хранения",
     "searchManufacturer": "Поиск производителя...",
     "searchBoard": "Поиск плат...",
-    "searchImage": "Поиск образов...",
-    "close": "Закрыть",
-    "noResults": "Результаты не найдены",
     "noManufacturers": "Производители не найдены",
     "noBoards": "Платы не найдены",
     "noImages": "Образы не найдены",
     "noDevices": "Устройства не найдены",
     "loading": "Загрузка...",
-    "error": "Ошибка загрузки данных",
-    "retry": "Повторить",
     "promoted": "Рекомендуемые",
     "stable": "Стабильная",
     "nightly": "Nightly",
@@ -64,19 +59,15 @@
     "refreshDevices": "Обновить устройства"
   },
   "device": {
-    "removable": "Съёмный",
     "system": "Системный",
     "sdCard": "SD-карта",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "Съёмные устройства не найдены",
-    "refreshing": "Обновление...",
     "refresh": "Обновить"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "Производитель",
     "stepBoard": "Плата",
     "stepOs": "ОС",
@@ -90,19 +81,15 @@
     "uploadingLogs": "Загрузка логов...",
     "uploadLogsForSupport": "Загрузить логи для поддержки",
     "viewLogs": "Просмотр логов",
-    "scanQrOrShare": "Отсканируйте QR или поделитесь ссылкой:",
-    "uploadFailed": "Ошибка загрузки"
+    "scanQrOrShare": "Отсканируйте QR или поделитесь ссылкой:"
   },
   "error": {
     "downloadFailed": "Ошибка загрузки",
     "flashFailed": "Ошибка записи",
-    "verifyFailed": "Ошибка проверки",
-    "cancelled": "Операция отменена",
     "authFailed": "Ошибка авторизации",
     "authCancelled": "Авторизация отменена пользователем",
     "decompressionFailed": "Ошибка распаковки",
-    "uploadFailed": "Ошибка загрузки",
-    "deviceDisconnected": "Устройство отключено"
+    "uploadFailed": "Ошибка загрузки"
   },
   "custom": {
     "customImage": "Свой образ"

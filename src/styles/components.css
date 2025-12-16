@@ -797,3 +797,34 @@
   color: var(--text-secondary);
   margin-top: 2px;
 }
+
+/* ========================================
+   MARQUEE TEXT (Shared Component)
+   ======================================== */
+.marquee-container {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.marquee-container.overflow {
+  text-overflow: clip;
+}
+
+.marquee-container .marquee-content {
+  display: inline-block;
+}
+
+.marquee-container.overflow .marquee-content {
+  animation: marquee-scroll 12s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(var(--scroll-percent, -50%));
+  }
+}

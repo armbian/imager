@@ -11,7 +11,10 @@
     "useCustomImage": "Usar imagen personalizada",
     "changeCustomImage": "Cambiar imagen personalizada",
     "images": "imágenes",
-    "boards": "placas"
+    "imageCount_one": "{{count}} imagen",
+    "imageCount_other": "{{count}} imágenes",
+    "boardCount_one": "{{count}} placa",
+    "boardCount_other": "{{count}} placas"
   },
   "flash": {
     "downloading": "Descargando imagen...",
@@ -20,21 +23,18 @@
     "verifying": "Verificando datos escritos...",
     "complete": "¡Flash completado!",
     "failed": "Se produjo un error",
-    "cancelled": "Cancelado",
     "cancel": "Cancelar",
     "retry": "Reintentar",
-    "back": "Atrás",
     "done": "Hecho",
     "flashAnother": "Flashear otra",
     "authorizing": "Solicitando autorización...",
-    "authorizingDesc": "Por favor apruebe la solicitud de autorización para continuar.",
-    "preparing": "Preparando...",
     "confirmTitle": "Confirmar selección",
     "confirmText": "Está a punto de escribir en:",
     "confirmWarning": "TODOS LOS DATOS SERÁN ELIMINADOS PERMANENTEMENTE",
     "eraseAndFlash": "Borrar y Flashear",
     "dataWarning": "Todos los datos en el dispositivo seleccionado serán borrados",
-    "successHint": "¡Tu tarjeta SD está lista! Puedes retirar el dispositivo de forma segura e insertarlo en tu {{boardName}}."
+    "successHint": "¡Tu tarjeta SD está lista! Puedes retirar el dispositivo de forma segura e insertarlo en tu {{boardName}}.",
+    "successHintCustom": "¡Tu tarjeta SD está lista! Puedes retirar el dispositivo de forma segura."
   },
   "modal": {
     "selectManufacturer": "Seleccionar fabricante",
@@ -43,40 +43,31 @@
     "selectDevice": "Seleccionar dispositivo de almacenamiento",
     "searchManufacturer": "Buscar fabricante...",
     "searchBoard": "Buscar placas...",
-    "searchImage": "Buscar imágenes...",
-    "close": "Cerrar",
-    "noResults": "No se encontraron resultados",
     "noManufacturers": "No se encontraron fabricantes",
     "noBoards": "No se encontraron placas",
     "noImages": "No se encontraron imágenes",
     "noDevices": "No se encontraron dispositivos",
     "loading": "Cargando...",
-    "error": "Error al cargar datos",
-    "retry": "Reintentar",
     "promoted": "Recomendado",
     "stable": "Estable",
     "nightly": "Nightly",
     "apps": "Apps",
-    "minimal": "Mínimo",
+    "minimal": "Mínima",
     "allImages": "Todas las imágenes",
     "scanningDevices": "Buscando dispositivos...",
     "insertDevice": "Inserte una tarjeta SD o unidad USB",
     "refreshDevices": "Actualizar dispositivos"
   },
   "device": {
-    "removable": "Extraíble",
     "system": "Sistema",
     "sdCard": "Tarjeta SD",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "No se encontraron dispositivos extraíbles",
-    "refreshing": "Actualizando...",
     "refresh": "Actualizar"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "Fabricante",
     "stepBoard": "Placa",
     "stepOs": "SO",
@@ -90,19 +81,15 @@
     "uploadingLogs": "Subiendo logs...",
     "uploadLogsForSupport": "Subir logs para soporte",
     "viewLogs": "Ver logs",
-    "scanQrOrShare": "Escanea el QR o comparte este enlace:",
-    "uploadFailed": "Error al subir"
+    "scanQrOrShare": "Escanea el QR o comparte este enlace:"
   },
   "error": {
     "downloadFailed": "Error de descarga",
     "flashFailed": "Error de flash",
-    "verifyFailed": "Error de verificación",
-    "cancelled": "Operación cancelada",
     "authFailed": "Error de autorización",
     "authCancelled": "Autorización cancelada por el usuario",
     "decompressionFailed": "Error de descompresión",
-    "uploadFailed": "Error al subir",
-    "deviceDisconnected": "Dispositivo desconectado"
+    "uploadFailed": "Error al subir"
   },
   "custom": {
     "customImage": "Imagen personalizada"

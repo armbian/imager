@@ -111,7 +111,7 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
       });
   }, [boards, manufacturer, search]);
 
-  const title = manufacturer ? `${manufacturer.name} ${t('home.boards')}` : t('modal.selectBoard');
+  const title = t('modal.selectBoard');
 
   const searchBarContent = (
     <div className="modal-search">

@@ -11,7 +11,10 @@
     "useCustomImage": "Use Custom Image",
     "changeCustomImage": "Change Custom Image",
     "images": "images",
-    "boards": "boards"
+    "imageCount_one": "{{count}} image",
+    "imageCount_other": "{{count}} images",
+    "boardCount_one": "{{count}} board",
+    "boardCount_other": "{{count}} boards"
   },
   "flash": {
     "downloading": "Downloading image...",
@@ -20,21 +23,18 @@
     "verifying": "Verifying written data...",
     "complete": "Flash complete!",
     "failed": "An error occurred",
-    "cancelled": "Cancelled",
     "cancel": "Cancel",
     "retry": "Retry",
-    "back": "Back",
     "done": "Done",
     "flashAnother": "Flash Another",
     "authorizing": "Requesting authorization...",
-    "authorizingDesc": "Please approve the authorization request to continue.",
-    "preparing": "Preparing...",
     "confirmTitle": "Confirm Selection",
     "confirmText": "You are about to write to:",
     "confirmWarning": "ALL DATA WILL BE PERMANENTLY ERASED",
     "eraseAndFlash": "Erase & Flash",
     "dataWarning": "All data on selected device will be erased",
-    "successHint": "Your SD card is ready! You can safely remove the device and insert it into your {{boardName}}."
+    "successHint": "Your SD card is ready! You can safely remove the device and insert it into your {{boardName}}.",
+    "successHintCustom": "Your SD card is ready! You can safely remove the device."
   },
   "modal": {
     "selectManufacturer": "Select Manufacturer",
@@ -43,16 +43,11 @@
     "selectDevice": "Select Storage Device",
     "searchManufacturer": "Search manufacturer...",
     "searchBoard": "Search boards...",
-    "searchImage": "Search images...",
-    "close": "Close",
-    "noResults": "No results found",
     "noManufacturers": "No manufacturers found",
     "noBoards": "No boards found",
     "noImages": "No images found",
     "noDevices": "No devices found",
     "loading": "Loading...",
-    "error": "Error loading data",
-    "retry": "Retry",
     "promoted": "Recommended",
     "stable": "Stable",
     "nightly": "Nightly",
@@ -64,19 +59,15 @@
     "refreshDevices": "Refresh Devices"
   },
   "device": {
-    "removable": "Removable",
     "system": "System",
     "sdCard": "SD Card",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "No removable devices found",
-    "refreshing": "Refreshing...",
     "refresh": "Refresh"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "Manufacturer",
     "stepBoard": "Board",
     "stepOs": "OS",
@@ -90,19 +81,15 @@
     "uploadingLogs": "Uploading logs...",
     "uploadLogsForSupport": "Upload Logs for Support",
     "viewLogs": "View Logs",
-    "scanQrOrShare": "Scan QR or share this link:",
-    "uploadFailed": "Upload failed"
+    "scanQrOrShare": "Scan QR or share this link:"
   },
   "error": {
     "downloadFailed": "Download failed",
     "flashFailed": "Flash failed",
-    "verifyFailed": "Verification failed",
-    "cancelled": "Operation cancelled",
     "authFailed": "Authorization failed",
     "authCancelled": "Authorization cancelled by user",
     "decompressionFailed": "Decompression failed",
-    "uploadFailed": "Upload failed",
-    "deviceDisconnected": "Device disconnected"
+    "uploadFailed": "Upload failed"
   },
   "custom": {
     "customImage": "Custom Image"
