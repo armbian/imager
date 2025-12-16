@@ -96,5 +96,11 @@
   },
   "common": {
     "unknown": "Onbekend"
+  },
+  "update": {
+    "title": "Update beschikbaar",
+    "newVersionAvailable": "Nieuwe versie {{version}} beschikbaar",
+    "download": "Downloaden",
+    "later": "Later"
   }
 }

@@ -96,5 +96,11 @@
   },
   "common": {
     "unknown": "不明"
+  },
+  "update": {
+    "title": "アップデートが利用可能",
+    "newVersionAvailable": "新しいバージョン {{version}} が利用可能です",
+    "download": "ダウンロード",
+    "later": "後で"
   }
 }

@@ -96,5 +96,11 @@
   },
   "common": {
     "unknown": "Bilinmeyen"
+  },
+  "update": {
+    "title": "Güncelleme mevcut",
+    "newVersionAvailable": "Yeni sürüm {{version}} mevcut",
+    "download": "İndir",
+    "later": "Daha sonra"
   }
 }

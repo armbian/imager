@@ -96,5 +96,11 @@
   },
   "common": {
     "unknown": "Neznano"
+  },
+  "update": {
+    "title": "Na voljo posodobitev",
+    "newVersionAvailable": "Na voljo nova različica {{version}}",
+    "download": "Prenesi",
+    "later": "Kasneje"
   }
 }

@@ -96,5 +96,11 @@
   },
   "common": {
     "unknown": "Unknown"
+  },
+  "update": {
+    "title": "Update Available",
+    "newVersionAvailable": "New version {{version}} available",
+    "download": "Download",
+    "later": "Later"
   }
 }

@@ -96,5 +96,11 @@
   },
   "common": {
     "unknown": "Неизвестно"
+  },
+  "update": {
+    "title": "Доступно обновление",
+    "newVersionAvailable": "Доступна новая версия {{version}}",
+    "download": "Скачать",
+    "later": "Позже"
   }
 }

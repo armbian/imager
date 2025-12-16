@@ -96,5 +96,11 @@
   },
   "common": {
     "unknown": "未知"
+  },
+  "update": {
+    "title": "有可用更新",
+    "newVersionAvailable": "新版本 {{version}} 可用",
+    "download": "下载",
+    "later": "稍后"
   }
 }
