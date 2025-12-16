@@ -4,6 +4,7 @@ import armbianLogo from '../assets/armbian-logo.png';
 import type { BoardInfo, ImageInfo, BlockDevice } from '../types';
 import type { Manufacturer } from './ManufacturerModal';
 import { UpdateModal } from './shared/UpdateModal';
+import { MotdTip } from './shared/MotdTip';
 
 interface HeaderProps {
   selectedManufacturer?: Manufacturer | null;
@@ -52,6 +53,7 @@ export function Header({
           ))}
         </div>
       </header>
+      <MotdTip />
     </>
   );
 }

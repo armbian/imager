@@ -937,3 +937,55 @@
 .update-modal-btn.secondary:hover {
   background: var(--bg-hover);
 }
+
+/* ========================================
+   MOTD TIP (Banner under header)
+   ======================================== */
+.motd-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 16px;
+  background: var(--bg-secondary);
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.motd-tip:hover {
+  background: var(--bg-hover);
+}
+
+.motd-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.motd-tip:hover .motd-icon {
+  color: var(--accent);
+}
+
+.motd-message {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.motd-tip:hover .motd-message {
+  color: var(--text-primary);
+}
+
+.motd-arrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.motd-tip:hover .motd-arrow {
+  opacity: 1;
+  color: var(--accent);
+}
