@@ -11,7 +11,10 @@
     "useCustomImage": "Użyj własnego obrazu",
     "changeCustomImage": "Zmień własny obraz",
     "images": "obrazy",
-    "boards": "płytki"
+    "imageCount_one": "{{count}} obraz",
+    "imageCount_other": "{{count}} obrazów",
+    "boardCount_one": "{{count}} płytka",
+    "boardCount_other": "{{count}} płytek"
   },
   "flash": {
     "downloading": "Pobieranie obrazu...",
@@ -20,21 +23,18 @@
     "verifying": "Weryfikacja zapisanych danych...",
     "complete": "Flash zakończony!",
     "failed": "Wystąpił błąd",
-    "cancelled": "Anulowano",
     "cancel": "Anuluj",
     "retry": "Ponów",
-    "back": "Wstecz",
     "done": "Gotowe",
     "flashAnother": "Flashuj kolejny",
     "authorizing": "Żądanie autoryzacji...",
-    "authorizingDesc": "Proszę zatwierdzić żądanie autoryzacji, aby kontynuować.",
-    "preparing": "Przygotowywanie...",
     "confirmTitle": "Potwierdź wybór",
     "confirmText": "Zamierzasz zapisać na:",
     "confirmWarning": "WSZYSTKIE DANE ZOSTANĄ TRWALE USUNIĘTE",
     "eraseAndFlash": "Wymaż i Flashuj",
     "dataWarning": "Wszystkie dane na wybranym urządzeniu zostaną usunięte",
-    "successHint": "Twoja karta SD jest gotowa! Możesz bezpiecznie wyjąć urządzenie i włożyć je do swojego {{boardName}}."
+    "successHint": "Twoja karta SD jest gotowa! Możesz bezpiecznie wyjąć urządzenie i włożyć je do swojego {{boardName}}.",
+    "successHintCustom": "Twoja karta SD jest gotowa! Możesz bezpiecznie wyjąć urządzenie."
   },
   "modal": {
     "selectManufacturer": "Wybierz producenta",
@@ -43,16 +43,11 @@
     "selectDevice": "Wybierz urządzenie pamięci",
     "searchManufacturer": "Szukaj producenta...",
     "searchBoard": "Szukaj płytek...",
-    "searchImage": "Szukaj obrazów...",
-    "close": "Zamknij",
-    "noResults": "Nie znaleziono wyników",
     "noManufacturers": "Nie znaleziono producentów",
     "noBoards": "Nie znaleziono płytek",
     "noImages": "Nie znaleziono obrazów",
     "noDevices": "Nie znaleziono urządzeń",
     "loading": "Ładowanie...",
-    "error": "Błąd ładowania danych",
-    "retry": "Ponów",
     "promoted": "Polecane",
     "stable": "Stabilna",
     "nightly": "Nightly",
@@ -64,19 +59,15 @@
     "refreshDevices": "Odśwież urządzenia"
   },
   "device": {
-    "removable": "Wymienny",
     "system": "System",
     "sdCard": "Karta SD",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "Nie znaleziono urządzeń wymiennych",
-    "refreshing": "Odświeżanie...",
     "refresh": "Odśwież"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "Producent",
     "stepBoard": "Płytka",
     "stepOs": "OS",
@@ -90,19 +81,15 @@
     "uploadingLogs": "Przesyłanie logów...",
     "uploadLogsForSupport": "Prześlij logi do wsparcia",
     "viewLogs": "Zobacz logi",
-    "scanQrOrShare": "Zeskanuj QR lub udostępnij ten link:",
-    "uploadFailed": "Przesyłanie nie powiodło się"
+    "scanQrOrShare": "Zeskanuj QR lub udostępnij ten link:"
   },
   "error": {
     "downloadFailed": "Pobieranie nie powiodło się",
     "flashFailed": "Flash nie powiódł się",
-    "verifyFailed": "Weryfikacja nie powiodła się",
-    "cancelled": "Operacja anulowana",
     "authFailed": "Autoryzacja nie powiodła się",
     "authCancelled": "Autoryzacja anulowana przez użytkownika",
     "decompressionFailed": "Rozpakowywanie nie powiodło się",
-    "uploadFailed": "Przesyłanie nie powiodło się",
-    "deviceDisconnected": "Urządzenie odłączone"
+    "uploadFailed": "Przesyłanie nie powiodło się"
   },
   "custom": {
     "customImage": "Własny obraz"

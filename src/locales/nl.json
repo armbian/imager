@@ -11,7 +11,10 @@
     "useCustomImage": "Aangepaste image gebruiken",
     "changeCustomImage": "Aangepaste image wijzigen",
     "images": "images",
-    "boards": "boards"
+    "imageCount_one": "{{count}} image",
+    "imageCount_other": "{{count}} images",
+    "boardCount_one": "{{count}} board",
+    "boardCount_other": "{{count}} boards"
   },
   "flash": {
     "downloading": "Image downloaden...",
@@ -20,21 +23,18 @@
     "verifying": "Geschreven data verifiëren...",
     "complete": "Flash voltooid!",
     "failed": "Er is een fout opgetreden",
-    "cancelled": "Geannuleerd",
     "cancel": "Annuleren",
     "retry": "Opnieuw proberen",
-    "back": "Terug",
     "done": "Klaar",
     "flashAnother": "Nog een flashen",
     "authorizing": "Autorisatie aanvragen...",
-    "authorizingDesc": "Keur de autorisatieaanvraag goed om door te gaan.",
-    "preparing": "Voorbereiden...",
     "confirmTitle": "Selectie bevestigen",
     "confirmText": "U staat op het punt te schrijven naar:",
     "confirmWarning": "ALLE DATA WORDT PERMANENT GEWIST",
     "eraseAndFlash": "Wissen en Flashen",
     "dataWarning": "Alle data op het geselecteerde apparaat wordt gewist",
-    "successHint": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen en in je {{boardName}} plaatsen."
+    "successHint": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen en in je {{boardName}} plaatsen.",
+    "successHintCustom": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen."
   },
   "modal": {
     "selectManufacturer": "Selecteer fabrikant",
@@ -43,16 +43,11 @@
     "selectDevice": "Selecteer opslagapparaat",
     "searchManufacturer": "Zoek fabrikant...",
     "searchBoard": "Zoek boards...",
-    "searchImage": "Zoek images...",
-    "close": "Sluiten",
-    "noResults": "Geen resultaten gevonden",
     "noManufacturers": "Geen fabrikanten gevonden",
     "noBoards": "Geen boards gevonden",
     "noImages": "Geen images gevonden",
     "noDevices": "Geen apparaten gevonden",
     "loading": "Laden...",
-    "error": "Fout bij laden van data",
-    "retry": "Opnieuw proberen",
     "promoted": "Aanbevolen",
     "stable": "Stabiel",
     "nightly": "Nightly",
@@ -64,19 +59,15 @@
     "refreshDevices": "Apparaten vernieuwen"
   },
   "device": {
-    "removable": "Verwijderbaar",
     "system": "Systeem",
     "sdCard": "SD-kaart",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "Geen verwijderbare apparaten gevonden",
-    "refreshing": "Vernieuwen...",
     "refresh": "Vernieuwen"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "Fabrikant",
     "stepBoard": "Board",
     "stepOs": "OS",
@@ -90,19 +81,15 @@
     "uploadingLogs": "Logs uploaden...",
     "uploadLogsForSupport": "Logs uploaden voor ondersteuning",
     "viewLogs": "Logs bekijken",
-    "scanQrOrShare": "Scan QR of deel deze link:",
-    "uploadFailed": "Upload mislukt"
+    "scanQrOrShare": "Scan QR of deel deze link:"
   },
   "error": {
     "downloadFailed": "Download mislukt",
     "flashFailed": "Flash mislukt",
-    "verifyFailed": "Verificatie mislukt",
-    "cancelled": "Bewerking geannuleerd",
     "authFailed": "Autorisatie mislukt",
     "authCancelled": "Autorisatie geannuleerd door gebruiker",
     "decompressionFailed": "Uitpakken mislukt",
-    "uploadFailed": "Upload mislukt",
-    "deviceDisconnected": "Apparaat losgekoppeld"
+    "uploadFailed": "Upload mislukt"
   },
   "custom": {
     "customImage": "Aangepaste image"

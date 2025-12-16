@@ -18,6 +18,7 @@ import {
 import { FlashStageIcon, getStageKey } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
 import { ErrorDisplay } from '../shared/ErrorDisplay';
+import { MarqueeText } from '../shared/MarqueeText';
 import type { FlashStage } from './FlashStageIcon';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
 
@@ -243,16 +244,7 @@ export function FlashProgress({
 
   function getImageDisplayText(): string {
     if (image.is_custom) {
-      const fileName = image.distro_release;
-      if (fileName.length > 45) {
-        const extIndex = fileName.lastIndexOf('.');
-        if (extIndex > 0) {
-          const extension = fileName.substring(extIndex);
-          return fileName.substring(0, 42 - extension.length) + '...' + extension;
-        }
-        return fileName.substring(0, 42) + '...';
-      }
-      return fileName;
+      return image.distro_release;
     }
     return `Armbian ${image.armbian_version} ${image.distro_release}`;
   }
@@ -297,13 +289,11 @@ export function FlashProgress({
                     <Disc size={20} className="os-badge-icon" />
                   );
                 })()}
-                <span className="os-badge-text">{getImageDisplayText()}</span>
+                <MarqueeText text={getImageDisplayText()} maxWidth={200} className="os-badge-text" />
               </div>
               <div className="flash-device-row">
                 <HardDrive size={16} />
-                <span className="flash-device-name">
-                  {device.model || device.name}
-                </span>
+                <MarqueeText text={device.model || device.name} maxWidth={150} className="flash-device-name" />
                 <span className="flash-device-size">{device.size_formatted}</span>
               </div>
             </div>
@@ -337,7 +327,9 @@ export function FlashProgress({
 
         {stage === 'complete' && (
           <p className="flash-success-hint">
-            {t('flash.successHint', { boardName: board.name })}
+            {image.is_custom
+              ? t('flash.successHintCustom')
+              : t('flash.successHint', { boardName: board.name })}
           </p>
         )}
 

@@ -11,7 +11,10 @@
     "useCustomImage": "カスタムイメージを使用",
     "changeCustomImage": "カスタムイメージを変更",
     "images": "イメージ",
-    "boards": "ボード"
+    "imageCount_one": "{{count}} イメージ",
+    "imageCount_other": "{{count}} イメージ",
+    "boardCount_one": "{{count}} ボード",
+    "boardCount_other": "{{count}} ボード"
   },
   "flash": {
     "downloading": "イメージをダウンロード中...",
@@ -20,21 +23,18 @@
     "verifying": "書き込みデータを検証中...",
     "complete": "書き込み完了！",
     "failed": "エラーが発生しました",
-    "cancelled": "キャンセルされました",
     "cancel": "キャンセル",
     "retry": "再試行",
-    "back": "戻る",
     "done": "完了",
     "flashAnother": "別のイメージを書き込む",
     "authorizing": "認証をリクエスト中...",
-    "authorizingDesc": "続行するには認証リクエストを承認してください。",
-    "preparing": "準備中...",
     "confirmTitle": "選択を確認",
     "confirmText": "次のデバイスに書き込もうとしています：",
     "confirmWarning": "すべてのデータが完全に消去されます",
     "eraseAndFlash": "消去して書き込む",
     "dataWarning": "選択したデバイスのすべてのデータが消去されます",
-    "successHint": "SDカードの準備ができました！デバイスを安全に取り外して{{boardName}}に挿入できます。"
+    "successHint": "SDカードの準備ができました！デバイスを安全に取り外して{{boardName}}に挿入できます。",
+    "successHintCustom": "SDカードの準備ができました！デバイスを安全に取り外せます。"
   },
   "modal": {
     "selectManufacturer": "メーカーを選択",
@@ -43,16 +43,11 @@
     "selectDevice": "ストレージデバイスを選択",
     "searchManufacturer": "メーカーを検索...",
     "searchBoard": "ボードを検索...",
-    "searchImage": "イメージを検索...",
-    "close": "閉じる",
-    "noResults": "結果が見つかりません",
     "noManufacturers": "メーカーが見つかりません",
     "noBoards": "ボードが見つかりません",
     "noImages": "イメージが見つかりません",
     "noDevices": "デバイスが見つかりません",
     "loading": "読み込み中...",
-    "error": "データ読み込みエラー",
-    "retry": "再試行",
     "promoted": "おすすめ",
     "stable": "安定版",
     "nightly": "ナイトリー",
@@ -64,19 +59,15 @@
     "refreshDevices": "デバイスを更新"
   },
   "device": {
-    "removable": "リムーバブル",
     "system": "システム",
     "sdCard": "SDカード",
     "usb": "USB",
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "noDevices": "リムーバブルデバイスが見つかりません",
-    "refreshing": "更新中...",
     "refresh": "更新"
   },
   "header": {
-    "title": "Armbian Imager",
     "stepManufacturer": "メーカー",
     "stepBoard": "ボード",
     "stepOs": "OS",
@@ -90,19 +81,15 @@
     "uploadingLogs": "ログをアップロード中...",
     "uploadLogsForSupport": "サポート用にログをアップロード",
     "viewLogs": "ログを表示",
-    "scanQrOrShare": "QRをスキャンするかリンクを共有：",
-    "uploadFailed": "アップロード失敗"
+    "scanQrOrShare": "QRをスキャンするかリンクを共有："
   },
   "error": {
     "downloadFailed": "ダウンロード失敗",
     "flashFailed": "書き込み失敗",
-    "verifyFailed": "検証失敗",
-    "cancelled": "操作がキャンセルされました",
     "authFailed": "認証失敗",
     "authCancelled": "ユーザーにより認証がキャンセルされました",
     "decompressionFailed": "解凍失敗",
-    "uploadFailed": "アップロード失敗",
-    "deviceDisconnected": "デバイスが切断されました"
+    "uploadFailed": "アップロード失敗"
   },
   "custom": {
     "customImage": "カスタムイメージ"

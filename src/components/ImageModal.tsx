@@ -93,7 +93,7 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
     return applyFilter(allImages, filterType);
   }, [allImages, filterType]);
 
-  const title = board ? `${board.name} - ${t('modal.selectImage')}` : t('modal.selectImage');
+  const title = t('modal.selectImage');
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
