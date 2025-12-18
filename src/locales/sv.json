@@ -1,0 +1,106 @@
+{
+  "home": {
+    "manufacturer": "Manufacturer",
+    "board": "Board",
+    "operatingSystem": "Operating System",
+    "storage": "Storage",
+    "chooseBrand": "CHOOSE BRAND",
+    "chooseBoard": "CHOOSE BOARD",
+    "chooseOs": "CHOOSE OS",
+    "chooseStorage": "CHOOSE STORAGE",
+    "useCustomImage": "Use Custom Image",
+    "changeCustomImage": "Change Custom Image",
+    "images": "images",
+    "imageCount_one": "{{count}} image",
+    "imageCount_other": "{{count}} images",
+    "boardCount_one": "{{count}} board",
+    "boardCount_other": "{{count}} boards"
+  },
+  "flash": {
+    "downloading": "Downloading image...",
+    "decompressing": "Decompressing image...",
+    "writing": "Writing image to device...",
+    "verifying": "Verifying written data...",
+    "complete": "Flash complete!",
+    "failed": "An error occurred",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "done": "Done",
+    "flashAnother": "Flash Another",
+    "authorizing": "Requesting authorization...",
+    "confirmTitle": "Confirm Selection",
+    "confirmText": "You are about to write to:",
+    "confirmWarning": "ALL DATA WILL BE PERMANENTLY ERASED",
+    "eraseAndFlash": "Erase & Flash",
+    "dataWarning": "All data on selected device will be erased",
+    "successHint": "Your SD card is ready! You can safely remove the device and insert it into your {{boardName}}.",
+    "successHintCustom": "Your SD card is ready! You can safely remove the device."
+  },
+  "modal": {
+    "selectManufacturer": "Select Manufacturer",
+    "selectBoard": "Select Board",
+    "selectImage": "Select Operating System",
+    "selectDevice": "Select Storage Device",
+    "searchManufacturer": "Search manufacturer...",
+    "searchBoard": "Search boards...",
+    "noManufacturers": "No manufacturers found",
+    "noBoards": "No boards found",
+    "noImages": "No images found",
+    "noDevices": "No devices found",
+    "loading": "Loading...",
+    "promoted": "Recommended",
+    "stable": "Stable",
+    "nightly": "Nightly",
+    "apps": "Apps",
+    "minimal": "Minimal",
+    "allImages": "All Images",
+    "scanningDevices": "Scanning devices...",
+    "insertDevice": "Insert an SD card or USB drive",
+    "refreshDevices": "Refresh Devices"
+  },
+  "device": {
+    "system": "System",
+    "sdCard": "SD Card",
+    "usb": "USB",
+    "sata": "SATA",
+    "sas": "SAS",
+    "nvme": "NVMe",
+    "refresh": "Refresh"
+  },
+  "header": {
+    "stepManufacturer": "Manufacturer",
+    "stepBoard": "Board",
+    "stepOs": "OS",
+    "stepStorage": "Storage",
+    "stepImage": "Image"
+  },
+  "errorDisplay": {
+    "retry": "Retry",
+    "uploadLogs": "Upload Logs",
+    "uploading": "Uploading...",
+    "uploadingLogs": "Uploading logs...",
+    "uploadLogsForSupport": "Upload Logs for Support",
+    "viewLogs": "View Logs",
+    "scanQrOrShare": "Scan QR or share this link:"
+  },
+  "error": {
+    "downloadFailed": "Download failed",
+    "flashFailed": "Flash failed",
+    "authFailed": "Authorization failed",
+    "authCancelled": "Authorization cancelled by user",
+    "decompressionFailed": "Decompression failed",
+    "uploadFailed": "Upload failed"
+  },
+  "custom": {
+    "customImage": "Custom Image"
+  },
+  "common": {
+    "unknown": "Unknown"
+  },
+  "update": {
+    "title": "Update Available",
+    "newVersionAvailable": "New version {{version}} available",
+    "download": "Download",
+    "later": "Later"
+  }
+}
