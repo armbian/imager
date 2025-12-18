@@ -6,11 +6,16 @@ import type { Manufacturer } from './ManufacturerModal';
 import { UpdateModal } from './shared/UpdateModal';
 import { MotdTip } from './shared/MotdTip';
 
+type NavigationStep = 'manufacturer' | 'board' | 'image' | 'device';
+
 interface HeaderProps {
   selectedManufacturer?: Manufacturer | null;
   selectedBoard?: BoardInfo | null;
   selectedImage?: ImageInfo | null;
   selectedDevice?: BlockDevice | null;
+  onReset?: () => void;
+  onNavigateToStep?: (step: NavigationStep) => void;
+  isFlashing?: boolean;
 }
 
 export function Header({
@@ -18,6 +23,9 @@ export function Header({
   selectedBoard,
   selectedImage,
   selectedDevice,
+  onReset,
+  onNavigateToStep,
+  isFlashing,
 }: HeaderProps) {
   const { t } = useTranslation();
   const isCustomImage = selectedImage?.is_custom;
@@ -25,26 +33,50 @@ export function Header({
   // For custom images, show different steps
   const steps = isCustomImage
     ? [
-        { label: t('header.stepImage'), completed: !!selectedImage },
-        { label: t('header.stepStorage'), completed: !!selectedDevice },
+        { key: 'image' as NavigationStep, label: t('header.stepImage'), completed: !!selectedImage },
+        { key: 'device' as NavigationStep, label: t('header.stepStorage'), completed: !!selectedDevice },
       ]
     : [
-        { label: t('header.stepManufacturer'), completed: !!selectedManufacturer },
-        { label: t('header.stepBoard'), completed: !!selectedBoard },
-        { label: t('header.stepOs'), completed: !!selectedImage },
-        { label: t('header.stepStorage'), completed: !!selectedDevice },
+        { key: 'manufacturer' as NavigationStep, label: t('header.stepManufacturer'), completed: !!selectedManufacturer },
+        { key: 'board' as NavigationStep, label: t('header.stepBoard'), completed: !!selectedBoard },
+        { key: 'image' as NavigationStep, label: t('header.stepOs'), completed: !!selectedImage },
+        { key: 'device' as NavigationStep, label: t('header.stepStorage'), completed: !!selectedDevice },
       ];
+
+  function handleLogoClick() {
+    if (!isFlashing && onReset) {
+      onReset();
+    }
+  }
+
+  function handleStepClick(step: NavigationStep, completed: boolean) {
+    // Only allow clicking on completed steps, and not during flashing
+    if (!isFlashing && completed && onNavigateToStep) {
+      onNavigateToStep(step);
+    }
+  }
 
   return (
     <>
       <UpdateModal />
       <header className="header">
         <div className="header-left">
-          <img src={armbianLogo} alt="Armbian" className="logo-main" />
+          <img
+            src={armbianLogo}
+            alt="Armbian"
+            className={`logo-main ${!isFlashing && onReset ? 'clickable' : ''}`}
+            onClick={handleLogoClick}
+            title={!isFlashing ? t('header.resetTooltip') : undefined}
+          />
         </div>
         <div className="header-steps">
           {steps.map((step, index) => (
-            <div key={step.label} className={`header-step ${step.completed ? 'completed' : ''}`}>
+            <div
+              key={step.key}
+              className={`header-step ${step.completed ? 'completed' : ''} ${!isFlashing && step.completed && onNavigateToStep ? 'clickable' : ''}`}
+              onClick={() => handleStepClick(step.key, step.completed)}
+              title={!isFlashing && step.completed ? t('header.stepTooltip', { step: step.label }) : undefined}
+            >
               <span className="header-step-indicator">
                 {step.completed ? <Check size={14} /> : (index + 1)}
               </span>

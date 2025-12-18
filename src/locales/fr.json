@@ -72,7 +72,9 @@
     "stepBoard": "Carte",
     "stepOs": "OS",
     "stepStorage": "Stockage",
-    "stepImage": "Image"
+    "stepImage": "Image",
+    "resetTooltip": "Recommencer",
+    "stepTooltip": "Modifier {{step}}"
   },
   "errorDisplay": {
     "retry": "Réessayer",

@@ -72,7 +72,9 @@
     "stepBoard": "Plošča",
     "stepOs": "OS",
     "stepStorage": "Shramba",
-    "stepImage": "Slika"
+    "stepImage": "Slika",
+    "resetTooltip": "Začni znova",
+    "stepTooltip": "Spremeni {{step}}"
   },
   "errorDisplay": {
     "retry": "Poskusi znova",

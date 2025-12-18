@@ -276,8 +276,7 @@ export function FlashProgress({
                 {(() => {
                   const logo = getImageLogo(
                     image.distro_release,
-                    image.preinstalled_application,
-                    image.is_custom
+                    image.preinstalled_application
                   );
                   return logo ? (
                     <img

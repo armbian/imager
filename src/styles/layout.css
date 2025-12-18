@@ -33,6 +33,16 @@
   filter: var(--logo-filter, none);
 }
 
+.logo-main.clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.logo-main.clickable:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
 .header-steps {
   display: flex;
   align-items: center;
@@ -86,6 +96,18 @@
 
 .header-step.completed .header-step-label {
   color: #22c55e;
+}
+
+.header-step.clickable {
+  cursor: pointer;
+}
+
+.header-step.clickable:hover {
+  background: rgba(34, 197, 94, 0.25);
+}
+
+.header-step.clickable:hover .header-step-indicator {
+  transform: scale(1.1);
 }
 
 /* ========================================

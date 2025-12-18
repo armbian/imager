@@ -112,6 +112,16 @@ function App() {
     setIsFlashing(false);
   }
 
+  function handleReset() {
+    resetSelectionsFrom('manufacturer');
+  }
+
+  function handleNavigateToStep(step: SelectionStep) {
+    // Reset selections from this step onwards, then open the modal
+    resetSelectionsFrom(step);
+    setActiveModal(step);
+  }
+
   return (
     <div className="app">
       <Header
@@ -119,6 +129,9 @@ function App() {
         selectedBoard={selectedBoard}
         selectedImage={selectedImage}
         selectedDevice={selectedDevice}
+        onReset={handleReset}
+        onNavigateToStep={handleNavigateToStep}
+        isFlashing={isFlashing}
       />
 
       <main className="main-content">

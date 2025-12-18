@@ -72,7 +72,9 @@
     "stepBoard": "Placa",
     "stepOs": "SO",
     "stepStorage": "Armazenamento",
-    "stepImage": "Imagem"
+    "stepImage": "Imagem",
+    "resetTooltip": "Recomeçar",
+    "stepTooltip": "Alterar {{step}}"
   },
   "errorDisplay": {
     "retry": "Tentar novamente",

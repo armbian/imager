@@ -72,7 +72,9 @@
     "stepBoard": "Płytka",
     "stepOs": "OS",
     "stepStorage": "Pamięć",
-    "stepImage": "Obraz"
+    "stepImage": "Obraz",
+    "resetTooltip": "Zacznij od nowa",
+    "stepTooltip": "Zmień {{step}}"
   },
   "errorDisplay": {
     "retry": "Ponów",

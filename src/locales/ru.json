@@ -72,7 +72,9 @@
     "stepBoard": "Плата",
     "stepOs": "ОС",
     "stepStorage": "Хранилище",
-    "stepImage": "Образ"
+    "stepImage": "Образ",
+    "resetTooltip": "Начать сначала",
+    "stepTooltip": "Изменить {{step}}"
   },
   "errorDisplay": {
     "retry": "Повторить",
