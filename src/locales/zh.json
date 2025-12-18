@@ -72,7 +72,9 @@
     "stepBoard": "开发板",
     "stepOs": "系统",
     "stepStorage": "存储",
-    "stepImage": "镜像"
+    "stepImage": "镜像",
+    "resetTooltip": "重新开始",
+    "stepTooltip": "更改{{step}}"
   },
   "errorDisplay": {
     "retry": "重试",

@@ -72,7 +72,9 @@
     "stepBoard": "Scheda",
     "stepOs": "SO",
     "stepStorage": "Storage",
-    "stepImage": "Immagine"
+    "stepImage": "Immagine",
+    "resetTooltip": "Ricomincia",
+    "stepTooltip": "Cambia {{step}}"
   },
   "errorDisplay": {
     "retry": "Riprova",

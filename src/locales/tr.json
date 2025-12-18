@@ -72,7 +72,9 @@
     "stepBoard": "Kart",
     "stepOs": "İS",
     "stepStorage": "Depolama",
-    "stepImage": "İmaj"
+    "stepImage": "İmaj",
+    "resetTooltip": "Yeniden başla",
+    "stepTooltip": "{{step}} değiştir"
   },
   "errorDisplay": {
     "retry": "Yeniden dene",

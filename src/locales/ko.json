@@ -72,7 +72,9 @@
     "stepBoard": "보드",
     "stepOs": "OS",
     "stepStorage": "저장 장치",
-    "stepImage": "이미지"
+    "stepImage": "이미지",
+    "resetTooltip": "처음부터 다시",
+    "stepTooltip": "{{step}} 변경"
   },
   "errorDisplay": {
     "retry": "재시도",

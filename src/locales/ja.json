@@ -72,7 +72,9 @@
     "stepBoard": "ボード",
     "stepOs": "OS",
     "stepStorage": "ストレージ",
-    "stepImage": "イメージ"
+    "stepImage": "イメージ",
+    "resetTooltip": "最初からやり直す",
+    "stepTooltip": "{{step}}を変更"
   },
   "errorDisplay": {
     "retry": "再試行",

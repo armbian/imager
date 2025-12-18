@@ -7,6 +7,9 @@ import armbianLogo from '../armbian-logo.png';
 import homeassistantLogo from './homeassistant.png';
 import openmediavaultLogo from './openmediavault.jpeg';
 
+// Import OS_INFO from config as single source of truth
+import { OS_INFO } from '../../config/os-info';
+
 export const osLogos: Record<string, string> = {
   debian: debianLogo,
   ubuntu: ubuntuLogo,
@@ -20,18 +23,13 @@ export const appLogos: Record<string, string> = {
   omv: openmediavaultLogo,
 };
 
-// Debian codenames
-const debianCodenames = ['bookworm', 'bullseye', 'trixie', 'sid', 'buster', 'stretch'];
-// Ubuntu codenames
-const ubuntuCodenames = ['jammy', 'noble', 'focal', 'kinetic', 'lunar', 'mantic'];
-
 /**
  * Get the appropriate logo for an image based on distro release and preinstalled app
  * Priority: preinstalled app logo > OS logo based on distro > null (for generic icon)
  * For custom images, also checks the filename for OS/app keywords
  * Returns null if no matching logo found (caller should show generic icon)
  */
-export function getImageLogo(distroRelease: string, preinstalledApp?: string, isCustom?: boolean): string | null {
+export function getImageLogo(distroRelease: string, preinstalledApp?: string): string | null {
   // First check if there's a preinstalled app with a logo
   if (preinstalledApp) {
     const appKey = preinstalledApp.toLowerCase();
@@ -52,28 +50,28 @@ export function getImageLogo(distroRelease: string, preinstalledApp?: string, is
     }
   }
 
-  // Check Ubuntu codenames
-  if (distro.includes('ubuntu') || ubuntuCodenames.some(c => distro.includes(c))) {
+  // Check OS_INFO for known codenames (single source of truth)
+  for (const [codename, info] of Object.entries(OS_INFO)) {
+    if (distro.includes(codename)) {
+      return info.logo;
+    }
+  }
+
+  // Check for explicit OS names
+  if (distro.includes('ubuntu')) {
     return osLogos.ubuntu;
   }
 
-  // Check Debian codenames
-  if (distro.includes('debian') || debianCodenames.some(c => distro.includes(c))) {
+  if (distro.includes('debian')) {
     return osLogos.debian;
   }
 
-  // Check for Armbian in name
   if (distro.includes('armbian')) {
     return osLogos.armbian;
   }
 
-  // For custom images without recognized OS, return null (show generic icon)
-  if (isCustom) {
-    return null;
-  }
-
-  // Default to Armbian for non-custom images
-  return osLogos.armbian;
+  // Return null for unrecognized OS (caller should show generic icon)
+  return null;
 }
 
 /**
@@ -82,11 +80,18 @@ export function getImageLogo(distroRelease: string, preinstalledApp?: string, is
 export function getOsName(distroRelease: string): string {
   const distro = distroRelease.toLowerCase();
 
-  if (distro.includes('ubuntu') || ubuntuCodenames.some(c => distro.includes(c))) {
+  // Check OS_INFO for known codenames
+  for (const [codename, info] of Object.entries(OS_INFO)) {
+    if (distro.includes(codename)) {
+      return info.name;
+    }
+  }
+
+  if (distro.includes('ubuntu')) {
     return 'Ubuntu';
   }
 
-  if (distro.includes('debian') || debianCodenames.some(c => distro.includes(c))) {
+  if (distro.includes('debian')) {
     return 'Debian';
   }
 

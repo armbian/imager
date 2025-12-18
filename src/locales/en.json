@@ -72,7 +72,9 @@
     "stepBoard": "Board",
     "stepOs": "OS",
     "stepStorage": "Storage",
-    "stepImage": "Image"
+    "stepImage": "Image",
+    "resetTooltip": "Start over",
+    "stepTooltip": "Change {{step}}"
   },
   "errorDisplay": {
     "retry": "Retry",
