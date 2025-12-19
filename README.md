@@ -19,17 +19,12 @@
 
 ## Features
 
-- **307+ Boards** — Browse every Armbian-supported SBC, organized by manufacturer
-- **Smart Filtering** — Filter by stable/nightly, desktop/server/minimal, kernel variant
-- **Safe by Design** — System disks are automatically excluded
-- **Verified Writes** — SHA256 read-back verification
-- **Custom Images** — Use your own `.img`, `.img.xz`, `.img.gz`, `.img.bz2`, `.img.zst` files
-- **Touch ID** — Biometric authentication on macOS
-- **15 Languages** — Auto-detects system language
-- **Light/Dark Mode** — Follows your system preference
-- **Device Hot-Swap** — Automatically detects when devices are connected/disconnected
-- **Log Upload** — One-click error log upload to paste.armbian.com with QR code
-- **Tiny Footprint** — ~15MB app size vs 200MB+ for Electron alternatives
+- **307+ Boards** — Browse Armbian-supported SBCs with smart filtering and real photos
+- **Safe & Verified** — System disks excluded, byte-by-byte verification after write
+- **Cross-Platform** — Native builds for macOS, Windows, Linux (x64 & ARM64)
+- **15 Languages** — Auto-detects system language, light/dark mode support
+- **Auto-Updates** — In-app update download and installation
+- **Tiny Footprint** — ~15MB vs 200MB+ for Electron alternatives
 
 ## Download
 
@@ -39,7 +34,7 @@
 |:---:|:---:|:---:|
 | **macOS** | **Windows** | **Linux** |
 | [Intel & Apple Silicon](https://github.com/armbian/imager/releases) | [x64 & ARM64](https://github.com/armbian/imager/releases) | [x64 & ARM64](https://github.com/armbian/imager/releases) |
-| `.dmg` / `.app.zip` | `.exe` / `.msi` | `.deb` |
+| `.dmg` / `.app.zip` | `.exe` / `.msi` | `.deb` / `.AppImage` |
 
 </p>
 
@@ -70,8 +65,8 @@ This only needs to be done once.
 |----------|-------------|--------|-------|
 | macOS | Intel x64 | ✅ | Full support |
 | macOS | Apple Silicon | ✅ | Native ARM64 + Touch ID |
-| Windows | x64 | ✅ | Admin elevation via UAC |
-| Windows | ARM64 | ✅ | Native ARM64 build |
+| Windows | x64 | ✅ | Run as Administrator |
+| Windows | ARM64 | ✅ | Native ARM64 build, run as Administrator |
 | Linux | x64 | ✅ | UDisks2 + pkexec for privileges |
 | Linux | ARM64 | ✅ | Native ARM64 build |
 
@@ -101,8 +96,9 @@ npm run tauri:dev
 ```bash
 npm run dev              # Frontend only (Vite)
 npm run tauri:dev        # Full app with hot reload
-npm run build            # Build frontend
+npm run build            # Build frontend for production
 npm run tauri:build      # Build distributable
+npm run tauri:build:dev  # Build with debug symbols
 npm run lint             # ESLint
 npm run clean            # Clean all build artifacts
 ```
@@ -144,8 +140,9 @@ npm run clean            # Clean all build artifacts
 armbian-imager/
 ├── src/                          # React Frontend
 │   ├── components/               # UI Components
-│   ├── hooks/                    # React Hooks
-│   ├── config/                   # Configuration
+│   │   └── shared/               # Reusable components (UpdateModal, ErrorDisplay, etc.)
+│   ├── hooks/                    # React Hooks (Tauri IPC, async data)
+│   ├── config/                   # Badges, manufacturers, OS info
 │   ├── locales/                  # i18n translations (15 languages)
 │   ├── styles/                   # Modular CSS
 │   ├── types/                    # TypeScript interfaces
@@ -155,11 +152,12 @@ armbian-imager/
 │   ├── src/
 │   │   ├── commands/             # Tauri IPC handlers
 │   │   ├── devices/              # Platform device detection
-│   │   ├── flash/                # Platform flash implementation
+│   │   ├── flash/                # Platform flash (macOS, Linux, Windows)
 │   │   ├── images/               # Image management and filtering
+│   │   ├── logging/              # Session logging
+│   │   ├── paste/                # Log upload to paste.armbian.com
 │   │   ├── download.rs           # HTTP streaming downloads
-│   │   ├── decompress.rs         # XZ/GZ/BZ2/ZST decompression
-│   │   └── paste/                # Log upload
+│   │   └── decompress.rs         # XZ decompression
 │   └── icons/                    # App icons (all platforms)
 │
 ├── scripts/                      # Build scripts
@@ -174,7 +172,7 @@ armbian-imager/
 |------|--------|
 | Board List | [github.armbian.com/all-images.json](https://github.armbian.com/all-images.json) |
 | Board Photos | [cache.armbian.com](https://cache.armbian.com) |
-| Checksums | Embedded in image metadata (SHA256) |
+| MOTD Tips | [armbian/os/main/motd.json](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
 | Log Upload | [paste.armbian.com](https://paste.armbian.com) |
 
 
@@ -204,6 +202,8 @@ GPLv2 — Part of the [Armbian](https://www.armbian.com) ecosystem.
 
 - [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager) — The inspiration for this project
 - [Tauri](https://tauri.app/) — The framework that makes native apps accessible
+- [i18next](https://www.i18next.com/) — Internationalization framework
+- [Lucide](https://lucide.dev/) — Beautiful icons
 - [Armbian Community](https://forum.armbian.com) — For years of amazing work on SBC support
 
 ---
