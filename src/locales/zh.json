@@ -10,7 +10,6 @@
     "chooseStorage": "选择存储",
     "useCustomImage": "使用自定义镜像",
     "changeCustomImage": "更换自定义镜像",
-    "images": "镜像",
     "imageCount_one": "{{count}} 镜像",
     "imageCount_other": "{{count}} 镜像",
     "boardCount_one": "{{count}} 开发板",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "正在下载镜像...",
+    "verifyingSha": "正在验证下载完整性...",
     "decompressing": "正在解压镜像...",
     "writing": "正在写入镜像到设备...",
     "verifying": "正在验证写入的数据...",

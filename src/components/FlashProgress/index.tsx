@@ -42,6 +42,7 @@ export function FlashProgress({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [boardImageUrl, setBoardImageUrl] = useState<string | null>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const [imagePath, setImagePath] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
   const maxProgressRef = useRef<number>(0);
@@ -139,13 +140,17 @@ export function FlashProgress({
       try {
         const prog = await getDownloadProgress();
 
-        if (prog.is_decompressing && stage !== 'decompressing') {
+        if (prog.is_verifying_sha && stage !== 'verifying_sha') {
+          setStage('verifying_sha');
+          maxProgressRef.current = 0;
+          setProgress(0);
+        } else if (prog.is_decompressing && stage !== 'decompressing') {
           setStage('decompressing');
           maxProgressRef.current = 0;
           setProgress(0);
         }
 
-        if (!prog.is_decompressing) {
+        if (!prog.is_decompressing && !prog.is_verifying_sha) {
           const newProgress = prog.progress_percent;
           if (newProgress >= maxProgressRef.current) {
             maxProgressRef.current = newProgress;
@@ -164,7 +169,7 @@ export function FlashProgress({
     }, 250);
 
     try {
-      const path = await downloadImage(image.file_url);
+      const path = await downloadImage(image.file_url, image.file_url_sha);
       setImagePath(path);
       if (intervalRef.current) clearInterval(intervalRef.current);
       startFlash(path);
@@ -261,9 +266,10 @@ export function FlashProgress({
             </div>
           ) : (
             <img
-              src={boardImageUrl || fallbackImage}
+              src={imageLoadError ? fallbackImage : (boardImageUrl || fallbackImage)}
               alt={board.name}
               className="flash-board-image"
+              onError={() => setImageLoadError(true)}
             />
           )}
           <div className="flash-info">
@@ -309,16 +315,16 @@ export function FlashProgress({
           stage !== 'authorizing' && (
             <div className="progress-container">
               <div
-                className={`progress-bar ${stage === 'decompressing' ? 'indeterminate' : ''}`}
+                className={`progress-bar ${stage === 'decompressing' || stage === 'verifying_sha' ? 'indeterminate' : ''}`}
               >
                 <div
                   className="progress-fill"
                   style={{
-                    width: stage === 'decompressing' ? '100%' : `${progress}%`,
+                    width: stage === 'decompressing' || stage === 'verifying_sha' ? '100%' : `${progress}%`,
                   }}
                 />
               </div>
-              {stage !== 'decompressing' && (
+              {stage !== 'decompressing' && stage !== 'verifying_sha' && (
                 <span className="progress-text">{progress.toFixed(0)}%</span>
               )}
             </div>

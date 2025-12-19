@@ -10,7 +10,6 @@
     "chooseStorage": "IZBERI SHRAMBO",
     "useCustomImage": "Uporabi sliko po meri",
     "changeCustomImage": "Spremeni sliko po meri",
-    "images": "slike",
     "imageCount_one": "{{count}} slika",
     "imageCount_other": "{{count}} slik",
     "boardCount_one": "{{count}} plošča",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "Prenašanje slike...",
+    "verifyingSha": "Preverjanje celovitosti prenosa...",
     "decompressing": "Razširjanje slike...",
     "writing": "Zapisovanje slike na napravo...",
     "verifying": "Preverjanje zapisanih podatkov...",

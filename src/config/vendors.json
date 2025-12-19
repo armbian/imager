@@ -1,5 +1,7 @@
 {
   "vendors": {
+    "allwinner": { "prefixes": ["Allwinner"], "name": "Allwinner" },
+    "arm": { "prefixes": ["ARM"], "name": "ARM" },
     "armsom": { "prefixes": ["ArmSom"], "name": "ArmSoM" },
     "asus": { "prefixes": ["Tinker"], "name": "ASUS" },
     "beagleboard": { "prefixes": ["BeagleBone", "BeaglePlay", "BeagleY", "PocketBeagle"], "name": "BeagleBoard" },
@@ -34,11 +36,13 @@
     "sakura": { "prefixes": ["SakuraPi"] },
     "sinovoip": { "prefixes": ["Banana Pi"], "name": "Banana Pi" },
     "solidrun": { "prefixes": ["ClearFog", "CuBox", "SolidRun"] },
+    "spacemit": { "prefixes": ["SpacemiT"], "name": "SpacemiT" },
     "star-five": { "prefixes": ["VisionFive"], "name": "StarFive" },
     "ti": { "prefixes": ["SK-AM", "SK-TDA"], "name": "Texas Instruments" },
+    "tqgroup": { "prefixes": ["TQ"], "name": "TQ-Group" },
     "udoo": { "prefixes": ["UDOO"], "name": "UDOO" },
     "xpressreal": { "prefixes": ["XPressReal"] },
     "xunlong": { "prefixes": ["Orange Pi"], "name": "Orange Pi" },
-    "youyeetoo": { "prefixes": ["Youyeetoo"] }
+    "youyeetoo": { "prefixes": ["Youyeetoo", "YouYeeToo"] }
   }
 }

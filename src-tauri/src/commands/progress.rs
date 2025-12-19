@@ -12,6 +12,7 @@ use super::state::AppState;
 pub struct DownloadProgress {
     pub total_bytes: u64,
     pub downloaded_bytes: u64,
+    pub is_verifying_sha: bool,
     pub is_decompressing: bool,
     pub progress_percent: f64,
     pub error: Option<String>,
@@ -35,6 +36,7 @@ pub async fn get_download_progress(state: State<'_, AppState>) -> Result<Downloa
 
     let total = ds.total_bytes.load(std::sync::atomic::Ordering::SeqCst);
     let downloaded = ds.downloaded_bytes.load(std::sync::atomic::Ordering::SeqCst);
+    let is_verifying_sha = ds.is_verifying_sha.load(std::sync::atomic::Ordering::SeqCst);
     let is_decompressing = ds.is_decompressing.load(std::sync::atomic::Ordering::SeqCst);
 
     let progress = if total > 0 {
@@ -48,6 +50,7 @@ pub async fn get_download_progress(state: State<'_, AppState>) -> Result<Downloa
     Ok(DownloadProgress {
         total_bytes: total,
         downloaded_bytes: downloaded,
+        is_verifying_sha,
         is_decompressing,
         progress_percent: progress,
         error,

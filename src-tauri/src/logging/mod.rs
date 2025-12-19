@@ -35,15 +35,6 @@ impl LogLevel {
         }
     }
 
-    /// Get ANSI color code for terminal output
-    pub fn color_code(&self) -> &'static str {
-        match self {
-            LogLevel::Debug => "\x1b[36m", // Cyan
-            LogLevel::Info => "\x1b[32m",  // Green
-            LogLevel::Warn => "\x1b[33m",  // Yellow
-            LogLevel::Error => "\x1b[31m", // Red
-        }
-    }
 }
 
 /// Logger configuration
@@ -121,36 +112,59 @@ impl Logger {
         }
 
         let timestamp = Local::now();
-        let formatted = self.format_message(level, module, message, &timestamp);
+        let formatted_colored = self.format_message_colored(level, module, message, &timestamp);
 
         // Console output
         if self.config.console_output {
             if self.config.use_colors {
-                let reset = "\x1b[0m";
-                eprintln!(
-                    "{}[{}] [{}] [{}]{} {}",
-                    level.color_code(),
-                    timestamp.format("%H:%M:%S%.3f"),
-                    level.as_str(),
-                    module,
-                    reset,
-                    message
-                );
+                eprintln!("{}", formatted_colored);
             } else {
+                let formatted = self.format_message_plain(level, module, message, &timestamp);
                 eprintln!("{}", formatted);
             }
         }
 
-        // File output
+        // File output (with ANSI colors for hastebin)
         if self.config.file_output {
             if let Some(ref mut file) = self.log_file {
-                let _ = writeln!(file, "{}", formatted);
+                let _ = writeln!(file, "{}", formatted_colored);
                 let _ = file.flush();
             }
         }
     }
 
-    fn format_message(
+    fn format_message_colored(
+        &self,
+        level: LogLevel,
+        module: &str,
+        message: &str,
+        timestamp: &DateTime<Local>,
+    ) -> String {
+        let reset = "\x1b[0m";
+        let dim = "\x1b[90m";
+
+        let (icon, level_color) = match level {
+            LogLevel::Debug => ("●", "\x1b[35m"),
+            LogLevel::Info => ("●", "\x1b[32m"),
+            LogLevel::Warn => ("●", "\x1b[33m"),
+            LogLevel::Error => ("●", "\x1b[31m"),
+        };
+
+        format!(
+            "{}{} {}{}{} {}{}:{} {}",
+            dim,
+            timestamp.format("%H:%M:%S"),
+            level_color,
+            icon,
+            reset,
+            level_color,
+            module,
+            reset,
+            message
+        )
+    }
+
+    fn format_message_plain(
         &self,
         level: LogLevel,
         module: &str,

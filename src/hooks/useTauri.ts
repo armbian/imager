@@ -33,8 +33,8 @@ export async function requestWriteAuthorization(devicePath: string): Promise<boo
   return invoke('request_write_authorization', { devicePath });
 }
 
-export async function downloadImage(fileUrl: string): Promise<string> {
-  return invoke('download_image', { fileUrl });
+export async function downloadImage(fileUrl: string, fileUrlSha?: string | null): Promise<string> {
+  return invoke('download_image', { fileUrl, fileUrlSha });
 }
 
 export async function getDownloadProgress(): Promise<DownloadProgress> {

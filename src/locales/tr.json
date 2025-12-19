@@ -10,7 +10,6 @@
     "chooseStorage": "DEPOLAMA SEÇ",
     "useCustomImage": "Özel imaj kullan",
     "changeCustomImage": "Özel imajı değiştir",
-    "images": "imaj",
     "imageCount_one": "{{count}} imaj",
     "imageCount_other": "{{count}} imaj",
     "boardCount_one": "{{count}} kart",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "İmaj indiriliyor...",
+    "verifyingSha": "İndirme bütünlüğü doğrulanıyor...",
     "decompressing": "İmaj açılıyor...",
     "writing": "İmaj cihaza yazılıyor...",
     "verifying": "Yazılan veriler doğrulanıyor...",

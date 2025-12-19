@@ -10,7 +10,6 @@
     "chooseStorage": "ВЫБРАТЬ ХРАНИЛИЩЕ",
     "useCustomImage": "Использовать свой образ",
     "changeCustomImage": "Изменить свой образ",
-    "images": "образы",
     "imageCount_one": "{{count}} образ",
     "imageCount_other": "{{count}} образов",
     "boardCount_one": "{{count}} плата",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "Загрузка образа...",
+    "verifyingSha": "Проверка целостности загрузки...",
     "decompressing": "Распаковка образа...",
     "writing": "Запись образа на устройство...",
     "verifying": "Проверка записанных данных...",

@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArmbianImage {
     pub board_slug: Option<String>,
+    pub board_name: Option<String>,
     pub armbian_version: Option<String>,
     pub distro_release: Option<String>,
     pub kernel_branch: Option<String>,
@@ -15,6 +16,7 @@ pub struct ArmbianImage {
     pub preinstalled_application: Option<String>,
     pub promoted: Option<String>,
     pub file_url: Option<String>,
+    pub file_url_sha: Option<String>,
     pub file_extension: Option<String>,
     pub file_size: Option<String>,
     pub download_repository: Option<String>,
@@ -40,6 +42,7 @@ pub struct ImageInfo {
     pub preinstalled_application: String,
     pub promoted: bool,
     pub file_url: String,
+    pub file_url_sha: Option<String>,
     pub file_size: u64,
     pub download_repository: String,
 }

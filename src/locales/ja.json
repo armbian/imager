@@ -10,7 +10,6 @@
     "chooseStorage": "ストレージを選択",
     "useCustomImage": "カスタムイメージを使用",
     "changeCustomImage": "カスタムイメージを変更",
-    "images": "イメージ",
     "imageCount_one": "{{count}} イメージ",
     "imageCount_other": "{{count}} イメージ",
     "boardCount_one": "{{count}} ボード",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "イメージをダウンロード中...",
+    "verifyingSha": "ダウンロードの整合性を検証中...",
     "decompressing": "イメージを解凍中...",
     "writing": "デバイスにイメージを書き込み中...",
     "verifying": "書き込みデータを検証中...",

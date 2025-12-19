@@ -10,7 +10,6 @@
     "chooseStorage": "WYBIERZ PAMIĘĆ",
     "useCustomImage": "Użyj własnego obrazu",
     "changeCustomImage": "Zmień własny obraz",
-    "images": "obrazy",
     "imageCount_one": "{{count}} obraz",
     "imageCount_other": "{{count}} obrazów",
     "boardCount_one": "{{count}} płytka",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "Pobieranie obrazu...",
+    "verifyingSha": "Weryfikacja integralności pobierania...",
     "decompressing": "Rozpakowywanie obrazu...",
     "writing": "Zapisywanie obrazu na urządzeniu...",
     "verifying": "Weryfikacja zapisanych danych...",

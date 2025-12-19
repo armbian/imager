@@ -2,42 +2,12 @@
 //!
 //! Functions for parsing and filtering image data.
 
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
 use crate::config;
 use crate::utils::normalize_slug;
 
 use super::models::{ArmbianImage, BoardInfo, ImageInfo};
-
-// Load board names from JSON at compile time
-static BOARD_NAMES: Lazy<HashMap<String, String>> = Lazy::new(|| {
-    let json_str = include_str!("../data/board_names.json");
-    serde_json::from_str(json_str).unwrap_or_default()
-});
-
-/// Convert a board slug to a human-readable name
-fn slug_to_display_name(slug: &str) -> String {
-    let normalized = normalize_slug(slug);
-
-    // Look up in JSON map first
-    if let Some(name) = BOARD_NAMES.get(&normalized) {
-        return name.clone();
-    }
-
-    // Fallback: simple formatting for unknown boards
-    slug.split(|c| c == '-' || c == '_')
-        .filter(|s| !s.is_empty())
-        .map(|part| {
-            let mut chars = part.chars();
-            match chars.next() {
-                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-                None => String::new(),
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
-}
 
 /// Check if file extension is a valid image file
 fn is_valid_image_extension(ext: &str) -> bool {
@@ -83,30 +53,46 @@ fn extract_images_recursive(value: &serde_json::Value, images: &mut Vec<ArmbianI
     }
 }
 
+/// Board data accumulated from images
+struct BoardData {
+    original_slug: String,
+    board_name: Option<String>,
+    count: usize,
+    has_promoted: bool,
+}
+
 /// Get unique board list from images
 pub fn get_unique_boards(images: &[ArmbianImage]) -> Vec<BoardInfo> {
-    let mut board_map: HashMap<String, (String, usize, bool)> = HashMap::new();
+    let mut board_map: HashMap<String, BoardData> = HashMap::new();
 
     for img in images {
         if let Some(ref slug) = img.board_slug {
             let normalized = normalize_slug(slug);
-            let entry = board_map
-                .entry(normalized.clone())
-                .or_insert((slug.clone(), 0, false));
-            entry.1 += 1;
+            let entry = board_map.entry(normalized.clone()).or_insert(BoardData {
+                original_slug: slug.clone(),
+                board_name: img.board_name.clone(),
+                count: 0,
+                has_promoted: false,
+            });
+            entry.count += 1;
             if img.promoted.as_deref() == Some("true") {
-                entry.2 = true;
+                entry.has_promoted = true;
             }
         }
     }
 
     let mut boards: Vec<BoardInfo> = board_map
         .into_iter()
-        .map(|(slug, (original_slug, count, promoted))| BoardInfo {
-            slug,
-            name: slug_to_display_name(&original_slug),
-            image_count: count,
-            has_promoted: promoted,
+        .map(|(slug, data)| {
+            // Use board_name from API, fallback to slug if missing
+            let name = data.board_name.unwrap_or(data.original_slug);
+
+            BoardInfo {
+                slug,
+                name,
+                image_count: data.count,
+                has_promoted: data.has_promoted,
+            }
         })
         .collect();
 
@@ -175,6 +161,7 @@ pub fn filter_images_for_board(
             preinstalled_application: img.preinstalled_application.clone().unwrap_or_default(),
             promoted: img.promoted.as_deref() == Some("true"),
             file_url: img.file_url.clone().unwrap_or_default(),
+            file_url_sha: img.file_url_sha.clone(),
             file_size: img.file_size.as_ref().and_then(|s| s.parse().ok()).unwrap_or(0),
             download_repository: img.download_repository.clone().unwrap_or_default(),
         })

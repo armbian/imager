@@ -84,6 +84,7 @@ function App() {
           preinstalled_application: '',
           promoted: false,
           file_url: '',
+          file_url_sha: null,
           file_size: result.size,
           download_repository: 'local',
           is_custom: true,
@@ -111,6 +112,7 @@ function App() {
 
   function handleBackFromFlash() {
     setIsFlashing(false);
+    setSelectedDevice(null); // Reset device to allow re-selection
   }
 
   function handleReset() {

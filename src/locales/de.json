@@ -10,7 +10,6 @@
     "chooseStorage": "SPEICHER WÄHLEN",
     "useCustomImage": "Eigenes Image verwenden",
     "changeCustomImage": "Eigenes Image ändern",
-    "images": "Images",
     "imageCount_one": "{{count}} Image",
     "imageCount_other": "{{count}} Images",
     "boardCount_one": "{{count}} Board",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "Image wird heruntergeladen...",
+    "verifyingSha": "Download-Integrität wird überprüft...",
     "decompressing": "Image wird entpackt...",
     "writing": "Image wird auf Gerät geschrieben...",
     "verifying": "Geschriebene Daten werden überprüft...",

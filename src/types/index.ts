@@ -13,6 +13,7 @@ export interface ImageInfo {
   preinstalled_application: string;
   promoted: boolean;
   file_url: string;
+  file_url_sha: string | null;
   file_size: number;
   download_repository: string;
   // Custom image fields
@@ -34,6 +35,7 @@ export interface BlockDevice {
 export interface DownloadProgress {
   total_bytes: number;
   downloaded_bytes: number;
+  is_verifying_sha: boolean;
   is_decompressing: boolean;
   progress_percent: number;
   error: string | null;

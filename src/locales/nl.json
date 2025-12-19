@@ -10,7 +10,6 @@
     "chooseStorage": "KIES OPSLAG",
     "useCustomImage": "Aangepaste image gebruiken",
     "changeCustomImage": "Aangepaste image wijzigen",
-    "images": "images",
     "imageCount_one": "{{count}} image",
     "imageCount_other": "{{count}} images",
     "boardCount_one": "{{count}} board",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "Image downloaden...",
+    "verifyingSha": "Download-integriteit controleren...",
     "decompressing": "Image uitpakken...",
     "writing": "Image naar apparaat schrijven...",
     "verifying": "Geschreven data verifiëren...",

@@ -10,7 +10,6 @@
     "chooseStorage": "저장 장치 선택",
     "useCustomImage": "사용자 정의 이미지 사용",
     "changeCustomImage": "사용자 정의 이미지 변경",
-    "images": "이미지",
     "imageCount_one": "{{count}} 이미지",
     "imageCount_other": "{{count}} 이미지",
     "boardCount_one": "{{count}} 보드",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "이미지 다운로드 중...",
+    "verifyingSha": "다운로드 무결성 확인 중...",
     "decompressing": "이미지 압축 해제 중...",
     "writing": "장치에 이미지 쓰기 중...",
     "verifying": "기록된 데이터 확인 중...",

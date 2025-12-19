@@ -10,7 +10,6 @@
     "chooseStorage": "ОБРАТИ СХОВИЩЕ",
     "useCustomImage": "Використати власний образ",
     "changeCustomImage": "Змінити власний образ",
-    "images": "образи",
     "imageCount_one": "{{count}} образ",
     "imageCount_other": "{{count}} образів",
     "boardCount_one": "{{count}} плата",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "Завантаження образу...",
+    "verifyingSha": "Перевірка цілісності завантаження...",
     "decompressing": "Розпакування образу...",
     "writing": "Запис образу на пристрій...",
     "verifying": "Перевірка записаних даних...",

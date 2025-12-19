@@ -204,6 +204,11 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
+.stage-icon.verifying-sha {
+  color: var(--accent);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 .stage-icon.ready {
   color: #10b981;
 }

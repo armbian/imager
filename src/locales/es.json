@@ -10,7 +10,6 @@
     "chooseStorage": "ELEGIR ALMACENAMIENTO",
     "useCustomImage": "Usar imagen personalizada",
     "changeCustomImage": "Cambiar imagen personalizada",
-    "images": "imágenes",
     "imageCount_one": "{{count}} imagen",
     "imageCount_other": "{{count}} imágenes",
     "boardCount_one": "{{count}} placa",
@@ -18,6 +17,7 @@
   },
   "flash": {
     "downloading": "Descargando imagen...",
+    "verifyingSha": "Verificando integridad de la descarga...",
     "decompressing": "Descomprimiendo imagen...",
     "writing": "Escribiendo imagen en el dispositivo...",
     "verifying": "Verificando datos escritos...",

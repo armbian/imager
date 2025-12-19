@@ -25,8 +25,12 @@ pub fn needs_decompression(path: &Path) -> bool {
 }
 
 /// Decompress using system xz command (much faster, uses multiple threads)
-pub fn decompress_with_system_xz(input_path: &Path, output_path: &Path) -> Result<(), String> {
-    use std::io::copy;
+pub fn decompress_with_system_xz(
+    input_path: &Path,
+    output_path: &Path,
+    state: &Arc<DownloadState>,
+) -> Result<(), String> {
+    use std::io::Read as IoRead;
     use std::process::Stdio;
 
     let xz_path = find_binary("xz").ok_or("xz command not found")?;
@@ -56,8 +60,31 @@ pub fn decompress_with_system_xz(input_path: &Path, output_path: &Path) -> Resul
     let mut output_file =
         File::create(output_path).map_err(|e| format!("Failed to create output file: {}", e))?;
 
-    copy(&mut stdout, &mut output_file)
-        .map_err(|e| format!("Failed to write decompressed data: {}", e))?;
+    // Read in chunks to allow cancellation checks
+    let mut buffer = vec![0u8; config::download::CHUNK_SIZE];
+    loop {
+        // Check for cancellation
+        if state.is_cancelled.load(Ordering::SeqCst) {
+            log_info!(MODULE, "Decompression cancelled by user, killing xz process");
+            let _ = child.kill();
+            let _ = child.wait();
+            drop(output_file);
+            let _ = std::fs::remove_file(output_path);
+            return Err("Decompression cancelled".to_string());
+        }
+
+        let bytes_read = stdout
+            .read(&mut buffer)
+            .map_err(|e| format!("Failed to read from xz: {}", e))?;
+
+        if bytes_read == 0 {
+            break;
+        }
+
+        output_file
+            .write_all(&buffer[..bytes_read])
+            .map_err(|e| format!("Failed to write decompressed data: {}", e))?;
+    }
 
     let status = child
         .wait()
@@ -170,7 +197,11 @@ pub fn decompress_local_file(
     // Only handle .xz for now (most common for Armbian)
     if filename.ends_with(".xz") {
         // Try system xz first, fall back to Rust library
-        if let Err(e) = decompress_with_system_xz(input_path, &output_path) {
+        if let Err(e) = decompress_with_system_xz(input_path, &output_path, state) {
+            // Check if it was cancelled
+            if state.is_cancelled.load(Ordering::SeqCst) {
+                return Err("Decompression cancelled".to_string());
+            }
             log_warn!(
                 MODULE,
                 "System xz failed: {}, falling back to Rust library (slower)",

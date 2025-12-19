@@ -6,11 +6,13 @@ import {
   Check,
   Archive,
   Shield,
+  ShieldCheck,
 } from 'lucide-react';
 
 export type FlashStage =
   | 'authorizing'
   | 'downloading'
+  | 'verifying_sha'
   | 'decompressing'
   | 'flashing'
   | 'verifying'
@@ -28,6 +30,8 @@ export function FlashStageIcon({ stage, size = 32 }: FlashStageIconProps) {
       return <Shield size={size} className="stage-icon authorizing" />;
     case 'downloading':
       return <Download size={size} className="stage-icon downloading" />;
+    case 'verifying_sha':
+      return <ShieldCheck size={size} className="stage-icon verifying-sha" />;
     case 'decompressing':
       return <Archive size={size} className="stage-icon decompressing" />;
     case 'flashing':
@@ -48,6 +52,8 @@ export function getStageKey(stage: FlashStage): string {
       return 'flash.authorizing';
     case 'downloading':
       return 'flash.downloading';
+    case 'verifying_sha':
+      return 'flash.verifyingSha';
     case 'decompressing':
       return 'flash.decompressing';
     case 'flashing':

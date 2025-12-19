@@ -20,7 +20,7 @@
 ## Features
 
 - **307+ Boards** — Browse Armbian-supported SBCs with smart filtering and real photos
-- **Safe & Verified** — System disks excluded, byte-by-byte verification after write
+- **Safe & Verified** — System disks excluded, SHA256 checksum + byte-by-byte verification
 - **Cross-Platform** — Native builds for macOS, Windows, Linux (x64 & ARM64)
 - **15 Languages** — Auto-detects system language, light/dark mode support
 - **Auto-Updates** — In-app update download and installation
@@ -170,8 +170,9 @@ armbian-imager/
 
 | Data | Source |
 |------|--------|
-| Board List | [github.armbian.com/all-images.json](https://github.armbian.com/all-images.json) |
-| Board Photos | [cache.armbian.com](https://cache.armbian.com) |
+| Board List & Names | [github.armbian.com/armbian-images.json](https://github.armbian.com/armbian-images.json) |
+| Board Photos | [cache.armbian.com/images/boards](https://cache.armbian.com) |
+| Vendor Logos | [cache.armbian.com/images/vendors](https://cache.armbian.com/images/vendors/272/) |
 | MOTD Tips | [armbian/os/main/motd.json](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
 | Log Upload | [paste.armbian.com](https://paste.armbian.com) |
 
