@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Download, RefreshCw, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { logInfo } from '../../hooks/useTauri';
 
 type UpdateState = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
 
@@ -18,8 +19,12 @@ export function UpdateModal() {
   const [progress, setProgress] = useState<DownloadProgress>({ downloaded: 0, total: null });
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const hasCheckedRef = useRef(false);
 
   const checkForUpdate = useCallback(async () => {
+    if (hasCheckedRef.current) return;
+    hasCheckedRef.current = true;
+
     setState('checking');
     setError(null);
 
@@ -29,7 +34,9 @@ export function UpdateModal() {
       if (updateResult) {
         setUpdate(updateResult);
         setState('available');
+        logInfo('updater', `Update available: ${updateResult.currentVersion} -> ${updateResult.version}`);
       } else {
+        logInfo('updater', 'No updates available');
         setState('idle');
       }
     } catch (err) {

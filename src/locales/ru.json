@@ -91,7 +91,8 @@
     "authFailed": "Ошибка авторизации",
     "authCancelled": "Авторизация отменена пользователем",
     "decompressionFailed": "Ошибка распаковки",
-    "uploadFailed": "Ошибка загрузки"
+    "uploadFailed": "Ошибка загрузки",
+    "deviceDisconnected": "Устройство было отключено"
   },
   "custom": {
     "customImage": "Свой образ"

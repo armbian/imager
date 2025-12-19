@@ -91,7 +91,8 @@
     "authFailed": "Authorization failed",
     "authCancelled": "Authorization cancelled by user",
     "decompressionFailed": "Decompression failed",
-    "uploadFailed": "Upload failed"
+    "uploadFailed": "Upload failed",
+    "deviceDisconnected": "Device was disconnected"
   },
   "custom": {
     "customImage": "Custom Image"

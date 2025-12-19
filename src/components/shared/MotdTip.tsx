@@ -34,20 +34,9 @@ export function MotdTip() {
         // Filter out expired messages
         const now = new Date();
         const validMessages = messages.filter((msg) => {
-          try {
-            // Parse date (format: YYYY-DD-MM or YYYY-MM-DD)
-            const parts = msg.expiration.split('-');
-            if (parts.length === 3) {
-              const year = parseInt(parts[0], 10);
-              const month = parseInt(parts[1], 10) - 1;
-              const day = parseInt(parts[2], 10);
-              const expDate = new Date(year, month, day);
-              return expDate > now;
-            }
-          } catch {
-            return true; // Include if date parsing fails
-          }
-          return true;
+          if (!msg.expiration) return true;
+          const expDate = new Date(msg.expiration);
+          return isNaN(expDate.getTime()) || expDate > now;
         });
 
         if (validMessages.length > 0) {

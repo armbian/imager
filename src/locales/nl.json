@@ -91,7 +91,8 @@
     "authFailed": "Autorisatie mislukt",
     "authCancelled": "Autorisatie geannuleerd door gebruiker",
     "decompressionFailed": "Uitpakken mislukt",
-    "uploadFailed": "Upload mislukt"
+    "uploadFailed": "Upload mislukt",
+    "deviceDisconnected": "Apparaat is losgekoppeld"
   },
   "custom": {
     "customImage": "Aangepaste image"

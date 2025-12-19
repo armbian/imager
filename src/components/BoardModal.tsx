@@ -30,11 +30,13 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
     [isOpen]
   );
 
+  // Reset state when modal closes or manufacturer changes
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset state when manufacturer changes
+    if (!isOpen) {
+      setImagesReady(false);
+    }
     setSearch('');
-    setImagesReady(false);
-  }, [manufacturer]);
+  }, [isOpen, manufacturer]);
 
   // Pre-load images for current manufacturer
   useEffect(() => {

@@ -30,9 +30,16 @@ export function MarqueeText({ text, maxWidth = 180, className = '' }: MarqueeTex
         text-transform: ${computedStyle.textTransform};
       `;
       measureSpan.textContent = text;
-      document.body.appendChild(measureSpan);
-      const singleTextWidth = measureSpan.offsetWidth;
-      document.body.removeChild(measureSpan);
+
+      let singleTextWidth = 0;
+      try {
+        document.body.appendChild(measureSpan);
+        singleTextWidth = measureSpan.offsetWidth;
+      } finally {
+        if (measureSpan.parentNode) {
+          measureSpan.parentNode.removeChild(measureSpan);
+        }
+      }
 
       const overflow = singleTextWidth > maxWidth;
       setIsOverflow(overflow);

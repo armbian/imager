@@ -91,7 +91,8 @@
     "authFailed": "Autoryzacja nie powiodła się",
     "authCancelled": "Autoryzacja anulowana przez użytkownika",
     "decompressionFailed": "Rozpakowywanie nie powiodło się",
-    "uploadFailed": "Przesyłanie nie powiodło się"
+    "uploadFailed": "Przesyłanie nie powiodło się",
+    "deviceDisconnected": "Urządzenie zostało odłączone"
   },
   "custom": {
     "customImage": "Własny obraz"

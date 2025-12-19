@@ -91,7 +91,8 @@
     "authFailed": "認証失敗",
     "authCancelled": "ユーザーにより認証がキャンセルされました",
     "decompressionFailed": "解凍失敗",
-    "uploadFailed": "アップロード失敗"
+    "uploadFailed": "アップロード失敗",
+    "deviceDisconnected": "デバイスが切断されました"
   },
   "custom": {
     "customImage": "カスタムイメージ"

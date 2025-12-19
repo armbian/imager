@@ -91,7 +91,8 @@
     "authFailed": "Помилка авторизації",
     "authCancelled": "Авторизацію скасовано користувачем",
     "decompressionFailed": "Помилка розпакування",
-    "uploadFailed": "Помилка завантаження"
+    "uploadFailed": "Помилка завантаження",
+    "deviceDisconnected": "Пристрій було від'єднано"
   },
   "custom": {
     "customImage": "Власний образ"

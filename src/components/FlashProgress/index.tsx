@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { HardDrive, Disc, FileImage } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { BoardInfo, ImageInfo, BlockDevice } from '../../types';
@@ -14,6 +14,7 @@ import {
   requestWriteAuthorization,
   checkNeedsDecompression,
   decompressCustomImage,
+  getBlockDevices,
 } from '../../hooks/useTauri';
 import { FlashStageIcon, getStageKey } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
@@ -21,6 +22,8 @@ import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { MarqueeText } from '../shared/MarqueeText';
 import type { FlashStage } from './FlashStageIcon';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
+
+const DEVICE_POLL_INTERVAL = 2000;
 
 interface FlashProgressProps {
   board: BoardInfo;
@@ -45,8 +48,10 @@ export function FlashProgress({
   const [imageLoadError, setImageLoadError] = useState(false);
   const [imagePath, setImagePath] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const deviceMonitorRef = useRef<number | null>(null);
   const maxProgressRef = useRef<number>(0);
   const hasStartedRef = useRef<boolean>(false);
+  const deviceDisconnectedRef = useRef<boolean>(false);
 
   // Cleanup downloaded image file (skip for custom images)
   async function cleanupImage(path: string | null) {
@@ -59,6 +64,54 @@ export function FlashProgress({
       }
     }
   }
+
+  // Handle device disconnection during flashing
+  const handleDeviceDisconnected = useCallback(async () => {
+    deviceDisconnectedRef.current = true;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (deviceMonitorRef.current) clearInterval(deviceMonitorRef.current);
+    try {
+      await cancelOperation();
+    } catch {
+      // Ignore
+    }
+    setError(t('error.deviceDisconnected'));
+    setStage('error');
+  }, [t]);
+
+  // Monitor device connection during active operations
+  useEffect(() => {
+    const activeStages: FlashStage[] = ['downloading', 'verifying_sha', 'decompressing', 'flashing', 'verifying'];
+    if (!activeStages.includes(stage)) {
+      if (deviceMonitorRef.current) {
+        clearInterval(deviceMonitorRef.current);
+        deviceMonitorRef.current = null;
+      }
+      return;
+    }
+
+    const checkDevice = async () => {
+      try {
+        const devices = await getBlockDevices();
+        const stillConnected = devices.some(d => d.path === device.path);
+        if (!stillConnected) {
+          handleDeviceDisconnected();
+        }
+      } catch {
+        // Ignore polling errors
+      }
+    };
+
+    checkDevice();
+    deviceMonitorRef.current = window.setInterval(checkDevice, DEVICE_POLL_INTERVAL);
+
+    return () => {
+      if (deviceMonitorRef.current) {
+        clearInterval(deviceMonitorRef.current);
+        deviceMonitorRef.current = null;
+      }
+    };
+  }, [stage, device.path, handleDeviceDisconnected]);
 
   async function loadBoardImage() {
     try {
@@ -125,6 +178,20 @@ export function FlashProgress({
         startFlash(customPath);
       }
     } catch (err) {
+      if (deviceDisconnectedRef.current) return;
+
+      // Check if device is still connected before showing decompression error
+      try {
+        const devices = await getBlockDevices();
+        const stillConnected = devices.some(d => d.path === device.path);
+        if (!stillConnected) {
+          handleDeviceDisconnected();
+          return;
+        }
+      } catch {
+        // If we can't check, continue with decompression error
+      }
+
       setError(err instanceof Error ? err.message : t('error.decompressionFailed'));
       setStage('error');
     }
@@ -158,7 +225,7 @@ export function FlashProgress({
           }
         }
 
-        if (prog.error) {
+        if (prog.error && !deviceDisconnectedRef.current) {
           setError(prog.error);
           setStage('error');
           if (intervalRef.current) clearInterval(intervalRef.current);
@@ -175,6 +242,20 @@ export function FlashProgress({
       startFlash(path);
     } catch (err) {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (deviceDisconnectedRef.current) return;
+
+      // Check if device is still connected before showing download error
+      try {
+        const devices = await getBlockDevices();
+        const stillConnected = devices.some(d => d.path === device.path);
+        if (!stillConnected) {
+          handleDeviceDisconnected();
+          return;
+        }
+      } catch {
+        // If we can't check, continue with download error
+      }
+
       setError(err instanceof Error ? err.message : t('error.downloadFailed'));
       setStage('error');
     }
@@ -198,7 +279,7 @@ export function FlashProgress({
           maxProgressRef.current = prog.progress_percent;
           setProgress(prog.progress_percent);
         }
-        if (prog.error) {
+        if (prog.error && !deviceDisconnectedRef.current) {
           setError(prog.error);
           setStage('error');
           if (intervalRef.current) clearInterval(intervalRef.current);
@@ -215,6 +296,20 @@ export function FlashProgress({
       setProgress(100);
     } catch (err) {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (deviceDisconnectedRef.current) return;
+
+      // Check if device is still connected before showing flash error
+      try {
+        const devices = await getBlockDevices();
+        const stillConnected = devices.some(d => d.path === device.path);
+        if (!stillConnected) {
+          handleDeviceDisconnected();
+          return;
+        }
+      } catch {
+        // If we can't check, assume disconnected on certain errors
+      }
+
       setError(err instanceof Error ? err.message : t('error.flashFailed'));
       setStage('error');
     }
@@ -231,14 +326,30 @@ export function FlashProgress({
     }
   }
 
-  function handleRetry() {
+  async function handleRetry() {
     setError(null);
+    deviceDisconnectedRef.current = false;
+
+    // If device was disconnected, need to re-authorize
     if (imagePath) {
-      startFlash(imagePath);
+      // Re-authorize before flashing
+      setStage('authorizing');
+      try {
+        const authorized = await requestWriteAuthorization(device.path);
+        if (!authorized) {
+          setError(t('error.authCancelled'));
+          setStage('error');
+          return;
+        }
+        startFlash(imagePath);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t('error.authFailed'));
+        setStage('error');
+      }
     } else if (image.is_custom && image.custom_path) {
-      startFlash(image.custom_path);
+      handleAuthorization();
     } else {
-      startDownload();
+      handleAuthorization();
     }
   }
 

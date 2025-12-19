@@ -91,7 +91,8 @@
     "authFailed": "Autorizzazione fallita",
     "authCancelled": "Autorizzazione annullata dall'utente",
     "decompressionFailed": "Decompressione fallita",
-    "uploadFailed": "Caricamento fallito"
+    "uploadFailed": "Caricamento fallito",
+    "deviceDisconnected": "Dispositivo disconnesso"
   },
   "custom": {
     "customImage": "Immagine Personalizzata"

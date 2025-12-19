@@ -91,7 +91,8 @@
     "authFailed": "授权失败",
     "authCancelled": "用户取消了授权",
     "decompressionFailed": "解压失败",
-    "uploadFailed": "上传失败"
+    "uploadFailed": "上传失败",
+    "deviceDisconnected": "设备已断开连接"
   },
   "custom": {
     "customImage": "自定义镜像"

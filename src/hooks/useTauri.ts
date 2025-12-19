@@ -88,3 +88,7 @@ export async function uploadLogs(): Promise<UploadResult> {
 export async function openUrl(url: string): Promise<void> {
   return invoke('open_url', { url });
 }
+
+export async function logInfo(module: string, message: string): Promise<void> {
+  return invoke('log_from_frontend', { module, message });
+}

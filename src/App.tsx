@@ -10,11 +10,8 @@ import { FlashProgress } from './components/FlashProgress';
 import { AppVersion } from './components/shared/AppVersion';
 import { selectCustomImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
-import type { BoardInfo, ImageInfo, BlockDevice, ModalType } from './types';
+import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep } from './types';
 import './styles/index.css';
-
-/** Selection step in the wizard flow */
-type SelectionStep = 'manufacturer' | 'board' | 'image' | 'device';
 
 function App() {
   const { t } = useTranslation();

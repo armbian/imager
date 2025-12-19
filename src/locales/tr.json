@@ -91,7 +91,8 @@
     "authFailed": "Yetkilendirme başarısız",
     "authCancelled": "Yetkilendirme kullanıcı tarafından iptal edildi",
     "decompressionFailed": "Açma başarısız",
-    "uploadFailed": "Yükleme başarısız"
+    "uploadFailed": "Yükleme başarısız",
+    "deviceDisconnected": "Cihaz bağlantısı kesildi"
   },
   "custom": {
     "customImage": "Özel İmaj"

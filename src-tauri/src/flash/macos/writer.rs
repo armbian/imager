@@ -83,12 +83,15 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
             // Redirect stdin from pipe
             libc::dup2(stdin_pipe[0], libc::STDIN_FILENO);
 
-            let authopen = std::ffi::CString::new("/usr/libexec/authopen").unwrap();
-            let arg_stdoutpipe = std::ffi::CString::new("-stdoutpipe").unwrap();
-            let arg_extauth = std::ffi::CString::new("-extauth").unwrap();
-            let arg_o = std::ffi::CString::new("-o").unwrap();
-            let arg_mode = std::ffi::CString::new("2").unwrap(); // O_RDWR
-            let path = std::ffi::CString::new(device_path).unwrap();
+            let authopen = std::ffi::CString::new("/usr/libexec/authopen").expect("static string");
+            let arg_stdoutpipe = std::ffi::CString::new("-stdoutpipe").expect("static string");
+            let arg_extauth = std::ffi::CString::new("-extauth").expect("static string");
+            let arg_o = std::ffi::CString::new("-o").expect("static string");
+            let arg_mode = std::ffi::CString::new("2").expect("static string");
+            let path = match std::ffi::CString::new(device_path) {
+                Ok(p) => p,
+                Err(_) => libc::_exit(2),
+            };
 
             libc::execl(
                 authopen.as_ptr(),

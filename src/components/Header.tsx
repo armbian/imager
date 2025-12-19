@@ -1,12 +1,10 @@
 import { Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import armbianLogo from '../assets/armbian-logo.png';
-import type { BoardInfo, ImageInfo, BlockDevice } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep } from '../types';
 import type { Manufacturer } from './ManufacturerModal';
 import { UpdateModal } from './shared/UpdateModal';
 import { MotdTip } from './shared/MotdTip';
-
-type NavigationStep = 'manufacturer' | 'board' | 'image' | 'device';
 
 interface HeaderProps {
   selectedManufacturer?: Manufacturer | null;
@@ -14,7 +12,7 @@ interface HeaderProps {
   selectedImage?: ImageInfo | null;
   selectedDevice?: BlockDevice | null;
   onReset?: () => void;
-  onNavigateToStep?: (step: NavigationStep) => void;
+  onNavigateToStep?: (step: SelectionStep) => void;
   isFlashing?: boolean;
 }
 
@@ -33,14 +31,14 @@ export function Header({
   // For custom images, show different steps
   const steps = isCustomImage
     ? [
-        { key: 'image' as NavigationStep, label: t('header.stepImage'), completed: !!selectedImage },
-        { key: 'device' as NavigationStep, label: t('header.stepStorage'), completed: !!selectedDevice },
+        { key: 'image' as SelectionStep, label: t('header.stepImage'), completed: !!selectedImage },
+        { key: 'device' as SelectionStep, label: t('header.stepStorage'), completed: !!selectedDevice },
       ]
     : [
-        { key: 'manufacturer' as NavigationStep, label: t('header.stepManufacturer'), completed: !!selectedManufacturer },
-        { key: 'board' as NavigationStep, label: t('header.stepBoard'), completed: !!selectedBoard },
-        { key: 'image' as NavigationStep, label: t('header.stepOs'), completed: !!selectedImage },
-        { key: 'device' as NavigationStep, label: t('header.stepStorage'), completed: !!selectedDevice },
+        { key: 'manufacturer' as SelectionStep, label: t('header.stepManufacturer'), completed: !!selectedManufacturer },
+        { key: 'board' as SelectionStep, label: t('header.stepBoard'), completed: !!selectedBoard },
+        { key: 'image' as SelectionStep, label: t('header.stepOs'), completed: !!selectedImage },
+        { key: 'device' as SelectionStep, label: t('header.stepStorage'), completed: !!selectedDevice },
       ];
 
   function handleLogoClick() {
@@ -49,7 +47,7 @@ export function Header({
     }
   }
 
-  function handleStepClick(step: NavigationStep, completed: boolean) {
+  function handleStepClick(step: SelectionStep, completed: boolean) {
     // Only allow clicking on completed steps, and not during flashing
     if (!isFlashing && completed && onNavigateToStep) {
       onNavigateToStep(step);

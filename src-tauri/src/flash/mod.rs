@@ -14,10 +14,6 @@ mod linux;
 #[cfg(target_os = "windows")]
 mod windows;
 
-use sha2::{Digest, Sha256};
-use std::fs::File;
-use std::io::Read;
-use std::path::PathBuf;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -117,27 +113,4 @@ pub(crate) fn sync_device(_device_path: &str) {
     {
         let _ = Command::new("sync").output();
     }
-}
-
-/// Calculate SHA256 hash of a file
-#[allow(dead_code)]
-pub fn calculate_sha256(path: &PathBuf) -> Result<String, String> {
-    let mut file = File::open(path).map_err(|e| format!("Failed to open file: {}", e))?;
-
-    let mut hasher = Sha256::new();
-    let mut buffer = vec![0u8; 1024 * 1024];
-
-    loop {
-        let bytes_read = file
-            .read(&mut buffer)
-            .map_err(|e| format!("Failed to read file: {}", e))?;
-
-        if bytes_read == 0 {
-            break;
-        }
-
-        hasher.update(&buffer[..bytes_read]);
-    }
-
-    Ok(hex::encode(hasher.finalize()))
 }

@@ -76,7 +76,7 @@ pub async fn select_custom_image(
         .file()
         .add_filter(
             "Disk Images",
-            &["img", "iso", "xz", "gz", "zip", "zst", "bz2", "raw"],
+            &["img", "iso", "raw", "xz", "gz", "bz2", "zst"],
         )
         .add_filter("All Files", &["*"])
         .set_title("Select Disk Image")

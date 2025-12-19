@@ -91,7 +91,8 @@
     "authFailed": "Avtorizacija ni uspela",
     "authCancelled": "Uporabnik je preklical avtorizacijo",
     "decompressionFailed": "Razširjanje ni uspelo",
-    "uploadFailed": "Nalaganje ni uspelo"
+    "uploadFailed": "Nalaganje ni uspelo",
+    "deviceDisconnected": "Naprava je bila odklopljena"
   },
   "custom": {
     "customImage": "Slika po meri"

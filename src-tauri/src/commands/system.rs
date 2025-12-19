@@ -7,6 +7,12 @@ use sys_locale::get_locale;
 
 const MODULE: &str = "commands::system";
 
+/// Log a message from the frontend
+#[tauri::command]
+pub fn log_from_frontend(module: String, message: String) {
+    log_info!(&format!("frontend::{}", module), "{}", message);
+}
+
 /// Get the system locale (e.g., "en-US", "it-IT", "de-DE")
 /// Returns the language code for i18n initialization
 #[tauri::command]

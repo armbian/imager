@@ -917,6 +917,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
+  flex: 1;
+  max-width: 160px;
 }
 
 .update-modal-btn.primary {

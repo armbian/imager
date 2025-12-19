@@ -13,7 +13,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::config;
-use crate::decompress::{decompress_with_rust_library, decompress_with_system_xz};
+use crate::decompress::{decompress_with_rust_xz, decompress_with_system_xz};
 use crate::{log_error, log_info, log_warn};
 
 const MODULE: &str = "download";
@@ -305,7 +305,7 @@ pub async fn download_image(
                 "System xz failed: {}, falling back to Rust library (slower)",
                 e
             );
-            decompress_with_rust_library(&temp_path, &output_path, &state)?;
+            decompress_with_rust_xz(&temp_path, &output_path, &state)?;
             log_info!(MODULE, "Rust fallback decompression complete");
         }
 

@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/armbian/imager/releases"><img src="https://img.shields.io/github/v/release/armbian/imager?style=for-the-badge&color=orange" alt="Release"></a>
+  <a href="https://github.com/armbian/imager/releases"><img src="https://img.shields.io/github/downloads/armbian/imager/total?style=for-the-badge&color=green" alt="Downloads"></a>
   <a href="https://github.com/armbian/imager/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPLv2-blue?style=for-the-badge" alt="License"></a>
 </p>
 
@@ -42,12 +43,10 @@
 
 macOS may show a warning because the app is not signed with an Apple Developer certificate. To open it:
 
-**Option 1:** Right-click the app → **Open** → Click **Open** in the dialog
-
-**Option 2:** Run in Terminal:
-```bash
-xattr -cr "/Applications/Armbian Imager.app"
-```
+1. Try to open the app (it will be blocked)
+2. Go to **System Settings** → **Privacy & Security**
+3. Scroll down and click **Open Anyway** next to "Armbian Imager was blocked"
+4. Click **Open** in the confirmation dialog
 
 This only needs to be done once.
 

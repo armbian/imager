@@ -91,7 +91,8 @@
     "authFailed": "Autorisierung fehlgeschlagen",
     "authCancelled": "Autorisierung vom Benutzer abgebrochen",
     "decompressionFailed": "Dekomprimierung fehlgeschlagen",
-    "uploadFailed": "Hochladen fehlgeschlagen"
+    "uploadFailed": "Hochladen fehlgeschlagen",
+    "deviceDisconnected": "Gerät wurde getrennt"
   },
   "custom": {
     "customImage": "Benutzerdefiniertes Image"

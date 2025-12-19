@@ -34,7 +34,8 @@ pub fn request_authorization(device_path: &str) -> Result<bool, String> {
 
     unsafe {
         let right_name = format!("sys.openfile.readwrite.{}", raw_device);
-        let right_name_cstr = std::ffi::CString::new(right_name.clone()).unwrap();
+        let right_name_cstr = std::ffi::CString::new(right_name.clone())
+            .map_err(|_| "Invalid device path: contains null byte".to_string())?;
 
         let mut item = AuthorizationItem {
             name: right_name_cstr.as_ptr(),

@@ -9,7 +9,11 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
+
+use bzip2::read::BzDecoder;
+use flate2::read::GzDecoder;
 use liblzma::read::XzDecoder;
+use zstd::stream::read::Decoder as ZstdDecoder;
 
 use crate::config;
 use crate::download::DownloadState;
@@ -101,17 +105,65 @@ pub fn decompress_with_system_xz(
 }
 
 /// Decompress using Rust xz2 library (slower, single-threaded fallback)
-pub fn decompress_with_rust_library(
+pub fn decompress_with_rust_xz(
     input_path: &Path,
     output_path: &Path,
     state: &Arc<DownloadState>,
 ) -> Result<(), String> {
-    let temp_file =
-        File::open(input_path).map_err(|e| format!("Failed to open temp file: {}", e))?;
+    let input_file =
+        File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+    let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
+    let decoder = XzDecoder::new(buf_reader);
+    decompress_with_reader(decoder, output_path, state, "xz")
+}
 
-    let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, temp_file);
-    let mut decoder = XzDecoder::new(buf_reader);
+/// Decompress gzip files using flate2
+pub fn decompress_with_gz(
+    input_path: &Path,
+    output_path: &Path,
+    state: &Arc<DownloadState>,
+) -> Result<(), String> {
+    let input_file =
+        File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+    let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
+    let decoder = GzDecoder::new(buf_reader);
+    decompress_with_reader(decoder, output_path, state, "gz")
+}
 
+/// Decompress bzip2 files
+pub fn decompress_with_bz2(
+    input_path: &Path,
+    output_path: &Path,
+    state: &Arc<DownloadState>,
+) -> Result<(), String> {
+    let input_file =
+        File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+    let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
+    let decoder = BzDecoder::new(buf_reader);
+    decompress_with_reader(decoder, output_path, state, "bz2")
+}
+
+/// Decompress zstd files
+pub fn decompress_with_zstd(
+    input_path: &Path,
+    output_path: &Path,
+    state: &Arc<DownloadState>,
+) -> Result<(), String> {
+    let input_file =
+        File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+    let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
+    let decoder = ZstdDecoder::new(buf_reader)
+        .map_err(|e| format!("Failed to create zstd decoder: {}", e))?;
+    decompress_with_reader(decoder, output_path, state, "zstd")
+}
+
+/// Generic decompression using any Read implementation
+fn decompress_with_reader<R: Read>(
+    mut decoder: R,
+    output_path: &Path,
+    state: &Arc<DownloadState>,
+    format_name: &str,
+) -> Result<(), String> {
     let output_file =
         File::create(output_path).map_err(|e| format!("Failed to create output file: {}", e))?;
 
@@ -128,7 +180,7 @@ pub fn decompress_with_rust_library(
 
         let bytes_read = decoder
             .read(&mut buffer)
-            .map_err(|e| format!("Decompression error: {}", e))?;
+            .map_err(|e| format!("{} decompression error: {}", format_name, e))?;
 
         if bytes_read == 0 {
             break;
@@ -194,11 +246,11 @@ pub fn decompress_local_file(
         output_path.display()
     );
 
-    // Only handle .xz for now (most common for Armbian)
-    if filename.ends_with(".xz") {
-        // Try system xz first, fall back to Rust library
+    // Handle different compression formats
+    let result = if filename.ends_with(".xz") {
+        // Try system xz first (faster, multi-threaded), fall back to Rust library
+        log_info!(MODULE, "Decompressing XZ format");
         if let Err(e) = decompress_with_system_xz(input_path, &output_path, state) {
-            // Check if it was cancelled
             if state.is_cancelled.load(Ordering::SeqCst) {
                 return Err("Decompression cancelled".to_string());
             }
@@ -207,14 +259,27 @@ pub fn decompress_local_file(
                 "System xz failed: {}, falling back to Rust library (slower)",
                 e
             );
-            decompress_with_rust_library(input_path, &output_path, state)?;
+            decompress_with_rust_xz(input_path, &output_path, state)
+        } else {
+            Ok(())
         }
+    } else if filename.ends_with(".gz") {
+        log_info!(MODULE, "Decompressing GZ format");
+        decompress_with_gz(input_path, &output_path, state)
+    } else if filename.ends_with(".bz2") {
+        log_info!(MODULE, "Decompressing BZ2 format");
+        decompress_with_bz2(input_path, &output_path, state)
+    } else if filename.ends_with(".zst") {
+        log_info!(MODULE, "Decompressing ZSTD format");
+        decompress_with_zstd(input_path, &output_path, state)
     } else {
         return Err(format!(
             "Unsupported compression format for: {}",
             filename
         ));
-    }
+    };
+
+    result?;
 
     state.is_decompressing.store(false, Ordering::SeqCst);
     log_info!(MODULE, "Decompression complete: {}", output_path.display());

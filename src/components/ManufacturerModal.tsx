@@ -92,8 +92,16 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
 
   // Preload all vendor logos
   const [logosLoaded, setLogosLoaded] = useState(false);
+
+  // Reset logos loaded state when modal closes
   useEffect(() => {
-    if (!manufacturers.length || logosLoaded) return;
+    if (!isOpen) {
+      setLogosLoaded(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !manufacturers.length || logosLoaded) return;
 
     const vendorsWithLogos = manufacturers.filter(m => vendorHasLogo(m.id) && m.id !== 'other');
     if (vendorsWithLogos.length === 0) {
@@ -112,7 +120,7 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
       };
       img.src = getVendorLogoUrl(m.id);
     });
-  }, [manufacturers, logosLoaded]);
+  }, [isOpen, manufacturers, logosLoaded]);
 
   const searchBarContent = (
     <div className="modal-search">

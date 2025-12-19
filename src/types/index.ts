@@ -66,9 +66,14 @@ export interface Manufacturer {
 export type ImageFilterType = 'all' | 'recommended' | 'stable' | 'nightly' | 'apps' | 'barebone';
 
 /**
- * Modal type for app navigation
+ * Selection step in the wizard flow
  */
-export type ModalType = 'none' | 'manufacturer' | 'board' | 'image' | 'device';
+export type SelectionStep = 'manufacturer' | 'board' | 'image' | 'device';
+
+/**
+ * Modal type for app navigation (includes 'none' for closed state)
+ */
+export type ModalType = 'none' | SelectionStep;
 
 /**
  * Custom image info from file picker

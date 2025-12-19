@@ -91,7 +91,8 @@
     "authFailed": "Falha na autorização",
     "authCancelled": "Autorização cancelada pelo usuário",
     "decompressionFailed": "Falha na descompactação",
-    "uploadFailed": "Falha no envio"
+    "uploadFailed": "Falha no envio",
+    "deviceDisconnected": "Dispositivo foi desconectado"
   },
   "custom": {
     "customImage": "Imagem personalizada"
