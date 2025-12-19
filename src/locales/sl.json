@@ -101,13 +101,10 @@
   },
   "update": {
     "title": "Na voljo posodobitev",
-    "newVersionAvailable": "Na voljo nova različica {{version}}",
-    "download": "Prenesi",
     "later": "Kasneje",
     "downloading": "Prenašanje posodobitve...",
     "ready": "Posodobitev pripravljena",
     "error": "Posodobitev ni uspela",
-    "changelog": "Novosti",
     "installNow": "Namesti zdaj",
     "restartNow": "Znova zaženi",
     "cancel": "Prekliči",

@@ -101,13 +101,10 @@
   },
   "update": {
     "title": "업데이트 가능",
-    "newVersionAvailable": "새 버전 {{version}} 사용 가능",
-    "download": "다운로드",
     "later": "나중에",
     "downloading": "업데이트 다운로드 중...",
     "ready": "업데이트 준비됨",
     "error": "업데이트 실패",
-    "changelog": "새로운 기능",
     "installNow": "지금 설치",
     "restartNow": "지금 재시작",
     "cancel": "취소",
