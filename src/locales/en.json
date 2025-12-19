@@ -103,16 +103,6 @@
     "title": "Update Available",
     "newVersionAvailable": "New version {{version}} available",
     "download": "Download",
-    "later": "Later",
-    "downloading": "Downloading Update...",
-    "ready": "Update Ready",
-    "error": "Update Failed",
-    "changelog": "What's New",
-    "installNow": "Install Now",
-    "restartNow": "Restart Now",
-    "cancel": "Cancel",
-    "retry": "Retry",
-    "readyMessage": "The update has been downloaded. Restart the application to complete the installation.",
-    "errorMessage": "Failed to download the update. Please try again later."
+    "later": "Later"
   }
 }
