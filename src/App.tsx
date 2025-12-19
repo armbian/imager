@@ -7,6 +7,7 @@ import { BoardModal } from './components/BoardModal';
 import { ImageModal } from './components/ImageModal';
 import { DeviceModal } from './components/DeviceModal';
 import { FlashProgress } from './components/FlashProgress';
+import { AppVersion } from './components/shared/AppVersion';
 import { selectCustomImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import type { BoardInfo, ImageInfo, BlockDevice, ModalType } from './types';
@@ -186,6 +187,8 @@ function App() {
         onClose={() => setActiveModal('none')}
         onSelect={handleDeviceSelect}
       />
+
+      <AppVersion />
     </div>
   );
 }

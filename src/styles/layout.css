@@ -360,3 +360,15 @@
 .home-custom-button:hover svg {
   opacity: 1;
 }
+
+/* ========================================
+   APP VERSION (footer)
+   ======================================== */
+.app-version {
+  position: fixed;
+  bottom: 8px;
+  right: 12px;
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
