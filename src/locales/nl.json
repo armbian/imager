@@ -101,13 +101,10 @@
   },
   "update": {
     "title": "Update beschikbaar",
-    "newVersionAvailable": "Nieuwe versie {{version}} beschikbaar",
-    "download": "Downloaden",
     "later": "Later",
     "downloading": "Update downloaden...",
     "ready": "Update gereed",
     "error": "Update mislukt",
-    "changelog": "Nieuw",
     "installNow": "Nu installeren",
     "restartNow": "Nu herstarten",
     "cancel": "Annuleren",

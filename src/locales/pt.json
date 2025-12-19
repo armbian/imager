@@ -101,13 +101,10 @@
   },
   "update": {
     "title": "Atualização disponível",
-    "newVersionAvailable": "Nova versão {{version}} disponível",
-    "download": "Baixar",
     "later": "Mais tarde",
     "downloading": "Baixando atualização...",
     "ready": "Atualização pronta",
     "error": "Falha na atualização",
-    "changelog": "Novidades",
     "installNow": "Instalar agora",
     "restartNow": "Reiniciar agora",
     "cancel": "Cancelar",
