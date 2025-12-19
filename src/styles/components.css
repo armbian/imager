@@ -938,6 +938,195 @@
   background: var(--bg-hover);
 }
 
+.update-modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Large modal variant for changelog */
+.update-modal.update-modal-large {
+  max-width: 500px;
+  text-align: left;
+}
+
+.update-modal-large .update-modal-icon {
+  margin: 0 auto 16px;
+}
+
+.update-modal-large .update-modal-title {
+  text-align: center;
+}
+
+/* Close button */
+.update-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.update-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.update-modal {
+  position: relative;
+}
+
+/* Version info */
+.update-version-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.update-version-current {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.update-version-arrow {
+  color: var(--text-muted);
+}
+
+.update-version-new {
+  font-size: 14px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+/* Changelog */
+.update-changelog {
+  margin-bottom: 20px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.update-changelog-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.update-changelog-content {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-left: 16px;
+}
+
+.update-changelog-heading {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 12px 0 8px;
+}
+
+.update-changelog-heading:first-child {
+  margin-top: 0;
+}
+
+.update-changelog-subheading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 8px 0 6px;
+}
+
+.update-changelog-item {
+  margin: 4px 0;
+  padding-left: 8px;
+  position: relative;
+}
+
+.update-changelog-item::before {
+  content: "•";
+  position: absolute;
+  left: -8px;
+  color: var(--accent);
+}
+
+.update-changelog-text {
+  margin: 8px 0;
+}
+
+/* Progress bar */
+.update-progress-container {
+  width: 100%;
+  margin: 16px 0 24px;
+}
+
+.update-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.update-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.update-progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.update-progress-percent {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Icon states */
+.update-modal-icon.success {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+}
+
+.update-modal-icon.error {
+  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+}
+
+/* Spinning animation */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Error message */
+.update-error-message {
+  color: #ef4444;
+}
+
 /* ========================================
    MOTD TIP (Banner under header)
    ======================================== */

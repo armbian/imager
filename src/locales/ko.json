@@ -103,6 +103,16 @@
     "title": "업데이트 가능",
     "newVersionAvailable": "새 버전 {{version}} 사용 가능",
     "download": "다운로드",
-    "later": "나중에"
+    "later": "나중에",
+    "downloading": "업데이트 다운로드 중...",
+    "ready": "업데이트 준비됨",
+    "error": "업데이트 실패",
+    "changelog": "새로운 기능",
+    "installNow": "지금 설치",
+    "restartNow": "지금 재시작",
+    "cancel": "취소",
+    "retry": "다시 시도",
+    "readyMessage": "업데이트가 다운로드되었습니다. 설치를 완료하려면 애플리케이션을 재시작하세요.",
+    "errorMessage": "업데이트를 다운로드하지 못했습니다. 나중에 다시 시도해 주세요."
   }
 }

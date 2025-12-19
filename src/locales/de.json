@@ -103,6 +103,16 @@
     "title": "Update verfügbar",
     "newVersionAvailable": "Neue Version {{version}} verfügbar",
     "download": "Herunterladen",
-    "later": "Später"
+    "later": "Später",
+    "downloading": "Update wird heruntergeladen...",
+    "ready": "Update bereit",
+    "error": "Update fehlgeschlagen",
+    "changelog": "Neuerungen",
+    "installNow": "Jetzt installieren",
+    "restartNow": "Jetzt neu starten",
+    "cancel": "Abbrechen",
+    "retry": "Erneut versuchen",
+    "readyMessage": "Das Update wurde heruntergeladen. Starten Sie die Anwendung neu, um die Installation abzuschließen.",
+    "errorMessage": "Das Update konnte nicht heruntergeladen werden. Bitte versuchen Sie es später erneut."
   }
 }

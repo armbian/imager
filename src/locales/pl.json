@@ -103,6 +103,16 @@
     "title": "Dostępna aktualizacja",
     "newVersionAvailable": "Dostępna nowa wersja {{version}}",
     "download": "Pobierz",
-    "later": "Później"
+    "later": "Później",
+    "downloading": "Pobieranie aktualizacji...",
+    "ready": "Aktualizacja gotowa",
+    "error": "Błąd aktualizacji",
+    "changelog": "Co nowego",
+    "installNow": "Zainstaluj teraz",
+    "restartNow": "Uruchom ponownie",
+    "cancel": "Anuluj",
+    "retry": "Spróbuj ponownie",
+    "readyMessage": "Aktualizacja została pobrana. Uruchom ponownie aplikację, aby zakończyć instalację.",
+    "errorMessage": "Nie udało się pobrać aktualizacji. Spróbuj ponownie później."
   }
 }
