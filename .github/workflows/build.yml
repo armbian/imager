@@ -493,8 +493,7 @@ jobs:
           artifacts: |
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip.sig
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe.sig
 
   build-windows-arm64:
     name: build-windows (aarch64-pc-windows-msvc)
@@ -581,8 +580,7 @@ jobs:
           artifacts: |
             src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/*.msi
             src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
-            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip
-            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip.sig
+            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe.sig
 
   generate-update-manifest:
     name: Generate latest.json for updater
@@ -632,39 +630,39 @@ jobs:
           declare -A PLATFORMS
 
           # macOS x64
-          MAC_X64_SIG=$(get_sig "Armbian Imager-x64.tar.gz" || echo "")
+          MAC_X64_SIG=$(get_sig "Armbian.Imager.app-x64.tar.gz" || echo "")
           if [[ -n "$MAC_X64_SIG" ]]; then
-            PLATFORMS["darwin-x86_64"]="{\"signature\": \"${MAC_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian%20Imager-x64.tar.gz\"}"
+            PLATFORMS["darwin-x86_64"]="{\"signature\": \"${MAC_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager.app-x64.tar.gz\"}"
           fi
 
           # macOS ARM64
-          MAC_ARM_SIG=$(get_sig "Armbian Imager-arm64.tar.gz" || echo "")
+          MAC_ARM_SIG=$(get_sig "Armbian.Imager.app-arm64.tar.gz" || echo "")
           if [[ -n "$MAC_ARM_SIG" ]]; then
-            PLATFORMS["darwin-aarch64"]="{\"signature\": \"${MAC_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian%20Imager-arm64.tar.gz\"}"
+            PLATFORMS["darwin-aarch64"]="{\"signature\": \"${MAC_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager.app-arm64.tar.gz\"}"
           fi
 
           # Linux x64
-          LINUX_X64_SIG=$(get_sig "armbian-imager_${VERSION}_amd64.AppImage" || echo "")
+          LINUX_X64_SIG=$(get_sig "Armbian.Imager_${VERSION}_amd64.AppImage" || echo "")
           if [[ -n "$LINUX_X64_SIG" ]]; then
-            PLATFORMS["linux-x86_64"]="{\"signature\": \"${LINUX_X64_SIG}\", \"url\": \"${BASE_URL}/armbian-imager_${VERSION}_amd64.AppImage\"}"
+            PLATFORMS["linux-x86_64"]="{\"signature\": \"${LINUX_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager_${VERSION}_amd64.AppImage\"}"
           fi
 
           # Linux ARM64
-          LINUX_ARM_SIG=$(get_sig "armbian-imager_${VERSION}_arm64.AppImage" || echo "")
+          LINUX_ARM_SIG=$(get_sig "Armbian.Imager_${VERSION}_aarch64.AppImage" || echo "")
           if [[ -n "$LINUX_ARM_SIG" ]]; then
-            PLATFORMS["linux-aarch64"]="{\"signature\": \"${LINUX_ARM_SIG}\", \"url\": \"${BASE_URL}/armbian-imager_${VERSION}_arm64.AppImage\"}"
+            PLATFORMS["linux-aarch64"]="{\"signature\": \"${LINUX_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager_${VERSION}_aarch64.AppImage\"}"
           fi
 
           # Windows x64
-          WIN_X64_SIG=$(get_sig "Armbian Imager_${VERSION}_x64-setup.nsis.zip" || echo "")
+          WIN_X64_SIG=$(get_sig "Armbian.Imager_${VERSION}_x64-setup.exe" || echo "")
           if [[ -n "$WIN_X64_SIG" ]]; then
-            PLATFORMS["windows-x86_64"]="{\"signature\": \"${WIN_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian%20Imager_${VERSION}_x64-setup.nsis.zip\"}"
+            PLATFORMS["windows-x86_64"]="{\"signature\": \"${WIN_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager_${VERSION}_x64-setup.exe\"}"
           fi
 
           # Windows ARM64
-          WIN_ARM_SIG=$(get_sig "Armbian Imager_${VERSION}_arm64-setup.nsis.zip" || echo "")
+          WIN_ARM_SIG=$(get_sig "Armbian.Imager_${VERSION}_arm64-setup.exe" || echo "")
           if [[ -n "$WIN_ARM_SIG" ]]; then
-            PLATFORMS["windows-aarch64"]="{\"signature\": \"${WIN_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian%20Imager_${VERSION}_arm64-setup.nsis.zip\"}"
+            PLATFORMS["windows-aarch64"]="{\"signature\": \"${WIN_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager_${VERSION}_arm64-setup.exe\"}"
           fi
 
           # Build platforms JSON
