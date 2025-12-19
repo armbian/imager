@@ -133,7 +133,8 @@ jobs:
             patchelf \
             libssl-dev \
             libgtk-3-dev \
-            squashfs-tools
+            squashfs-tools \
+            xdg-utils
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -228,7 +229,8 @@ jobs:
             patchelf \
             libssl-dev \
             libgtk-3-dev \
-            squashfs-tools
+            squashfs-tools \
+            xdg-utils
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
