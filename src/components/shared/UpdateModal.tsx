@@ -108,53 +108,12 @@ export function UpdateModal() {
     return Math.round((progress.downloaded / progress.total) * 100);
   };
 
-  // Simple markdown renderer for changelog
-  const renderChangelog = (body: string | undefined): React.ReactElement | null => {
-    if (!body) return null;
-
-    const lines = body.split('\n');
-    const elements: React.ReactElement[] = [];
-
-    lines.forEach((line, index) => {
-      const trimmed = line.trim();
-      if (!trimmed) return;
-
-      if (trimmed.startsWith('## ')) {
-        elements.push(
-          <h4 key={index} className="update-changelog-heading">
-            {trimmed.slice(3)}
-          </h4>
-        );
-      } else if (trimmed.startsWith('### ')) {
-        elements.push(
-          <h5 key={index} className="update-changelog-subheading">
-            {trimmed.slice(4)}
-          </h5>
-        );
-      } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-        elements.push(
-          <li key={index} className="update-changelog-item">
-            {trimmed.slice(2)}
-          </li>
-        );
-      } else if (trimmed) {
-        elements.push(
-          <p key={index} className="update-changelog-text">
-            {trimmed}
-          </p>
-        );
-      }
-    });
-
-    return <>{elements}</>;
-  };
-
   // Don't show anything if no update or dismissed
   if (state === 'idle' || state === 'checking' || dismissed) return null;
 
   return (
     <div className="update-modal-overlay">
-      <div className={`update-modal ${state === 'available' ? 'update-modal-large' : ''}`}>
+      <div className="update-modal">
         {/* Close button for available state */}
         {state === 'available' && (
           <button className="update-modal-close" onClick={handleLater} aria-label="Close">
@@ -183,22 +142,11 @@ export function UpdateModal() {
 
         {/* Message / Content */}
         {state === 'available' && update && (
-          <>
-            <div className="update-version-info">
-              <span className="update-version-current">{update.currentVersion}</span>
-              <span className="update-version-arrow">→</span>
-              <span className="update-version-new">{update.version}</span>
-            </div>
-
-            {update.body && (
-              <div className="update-changelog">
-                <h3 className="update-changelog-title">{t('update.changelog')}</h3>
-                <div className="update-changelog-content">
-                  {renderChangelog(update.body)}
-                </div>
-              </div>
-            )}
-          </>
+          <div className="update-version-info">
+            <span className="update-version-current">{update.currentVersion}</span>
+            <span className="update-version-arrow">→</span>
+            <span className="update-version-new">{update.version}</span>
+          </div>
         )}
 
         {state === 'downloading' && (

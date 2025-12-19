@@ -943,20 +943,6 @@
   cursor: not-allowed;
 }
 
-/* Large modal variant for changelog */
-.update-modal.update-modal-large {
-  max-width: 500px;
-  text-align: left;
-}
-
-.update-modal-large .update-modal-icon {
-  margin: 0 auto 16px;
-}
-
-.update-modal-large .update-modal-title {
-  text-align: center;
-}
-
 /* Close button */
 .update-modal-close {
   position: absolute;
@@ -1009,64 +995,6 @@
   font-size: 14px;
   font-weight: 600;
   color: #10b981;
-}
-
-/* Changelog */
-.update-changelog {
-  margin-bottom: 20px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.update-changelog-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin: 0 0 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.update-changelog-content {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  padding-left: 16px;
-}
-
-.update-changelog-heading {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 12px 0 8px;
-}
-
-.update-changelog-heading:first-child {
-  margin-top: 0;
-}
-
-.update-changelog-subheading {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin: 8px 0 6px;
-}
-
-.update-changelog-item {
-  margin: 4px 0;
-  padding-left: 8px;
-  position: relative;
-}
-
-.update-changelog-item::before {
-  content: "•";
-  position: absolute;
-  left: -8px;
-  color: var(--accent);
-}
-
-.update-changelog-text {
-  margin: 8px 0;
 }
 
 /* Progress bar */

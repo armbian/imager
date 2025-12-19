@@ -678,14 +678,10 @@ jobs:
           done
           PLATFORMS_JSON+="}"
 
-          # Get release notes
-          NOTES=$(gh release view "$TAG" --json body --jq '.body' | jq -Rs .)
-
           # Generate latest.json
           cat > latest.json <<EOF
           {
             "version": "${VERSION}",
-            "notes": ${NOTES},
             "pub_date": "${PUB_DATE}",
             "platforms": ${PLATFORMS_JSON}
           }
