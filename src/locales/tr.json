@@ -103,6 +103,16 @@
     "title": "Güncelleme mevcut",
     "newVersionAvailable": "Yeni sürüm {{version}} mevcut",
     "download": "İndir",
-    "later": "Daha sonra"
+    "later": "Daha sonra",
+    "downloading": "Güncelleme indiriliyor...",
+    "ready": "Güncelleme hazır",
+    "error": "Güncelleme başarısız",
+    "changelog": "Yenilikler",
+    "installNow": "Şimdi yükle",
+    "restartNow": "Şimdi yeniden başlat",
+    "cancel": "İptal",
+    "retry": "Tekrar dene",
+    "readyMessage": "Güncelleme indirildi. Kurulumu tamamlamak için uygulamayı yeniden başlatın.",
+    "errorMessage": "Güncelleme indirilemedi. Lütfen daha sonra tekrar deneyin."
   }
 }

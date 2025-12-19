@@ -103,6 +103,16 @@
     "title": "Actualización disponible",
     "newVersionAvailable": "Nueva versión {{version}} disponible",
     "download": "Descargar",
-    "later": "Más tarde"
+    "later": "Más tarde",
+    "downloading": "Descargando actualización...",
+    "ready": "Actualización lista",
+    "error": "Error de actualización",
+    "changelog": "Novedades",
+    "installNow": "Instalar ahora",
+    "restartNow": "Reiniciar ahora",
+    "cancel": "Cancelar",
+    "retry": "Reintentar",
+    "readyMessage": "La actualización se ha descargado. Reinicie la aplicación para completar la instalación.",
+    "errorMessage": "No se pudo descargar la actualización. Por favor, inténtelo más tarde."
   }
 }

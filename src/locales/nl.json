@@ -103,6 +103,16 @@
     "title": "Update beschikbaar",
     "newVersionAvailable": "Nieuwe versie {{version}} beschikbaar",
     "download": "Downloaden",
-    "later": "Later"
+    "later": "Later",
+    "downloading": "Update downloaden...",
+    "ready": "Update gereed",
+    "error": "Update mislukt",
+    "changelog": "Nieuw",
+    "installNow": "Nu installeren",
+    "restartNow": "Nu herstarten",
+    "cancel": "Annuleren",
+    "retry": "Opnieuw proberen",
+    "readyMessage": "De update is gedownload. Start de applicatie opnieuw om de installatie te voltooien.",
+    "errorMessage": "Kan de update niet downloaden. Probeer het later opnieuw."
   }
 }

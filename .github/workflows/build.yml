@@ -35,6 +35,9 @@ env:
   CARGO_TERM_COLOR: always
   NODE_VERSION: '20'
   TAURI_CLI_VERSION: '^2'
+  # Tauri updater signing key (set in GitHub Secrets)
+  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
 jobs:
   create-release:
@@ -166,9 +169,9 @@ jobs:
           fi
 
       - name: Build Tauri app
-        run: cargo tauri build --bundles deb
+        run: cargo tauri build --bundles deb,updater
 
-      - name: Upload .deb to GitHub Release
+      - name: Upload artifacts to GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ needs.create-release.outputs.release_tag }}
@@ -180,6 +183,8 @@ jobs:
           replacesArtifacts: false
           artifacts: |
             src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/appimage/*.AppImage.sig
 
   build-linux-arm64:
     name: build-linux (aarch64-unknown-linux-gnu)
@@ -259,9 +264,9 @@ jobs:
           fi
 
       - name: Build Tauri app
-        run: cargo tauri build --bundles deb
+        run: cargo tauri build --bundles deb,updater
 
-      - name: Upload .deb to GitHub Release
+      - name: Upload artifacts to GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ needs.create-release.outputs.release_tag }}
@@ -273,6 +278,8 @@ jobs:
           replacesArtifacts: false
           artifacts: |
             src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/appimage/*.AppImage.sig
 
   build-macos:
     name: build-macos (${{ matrix.target }})
@@ -361,9 +368,9 @@ jobs:
       - name: Build Tauri app (per-target output dir)
         shell: bash
         run: |
-          cargo tauri build --target "${{ matrix.target }}" --bundles dmg,app
+          cargo tauri build --target "${{ matrix.target }}" --bundles dmg,app,updater
 
-      - name: Zip .app bundle(s)
+      - name: Zip .app bundle(s) and rename updater artifacts
         shell: bash
         env:
           CARGO_TARGET_DIR: src-tauri/target/${{ matrix.target }}
@@ -373,6 +380,15 @@ jobs:
           for app in "$CARGO_TARGET_DIR/release/bundle/macos/"*.app; do
             base="$(basename "$app" .app)"
             ditto -c -k --sequesterRsrc --keepParent "$app" "$CARGO_TARGET_DIR/release/bundle/macos/${base}-${{ matrix.arch }}.app.zip"
+          done
+          # Rename updater tar.gz to include arch
+          for tarball in "$CARGO_TARGET_DIR/release/bundle/macos/"*.tar.gz; do
+            base="$(basename "$tarball" .tar.gz)"
+            mv "$tarball" "$CARGO_TARGET_DIR/release/bundle/macos/${base}-${{ matrix.arch }}.tar.gz"
+          done
+          for sig in "$CARGO_TARGET_DIR/release/bundle/macos/"*.tar.gz.sig; do
+            base="$(basename "$sig" .tar.gz.sig)"
+            mv "$sig" "$CARGO_TARGET_DIR/release/bundle/macos/${base}-${{ matrix.arch }}.tar.gz.sig"
           done
 
       - name: Upload macOS artifacts to GitHub Release
@@ -387,6 +403,8 @@ jobs:
           replacesArtifacts: false
           artifacts: |
             src-tauri/target/${{ matrix.target }}/release/bundle/macos/*-${{ matrix.arch }}.app.zip
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*-${{ matrix.arch }}.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*-${{ matrix.arch }}.tar.gz.sig
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
 
   build-windows-x64:
@@ -458,7 +476,7 @@ jobs:
           fi
 
       - name: Build Tauri app
-        run: cargo tauri build --target x86_64-pc-windows-msvc --bundles msi,nsis
+        run: cargo tauri build --target x86_64-pc-windows-msvc --bundles msi,nsis,updater
 
       - name: Upload artifacts to GitHub Release
         uses: ncipollo/release-action@v1
@@ -473,6 +491,8 @@ jobs:
           artifacts: |
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip.sig
 
   build-windows-arm64:
     name: build-windows (aarch64-pc-windows-msvc)
@@ -544,7 +564,7 @@ jobs:
           fi
 
       - name: Build Tauri app
-        run: cargo tauri build --target aarch64-pc-windows-msvc --bundles msi,nsis
+        run: cargo tauri build --target aarch64-pc-windows-msvc --bundles msi,nsis,updater
 
       - name: Upload artifacts to GitHub Release
         uses: ncipollo/release-action@v1
@@ -559,6 +579,129 @@ jobs:
           artifacts: |
             src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/*.msi
             src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
+            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip
+            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.nsis.zip.sig
+
+  generate-update-manifest:
+    name: Generate latest.json for updater
+    needs:
+      - create-release
+      - build-linux-x64
+      - build-linux-arm64
+      - build-macos
+      - build-windows-x64
+      - build-windows-arm64
+    if: |
+      always() &&
+      (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release assets and generate latest.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.create-release.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          VERSION="${TAG#v}"
+          REPO="${{ github.repository }}"
+          BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Function to get signature content from release
+          get_sig() {
+            local asset_name="$1"
+            gh release download "$TAG" --pattern "${asset_name}.sig" --output - 2>/dev/null || echo ""
+          }
+
+          # Wait for assets to be available
+          sleep 10
+
+          # Get list of assets
+          ASSETS=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+
+          # Initialize platforms object
+          declare -A PLATFORMS
+
+          # macOS x64
+          MAC_X64_SIG=$(get_sig "Armbian Imager-x64.tar.gz" || echo "")
+          if [[ -n "$MAC_X64_SIG" ]]; then
+            PLATFORMS["darwin-x86_64"]="{\"signature\": \"${MAC_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian%20Imager-x64.tar.gz\"}"
+          fi
+
+          # macOS ARM64
+          MAC_ARM_SIG=$(get_sig "Armbian Imager-arm64.tar.gz" || echo "")
+          if [[ -n "$MAC_ARM_SIG" ]]; then
+            PLATFORMS["darwin-aarch64"]="{\"signature\": \"${MAC_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian%20Imager-arm64.tar.gz\"}"
+          fi
+
+          # Linux x64
+          LINUX_X64_SIG=$(get_sig "armbian-imager_${VERSION}_amd64.AppImage" || echo "")
+          if [[ -n "$LINUX_X64_SIG" ]]; then
+            PLATFORMS["linux-x86_64"]="{\"signature\": \"${LINUX_X64_SIG}\", \"url\": \"${BASE_URL}/armbian-imager_${VERSION}_amd64.AppImage\"}"
+          fi
+
+          # Linux ARM64
+          LINUX_ARM_SIG=$(get_sig "armbian-imager_${VERSION}_arm64.AppImage" || echo "")
+          if [[ -n "$LINUX_ARM_SIG" ]]; then
+            PLATFORMS["linux-aarch64"]="{\"signature\": \"${LINUX_ARM_SIG}\", \"url\": \"${BASE_URL}/armbian-imager_${VERSION}_arm64.AppImage\"}"
+          fi
+
+          # Windows x64
+          WIN_X64_SIG=$(get_sig "Armbian Imager_${VERSION}_x64-setup.nsis.zip" || echo "")
+          if [[ -n "$WIN_X64_SIG" ]]; then
+            PLATFORMS["windows-x86_64"]="{\"signature\": \"${WIN_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian%20Imager_${VERSION}_x64-setup.nsis.zip\"}"
+          fi
+
+          # Windows ARM64
+          WIN_ARM_SIG=$(get_sig "Armbian Imager_${VERSION}_arm64-setup.nsis.zip" || echo "")
+          if [[ -n "$WIN_ARM_SIG" ]]; then
+            PLATFORMS["windows-aarch64"]="{\"signature\": \"${WIN_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian%20Imager_${VERSION}_arm64-setup.nsis.zip\"}"
+          fi
+
+          # Build platforms JSON
+          PLATFORMS_JSON="{"
+          first=true
+          for key in "${!PLATFORMS[@]}"; do
+            if [[ "$first" == "true" ]]; then
+              first=false
+            else
+              PLATFORMS_JSON+=","
+            fi
+            PLATFORMS_JSON+="\"${key}\": ${PLATFORMS[$key]}"
+          done
+          PLATFORMS_JSON+="}"
+
+          # Get release notes
+          NOTES=$(gh release view "$TAG" --json body --jq '.body' | jq -Rs .)
+
+          # Generate latest.json
+          cat > latest.json <<EOF
+          {
+            "version": "${VERSION}",
+            "notes": ${NOTES},
+            "pub_date": "${PUB_DATE}",
+            "platforms": ${PLATFORMS_JSON}
+          }
+          EOF
+
+          # Pretty print for debugging
+          cat latest.json | jq .
+
+      - name: Upload latest.json to release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          artifacts: latest.json
 
   finalize-release:
     name: Publish release (draft -> false) + cleanup
@@ -569,6 +712,7 @@ jobs:
       - build-macos
       - build-windows-x64
       - build-windows-arm64
+      - generate-update-manifest
     if: |
       always() &&
       (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') &&

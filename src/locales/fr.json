@@ -103,6 +103,16 @@
     "title": "Mise à jour disponible",
     "newVersionAvailable": "Nouvelle version {{version}} disponible",
     "download": "Télécharger",
-    "later": "Plus tard"
+    "later": "Plus tard",
+    "downloading": "Téléchargement de la mise à jour...",
+    "ready": "Mise à jour prête",
+    "error": "Échec de la mise à jour",
+    "changelog": "Nouveautés",
+    "installNow": "Installer maintenant",
+    "restartNow": "Redémarrer maintenant",
+    "cancel": "Annuler",
+    "retry": "Réessayer",
+    "readyMessage": "La mise à jour a été téléchargée. Redémarrez l'application pour terminer l'installation.",
+    "errorMessage": "Impossible de télécharger la mise à jour. Veuillez réessayer plus tard."
   }
 }

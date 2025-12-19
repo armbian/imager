@@ -103,6 +103,16 @@
     "title": "アップデートが利用可能",
     "newVersionAvailable": "新しいバージョン {{version}} が利用可能です",
     "download": "ダウンロード",
-    "later": "後で"
+    "later": "後で",
+    "downloading": "アップデートをダウンロード中...",
+    "ready": "アップデート準備完了",
+    "error": "アップデート失敗",
+    "changelog": "新機能",
+    "installNow": "今すぐインストール",
+    "restartNow": "今すぐ再起動",
+    "cancel": "キャンセル",
+    "retry": "再試行",
+    "readyMessage": "アップデートがダウンロードされました。インストールを完了するにはアプリケーションを再起動してください。",
+    "errorMessage": "アップデートのダウンロードに失敗しました。後でもう一度お試しください。"
   }
 }
