@@ -1,16 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Header } from './components/Header';
-import { HomePage } from './components/HomePage';
-import { ManufacturerModal, type Manufacturer } from './components/ManufacturerModal';
-import { BoardModal } from './components/BoardModal';
-import { ImageModal } from './components/ImageModal';
-import { DeviceModal } from './components/DeviceModal';
-import { FlashProgress } from './components/FlashProgress';
-import { AppVersion } from './components/shared/AppVersion';
+import { Header, HomePage } from './components/layout';
+import { ManufacturerModal, BoardModal, ImageModal, DeviceModal } from './components/modals';
+import { FlashProgress } from './components/flash';
+import { AppVersion } from './components/shared';
 import { selectCustomImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
-import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep } from './types';
+import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep, Manufacturer } from './types';
 import './styles/index.css';
 
 function App() {
@@ -92,8 +88,16 @@ function App() {
         setSelectedBoard({
           slug: 'custom',
           name: t('custom.customImage'),
+          vendor: 'custom',
+          vendor_name: 'Custom',
+          vendor_logo: null,
           image_count: 1,
-          has_promoted: false,
+          has_standard_support: false,
+          has_community_support: false,
+          has_platinum_support: false,
+          has_eos_support: false,
+          has_tvb_support: false,
+          has_wip_support: false,
         });
         setSelectedImage(customImage);
       }

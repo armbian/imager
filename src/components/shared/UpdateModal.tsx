@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { logInfo } from '../../hooks/useTauri';
+import { formatFileSize, getErrorMessage } from '../../utils';
 
 type UpdateState = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
 
@@ -47,6 +48,7 @@ export function UpdateModal() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial update check on mount
     checkForUpdate();
   }, [checkForUpdate]);
 
@@ -77,7 +79,7 @@ export function UpdateModal() {
       setState('ready');
     } catch (err) {
       console.error('Failed to download update:', err);
-      setError(err instanceof Error ? err.message : 'Download failed');
+      setError(getErrorMessage(err, 'Download failed'));
       setState('error');
     }
   };
@@ -87,7 +89,7 @@ export function UpdateModal() {
       await relaunch();
     } catch (err) {
       console.error('Failed to relaunch:', err);
-      setError(err instanceof Error ? err.message : 'Failed to restart');
+      setError(getErrorMessage(err, 'Failed to restart'));
       setState('error');
     }
   };
@@ -104,11 +106,8 @@ export function UpdateModal() {
     }
   };
 
-  const formatBytes = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  /** Format bytes with precision for download progress */
+  const formatBytes = (bytes: number): string => formatFileSize(bytes, '0 B', true);
 
   const getProgressPercentage = (): number => {
     if (!progress.total) return 0;

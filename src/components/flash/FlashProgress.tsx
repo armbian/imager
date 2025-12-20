@@ -16,14 +16,12 @@ import {
   decompressCustomImage,
   getBlockDevices,
 } from '../../hooks/useTauri';
-import { FlashStageIcon, getStageKey } from './FlashStageIcon';
+import { FlashStageIcon, getStageKey, type FlashStage } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
-import { ErrorDisplay } from '../shared/ErrorDisplay';
-import { MarqueeText } from '../shared/MarqueeText';
-import type { FlashStage } from './FlashStageIcon';
+import { ErrorDisplay, MarqueeText } from '../shared';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
-
-const DEVICE_POLL_INTERVAL = 2000;
+import { POLLING } from '../../config';
+import { isDeviceConnected } from '../../utils/deviceUtils';
 
 interface FlashProgressProps {
   board: BoardInfo;
@@ -93,8 +91,7 @@ export function FlashProgress({
     const checkDevice = async () => {
       try {
         const devices = await getBlockDevices();
-        const stillConnected = devices.some(d => d.path === device.path);
-        if (!stillConnected) {
+        if (!isDeviceConnected(device.path, devices)) {
           handleDeviceDisconnected();
         }
       } catch {
@@ -103,7 +100,7 @@ export function FlashProgress({
     };
 
     checkDevice();
-    deviceMonitorRef.current = window.setInterval(checkDevice, DEVICE_POLL_INTERVAL);
+    deviceMonitorRef.current = window.setInterval(checkDevice, POLLING.DEVICE_CHECK);
 
     return () => {
       if (deviceMonitorRef.current) {
@@ -183,8 +180,7 @@ export function FlashProgress({
       // Check if device is still connected before showing decompression error
       try {
         const devices = await getBlockDevices();
-        const stillConnected = devices.some(d => d.path === device.path);
-        if (!stillConnected) {
+        if (!isDeviceConnected(device.path, devices)) {
           handleDeviceDisconnected();
           return;
         }
@@ -233,7 +229,7 @@ export function FlashProgress({
       } catch {
         // Ignore polling errors
       }
-    }, 250);
+    }, POLLING.DOWNLOAD_PROGRESS);
 
     try {
       const path = await downloadImage(image.file_url, image.file_url_sha);
@@ -247,8 +243,7 @@ export function FlashProgress({
       // Check if device is still connected before showing download error
       try {
         const devices = await getBlockDevices();
-        const stillConnected = devices.some(d => d.path === device.path);
-        if (!stillConnected) {
+        if (!isDeviceConnected(device.path, devices)) {
           handleDeviceDisconnected();
           return;
         }
@@ -287,7 +282,7 @@ export function FlashProgress({
       } catch {
         // Ignore polling errors
       }
-    }, 250);
+    }, POLLING.FLASH_PROGRESS);
 
     try {
       await flashImage(path, device.path, true);
@@ -301,8 +296,7 @@ export function FlashProgress({
       // Check if device is still connected before showing flash error
       try {
         const devices = await getBlockDevices();
-        const stillConnected = devices.some(d => d.path === device.path);
-        if (!stillConnected) {
+        if (!isDeviceConnected(device.path, devices)) {
           handleDeviceDisconnected();
           return;
         }

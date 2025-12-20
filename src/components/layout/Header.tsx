@@ -1,10 +1,8 @@
 import { Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import armbianLogo from '../assets/armbian-logo.png';
-import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep } from '../types';
-import type { Manufacturer } from './ManufacturerModal';
-import { UpdateModal } from './shared/UpdateModal';
-import { MotdTip } from './shared/MotdTip';
+import armbianLogo from '../../assets/armbian-logo.png';
+import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer } from '../../types';
+import { UpdateModal, MotdTip } from '../shared';
 
 interface HeaderProps {
   selectedManufacturer?: Manufacturer | null;

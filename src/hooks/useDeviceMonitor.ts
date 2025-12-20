@@ -1,9 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { getBlockDevices } from './useTauri';
+import { POLLING } from '../config';
 import type { BlockDevice } from '../types';
-
-/** Polling interval for device monitoring (ms) */
-const DEVICE_POLL_INTERVAL = 2000;
 
 /**
  * Hook to monitor if a selected device is still connected.
@@ -32,11 +30,9 @@ export function useDeviceMonitor(
   useEffect(() => {
     if (!enabled || !selectedDevice) return;
 
-    // Check immediately
     checkDevice();
 
-    // Then poll periodically
-    const interval = setInterval(checkDevice, DEVICE_POLL_INTERVAL);
+    const interval = setInterval(checkDevice, POLLING.DEVICE_CHECK);
     return () => clearInterval(interval);
   }, [enabled, selectedDevice, checkDevice]);
 }

@@ -2,15 +2,6 @@
  * Configuration exports
  */
 
-// Manufacturer configuration
-export {
-  MANUFACTURERS,
-  getManufacturer,
-  getVendorLogoUrl,
-  vendorHasLogo,
-  type ManufacturerConfig,
-} from './manufacturers';
-
 // OS/App information
 export {
   OS_INFO,
@@ -30,3 +21,9 @@ export {
   getKernelType,
   type BadgeConfig,
 } from './badges';
+
+// Constants and polling intervals
+export { POLLING, type DeviceType } from './constants';
+
+// Device colors
+export { DEVICE_COLORS, getDeviceColors, type DeviceColorConfig } from './deviceColors';

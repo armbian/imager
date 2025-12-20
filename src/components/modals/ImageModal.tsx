@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Download, Package, Monitor, Terminal, Zap } from 'lucide-react';
+import { Download, Package, Monitor, Terminal, Zap, Star, Layers, Shield, FlaskConical, AppWindow, Box } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
-import { ErrorDisplay } from './shared/ErrorDisplay';
-import type { BoardInfo, ImageInfo, ImageFilterType } from '../types';
-import { getImagesForBoard } from '../hooks/useTauri';
-import { useAsyncDataWhen } from '../hooks/useAsyncData';
+import { ErrorDisplay, LoadingState } from '../shared';
+import type { BoardInfo, ImageInfo, ImageFilterType } from '../../types';
+import { getImagesForBoard } from '../../hooks/useTauri';
+import { useAsyncDataWhen } from '../../hooks/useAsyncData';
 import {
   getOsInfo,
   getAppInfo,
@@ -14,21 +14,14 @@ import {
   DESKTOP_BADGES,
   KERNEL_BADGES,
   DESKTOP_ENVIRONMENTS,
-} from '../config';
+} from '../../config';
+import { formatFileSize, DEFAULT_COLOR } from '../../utils';
 
 interface ImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (image: ImageInfo) => void;
   board: BoardInfo | null;
-}
-
-function formatSize(bytes: number, unknownText: string): string {
-  if (bytes === 0) return unknownText;
-  const gb = bytes / (1024 * 1024 * 1024);
-  if (gb >= 1) return `${gb.toFixed(1)} GB`;
-  const mb = bytes / (1024 * 1024);
-  return `${mb.toFixed(0)} MB`;
 }
 
 /**
@@ -63,6 +56,19 @@ function applyFilter(images: ImageInfo[], filter: ImageFilterType): ImageInfo[] 
   if (filter === 'all') return images;
   return images.filter(IMAGE_FILTER_PREDICATES[filter]);
 }
+
+/** Filter button configuration for data-driven rendering */
+const FILTER_BUTTONS: Array<{
+  key: Exclude<ImageFilterType, 'all'>;
+  labelKey: string;
+  icon: typeof Star;
+}> = [
+  { key: 'recommended', labelKey: 'modal.promoted', icon: Star },
+  { key: 'stable', labelKey: 'modal.stable', icon: Shield },
+  { key: 'nightly', labelKey: 'modal.nightly', icon: FlaskConical },
+  { key: 'apps', labelKey: 'modal.apps', icon: AppWindow },
+  { key: 'barebone', labelKey: 'modal.minimal', icon: Box },
+];
 
 export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps) {
   const { t } = useTranslation();
@@ -102,67 +108,36 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
           className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
           onClick={() => setFilterType('all')}
         >
+          <Layers size={14} />
           {t('modal.allImages')}
         </button>
-        {availableFilters.recommended && (
-          <button
-            className={`filter-btn ${filterType === 'recommended' ? 'active' : ''}`}
-            onClick={() => setFilterType('recommended')}
-          >
-            {t('modal.promoted')}
-          </button>
-        )}
-        {availableFilters.stable && (
-          <button
-            className={`filter-btn ${filterType === 'stable' ? 'active' : ''}`}
-            onClick={() => setFilterType('stable')}
-          >
-            {t('modal.stable')}
-          </button>
-        )}
-        {availableFilters.nightly && (
-          <button
-            className={`filter-btn ${filterType === 'nightly' ? 'active' : ''}`}
-            onClick={() => setFilterType('nightly')}
-          >
-            {t('modal.nightly')}
-          </button>
-        )}
-        {availableFilters.apps && (
-          <button
-            className={`filter-btn ${filterType === 'apps' ? 'active' : ''}`}
-            onClick={() => setFilterType('apps')}
-          >
-            {t('modal.apps')}
-          </button>
-        )}
-        {availableFilters.barebone && (
-          <button
-            className={`filter-btn ${filterType === 'barebone' ? 'active' : ''}`}
-            onClick={() => setFilterType('barebone')}
-          >
-            {t('modal.minimal')}
-          </button>
+        {FILTER_BUTTONS.map(({ key, labelKey, icon: Icon }) =>
+          availableFilters[key] && (
+            <button
+              key={key}
+              className={`filter-btn ${filterType === key ? 'active' : ''}`}
+              onClick={() => setFilterType(key)}
+            >
+              <Icon size={14} />
+              {t(labelKey)}
+            </button>
+          )
         )}
       </div>
 
-      {loading ? (
-        <div className="loading">
-          <div className="spinner" />
-          <p>{t('modal.loading')}</p>
-        </div>
-      ) : error ? (
-        <ErrorDisplay error={error} onRetry={reload} compact />
-      ) : filteredImages.length === 0 ? (
-        <div className="no-results">
-          <Package size={48} />
-          <p>{t('modal.noImages')}</p>
-          <button onClick={() => setFilterType('all')} className="btn btn-secondary">
-            {t('modal.allImages')}
-          </button>
-        </div>
-      ) : (
-        <div className="modal-list">
+      <LoadingState isLoading={loading}>
+        {error ? (
+          <ErrorDisplay error={error} onRetry={reload} compact />
+        ) : filteredImages.length === 0 ? (
+          <div className="no-results">
+            <Package size={48} />
+            <p>{t('modal.noImages')}</p>
+            <button onClick={() => setFilterType('all')} className="btn btn-secondary">
+              {t('modal.allImages')}
+            </button>
+          </div>
+        ) : (
+          <div className="modal-list">
           {filteredImages.map((image, index) => {
             const desktopEnv = getDesktopEnv(image.image_variant);
             const kernelType = getKernelType(image.kernel_branch);
@@ -179,7 +154,7 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
                 onClick={() => onSelect(image)}
               >
                 {/* OS/App Icon */}
-                <div className="list-item-icon os-icon" style={{ backgroundColor: displayInfo?.color || '#64748b' }}>
+                <div className="list-item-icon os-icon" style={{ backgroundColor: displayInfo?.color || DEFAULT_COLOR }}>
                   {displayInfo?.logo ? (
                     <img src={displayInfo.logo} alt={displayInfo.name} />
                   ) : (
@@ -196,36 +171,42 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
                       </span>
                     )}
                   </div>
-                  <div className="list-item-badges" style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
-                    {image.promoted && <span className="badge badge-recommended">{t('modal.promoted')}</span>}
+                  <div className="list-item-badges" style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                    {image.promoted && (
+                      <span className="badge badge-recommended">
+                        <Star size={11} />
+                        {t('modal.promoted')}
+                      </span>
+                    )}
                     {desktopEnv && DESKTOP_BADGES[desktopEnv] ? (
-                      <span className="badge badge-desktop" style={{ backgroundColor: DESKTOP_BADGES[desktopEnv].color }}>
-                        <Monitor size={12} style={{ marginRight: 4, flexShrink: 0 }} />
+                      <span className="badge badge-desktop">
+                        <Monitor size={11} />
                         {DESKTOP_BADGES[desktopEnv].label}
                       </span>
                     ) : (
                       <span className="badge badge-cli">
-                        <Terminal size={12} style={{ marginRight: 4, flexShrink: 0 }} />
+                        <Terminal size={11} />
                         CLI
                       </span>
                     )}
                     {kernelType && KERNEL_BADGES[kernelType] && (
-                      <span className="badge badge-kernel" style={{ backgroundColor: KERNEL_BADGES[kernelType].color }}>
-                        <Zap size={12} style={{ marginRight: 4, flexShrink: 0 }} />
+                      <span className="badge badge-kernel">
+                        <Zap size={11} />
                         {KERNEL_BADGES[kernelType].label}
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="list-item-meta" style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-secondary)' }}>
-                  <Download size={14} />
-                  {formatSize(image.file_size, t('common.unknown'))}
-                </div>
+                <span className="badge badge-size">
+                  <Download size={11} />
+                  {formatFileSize(image.file_size, t('common.unknown'))}
+                </span>
               </button>
             );
           })}
-        </div>
-      )}
+          </div>
+        )}
+      </LoadingState>
     </Modal>
   );
 }

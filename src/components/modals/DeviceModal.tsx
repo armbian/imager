@@ -2,70 +2,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { HardDrive, RefreshCw, AlertTriangle, Shield, MemoryStick, Usb } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
-import { ErrorDisplay } from './shared/ErrorDisplay';
-import type { BlockDevice } from '../types';
-import { getBlockDevices } from '../hooks/useTauri';
-import { useAsyncDataWhen } from '../hooks/useAsyncData';
-
-/** Polling interval for device detection (ms) */
-const DEVICE_POLL_INTERVAL = 2000;
-
-/** Device type for icon selection */
-type DeviceType = 'sd' | 'usb' | 'sata' | 'sas' | 'nvme' | 'hdd' | 'system';
-
-/** Determine device type based on bus_type, model, and path */
-function getDeviceType(device: BlockDevice): DeviceType {
-  if (device.is_system) return 'system';
-
-  const busType = (device.bus_type || '').toUpperCase();
-  const model = (device.model || '').toLowerCase();
-  const path = (device.path || '').toLowerCase();
-
-  // Primary: use bus_type from backend (most reliable)
-  if (busType === 'SD' || busType === 'MMC') {
-    return 'sd';
-  }
-  if (busType === 'USB') {
-    return 'usb';
-  }
-  if (busType === 'SATA') {
-    return 'sata';
-  }
-  if (busType === 'SAS') {
-    return 'sas';
-  }
-  if (busType === 'NVME') {
-    return 'nvme';
-  }
-
-  // Fallback: detect from path (Linux mmcblk, nvme)
-  if (path.includes('mmcblk')) {
-    return 'sd';
-  }
-  if (path.includes('nvme')) {
-    return 'nvme';
-  }
-
-  // Fallback: detect from model name
-  // Match: "sdxc", "sdhc", "sd card", "card reader" - but NOT "ssd"
-  const isSDCard =
-    model.includes('sdxc') ||
-    model.includes('sdhc') ||
-    model.includes('card reader') ||
-    model.includes('sd reader') ||
-    model.includes('sd card');
-
-  if (isSDCard) {
-    return 'sd';
-  }
-
-  // USB detection - removable drives that aren't SD cards
-  if (device.is_removable) {
-    return 'usb';
-  }
-
-  return 'hdd';
-}
+import { ErrorDisplay, ConfirmationDialog } from '../shared';
+import type { BlockDevice } from '../../types';
+import { getBlockDevices } from '../../hooks/useTauri';
+import { useAsyncDataWhen } from '../../hooks/useAsyncData';
+import { POLLING, type DeviceType } from '../../config';
+import { getDeviceColors } from '../../config/deviceColors';
+import { getDeviceType } from '../../utils/deviceUtils';
 
 /** Get icon component for device type */
 function DeviceIcon({ type, size = 24 }: { type: DeviceType; size?: number }) {
@@ -170,7 +113,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   useEffect(() => {
     if (!isOpen || showConfirm) return;
 
-    const interval = setInterval(pollDevices, DEVICE_POLL_INTERVAL);
+    const interval = setInterval(pollDevices, POLLING.DEVICE_CHECK);
     return () => clearInterval(interval);
   }, [isOpen, showConfirm, pollDevices]);
 
@@ -229,18 +172,8 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
                     style={{ opacity: device.is_system ? 0.5 : 1 }}
                   >
                     <div className="list-item-icon" style={{
-                      backgroundColor: deviceType === 'system' ? 'rgba(239, 68, 68, 0.1)' :
-                        deviceType === 'sd' ? 'rgba(59, 130, 246, 0.1)' :
-                        deviceType === 'usb' ? 'rgba(16, 185, 129, 0.1)' :
-                        deviceType === 'sata' ? 'rgba(249, 115, 22, 0.1)' :
-                        deviceType === 'sas' ? 'rgba(168, 85, 247, 0.1)' :
-                        deviceType === 'nvme' ? 'rgba(236, 72, 153, 0.1)' : 'var(--bg-secondary)',
-                      color: deviceType === 'system' ? '#ef4444' :
-                        deviceType === 'sd' ? '#3b82f6' :
-                        deviceType === 'usb' ? '#10b981' :
-                        deviceType === 'sata' ? '#f97316' :
-                        deviceType === 'sas' ? '#a855f7' :
-                        deviceType === 'nvme' ? '#ec4899' : 'var(--text-secondary)'
+                      backgroundColor: getDeviceColors(deviceType).background,
+                      color: getDeviceColors(deviceType).text,
                     }}>
                       <DeviceIcon type={deviceType} size={24} />
                     </div>
@@ -272,30 +205,22 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
       </Modal>
 
       {/* Confirmation Dialog */}
-      {showConfirm && selectedDevice && !selectedDevice.is_system && (
-        <div className="modal-overlay" onClick={() => setShowConfirm(false)}>
-          <div className="modal confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="confirm-icon">
-              <AlertTriangle size={32} color="#f59e0b" />
-            </div>
-            <h3 className="confirm-title">{t('flash.confirmTitle')}</h3>
-            <p className="confirm-text">{t('flash.confirmText')}</p>
-            <div className="confirm-device">
-              <strong>{selectedDevice.model || selectedDevice.name}</strong>
-              <span>{selectedDevice.name} ({selectedDevice.size_formatted})</span>
-            </div>
-            <p className="confirm-warning">{t('flash.confirmWarning')}</p>
-            <div className="confirm-actions">
-              <button className="btn btn-secondary" onClick={() => setShowConfirm(false)}>
-                {t('flash.cancel')}
-              </button>
-              <button className="btn btn-danger" onClick={handleConfirm}>
-                {t('flash.eraseAndFlash')}
-              </button>
-            </div>
+      <ConfirmationDialog
+        isOpen={showConfirm && !!selectedDevice && !selectedDevice.is_system}
+        title={t('flash.confirmTitle')}
+        message={t('flash.confirmText')}
+        warning={t('flash.confirmWarning')}
+        confirmText={t('flash.eraseAndFlash')}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={handleConfirm}
+      >
+        {selectedDevice && (
+          <div className="confirm-device">
+            <strong>{selectedDevice.model || selectedDevice.name}</strong>
+            <span>{selectedDevice.name} ({selectedDevice.size_formatted})</span>
           </div>
-        </div>
-      )}
+        )}
+      </ConfirmationDialog>
     </>
   );
 }

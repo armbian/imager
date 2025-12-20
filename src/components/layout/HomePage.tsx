@@ -1,8 +1,7 @@
 import { Factory, Cpu, Database, HardDrive, FolderOpen } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { BoardInfo, ImageInfo, BlockDevice } from '../types';
-import type { Manufacturer } from './ManufacturerModal';
-import { MarqueeText } from './shared/MarqueeText';
+import type { BoardInfo, ImageInfo, BlockDevice, Manufacturer } from '../../types';
+import { MarqueeText } from '../shared';
 
 interface HomePageProps {
   selectedManufacturer: Manufacturer | null;

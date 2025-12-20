@@ -139,24 +139,30 @@ npm run clean            # Clean all build artifacts
 armbian-imager/
 ├── src/                          # React Frontend
 │   ├── components/               # UI Components
+│   │   ├── flash/                # Flash progress components
+│   │   ├── layout/               # Header, HomePage
+│   │   ├── modals/               # Board, Image, Device, Manufacturer modals
 │   │   └── shared/               # Reusable components (UpdateModal, ErrorDisplay, etc.)
 │   ├── hooks/                    # React Hooks (Tauri IPC, async data)
 │   ├── config/                   # Badges, manufacturers, OS info
 │   ├── locales/                  # i18n translations (15 languages)
 │   ├── styles/                   # Modular CSS
 │   ├── types/                    # TypeScript interfaces
+│   ├── utils/                    # Utility functions
 │   └── assets/                   # Images, logos, OS icons
 │
 ├── src-tauri/                    # Rust Backend
 │   ├── src/
 │   │   ├── commands/             # Tauri IPC handlers
+│   │   ├── config/               # Application configuration and constants
 │   │   ├── devices/              # Platform device detection
 │   │   ├── flash/                # Platform flash (macOS, Linux, Windows)
 │   │   ├── images/               # Image management and filtering
 │   │   ├── logging/              # Session logging
 │   │   ├── paste/                # Log upload to paste.armbian.com
+│   │   ├── utils/                # Shared utility functions
 │   │   ├── download.rs           # HTTP streaming downloads
-│   │   └── decompress.rs         # XZ decompression
+│   │   └── decompress.rs         # Decompression (XZ, GZ, ZSTD)
 │   └── icons/                    # App icons (all platforms)
 │
 ├── scripts/                      # Build scripts
@@ -169,10 +175,10 @@ armbian-imager/
 
 | Data | Source |
 |------|--------|
-| Board List & Names | [github.armbian.com/armbian-images.json](https://github.armbian.com/armbian-images.json) |
-| Board Photos | [cache.armbian.com/images/boards](https://cache.armbian.com) |
-| Vendor Logos | [cache.armbian.com/images/vendors](https://cache.armbian.com/images/vendors/272/) |
-| MOTD Tips | [armbian/os/main/motd.json](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
+| Board List & Images | [github.armbian.com/armbian-images.json](https://github.armbian.com/armbian-images.json) |
+| Board Photos | [cache.armbian.com/images/272/{slug}.png](https://cache.armbian.com/images/) |
+| Vendor Logos | [cache.armbian.com/images/vendors/272/{vendor}.png](https://cache.armbian.com/images/vendors/272/) |
+| MOTD Tips | [raw.githubusercontent.com/armbian/os/main/motd.json](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
 | Log Upload | [paste.armbian.com](https://paste.armbian.com) |
 
 

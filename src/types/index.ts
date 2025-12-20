@@ -1,8 +1,16 @@
 export interface BoardInfo {
   slug: string;
   name: string;
+  vendor: string;
+  vendor_name: string;
+  vendor_logo: string | null;
   image_count: number;
-  has_promoted: boolean;
+  has_standard_support: boolean;
+  has_community_support: boolean;
+  has_platinum_support: boolean;
+  has_eos_support: boolean;
+  has_tvb_support: boolean;
+  has_wip_support: boolean;
 }
 
 export interface ImageInfo {
