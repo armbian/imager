@@ -39,6 +39,12 @@ fn cleanup_download_cache() {
     }
 }
 
+/// Returns true if running as AppImage (APPIMAGE env var is set by AppImage runtime)
+#[cfg(target_os = "linux")]
+fn is_appimage() -> bool {
+    std::env::var("APPIMAGE").is_ok()
+}
+
 fn main() {
     // Initialize logging system
     logging::init();
@@ -54,11 +60,26 @@ fn main() {
     // Clean up any leftover download images from previous sessions
     cleanup_download_cache();
 
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_process::init());
+
+    // Enable updater only for AppImage on Linux (other formats like .deb don't support it)
+    #[cfg(target_os = "linux")]
+    {
+        if is_appimage() {
+            builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+        } else {
+            log_info!("main", "Updater disabled (not running as AppImage)");
+        }
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
+
+    builder
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             commands::board_queries::get_boards,
