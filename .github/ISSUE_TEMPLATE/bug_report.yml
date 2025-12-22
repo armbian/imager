@@ -1,0 +1,139 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in Armbian Imager
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below to help us investigate and fix the issue.
+
+  - type: checkboxes
+    id: existing-issue
+    attributes:
+      label: Prerequisites
+      description: Please confirm the following before submitting
+      options:
+        - label: I have searched the existing issues and this bug has not been reported before
+          required: true
+        - label: I am using the latest version of Armbian Imager
+          required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: Which operating system are you using?
+      options:
+        - Windows 10
+        - Windows 11
+        - macOS (Intel)
+        - macOS (Apple Silicon)
+        - Linux (Ubuntu)
+        - Linux (Debian)
+        - Linux (Linux Mint)
+        - Linux (Other Debian-based)
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: OS Version
+      description: Specific version of your operating system
+      placeholder: "e.g., Windows 11 23H2, macOS 14.2, Ubuntu 24.04"
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: Armbian Imager Version
+      description: Version of Armbian Imager (displayed at the bottom right corner of the home screen)
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operation
+    attributes:
+      label: Operation Type
+      description: What were you trying to do when the bug occurred?
+      options:
+        - Downloading an image
+        - Flashing to SD card
+        - Flashing to USB drive
+        - Verifying a flash
+        - Selecting a board/image
+        - Using a custom image
+        - Device detection
+        - Application startup
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: target-device
+    attributes:
+      label: Target Device (if applicable)
+      description: The SD card or USB drive model/brand you were flashing to
+      placeholder: "e.g., SanDisk Ultra 32GB, Samsung EVO 64GB"
+
+  - type: input
+    id: target-board
+    attributes:
+      label: Target Board (if applicable)
+      description: The Armbian board you were trying to flash an image for
+      placeholder: "e.g., Orange Pi 5, Raspberry Pi 4, Khadas VIM3"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe what happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe what should have happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Open Armbian Imager
+        2. Select board '...'
+        3. Click on '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Messages / Logs
+      description: |
+        If applicable, paste any error messages or logs here.
+        You can use the "Upload Logs" feature in Armbian Imager to get a paste.armbian.com link.
+      render: shell
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here

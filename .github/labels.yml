@@ -1,0 +1,378 @@
+# ===========================================
+# BUG AND ISSUE MANAGEMENT
+# ===========================================
+- name: bug
+  color: "d73a4a"
+  description: Something isn't working
+
+- name: triage
+  color: "fbca04"
+  description: Needs initial review and categorization
+
+- name: confirmed
+  color: "0e8a16"
+  description: Bug has been confirmed and reproduced
+
+- name: wontfix
+  color: "ffffff"
+  description: This will not be worked on
+
+- name: duplicate
+  color: "cfd3d7"
+  description: This issue or pull request already exists
+
+- name: invalid
+  color: "e4e669"
+  description: This doesn't seem right
+
+- name: regression
+  color: "b60205"
+  description: Something that worked before is now broken
+
+# ===========================================
+# FEATURE AND ENHANCEMENT
+# ===========================================
+- name: enhancement
+  color: "a2eeef"
+  description: New feature or request
+
+- name: good first issue
+  color: "7057ff"
+  description: Good for newcomers
+
+- name: help wanted
+  color: "008672"
+  description: Extra attention is needed
+
+- name: feature-request
+  color: "c2e0c6"
+  description: Request for a new feature
+
+# ===========================================
+# PRIORITY
+# ===========================================
+- name: "priority: critical"
+  color: "b60205"
+  description: Must be fixed immediately
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: Should be addressed soon
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: Normal priority
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: Can be addressed later
+
+# ===========================================
+# PLATFORM
+# ===========================================
+- name: "platform: windows"
+  color: "0078d4"
+  description: Windows-specific issue
+
+- name: "platform: macos"
+  color: "a3aaae"
+  description: macOS-specific issue
+
+- name: "platform: macos-intel"
+  color: "a3aaae"
+  description: macOS Intel-specific issue
+
+- name: "platform: macos-arm"
+  color: "a3aaae"
+  description: macOS Apple Silicon-specific issue
+
+- name: "platform: linux"
+  color: "e95420"
+  description: Linux-specific issue
+
+- name: "platform: linux-x64"
+  color: "e95420"
+  description: Linux x64 architecture issue
+
+- name: "platform: linux-arm64"
+  color: "e95420"
+  description: Linux ARM64 architecture issue
+
+# ===========================================
+# UI COMPONENTS
+# ===========================================
+- name: "component: ui"
+  color: "c5def5"
+  description: User interface related
+
+- name: "component: modal-manufacturer"
+  color: "c5def5"
+  description: Manufacturer selection modal
+
+- name: "component: modal-board"
+  color: "c5def5"
+  description: Board selection modal
+
+- name: "component: modal-image"
+  color: "c5def5"
+  description: Image selection modal
+
+- name: "component: modal-device"
+  color: "c5def5"
+  description: Device selection modal
+
+- name: "component: flash-progress"
+  color: "c5def5"
+  description: Flash progress UI
+
+- name: "component: settings"
+  color: "c5def5"
+  description: Settings and preferences
+
+- name: "component: theme"
+  color: "c5def5"
+  description: Light/dark theme issues
+
+# ===========================================
+# BACKEND COMPONENTS
+# ===========================================
+- name: "component: backend"
+  color: "fef2c0"
+  description: Rust backend related
+
+- name: "component: flash"
+  color: "f9d0c4"
+  description: Flash/write operations
+
+- name: "component: download"
+  color: "bfdadc"
+  description: Download functionality
+
+- name: "component: device-detection"
+  color: "d4c5f9"
+  description: Device detection issues
+
+- name: "component: decompression"
+  color: "e6ccb3"
+  description: Image decompression (XZ, GZ, ZSTD, BZIP2)
+
+- name: "component: verification"
+  color: "c2e0c6"
+  description: SHA256 verification and validation
+
+- name: "component: custom-image"
+  color: "f9c513"
+  description: Custom image file handling
+
+- name: "component: api"
+  color: "bfd4f2"
+  description: Armbian API integration
+
+- name: "component: tauri-ipc"
+  color: "d4c5f9"
+  description: Tauri IPC communication
+
+- name: "component: updater"
+  color: "fbca04"
+  description: Auto-updater functionality
+
+- name: "component: logs"
+  color: "c5def5"
+  description: Logging and log upload
+
+# ===========================================
+# OPERATIONS
+# ===========================================
+- name: "operation: download"
+  color: "1d76db"
+  description: Image download operation
+
+- name: "operation: flash"
+  color: "ff6b6b"
+  description: Flash to device operation
+
+- name: "operation: verify"
+  color: "0e8a16"
+  description: Verification operation
+
+- name: "operation: decompress"
+  color: "e6ccb3"
+  description: Decompression operation
+
+# ===========================================
+# TARGET DEVICE TYPE
+# ===========================================
+- name: "device: sd-card"
+  color: "5319e7"
+  description: SD card related
+
+- name: "device: usb"
+  color: "5319e7"
+  description: USB drive related
+
+- name: "device: emmc"
+  color: "5319e7"
+  description: eMMC module related
+
+- name: "device: nvme"
+  color: "5319e7"
+  description: NVMe drive related
+
+# ===========================================
+# IMAGE FORMATS
+# ===========================================
+- name: "format: xz"
+  color: "006b75"
+  description: XZ compressed images
+
+- name: "format: gz"
+  color: "006b75"
+  description: GZ compressed images
+
+- name: "format: zstd"
+  color: "006b75"
+  description: ZSTD compressed images
+
+- name: "format: bzip2"
+  color: "006b75"
+  description: BZIP2 compressed images
+
+- name: "format: raw"
+  color: "006b75"
+  description: Raw/uncompressed images
+
+- name: "format: img"
+  color: "006b75"
+  description: IMG file format
+
+# ===========================================
+# STATUS
+# ===========================================
+- name: "status: in progress"
+  color: "1d76db"
+  description: Currently being worked on
+
+- name: "status: blocked"
+  color: "b60205"
+  description: Blocked by another issue or external factor
+
+- name: "status: needs info"
+  color: "d876e3"
+  description: Waiting for more information from reporter
+
+- name: "status: ready for review"
+  color: "0e8a16"
+  description: Ready to be reviewed
+
+- name: "status: on hold"
+  color: "c5def5"
+  description: Temporarily paused
+
+- name: "status: needs testing"
+  color: "fbca04"
+  description: Needs testing before closing
+
+# ===========================================
+# TYPE
+# ===========================================
+- name: documentation
+  color: "0075ca"
+  description: Improvements or additions to documentation
+
+- name: refactor
+  color: "d4c5f9"
+  description: Code refactoring without functional changes
+
+- name: performance
+  color: "ff7619"
+  description: Performance improvements
+
+- name: security
+  color: "ee0701"
+  description: Security related issues
+
+- name: i18n
+  color: "5319e7"
+  description: Internationalization and translations
+
+- name: accessibility
+  color: "1d76db"
+  description: Accessibility improvements
+
+- name: testing
+  color: "bfd4f2"
+  description: Testing related
+
+- name: ci-cd
+  color: "6f42c1"
+  description: CI/CD and build pipeline
+
+- name: dependencies
+  color: "0366d6"
+  description: Dependency updates
+
+# ===========================================
+# ERRORS
+# ===========================================
+- name: "error: access-denied"
+  color: "b60205"
+  description: Permission/access denied errors
+
+- name: "error: network"
+  color: "d93f0b"
+  description: Network connectivity errors
+
+- name: "error: timeout"
+  color: "d93f0b"
+  description: Timeout errors
+
+- name: "error: checksum"
+  color: "b60205"
+  description: Checksum/hash verification failures
+
+- name: "error: write-failed"
+  color: "b60205"
+  description: Write operation failures
+
+- name: "error: device-busy"
+  color: "d93f0b"
+  description: Device busy/locked errors
+
+- name: "error: device-not-found"
+  color: "d93f0b"
+  description: Device not detected
+
+- name: "error: corrupt-image"
+  color: "b60205"
+  description: Corrupted or invalid image file
+
+- name: "error: insufficient-space"
+  color: "d93f0b"
+  description: Not enough space on device
+
+- name: "error: crash"
+  color: "b60205"
+  description: Application crash
+
+# ===========================================
+# SPECIAL
+# ===========================================
+- name: upstream
+  color: "ededed"
+  description: Issue from upstream dependency
+
+- name: breaking-change
+  color: "b60205"
+  description: Breaking change requiring migration
+
+- name: needs-design
+  color: "f9d0c4"
+  description: Requires UI/UX design work
+
+- name: hacktoberfest
+  color: "ff7619"
+  description: Hacktoberfest contribution
+
+- name: sponsored
+  color: "ea4aaa"
+  description: Sponsored feature or fix

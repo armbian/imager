@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Armbian Forums
+    url: https://forum.armbian.com/
+    about: For general questions and community support, please visit the Armbian Forums
+  - name: Documentation
+    url: https://docs.armbian.com/
+    about: Check the official Armbian documentation for guides and FAQs
