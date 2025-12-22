@@ -156,39 +156,52 @@ export function useManufacturerList(
         if (a.id === 'other') return 1;
         if (b.id === 'other') return -1;
 
-        // Priority Tier 1: Vendors with MORE than 1 platinum board go to the top
-        const aPlatinumPriority = a.platinumCount > 1;
-        const bPlatinumPriority = b.platinumCount > 1;
+        // Tier 1: Vendors with MORE than 1 platinum board (highest priority)
+        const aMultiPlatinum = a.platinumCount > 1;
+        const bMultiPlatinum = b.platinumCount > 1;
 
-        if (aPlatinumPriority && !bPlatinumPriority) return -1;
-        if (!aPlatinumPriority && bPlatinumPriority) return 1;
+        if (aMultiPlatinum && !bMultiPlatinum) return -1;
+        if (!aMultiPlatinum && bMultiPlatinum) return 1;
 
         // Within Tier 1, sort by platinum count (descending)
-        if (aPlatinumPriority && bPlatinumPriority) {
+        if (aMultiPlatinum && bMultiPlatinum) {
           if (a.platinumCount !== b.platinumCount) {
             return b.platinumCount - a.platinumCount;
           }
-          // If platinum counts are equal, sort by total board count (descending)
           return b.boardCount - a.boardCount;
         }
 
-        // Priority Tier 2: Vendors with MORE than 1 standard board (but not in Tier 1)
-        const aStandardPriority = a.standardCount > 1;
-        const bStandardPriority = b.standardCount > 1;
+        // Tier 2: Vendors with exactly 1 platinum board (any platinum beats standard-only)
+        const aSinglePlatinum = a.platinumCount === 1;
+        const bSinglePlatinum = b.platinumCount === 1;
 
-        if (aStandardPriority && !bStandardPriority) return -1;
-        if (!aStandardPriority && bStandardPriority) return 1;
+        if (aSinglePlatinum && !bSinglePlatinum) return -1;
+        if (!aSinglePlatinum && bSinglePlatinum) return 1;
 
-        // Within Tier 2, sort by standard count (descending)
-        if (aStandardPriority && bStandardPriority) {
+        // Within Tier 2, sort by standard count then board count
+        if (aSinglePlatinum && bSinglePlatinum) {
           if (a.standardCount !== b.standardCount) {
             return b.standardCount - a.standardCount;
           }
-          // If standard counts are equal, sort by total board count (descending)
           return b.boardCount - a.boardCount;
         }
 
-        // Tier 3: Remaining vendors - sort by total board count (descending)
+        // Tier 3: Vendors with MORE than 1 standard board (no platinum)
+        const aMultiStandard = a.standardCount > 1;
+        const bMultiStandard = b.standardCount > 1;
+
+        if (aMultiStandard && !bMultiStandard) return -1;
+        if (!aMultiStandard && bMultiStandard) return 1;
+
+        // Within Tier 3, sort by standard count (descending)
+        if (aMultiStandard && bMultiStandard) {
+          if (a.standardCount !== b.standardCount) {
+            return b.standardCount - a.standardCount;
+          }
+          return b.boardCount - a.boardCount;
+        }
+
+        // Tier 4: Remaining vendors - sort by total board count (descending)
         return b.boardCount - a.boardCount;
       });
 
