@@ -2,7 +2,7 @@
  * Shared components exports
  */
 
-export { AppVersion } from './AppVersion';
+export { AppVersion } from './AppVersion'
 export { ConfirmationDialog } from './ConfirmationDialog';
 export { ErrorDisplay } from './ErrorDisplay';
 export { LoadingState } from './LoadingState';
