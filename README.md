@@ -1,31 +1,35 @@
-<p align="center">
-  <a href="https://www.armbian.com">
-    <img src="https://raw.githubusercontent.com/armbian/.github/master/profile/logosmall.png" alt="Armbian logo" width="200">
-  </a>
-</p>
+<h2 align="center">
+  <a href=#><img src="https://raw.githubusercontent.com/armbian/.github/master/profile/logosmall.png" alt="Armbian logo"></a>
+  <br><br>
+</h2>
 
-<p align="center">
-  <b>The official tool for flashing Armbian OS to your single-board computer</b>
-</p>
+### Purpose of This Repository
 
-<p align="center">
-  <a href="https://github.com/armbian/imager/releases"><img src="https://img.shields.io/github/v/release/armbian/imager?style=for-the-badge&color=orange" alt="Release"></a>
-  <a href="https://github.com/armbian/imager/releases"><img src="https://img.shields.io/github/downloads/armbian/imager/total?style=for-the-badge&color=green" alt="Downloads"></a>
-  <a href="https://github.com/armbian/imager/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPLv2-blue?style=for-the-badge" alt="License"></a>
-</p>
+**Armbian Imager** is the official tool for downloading and flashing Armbian OS images to single-board computers. It focuses on safe and reliable flashing of Armbian images, with board-aware guidance and verification.
+
+### Key features
+
+- Support for **300+ boards** with smart filtering and board-aware metadata
+- Disk safety checks, checksum validation, and post-write **verification**
+- Native cross-platform builds for **Linux**, **Windows**, and **macOS** (x64 and ARM64)
+- **Multi-language UI** with automatic system language detection
+- Automatic application updates
+- Small binary size and minimal runtime dependencies
 
 <p align="center">
   <img src="images/armbian-imager-ani.gif" alt="Armbian Imager">
 </p>
 
-## Features
+### Testimonials
 
-- **307+ Boards** — Browse Armbian-supported SBCs with smart filtering and real photos
-- **Safe & Verified** — System disks excluded, SHA256 checksum + byte-by-byte verification
-- **Cross-Platform** — Native builds for macOS, Windows, Linux (x64 & ARM64)
-- **15 Languages** — Auto-detects system language, light/dark mode support
-- **Auto-Updates** — In-app update download and installation
-- **Tiny Footprint** — ~15MB vs 200MB+ for Electron alternatives
+> “A proper multi-platform desktop app that actually works, which is rarer than you’d think.”
+> — *Bruno Verachten*, *Senior Developer Relations Engineer* ([source](https://www.linkedin.com/pulse/adding-risc-v-support-armbian-imager-tale-qemu-tauri-deja-verachten-86fxe))
+
+> "The Upcoming Armbian Imager Tool is a Godsend for Non-Raspberry Pi SBC Owners"
+> — *Sourav Rudra*, *It's FOSS* ([source](https://itsfoss.com/news/armbian-imager-quietly-debuts/))
+
+> "According to Armbian, this results in less RAM and storage usage and a faster experience."
+> — *Jordan Gloor*, *HowtoGeek.com* ([source](https://www.howtogeek.com/armbians-raspberry-pi-imager-alternative-is-here/))
 
 ## Download
 
