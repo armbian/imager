@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="images/armbian-imager.png" alt="Armbian Imager" width="700">
+  <img src="images/armbian-imager-ani.gif" alt="Armbian Imager">
 </p>
 
 ## Features
