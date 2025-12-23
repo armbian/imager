@@ -17,7 +17,7 @@
 - Small binary size and minimal runtime dependencies
 
 <p align="center">
-  <img src="images/armbian-imager-ani.gif" alt="Armbian Imager">
+  <a href=https://github.com/armbian/imager/releases><img src="images/armbian-imager-ani.gif" alt="Armbian Imager"></a>
 </p>
 
 ### Testimonials
