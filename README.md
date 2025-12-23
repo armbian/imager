@@ -185,29 +185,6 @@ armbian-imager/
 | MOTD Tips | [raw.githubusercontent.com/armbian/os/main/motd.json](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
 | Log Upload | [paste.armbian.com](https://paste.armbian.com) |
 
-
-## Contributing
-
-We welcome contributions!
-
-- **Bug reports** — [Open an issue](https://github.com/armbian/imager/issues)
-- **Feature requests** — Let's discuss it
-- **Pull requests** — Code improvements are always welcome
-- **Translations** — Add or improve in `src/locales/`
-- **Documentation** — Help others get started
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-GPLv2 — Part of the [Armbian](https://www.armbian.com) ecosystem.
-
 ## Acknowledgments
 
 - [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager) — The inspiration for this project
