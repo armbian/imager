@@ -47,7 +47,6 @@
     "noBoards": "未找到开发板",
     "noImages": "未找到镜像",
     "noDevices": "未找到设备",
-    "loading": "加载中...",
     "promoted": "推荐",
     "stable": "稳定版",
     "nightly": "每日构建",

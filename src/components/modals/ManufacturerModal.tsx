@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
-import { ErrorDisplay, LoadingState, SearchBox } from '../shared';
+import { ErrorDisplay, ListItemSkeleton, SearchBox } from '../shared';
 import type { BoardInfo, Manufacturer } from '../../types';
 import { getBoards } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
@@ -39,6 +39,7 @@ interface ManufacturerModalProps {
 export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerModalProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
+  const [showSkeleton, setShowSkeleton] = useState(false);
 
   // Use hook for async data fetching
   const { data: boards, loading, error, reload } = useAsyncDataWhen<BoardInfo[]>(
@@ -50,6 +51,32 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
   // Use shared hook for manufacturer list with logo validation
   const { manufacturers, isLoaded: logosLoaded } = useManufacturerList(boards, isOpen, search);
 
+  // Derive ready state
+  const manufacturersReady = useMemo(() => {
+    return manufacturers && manufacturers.length > 0 && logosLoaded;
+  }, [manufacturers, logosLoaded]);
+
+  // Show skeleton with minimum delay
+  useEffect(() => {
+    let skeletonTimeout: NodeJS.Timeout;
+
+    if (loading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Show skeleton during loading
+      setShowSkeleton(true);
+    } else if (manufacturersReady) {
+      // Keep skeleton visible for at least 300ms
+      skeletonTimeout = setTimeout(() => {
+        setShowSkeleton(false);
+      }, 300);
+    }
+
+    return () => {
+      if (skeletonTimeout) {
+        clearTimeout(skeletonTimeout);
+      }
+    };
+  }, [loading, manufacturersReady]);
+
   const searchBarContent = (
     <SearchBox
       value={search}
@@ -60,12 +87,13 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={t('modal.selectManufacturer')} searchBar={searchBarContent}>
-      <LoadingState isLoading={loading || !logosLoaded}>
-        {error ? (
-          <ErrorDisplay error={error} onRetry={reload} compact />
-        ) : (
+      {error ? (
+        <ErrorDisplay error={error} onRetry={reload} compact />
+      ) : (
+        <>
+          {showSkeleton && <ListItemSkeleton count={6} />}
           <div className="modal-list">
-            {manufacturers.map((mfr) => (
+            {!showSkeleton && manufacturers.map((mfr) => (
               <button
                 key={mfr.id}
                 className="list-item"
@@ -78,14 +106,14 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
                 </div>
               </button>
             ))}
-            {manufacturers.length === 0 && (
+            {!showSkeleton && manufacturers.length === 0 && (
               <div className="no-results">
                 <p>{t('modal.noManufacturers')}</p>
               </div>
             )}
           </div>
-        )}
-      </LoadingState>
+        </>
+      )}
     </Modal>
   );
 }

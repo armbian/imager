@@ -1,4 +1,149 @@
 /* ========================================
+   MODAL ANIMATIONS
+   ======================================== */
+
+/* Overlay fade animation */
+@keyframes modalOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalOverlayFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Modal content slide and scale animation */
+@keyframes modalContentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(32px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalContentSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+/* Staggered list item animations */
+@keyframes listItemFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Staggered board grid animations */
+@keyframes boardGridFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Apply staggered animations to list items in modal */
+.modal-list .list-item {
+  opacity: 0;
+  animation: listItemFadeIn 0.3s ease-out forwards;
+}
+
+/* Disable animations for dynamically updated lists (DeviceModal) */
+.modal-list.no-animations .list-item {
+  opacity: 1 !important;
+  animation: none !important;
+}
+
+.modal-list .list-item:nth-child(1) { animation-delay: 0.15s; }
+.modal-list .list-item:nth-child(2) { animation-delay: 0.175s; }
+.modal-list .list-item:nth-child(3) { animation-delay: 0.2s; }
+.modal-list .list-item:nth-child(4) { animation-delay: 0.225s; }
+.modal-list .list-item:nth-child(5) { animation-delay: 0.25s; }
+.modal-list .list-item:nth-child(6) { animation-delay: 0.275s; }
+.modal-list .list-item:nth-child(7) { animation-delay: 0.3s; }
+.modal-list .list-item:nth-child(8) { animation-delay: 0.325s; }
+.modal-list .list-item:nth-child(9) { animation-delay: 0.35s; }
+.modal-list .list-item:nth-child(10) { animation-delay: 0.375s; }
+
+/* For items beyond 10, use a formula */
+.modal-list .list-item:nth-child(n+11) {
+  animation-delay: calc(0.15s + (0.025s * (10 - 1)));
+}
+
+/* Apply staggered animations to board grid items in modal */
+.board-grid-container .board-grid-item {
+  opacity: 0;
+  animation: boardGridFadeIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.board-grid-container .board-grid-item:nth-child(1) { animation-delay: 0.15s; }
+.board-grid-container .board-grid-item:nth-child(2) { animation-delay: 0.175s; }
+.board-grid-container .board-grid-item:nth-child(3) { animation-delay: 0.2s; }
+.board-grid-container .board-grid-item:nth-child(4) { animation-delay: 0.225s; }
+.board-grid-container .board-grid-item:nth-child(5) { animation-delay: 0.25s; }
+.board-grid-container .board-grid-item:nth-child(6) { animation-delay: 0.275s; }
+.board-grid-container .board-grid-item:nth-child(7) { animation-delay: 0.3s; }
+.board-grid-container .board-grid-item:nth-child(8) { animation-delay: 0.325s; }
+.board-grid-container .board-grid-item:nth-child(9) { animation-delay: 0.35s; }
+.board-grid-container .board-grid-item:nth-child(10) { animation-delay: 0.375s; }
+.board-grid-container .board-grid-item:nth-child(11) { animation-delay: 0.4s; }
+.board-grid-container .board-grid-item:nth-child(12) { animation-delay: 0.425s; }
+
+.board-grid-container .board-grid-item:nth-child(n+13) {
+  animation-delay: calc(0.15s + (0.025s * (12 - 1)));
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal {
+    animation: none !important;
+  }
+
+  .modal-list .list-item,
+  .board-grid-container .board-grid-item {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .list-item,
+  .board-grid-item {
+    transition: background 0.15s ease;
+  }
+
+  .list-item:hover,
+  .board-grid-item:hover {
+    transform: none;
+  }
+}
+
+/* ========================================
    MODAL / DIALOG
    ======================================== */
 .modal-overlay {
@@ -12,6 +157,15 @@
   padding: 24px;
 }
 
+/* Modal overlay animations */
+.modal-overlay.modal-entering {
+  animation: modalOverlayFadeIn 0.25s ease-out forwards;
+}
+
+.modal-overlay.modal-exiting {
+  animation: modalOverlayFadeOut 0.2s ease-in forwards;
+}
+
 .modal {
   background: var(--bg-modal);
   border-radius: 12px;
@@ -22,6 +176,15 @@
   flex-direction: column;
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+}
+
+/* Modal content animations */
+.modal.modal-entering {
+  animation: modalContentSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.modal.modal-exiting {
+  animation: modalContentSlideOut 0.2s ease-in forwards;
 }
 
 .modal-header {

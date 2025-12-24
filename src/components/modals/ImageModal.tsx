@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Download, Package, Monitor, Terminal, Zap, Star, Layers, Shield, FlaskConical, AppWindow, Box } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
-import { ErrorDisplay, LoadingState } from '../shared';
+import { ErrorDisplay, ListItemSkeleton } from '../shared';
 import type { BoardInfo, ImageInfo, ImageFilterType } from '../../types';
 import { getImagesForBoard } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
@@ -73,6 +73,7 @@ const FILTER_BUTTONS: Array<{
 export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps) {
   const { t } = useTranslation();
   const [filterType, setFilterType] = useState<ImageFilterType>('all');
+  const [showSkeleton, setShowSkeleton] = useState(false);
 
   // Use hook for async data fetching
   const { data: allImages, loading, error, reload } = useAsyncDataWhen<ImageInfo[]>(
@@ -80,6 +81,32 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
     () => getImagesForBoard(board!.slug, undefined, undefined, undefined, false),
     [isOpen, board?.slug]
   );
+
+  // Derive images ready state
+  const imagesReady = useMemo(() => {
+    return allImages && allImages.length > 0;
+  }, [allImages]);
+
+  // Show skeleton with minimum delay
+  useEffect(() => {
+    let skeletonTimeout: NodeJS.Timeout;
+
+    if (loading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Show skeleton during loading
+      setShowSkeleton(true);
+    } else if (imagesReady) {
+      // Keep skeleton visible for at least 300ms
+      skeletonTimeout = setTimeout(() => {
+        setShowSkeleton(false);
+      }, 300);
+    }
+
+    return () => {
+      if (skeletonTimeout) {
+        clearTimeout(skeletonTimeout);
+      }
+    };
+  }, [loading, imagesReady]);
 
   // Calculate available filters based on all images
   const availableFilters = useMemo(() => {
@@ -125,20 +152,22 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
         )}
       </div>
 
-      <LoadingState isLoading={loading}>
-        {error ? (
-          <ErrorDisplay error={error} onRetry={reload} compact />
-        ) : filteredImages.length === 0 ? (
-          <div className="no-results">
-            <Package size={48} />
-            <p>{t('modal.noImages')}</p>
-            <button onClick={() => setFilterType('all')} className="btn btn-secondary">
-              {t('modal.allImages')}
-            </button>
-          </div>
-        ) : (
+      {error ? (
+        <ErrorDisplay error={error} onRetry={reload} compact />
+      ) : (
+        <>
+          {showSkeleton && <ListItemSkeleton count={6} />}
+          {filteredImages.length === 0 && !showSkeleton && (
+            <div className="no-results">
+              <Package size={48} />
+              <p>{t('modal.noImages')}</p>
+              <button onClick={() => setFilterType('all')} className="btn btn-secondary">
+                {t('modal.allImages')}
+              </button>
+            </div>
+          )}
           <div className="modal-list">
-          {filteredImages.map((image, index) => {
+          {!showSkeleton && filteredImages.map((image, index) => {
             const desktopEnv = getDesktopEnv(image.image_variant);
             const kernelType = getKernelType(image.kernel_branch);
             const osInfo = getOsInfo(image.distro_release);
@@ -205,8 +234,8 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
             );
           })}
           </div>
-        )}
-      </LoadingState>
+        </>
+      )}
     </Modal>
   );
 }

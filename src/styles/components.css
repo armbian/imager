@@ -85,6 +85,153 @@
 }
 
 /* ========================================
+   SKELETON LOADING
+   ======================================== */
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-hover) 0%,
+    var(--bg-secondary) 20%,
+    var(--bg-hover) 40%,
+    var(--bg-hover) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* Board Card Skeleton */
+.board-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  cursor: default;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.board-card-skeleton-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.board-card-skeleton-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.board-card-skeleton-name {
+  width: 80%;
+  height: 14px;
+}
+
+.board-card-skeleton-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.board-card-skeleton-badge {
+  width: 50px;
+  height: 18px;
+}
+
+/* List Item Skeleton */
+.list-item-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-light);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.list-item-skeleton-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.list-item-skeleton-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.list-item-skeleton-title {
+  width: 60%;
+  height: 14px;
+}
+
+.list-item-skeleton-subtitle {
+  width: 40%;
+  height: 12px;
+}
+
+.board-card-skeleton-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.board-card-skeleton-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.board-card-skeleton-name {
+  width: 80%;
+  height: 14px;
+}
+
+.board-card-skeleton-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.board-card-skeleton-badge {
+  width: 50px;
+  height: 18px;
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--bg-hover);
+  }
+}
+
+/* ========================================
    LIST ITEMS
    ======================================== */
 .list-item {
@@ -96,13 +243,15 @@
   border: none;
   border-bottom: 1px solid var(--border-light);
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
   text-align: left;
+  position: relative;
 }
 
 .list-item:hover {
   background: var(--bg-hover);
+  transform: translateX(4px);
 }
 
 .list-item:last-child {
@@ -160,15 +309,17 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
   position: relative;
+  overflow: hidden;
 }
 
 .board-grid-item:hover {
   background: var(--bg-hover);
   border-color: var(--accent);
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-md);
 }
 
 .board-grid-image {

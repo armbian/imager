@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { HardDrive, RefreshCw, AlertTriangle, Shield, MemoryStick, Usb } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
-import { ErrorDisplay, ConfirmationDialog } from '../shared';
+import { ErrorDisplay, ConfirmationDialog, ListItemSkeleton } from '../shared';
 import type { BlockDevice } from '../../types';
 import { getBlockDevices } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
@@ -74,6 +74,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   const { t } = useTranslation();
   const [selectedDevice, setSelectedDevice] = useState<BlockDevice | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSkeleton, setShowSkeleton] = useState(false);
 
   // Track previous devices for change detection
   const prevDevicesRef = useRef<BlockDevice[] | null>(null);
@@ -86,12 +87,37 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
     [isOpen]
   );
 
+  // Derive devices ready state
+  const devicesReady = useMemo(() => {
+    return devices && devices.length > 0;
+  }, [devices]);
+
+  // Show skeleton with minimum delay
+  useEffect(() => {
+    let skeletonTimeout: NodeJS.Timeout;
+
+    if (loading) {
+      setShowSkeleton(true);
+    } else if (devicesReady || (!loading && devices.length === 0)) {
+      // Keep skeleton visible for at least 300ms
+      skeletonTimeout = setTimeout(() => {
+        setShowSkeleton(false);
+      }, 300);
+    }
+
+    return () => {
+      if (skeletonTimeout) {
+        clearTimeout(skeletonTimeout);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- devicesReady already tracks devices changes; adding devices.length causes re-renders during polling
+  }, [loading, devicesReady]);
+
   // Update devices only when they actually change
   useEffect(() => {
     if (!rawDevices) return;
     if (devicesChanged(prevDevicesRef.current, rawDevices)) {
       prevDevicesRef.current = rawDevices;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync external data to state
       setDevices(sortDevices(rawDevices));
     }
   }, [rawDevices]);
@@ -138,29 +164,26 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
           <span>{t('flash.dataWarning')}</span>
         </div>
 
-        {loading ? (
-          <div className="loading">
-            <div className="spinner" />
-            <p>{t('modal.scanningDevices')}</p>
-          </div>
-        ) : error ? (
+        {error ? (
           <ErrorDisplay error={error} onRetry={reload} compact />
-        ) : devices.length === 0 ? (
-          <div className="no-results">
-            <Usb size={40} />
-            <p>{t('modal.noDevices')}</p>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              {t('modal.insertDevice')}
-            </p>
-            <button className="btn btn-secondary" onClick={reload} disabled={loading} style={{ marginTop: 16 }}>
-              <RefreshCw size={14} className={loading ? 'spin' : ''} />
-              {t('device.refresh')}
-            </button>
-          </div>
         ) : (
           <>
-            <div className="modal-list">
-              {devices.map((device) => {
+            {showSkeleton && <ListItemSkeleton count={4} />}
+            {devices.length === 0 && !showSkeleton && (
+              <div className="no-results">
+                <Usb size={40} />
+                <p>{t('modal.noDevices')}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  {t('modal.insertDevice')}
+                </p>
+                <button className="btn btn-secondary" onClick={reload} disabled={loading} style={{ marginTop: 16 }}>
+                  <RefreshCw size={14} className={loading ? 'spin' : ''} />
+                  {t('device.refresh')}
+                </button>
+              </div>
+            )}
+            <div className="modal-list no-animations">
+              {!showSkeleton && devices.map((device) => {
                 const deviceType = getDeviceType(device);
                 const badge = getDeviceBadge(deviceType, t);
                 return (
@@ -194,12 +217,14 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
                 );
               })}
             </div>
-            <div className="modal-refresh-bottom">
-              <button className="btn btn-secondary" onClick={reload} disabled={loading}>
-                <RefreshCw size={14} className={loading ? 'spin' : ''} />
-                {t('modal.refreshDevices')}
-              </button>
-            </div>
+            {!showSkeleton && devices.length > 0 && (
+              <div className="modal-refresh-bottom">
+                <button className="btn btn-secondary" onClick={reload} disabled={loading}>
+                  <RefreshCw size={14} className={loading ? 'spin' : ''} />
+                  {t('modal.refreshDevices')}
+                </button>
+              </div>
+            )}
           </>
         )}
       </Modal>

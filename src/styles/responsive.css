@@ -108,6 +108,12 @@
     max-width: 300px;
   }
 
+  /* Faster stagger for mobile */
+  .home-button-group:nth-child(1) .home-button { animation-delay: 0ms; }
+  .home-button-group:nth-child(2) .home-button { animation-delay: 80ms; }
+  .home-button-group:nth-child(3) .home-button { animation-delay: 160ms; }
+  .home-button-group:nth-child(4) .home-button { animation-delay: 240ms; }
+
   .home-button {
     min-width: auto;
     width: 100%;
