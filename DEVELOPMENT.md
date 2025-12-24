@@ -102,7 +102,7 @@ armbian-imager/
 |------|--------|
 | Board List & Images | [github.armbian.com/armbian-images.json](https://github.armbian.com/armbian-images.json) |
 | Board Photos | [cache.armbian.com/images/272/{slug}.png](https://cache.armbian.com/images/) |
-| Vendor Logos | [cache.armbian.com/images/vendors/272/{vendor}.png](https://cache.armbian.com/images/vendors/272/) |
+| Vendor Logos | [cache.armbian.com/images/vendors/150/{vendor}.png](https://cache.armbian.com/images/vendors/150/) |
 | MOTD Tips | [raw.githubusercontent.com/armbian/os/main/motd.json](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
 | Log Upload | [paste.armbian.com](https://paste.armbian.com) |
 
