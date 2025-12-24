@@ -1,115 +1,276 @@
-## Development
+# Development Guide
 
-### Prerequisites
+Complete guide for setting up, building, and contributing to Armbian Imager.
 
-- **Node.js 20+** — [nodejs.org](https://nodejs.org)
-- **Rust 1.77+** — [rustup.rs](https://rustup.rs)
-- **Platform tools** — Xcode (macOS), Visual Studio Build Tools (Windows), build-essential (Linux)
+## Table of Contents
 
-### Quick Start
+1. [Quick Start](#quick-start)
+2. [Prerequisites](#prerequisites)
+3. [Step-by-Step Setup](#step-by-step-setup)
+4. [Development Workflow](#development-workflow)
+5. [Building for Distribution](#building-for-distribution)
+6. [Project Structure](#project-structure)
+7. [Tech Stack](#tech-stack)
+8. [Data Sources](#data-sources)
+9. [Troubleshooting](#troubleshooting)
+
+---
+
+## Quick Start
 
 ```bash
-git clone https://github.com/armbian/imager.git armbian-imager
-cd armbian-imager
+git clone https://github.com/armbian/imager.git && cd imager
+bash scripts/setup/install.sh
 npm install
 npm run tauri:dev
 ```
 
-### Scripts
+---
+
+## Prerequisites
+
+| Requirement | Minimum | Link |
+|-------------|---------|------|
+| Node.js | 20.19.0 | [nodejs.org](https://nodejs.org) |
+| Rust | 1.77 | [rustup.rs](https://rustup.rs) |
+| npm | 10+ | Included with Node.js |
+
+### Platform-Specific
+
+**Linux:** `libglib2.0-dev libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev`
+
+**macOS:** Xcode Command Line Tools
+
+**Windows:** Visual Studio Build Tools 2022 + WebView2 Runtime
+
+---
+
+## Step-by-Step Setup
+
+### 1. Clone Repository
 
 ```bash
-npm run dev              # Frontend only (Vite)
-npm run tauri:dev        # Full app with hot reload
-npm run build            # Build frontend for production
-npm run tauri:build      # Build distributable
-npm run tauri:build:dev  # Build with debug symbols
-npm run lint             # ESLint
-npm run clean            # Clean all build artifacts
+git clone https://github.com/armbian/imager.git
+cd imager
 ```
 
-### Build Scripts
+### 2. Install System Dependencies
+
+**Automated (Recommended):**
+```bash
+bash scripts/setup/install.sh
+```
+
+### 3. Verify Prerequisites
 
 ```bash
-./scripts/build-macos.sh [--clean] [--dev]   # macOS ARM64 + x64
-./scripts/build-linux.sh [--clean] [--dev]   # Linux x64 + ARM64
-./scripts/build-all.sh   [--clean] [--dev]   # All platforms
+node --version    # ≥ 20.19.0
+rustc --version   # ≥ 1.77
 ```
 
-## Tech Stack
+### 4. Install & Run
 
-| Layer | Technology | Why |
-|-------|------------|-----|
-| **UI** | React 19 + TypeScript | Type-safe, component-based UI |
-| **Bundler** | Vite | Lightning-fast HMR and builds |
-| **Framework** | Tauri 2 | Native performance, tiny bundle |
-| **Backend** | Rust | Memory-safe, blazing fast I/O |
-| **Async** | Tokio | Efficient concurrent operations |
-| **i18n** | i18next | 15 language translations |
+```bash
+npm install
+npm run tauri:dev
+```
 
-### Why Tauri over Electron?
+---
 
-| Metric | Armbian Imager (Tauri) | Typical Electron App |
-|--------|------------------------|---------------------|
-| App Size | ~15 MB | 150-200 MB |
-| RAM Usage | ~50 MB | 200-400 MB |
-| Startup | < 1 second | 2-5 seconds |
-| Native Feel | ✅ Uses system webview | ❌ Bundles Chromium |
+## Development Workflow
+
+### Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Frontend only |
+| `npm run tauri:dev` | Full app with hot reload |
+| `npm run build` | Build frontend |
+| `npm run tauri:build` | Build distributable |
+| `npm run lint` | Run ESLint |
+| `npm run clean` | Clean artifacts |
+
+### Daily Workflow
+
+1. `npm run tauri:dev` - Start dev server
+2. Edit [`src/`](src/) or [`src-tauri/src/`](src-tauri/src/) - Auto reload
+3. Test changes
+4. `npm run tauri:build` - Build when ready
+
+---
+
+## Building for Distribution
+
+### Single Platform
+
+```bash
+./scripts/build-macos.sh      # macOS (Intel + ARM)
+./scripts/build-linux.sh      # Linux (x64 + ARM)
+npm run tauri:build          # Windows
+```
+
+### All Platforms
+
+```bash
+./scripts/build-all.sh
+```
+
+### Build Options
+
+```bash
+./scripts/build-macos.sh --clean  # Clean build
+./scripts/build-macos.sh --dev    # Debug symbols
+./scripts/build-macos.sh --clean --dev  # Both
+```
+
+### Output
+
+- `src-tauri/target/release/bundle/` - Installers
+- `src-tauri/target/release/armbian-imager` - Binary
+
+---
 
 ## Project Structure
-
-<details>
-<summary>Click to expand</summary>
 
 ```
 armbian-imager/
 ├── src/                          # React Frontend
 │   ├── components/               # UI Components
-│   │   ├── flash/                # Flash progress components
+│   │   ├── flash/                # Flash progress
 │   │   ├── layout/               # Header, HomePage
-│   │   ├── modals/               # Board, Image, Device, Manufacturer modals
-│   │   └── shared/               # Reusable components (UpdateModal, ErrorDisplay, etc.)
-│   ├── hooks/                    # React Hooks (Tauri IPC, async data)
+│   │   ├── modals/               # Board, Image, Device, Manufacturer
+│   │   └── shared/               # Reusable components
+│   ├── hooks/                    # React Hooks
 │   ├── config/                   # Badges, manufacturers, OS info
-│   ├── locales/                  # i18n translations (15 languages)
+│   ├── locales/                  # i18n (15 languages)
 │   ├── styles/                   # Modular CSS
 │   ├── types/                    # TypeScript interfaces
-│   ├── utils/                    # Utility functions
-│   └── assets/                   # Images, logos, OS icons
+│   ├── utils/                    # Utilities
+│   └── assets/                   # Images, logos, icons
 │
 ├── src-tauri/                    # Rust Backend
 │   ├── src/
 │   │   ├── commands/             # Tauri IPC handlers
-│   │   ├── config/               # Application configuration and constants
-│   │   ├── devices/              # Platform device detection
-│   │   ├── flash/                # Platform flash (macOS, Linux, Windows)
-│   │   ├── images/               # Image management and filtering
+│   │   ├── config/               # Configuration
+│   │   ├── devices/              # Device detection
+│   │   ├── flash/                # Platform flash implementations
+│   │   ├── images/               # Image management
 │   │   ├── logging/              # Session logging
-│   │   ├── paste/                # Log upload to paste.armbian.com
-│   │   ├── utils/                # Shared utility functions
-│   │   ├── download.rs           # HTTP streaming downloads
-│   │   └── decompress.rs         # Decompression (XZ, GZ, ZSTD)
-│   └── icons/                    # App icons (all platforms)
+│   │   ├── paste/                # Log upload
+│   │   ├── utils/                # Utilities
+│   │   ├── download.rs           # HTTP downloads
+│   │   └── decompress.rs         # XZ, GZ, ZSTD
+│   ├── icons/                    # App icons
+│   └── target/                   # Compiled binaries (gitignored)
 │
-├── scripts/                      # Build scripts
+├── scripts/                      # Build and setup
+│   ├── build-*.sh                # Platform build scripts
+│   └── setup/                    # Dependency installation
+│       ├── install.sh
+│       ├── install-linux.sh
+│       ├── install-macos.sh
+│       └── install-windows.ps1
+│
 └── .github/workflows/            # CI/CD
 ```
 
-</details>
+---
+
+## Tech Stack
+
+### Frontend
+
+| Technology | Purpose |
+|------------|---------|
+| React 19 | UI Framework |
+| TypeScript | Type Safety |
+| Vite | Build Tool & Dev Server |
+| i18next | i18n (15 languages) |
+| Lucide | Icons |
+
+### Backend
+
+| Technology | Purpose |
+|------------|---------|
+| Rust | Systems Programming |
+| Tauri 2 | Desktop Framework |
+| Tokio | Async Runtime |
+| Serde | Serialization |
+| Reqwest | HTTP Client |
+
+### Why Tauri over Electron?
+
+| Metric | Tauri | Electron |
+|--------|-------|----------|
+| Size | ~15 MB | 150-200 MB |
+| RAM | ~50 MB | 200-400 MB |
+| Startup | < 1s | 2-5s |
+| Native | ✅ System webview | ❌ Bundled Chromium |
+
+---
 
 ## Data Sources
 
 | Data | Source |
 |------|--------|
 | Board List & Images | [github.armbian.com/armbian-images.json](https://github.armbian.com/armbian-images.json) |
-| Board Photos | [cache.armbian.com/images/272/{slug}.png](https://cache.armbian.com/images/) |
-| Vendor Logos | [cache.armbian.com/images/vendors/150/{vendor}.png](https://cache.armbian.com/images/vendors/150/) |
-| MOTD Tips | [raw.githubusercontent.com/armbian/os/main/motd.json](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
+| Board Photos | [cache.armbian.com/images/272/](https://cache.armbian.com/images/) |
+| Vendor Logos | [cache.armbian.com/images/vendors/150/](https://cache.armbian.com/images/vendors/150/) |
+| MOTD Tips | [github.com/armbian/os](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
 | Log Upload | [paste.armbian.com](https://paste.armbian.com) |
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| `cargo metadata failed` | Run `bash scripts/setup/install.sh` or install [Rust](https://rustup.rs) |
+| `glib-2.0 not found` (Linux) | Run `sudo bash scripts/setup/install-linux.sh` |
+| Xcode tools missing (macOS) | Run `xcode-select --install` |
+| VS Build Tools missing (Windows) | Run `scripts/setup/install-windows.ps1` as Administrator |
+| Node modules failing | Ensure Node.js ≥ 20.19.0, then `npm install` |
+
+### Getting Help
+
+1. Check [`scripts/setup/README.md`](scripts/setup/README.md)
+2. Search [GitHub Issues](https://github.com/armbian/imager/issues)
+3. Create issue with:
+   - OS and version
+   - `node --version`, `rustc --version`, `npm --version`
+   - Full error and stack trace
+   - Steps to reproduce
+
+---
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Tips
+
+- Keep commits small and atomic
+- Test on multiple platforms for platform-specific changes
+- Follow ESLint and Rustfmt
+- Update translations for user-facing text
+- Add tests for new features
+
+### PR Process
+
+1. Fork repository
+2. `git checkout -b feature/amazing-feature`
+3. `git commit -m 'Add amazing feature'`
+4. `git push origin feature/amazing-feature`
+5. Open Pull Request
+
+---
 
 ## Acknowledgments
 
-- [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager) — The inspiration for this project
-- [Tauri](https://tauri.app/) — The framework that makes native apps accessible
-- [i18next](https://www.i18next.com/) — Internationalization framework
-- [Lucide](https://lucide.dev/) — Beautiful icons
-- [Armbian Community](https://forum.armbian.com) — For years of amazing work on SBC support
+- [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager) — Inspiration
+- [Tauri](https://tauri.app/) — Framework
+- [i18next](https://www.i18next.com/) — i18n
+- [Lucide](https://lucide.dev/) — Icons
+- [Armbian Community](https://forum.armbian.com) — SBC support
