@@ -92,3 +92,21 @@ export async function openUrl(url: string): Promise<void> {
 export async function logInfo(module: string, message: string): Promise<void> {
   return invoke('log_from_frontend', { module, message });
 }
+
+export interface GitHubRelease {
+  tag_name: string;
+  name: string;
+  body: string | null;
+  html_url: string;
+  published_at: string;
+}
+
+/**
+ * Fetches GitHub release information for a specific version
+ *
+ * @param version - Version tag (e.g., "1.0.0" or "v1.0.0")
+ * @returns Promise resolving to GitHub release data with notes, date, and URL
+ */
+export async function getGithubRelease(version: string): Promise<GitHubRelease> {
+  return invoke('get_github_release', { version });
+}

@@ -53,7 +53,6 @@
     "apps": "Apps",
     "minimal": "Minimale",
     "allImages": "Toutes les images",
-    "scanningDevices": "Recherche de périphériques...",
     "insertDevice": "Insérez une carte SD ou une clé USB",
     "refreshDevices": "Actualiser les périphériques"
   },
@@ -97,7 +96,8 @@
     "customImage": "Image personnalisée"
   },
   "common": {
-    "unknown": "Inconnu"
+    "unknown": "Inconnu",
+    "confirm": "Confirmer"
   },
   "update": {
     "title": "Mise à jour disponible",
@@ -110,6 +110,13 @@
     "cancel": "Annuler",
     "retry": "Réessayer",
     "readyMessage": "La mise à jour a été téléchargée. Redémarrez l'application pour terminer l'installation.",
-    "errorMessage": "Impossible de télécharger la mise à jour. Veuillez réessayer plus tard."
+    "errorMessage": "Impossible de télécharger la mise à jour. Veuillez réessayer plus tard.",
+    "changelogTitle": "Quoi de neuf",
+    "viewChangelog": "Quoi de neuf",
+    "loadingChangelog": "Chargement du changelog...",
+    "noChangelog": "Pas de changelog disponible",
+    "viewOnGitHub": "Voir sur GitHub",
+    "contributors": "Contributeurs",
+    "changelogErrorHint": "Assurez-vous d'avoir une connexion Internet et que la version existe sur GitHub."
   }
 }

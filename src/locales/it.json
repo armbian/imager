@@ -53,7 +53,6 @@
     "apps": "App",
     "minimal": "Minimale",
     "allImages": "Tutte le Immagini",
-    "scanningDevices": "Ricerca dispositivi...",
     "insertDevice": "Inserisci una scheda SD o una chiavetta USB",
     "refreshDevices": "Aggiorna Dispositivi"
   },
@@ -97,7 +96,8 @@
     "customImage": "Immagine Personalizzata"
   },
   "common": {
-    "unknown": "Sconosciuto"
+    "unknown": "Sconosciuto",
+    "confirm": "Conferma"
   },
   "update": {
     "title": "Aggiornamento Disponibile",
@@ -110,6 +110,13 @@
     "cancel": "Annulla",
     "retry": "Riprova",
     "readyMessage": "L'aggiornamento è stato scaricato. Riavvia l'applicazione per completare l'installazione.",
-    "errorMessage": "Impossibile scaricare l'aggiornamento. Riprova più tardi."
+    "errorMessage": "Impossibile scaricare l'aggiornamento. Riprova più tardi.",
+    "changelogTitle": "Novità",
+    "viewChangelog": "Novità",
+    "loadingChangelog": "Caricamento changelog...",
+    "noChangelog": "Nessun changelog disponibile",
+    "viewOnGitHub": "Vedi su GitHub",
+    "contributors": "Contributori",
+    "changelogErrorHint": "Assicurati di avere una connessione internet e che la versione esista su GitHub."
   }
 }

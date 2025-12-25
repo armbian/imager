@@ -53,7 +53,6 @@
     "apps": "Uygulamalar",
     "minimal": "Minimal",
     "allImages": "Tüm İmajlar",
-    "scanningDevices": "Cihazlar taranıyor...",
     "insertDevice": "Bir SD kart veya USB sürücü takın",
     "refreshDevices": "Cihazları Yenile"
   },
@@ -97,7 +96,8 @@
     "customImage": "Özel İmaj"
   },
   "common": {
-    "unknown": "Bilinmeyen"
+    "unknown": "Bilinmeyen",
+    "confirm": "Onayla"
   },
   "update": {
     "title": "Güncelleme mevcut",
@@ -110,6 +110,13 @@
     "cancel": "İptal",
     "retry": "Tekrar dene",
     "readyMessage": "Güncelleme indirildi. Kurulumu tamamlamak için uygulamayı yeniden başlatın.",
-    "errorMessage": "Güncelleme indirilemedi. Lütfen daha sonra tekrar deneyin."
+    "errorMessage": "Güncelleme indirilemedi. Lütfen daha sonra tekrar deneyin.",
+    "changelogTitle": "Yenilikler",
+    "viewChangelog": "Yenilikler",
+    "loadingChangelog": "Değişiklik günlüğü yükleniyor...",
+    "noChangelog": "Değişiklik günlüğü mevcut değil",
+    "viewOnGitHub": "GitHub'da Görüntüle",
+    "contributors": "Katkıda Bulunanlar",
+    "changelogErrorHint": "İnternet bağlantınız olduğundan ve sürümün GitHub'da mevcut olduğundan emin olun."
   }
 }

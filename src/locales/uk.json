@@ -53,7 +53,6 @@
     "apps": "Додатки",
     "minimal": "Мінімальна",
     "allImages": "Усі образи",
-    "scanningDevices": "Пошук пристроїв...",
     "insertDevice": "Вставте SD-картку або USB-накопичувач",
     "refreshDevices": "Оновити пристрої"
   },
@@ -97,7 +96,8 @@
     "customImage": "Власний образ"
   },
   "common": {
-    "unknown": "Невідомо"
+    "unknown": "Невідомо",
+    "confirm": "Підтвердити"
   },
   "update": {
     "title": "Доступне оновлення",
@@ -110,6 +110,13 @@
     "cancel": "Скасувати",
     "retry": "Повторити",
     "readyMessage": "Оновлення завантажено. Перезапустіть програму для завершення встановлення.",
-    "errorMessage": "Не вдалося завантажити оновлення. Спробуйте пізніше."
+    "errorMessage": "Не вдалося завантажити оновлення. Спробуйте пізніше.",
+    "changelogTitle": "Що нового",
+    "viewChangelog": "Що нового",
+    "loadingChangelog": "Завантаження changelog...",
+    "noChangelog": "Changelog недоступний",
+    "viewOnGitHub": "Дивитися на GitHub",
+    "contributors": "Учасники",
+    "changelogErrorHint": "Переконайтеся, що у вас є підключення до Інтернету та версія існує на GitHub."
   }
 }

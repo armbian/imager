@@ -53,7 +53,6 @@
     "apps": "Apps",
     "minimal": "Minimaal",
     "allImages": "Alle images",
-    "scanningDevices": "Apparaten zoeken...",
     "insertDevice": "Plaats een SD-kaart of USB-stick",
     "refreshDevices": "Apparaten vernieuwen"
   },
@@ -97,7 +96,8 @@
     "customImage": "Aangepaste image"
   },
   "common": {
-    "unknown": "Onbekend"
+    "unknown": "Onbekend",
+    "confirm": "Bevestigen"
   },
   "update": {
     "title": "Update beschikbaar",
@@ -110,6 +110,13 @@
     "cancel": "Annuleren",
     "retry": "Opnieuw proberen",
     "readyMessage": "De update is gedownload. Start de applicatie opnieuw om de installatie te voltooien.",
-    "errorMessage": "Kan de update niet downloaden. Probeer het later opnieuw."
+    "errorMessage": "Kan de update niet downloaden. Probeer het later opnieuw.",
+    "changelogTitle": "Wat is er nieuw",
+    "viewChangelog": "Wat is er nieuw",
+    "loadingChangelog": "Changelog laden...",
+    "noChangelog": "Geen changelog beschikbaar",
+    "viewOnGitHub": "Bekijk op GitHub",
+    "contributors": "Bijdragers",
+    "changelogErrorHint": "Zorg ervoor dat u een internetverbinding heeft en dat de versie bestaat op GitHub."
   }
 }

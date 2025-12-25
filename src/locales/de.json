@@ -53,7 +53,6 @@
     "apps": "Apps",
     "minimal": "Minimal",
     "allImages": "Alle Images",
-    "scanningDevices": "Geräte werden gesucht...",
     "insertDevice": "SD-Karte oder USB-Stick einstecken",
     "refreshDevices": "Geräte aktualisieren"
   },
@@ -97,7 +96,8 @@
     "customImage": "Benutzerdefiniertes Image"
   },
   "common": {
-    "unknown": "Unbekannt"
+    "unknown": "Unbekannt",
+    "confirm": "Bestätigen"
   },
   "update": {
     "title": "Update verfügbar",
@@ -110,6 +110,13 @@
     "cancel": "Abbrechen",
     "retry": "Erneut versuchen",
     "readyMessage": "Das Update wurde heruntergeladen. Starten Sie die Anwendung neu, um die Installation abzuschließen.",
-    "errorMessage": "Das Update konnte nicht heruntergeladen werden. Bitte versuchen Sie es später erneut."
+    "errorMessage": "Das Update konnte nicht heruntergeladen werden. Bitte versuchen Sie es später erneut.",
+    "changelogTitle": "Was ist neu",
+    "viewChangelog": "Was ist neu",
+    "loadingChangelog": "Lade Changelog...",
+    "noChangelog": "Kein Changelog verfügbar",
+    "viewOnGitHub": "Auf GitHub ansehen",
+    "contributors": "Mitwirkende",
+    "changelogErrorHint": "Stellen Sie sicher, dass Sie eine Internetverbindung haben und die Version auf GitHub existiert."
   }
 }

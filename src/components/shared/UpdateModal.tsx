@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Download, RefreshCw, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Download, RefreshCw, CheckCircle, AlertCircle, X, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { logInfo } from '../../hooks/useTauri';
 import { formatFileSize, getErrorMessage } from '../../utils';
+import { ChangelogModal } from './ChangelogModal';
 
 type UpdateState = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
 
@@ -20,6 +21,7 @@ export function UpdateModal() {
   const [progress, setProgress] = useState<DownloadProgress>({ downloaded: 0, total: null });
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
   const hasCheckedRef = useRef(false);
 
   const checkForUpdate = useCallback(async () => {
@@ -42,7 +44,7 @@ export function UpdateModal() {
       }
     } catch (err) {
       console.error('Failed to check for updates:', err);
-      // Silently fail - don't show error modal for update check failures
+      // Update check failures are non-critical - user can continue using current version
       setState('idle');
     }
   }, []);
@@ -106,7 +108,7 @@ export function UpdateModal() {
     }
   };
 
-  /** Format bytes with precision for download progress */
+  /** Format file size in human-readable format with decimal precision for small values */
   const formatBytes = (bytes: number): string => formatFileSize(bytes, '0 B', true);
 
   const getProgressPercentage = (): number => {
@@ -114,18 +116,19 @@ export function UpdateModal() {
     return Math.round((progress.downloaded / progress.total) * 100);
   };
 
-  // Don't show anything if no update or dismissed
+  // Hide modal when no update is available or user has dismissed it
   if (state === 'idle' || state === 'checking' || dismissed) return null;
 
   return (
-    <div className="update-modal-overlay">
-      <div className="update-modal">
-        {/* Close button for available state */}
-        {state === 'available' && (
-          <button className="update-modal-close" onClick={handleLater} aria-label="Close">
-            <X size={18} />
-          </button>
-        )}
+    <>
+      <div className="update-modal-overlay">
+        <div className="update-modal">
+          {/* Close button for available state */}
+          {state === 'available' && (
+            <button className="update-modal-close" onClick={handleLater} aria-label="Close">
+              <X size={18} />
+            </button>
+          )}
 
         {/* Icon */}
         <div className={`update-modal-icon ${state === 'ready' ? 'success' : ''} ${state === 'error' ? 'error' : ''}`}>
@@ -148,11 +151,20 @@ export function UpdateModal() {
 
         {/* Message / Content */}
         {state === 'available' && update && (
-          <div className="update-version-info">
-            <span className="update-version-current">{update.currentVersion}</span>
-            <span className="update-version-arrow">→</span>
-            <span className="update-version-new">{update.version}</span>
-          </div>
+          <>
+            <div className="update-version-info">
+              <span className="update-version-current">{update.currentVersion}</span>
+              <span className="update-version-arrow">→</span>
+              <span className="update-version-new">{update.version}</span>
+            </div>
+            <button
+              className="update-changelog-link"
+              onClick={() => setShowChangelog(true)}
+            >
+              <FileText size={14} />
+              {t('update.viewChangelog', "What's New")}
+            </button>
+          </>
         )}
 
         {state === 'downloading' && (
@@ -227,6 +239,16 @@ export function UpdateModal() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+
+      {/* Changelog Modal */}
+      {update && (
+        <ChangelogModal
+          isOpen={showChangelog}
+          onClose={() => setShowChangelog(false)}
+          version={update.version}
+        />
+      )}
+    </>
   );
 }
