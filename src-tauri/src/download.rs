@@ -13,7 +13,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::config;
-use crate::decompress::{decompress_with_rust_xz, decompress_with_system_xz};
+use crate::decompress::decompress_with_rust_xz;
 use crate::{log_error, log_info, log_warn};
 
 const MODULE: &str = "download";
@@ -290,23 +290,14 @@ pub async fn download_image(
     // Decompress if needed
     if filename.ends_with(".xz") {
         state.is_decompressing.store(true, Ordering::SeqCst);
-        log_info!(MODULE, "Starting decompression...");
+        log_info!(
+            MODULE,
+            "Starting decompression with Rust lzma-rust2 (multi-threaded)..."
+        );
 
-        // Try system xz first, fall back to Rust library
-        if let Err(e) = decompress_with_system_xz(&temp_path, &output_path, &state) {
-            // Check if it was cancelled
-            if state.is_cancelled.load(Ordering::SeqCst) {
-                let _ = std::fs::remove_file(&temp_path);
-                return Err("Decompression cancelled".to_string());
-            }
-            log_warn!(
-                MODULE,
-                "System xz failed: {}, falling back to Rust library (slower)",
-                e
-            );
-            decompress_with_rust_xz(&temp_path, &output_path, &state)?;
-            log_info!(MODULE, "Rust fallback decompression complete");
-        }
+        // Use Rust lzma-rust2 library (multi-threaded) on all platforms
+        decompress_with_rust_xz(&temp_path, &output_path, &state)?;
+        log_info!(MODULE, "Decompression complete");
 
         // Clean up temp file
         let _ = std::fs::remove_file(&temp_path);
