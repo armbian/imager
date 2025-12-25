@@ -181,7 +181,11 @@ fn get_disk_info(disk_path: &str) -> Result<BlockDevice, String> {
 
     Ok(BlockDevice {
         path: disk_path.to_string(),
-        name: disk_path.split('/').last().unwrap_or(disk_path).to_string(),
+        name: disk_path
+            .split('/')
+            .next_back()
+            .unwrap_or(disk_path)
+            .to_string(),
         size,
         size_formatted: format_size(size),
         model,

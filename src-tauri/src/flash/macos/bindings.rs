@@ -55,15 +55,9 @@ pub struct AuthorizationEnvironment {
 
 /// External form for passing authorization between processes
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct AuthorizationExternalForm {
     pub bytes: [u8; 32],
-}
-
-impl Default for AuthorizationExternalForm {
-    fn default() -> Self {
-        Self { bytes: [0u8; 32] }
-    }
 }
 
 // Authorization flags
