@@ -420,7 +420,9 @@ export function FlashProgress({
           stage !== 'authorizing' && (
             <div className="progress-container">
               <div
-                className={`progress-bar ${stage === 'decompressing' || stage === 'verifying_sha' ? 'indeterminate' : ''}`}
+                className={`progress-bar ${
+                  stage === 'decompressing' || stage === 'verifying_sha' ? 'indeterminate' : ''
+                }`}
               >
                 <div
                   className="progress-fill"

@@ -251,7 +251,6 @@
 
 .list-item:hover {
   background: var(--bg-hover);
-  transform: translateX(4px);
 }
 
 .list-item:last-child {
