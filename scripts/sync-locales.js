@@ -36,7 +36,7 @@ const LOCALE_CODE_MAP = {
 };
 
 // All supported locale files
-const localeFiles = Object.keys(LOCALE_CODE_MAP);
+const localeFiles = Object.keys(LOCALE_CODE_MAP).map(code => `${code}.json`);
 
 /**
  * Translate text using LibreTranslate
