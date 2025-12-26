@@ -162,10 +162,34 @@ function preservePlaceholders(original, translated) {
 async function translateBatch(texts, targetLang, contexts = []) {
   const results = [];
 
-  // Process in smaller batches to avoid rate limiting
-  // Use batch size of 1 with longer delay to avoid rate limits
-  const batchSize = 1;
-  const batchDelay = 22000; // 22 seconds between requests (free tier: 3 req/min)
+  // Rate limit configuration based on model
+  // Free tier limits (approximate): gpt-4o-mini = 3/min, gpt-4o = 3/min
+  // Paid tier limits (approximate): gpt-4o-mini = 500/min, gpt-4o = 200/min
+  const isPaidTier = process.env.OPENAI_TIER === 'paid';
+
+  let batchSize, batchDelay;
+
+  if (OPENAI_MODEL.includes('gpt-4o-mini')) {
+    batchSize = isPaidTier ? 50 : 1;
+    batchDelay = isPaidTier ? 1000 : 22000;
+  } else if (OPENAI_MODEL.includes('gpt-4o')) {
+    batchSize = isPaidTier ? 20 : 1;
+    batchDelay = isPaidTier ? 1500 : 22000;
+  } else if (OPENAI_MODEL.includes('gpt-3.5')) {
+    batchSize = isPaidTier ? 100 : 1;
+    batchDelay = isPaidTier ? 500 : 22000;
+  } else {
+    // Conservative defaults for unknown models
+    batchSize = 1;
+    batchDelay = 22000;
+  }
+
+  if (isPaidTier) {
+    console.log(`  💰 Using paid tier rate limits (batch: ${batchSize}, delay: ${batchDelay}ms)`);
+  } else {
+    console.log(`  ⭐ Using free tier rate limits (batch: ${batchSize}, delay: ${batchDelay}ms)`);
+    console.log(`  💡 Tip: Add OPENAI_TIER=paid environment variable for faster translations`);
+  }
 
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
@@ -176,7 +200,7 @@ async function translateBatch(texts, targetLang, contexts = []) {
     );
     results.push(...translations);
 
-    // Longer delay between batches to respect API rate limits
+    // Delay between batches to respect API rate limits
     if (i + batchSize < texts.length) {
       console.log(`  ⏳ Progress: ${results.length}/${texts.length} translated...`);
       await new Promise(resolve => setTimeout(resolve, batchDelay));

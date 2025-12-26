@@ -12,7 +12,7 @@ Automatically syncs all translation files with `src/locales/en.json` (the source
 - **AI Translation**: Uses OpenAI API to automatically translate new keys with high quality
 - **Context-Aware**: Provides section/key context to the AI for better translations
 - **Placeholder Preservation**: Maintains i18next placeholders like `{{count}}` and `{{boardName}}`
-- **Batch Processing**: Translates in batches of 10 with rate limiting (1 second delay)
+- **Adaptive Rate Limiting**: Automatically adjusts based on model and payment tier
 - **Error Handling**: Falls back to `TODO:` prefix if translation fails
 - **Smart Prompts**: Uses specialized prompts for technical UI translation
 
@@ -30,6 +30,9 @@ OPENAI_MODEL=gpt-4o node scripts/sync-locales.js
 
 # With custom OpenAI-compatible API endpoint
 OPENAI_API=https://api.openai.com/v1 node scripts/sync-locales.js
+
+# For paid tier (much faster - 50-100x speedup)
+OPENAI_TIER=paid node scripts/sync-locales.js
 ```
 
 #### GitHub Actions
@@ -48,6 +51,7 @@ The workflow runs automatically:
 | `OPENAI_API_KEY` | OpenAI API key | - | Yes |
 | `OPENAI_MODEL` | Model to use for translation | `gpt-4o-mini` | No |
 | `OPENAI_API` | API endpoint URL | `https://api.openai.com/v1` | No |
+| `OPENAI_TIER` | Account tier for rate limits | `free` | No |
 
 #### GitHub Secrets/Variables
 
@@ -68,6 +72,11 @@ To configure the GitHub Action:
    gh variable set OPENAI_API --value "https://api.openai.com/v1"
    ```
 
+4. **Optional - Set account tier** (for faster translations with paid account):
+   ```bash
+   gh variable set OPENAI_TIER --value "paid"
+   ```
+
 ### OpenAI Setup
 
 #### Getting an API Key
@@ -77,6 +86,21 @@ To configure the GitHub Action:
 3. Navigate to API Keys section
 4. Create a new API key
 5. Add it to your environment or GitHub secrets
+
+#### Account Tier & Rate Limits
+
+The script automatically adjusts speed based on your account tier:
+
+| Tier | RPM Limit | Batch Size | Delay | 100 Keys Time |
+|------|-----------|------------|-------|---------------|
+| **Free** | 3/min | 1 | 22s | ~37 min |
+| **Paid** | 500/min | 50 | 1s | ~2 min |
+
+To use paid tier rates:
+1. Add a payment method to your OpenAI account
+2. Set `OPENAI_TIER=paid` environment variable
+
+**Recommendation**: Add a payment method even for small projects - the rate limit increase is worth it.
 
 #### Choosing a Model
 
