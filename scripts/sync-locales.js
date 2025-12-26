@@ -33,6 +33,8 @@ const LANGUAGE_NAMES = {
   'sl': 'Slovenian',
   'tr': 'Turkish',
   'uk': 'Ukrainian',
+  'hr': 'Croatian',
+  'sv': 'Swedish',
   'zh': 'Chinese (Simplified)'
 };
 
