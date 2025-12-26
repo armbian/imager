@@ -16,7 +16,6 @@
     "boardCount_one": "{{count}} kort",
     "boardCount_other": "{{count}} kort"
   },
-
   "flash": {
     "downloading": "Laddar ner image...",
     "verifyingSha": "Verifierar nedladdningens integritet...",
@@ -38,7 +37,6 @@
     "successHint": "Ditt SD-kort är klart! Du kan säkert ta bort enheten och sätta in den i din {{boardName}}.",
     "successHintCustom": "Ditt SD-kort är klart! Du kan säkert ta bort enheten."
   },
-
   "modal": {
     "selectManufacturer": "Välj tillverkare",
     "selectBoard": "Välj kort",
@@ -61,7 +59,6 @@
     "insertDevice": "Sätt i ett SD-kort eller USB-minne",
     "refreshDevices": "Uppdatera enheter"
   },
-
   "device": {
     "system": "System",
     "sdCard": "SD-kort",
@@ -69,9 +66,10 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Uppdatera"
+    "refresh": "Uppdatera",
+    "showSystemDevices": "Visa systemenheter",
+    "hideSystemDevices": "Dölj systemenheter"
   },
-
   "header": {
     "stepManufacturer": "Tillverkare",
     "stepBoard": "Kort",
@@ -81,7 +79,6 @@
     "resetTooltip": "Börja om",
     "stepTooltip": "Ändra {{step}}"
   },
-
   "errorDisplay": {
     "retry": "Försök igen",
     "uploadLogs": "Ladda upp loggar",
@@ -91,7 +88,6 @@
     "viewLogs": "Visa loggar",
     "scanQrOrShare": "Skanna QR-koden eller dela denna länk:"
   },
-
   "error": {
     "downloadFailed": "Nedladdning misslyckades",
     "flashFailed": "Flashning misslyckades",
@@ -101,15 +97,13 @@
     "uploadFailed": "Uppladdning misslyckades",
     "deviceDisconnected": "Enheten kopplades bort"
   },
-
   "custom": {
     "customImage": "Egen image"
   },
-
   "common": {
-    "unknown": "Okänd"
+    "unknown": "Okänd",
+    "confirm": "Bekräfta"
   },
-
   "update": {
     "title": "Uppdatering tillgänglig",
     "newVersionAvailable": "Ny version {{version}} tillgänglig",
@@ -123,6 +117,13 @@
     "cancel": "Avbryt",
     "retry": "Försök igen",
     "readyMessage": "Uppdateringen har laddats ner. Starta om programmet för att slutföra installationen.",
-    "errorMessage": "Det gick inte att ladda ner uppdateringen. Försök igen senare."
+    "errorMessage": "Det gick inte att ladda ner uppdateringen. Försök igen senare.",
+    "changelogTitle": "Vad är nytt",
+    "viewChangelog": "Vad är nytt",
+    "loadingChangelog": "Laddar ändringslogg...",
+    "noChangelog": "Ingen changelog tillgänglig",
+    "viewOnGitHub": "Visa på GitHub",
+    "contributors": "Bidragsgivare",
+    "changelogErrorHint": "Se till att du har en internetanslutning och att versionen finns på GitHub."
   }
 }
