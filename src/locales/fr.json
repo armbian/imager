@@ -54,7 +54,8 @@
     "minimal": "Minimale",
     "allImages": "Toutes les images",
     "insertDevice": "Insérez une carte SD ou une clé USB",
-    "refreshDevices": "Actualiser les périphériques"
+    "refreshDevices": "Actualiser les périphériques",
+    "loading": "Chargement..."
   },
   "device": {
     "system": "Système",

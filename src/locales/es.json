@@ -54,7 +54,8 @@
     "minimal": "Mínima",
     "allImages": "Todas las imágenes",
     "insertDevice": "Inserte una tarjeta SD o unidad USB",
-    "refreshDevices": "Actualizar dispositivos"
+    "refreshDevices": "Actualizar dispositivos",
+    "loading": "Cargando..."
   },
   "device": {
     "system": "Sistema",

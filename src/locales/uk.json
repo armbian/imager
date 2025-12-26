@@ -54,7 +54,8 @@
     "minimal": "Мінімальна",
     "allImages": "Усі образи",
     "insertDevice": "Вставте SD-картку або USB-накопичувач",
-    "refreshDevices": "Оновити пристрої"
+    "refreshDevices": "Оновити пристрої",
+    "loading": "Завантаження..."
   },
   "device": {
     "system": "Системний",

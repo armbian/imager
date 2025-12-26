@@ -54,7 +54,8 @@
     "minimal": "Minimalna",
     "allImages": "Vse slike",
     "insertDevice": "Vstavite SD kartico ali USB pogon",
-    "refreshDevices": "Osveži naprave"
+    "refreshDevices": "Osveži naprave",
+    "loading": "Nalaganje..."
   },
   "device": {
     "system": "Sistemska",

@@ -53,9 +53,9 @@
     "apps": "Aplikacije",
     "minimal": "Minimalno",
     "allImages": "Sve slike",
-    "scanningDevices": "Pretraživanje uređaja...",
     "insertDevice": "Umetnite SD karticu ili USB uređaj",
-    "refreshDevices": "Osvježi uređaje"
+    "refreshDevices": "Osvježi uređaje",
+    "loading": "Učitavanje..."
   },
   "device": {
     "system": "Sustav",

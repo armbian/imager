@@ -54,7 +54,8 @@
     "minimal": "Minimaal",
     "allImages": "Alle images",
     "insertDevice": "Plaats een SD-kaart of USB-stick",
-    "refreshDevices": "Apparaten vernieuwen"
+    "refreshDevices": "Apparaten vernieuwen",
+    "loading": "Laden..."
   },
   "device": {
     "system": "Systeem",

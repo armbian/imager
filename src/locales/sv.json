@@ -10,7 +10,6 @@
     "chooseStorage": "VÄLJ LAGRING",
     "useCustomImage": "Använd egen image",
     "changeCustomImage": "Ändra egen image",
-    "images": "images",
     "imageCount_one": "{{count}} image",
     "imageCount_other": "{{count}} images",
     "boardCount_one": "{{count}} kort",
@@ -55,7 +54,6 @@
     "apps": "Appar",
     "minimal": "Minimal",
     "allImages": "Alla images",
-    "scanningDevices": "Söker efter enheter...",
     "insertDevice": "Sätt i ett SD-kort eller USB-minne",
     "refreshDevices": "Uppdatera enheter"
   },
@@ -106,8 +104,6 @@
   },
   "update": {
     "title": "Uppdatering tillgänglig",
-    "newVersionAvailable": "Ny version {{version}} tillgänglig",
-    "download": "Ladda ner",
     "later": "Senare",
     "downloading": "Laddar ner uppdatering...",
     "ready": "Uppdatering klar",

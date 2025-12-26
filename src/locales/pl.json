@@ -54,7 +54,8 @@
     "minimal": "Minimalna",
     "allImages": "Wszystkie obrazy",
     "insertDevice": "Włóż kartę SD lub pendrive USB",
-    "refreshDevices": "Odśwież urządzenia"
+    "refreshDevices": "Odśwież urządzenia",
+    "loading": "Ładowanie..."
   },
   "device": {
     "system": "System",
