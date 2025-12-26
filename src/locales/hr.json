@@ -65,7 +65,7 @@
     "sas": "SAS",
     "nvme": "NVMe",
     "refresh": "Osvježi",
-    "showSystemDevices": "Prikaži sustavne diskove",
+    "showSystemDevices": "Prikaži sustavne uređaje",
     "hideSystemDevices": "Sakrij sustavne uređaje"
   },
   "header": {
