@@ -163,7 +163,10 @@ async function translateBatch(texts, targetLang, contexts = []) {
   const results = [];
 
   // Process in smaller batches to avoid rate limiting
-  const batchSize = 10;
+  // Use batch size of 1 with longer delay to avoid rate limits
+  const batchSize = 1;
+  const batchDelay = 22000; // 22 seconds between requests (free tier: 3 req/min)
+
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
     const batchContexts = contexts.slice(i, i + batchSize);
@@ -173,9 +176,10 @@ async function translateBatch(texts, targetLang, contexts = []) {
     );
     results.push(...translations);
 
-    // Small delay between batches to be respectful to the API
+    // Longer delay between batches to respect API rate limits
     if (i + batchSize < texts.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log(`  ⏳ Progress: ${results.length}/${texts.length} translated...`);
+      await new Promise(resolve => setTimeout(resolve, batchDelay));
     }
   }
 
