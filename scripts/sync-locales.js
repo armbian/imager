@@ -251,6 +251,30 @@ function collectMissingTranslations(source, target, path = '', missing = []) {
 }
 
 /**
+ * Collect all translations marked with TODO: for retry
+ */
+function collectFailedTranslations(source, target, path = '', failed = []) {
+  for (const [key, sourceValue] of Object.entries(source)) {
+    const fullKey = path ? `${path}.${key}` : key;
+
+    if (key in target) {
+      const targetValue = target[key];
+
+      if (typeof sourceValue === 'object' && sourceValue !== null && !Array.isArray(sourceValue)) {
+        // Recurse into nested objects
+        collectFailedTranslations(sourceValue, targetValue, fullKey, failed);
+      } else if (typeof targetValue === 'string' && targetValue.startsWith('TODO:')) {
+        // Found a failed translation
+        const context = `Section: ${path}, Key: ${key} (retry)`;
+        // Extract the original English value from source
+        failed.push({ path: fullKey, value: sourceValue, context, isRetry: true });
+      }
+    }
+  }
+  return failed;
+}
+
+/**
  * Set a value in a nested object using dot notation
  */
 function setByPath(obj, path, value) {
@@ -290,9 +314,13 @@ const sourceData = JSON.parse(sourceContent);
 const sourceKeys = getKeys(sourceData);
 console.log(`✅ Source file has ${sourceKeys.length} keys\n`);
 
+// Check if we should retry failed translations
+const retryFailed = process.env.RETRY_FAILED === 'true';
+
 let hasAnyChanges = false;
 let totalTranslated = 0;
 let totalFailed = 0;
+let totalRetried = 0;
 
 // Process each locale file
 for (const localeFile of localeFiles) {
@@ -306,8 +334,17 @@ for (const localeFile of localeFiles) {
   const localeData = JSON.parse(localeContent);
   const localeKeys = getKeys(localeData);
 
-  // Find missing keys
+  // Find missing keys and keys marked with TODO:
   const missingTranslations = collectMissingTranslations(sourceData, localeData);
+
+  // Also collect failed translations if retry is enabled
+  if (retryFailed) {
+    const failedTranslations = collectFailedTranslations(sourceData, localeData);
+    missingTranslations.push(...failedTranslations);
+    if (failedTranslations.length > 0) {
+      console.log(`  🔄 Retrying ${failedTranslations.length} failed translations`);
+    }
+  }
 
   if (missingTranslations.length === 0) {
     console.log(`  ✅ ${localeName} is up to date (${localeKeys.length} keys)\n`);
@@ -323,10 +360,12 @@ for (const localeFile of localeFiles) {
 
   const translatedTexts = await translateBatch(textsToTranslate, localeName, contexts);
 
-  // Count successes and failures
+  // Count successes, failures, and retries
+  const retryCount = missingTranslations.filter(t => t.isRetry).length;
   const failedCount = translatedTexts.filter(t => t.startsWith('TODO:')).length;
   totalTranslated += translatedTexts.length - failedCount;
   totalFailed += failedCount;
+  totalRetried += retryCount;
 
   // Create updated locale data
   const updatedLocaleData = deepClone(localeData);
@@ -351,8 +390,12 @@ if (hasAnyChanges) {
   console.log('✨ Translation files updated successfully!');
   console.log('\n📊 Summary:');
   console.log(`  - Total translated: ${totalTranslated} keys`);
+  if (totalRetried > 0) {
+    console.log(`  - Retried: ${totalRetried} previously failed translations`);
+  }
   if (totalFailed > 0) {
     console.log(`  - Total failed: ${totalFailed} keys (marked with TODO:)`);
+    console.log(`  - Run again with RETRY_FAILED=true to retry failed translations`);
   }
   console.log('  - Please review translations for accuracy and context');
 } else {

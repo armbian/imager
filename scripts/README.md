@@ -33,6 +33,9 @@ OPENAI_API=https://api.openai.com/v1 node scripts/sync-locales.js
 
 # For paid tier (much faster - 50-100x speedup)
 OPENAI_TIER=paid node scripts/sync-locales.js
+
+# Retry failed translations (keys marked with TODO:)
+RETRY_FAILED=true node scripts/sync-locales.js
 ```
 
 #### GitHub Actions
@@ -52,6 +55,7 @@ The workflow runs automatically:
 | `OPENAI_MODEL` | Model to use for translation | `gpt-4o-mini` | No |
 | `OPENAI_API` | API endpoint URL | `https://api.openai.com/v1` | No |
 | `OPENAI_TIER` | Account tier for rate limits | `free` | No |
+| `RETRY_FAILED` | Retry keys marked with `TODO:` | `false` | No |
 
 #### GitHub Secrets/Variables
 
@@ -75,6 +79,11 @@ To configure the GitHub Action:
 4. **Optional - Set account tier** (for faster translations with paid account):
    ```bash
    gh variable set OPENAI_TIER --value "paid"
+   ```
+
+5. **Optional - Retry failed translations** (re-attempt keys marked with `TODO:`):
+   ```bash
+   gh variable set RETRY_FAILED --value "true"
    ```
 
 ### OpenAI Setup
