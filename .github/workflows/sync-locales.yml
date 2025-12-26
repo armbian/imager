@@ -1,7 +1,6 @@
 name: Sync Translation Files
 
 on:
-  push:
   workflow_dispatch:
   schedule:
     # Run daily at 00:00 UTC
