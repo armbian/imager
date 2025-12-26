@@ -58,10 +58,6 @@ async function translateText(text, targetLang, context = '') {
     return text;
   }
 
-  // Extract placeholders to preserve them
-  const placeholderRegex = /\{\{([^}]+)\}\}/g;
-  const placeholders = text.match(placeholderRegex) || [];
-
   try {
     const systemPrompt = `You are a professional translator for a software application called "Armbian Imager" - a tool for flashing operating system images to SD cards and USB drives.
 
@@ -331,8 +327,9 @@ if (hasAnyChanges) {
     console.log(`  - Total failed: ${totalFailed} keys (marked with TODO:)`);
   }
   console.log('  - Please review translations for accuracy and context');
-  process.exit(1); // Exit with error to indicate changes were made
 } else {
   console.log('✅ All translation files are up to date!');
-  process.exit(0);
 }
+
+// Always exit successfully - the workflow checks git diff for changes
+process.exit(0);
