@@ -22,6 +22,7 @@ const LOCALE_CODE_MAP = {
   'de': 'de',    // German
   'es': 'es',    // Spanish
   'fr': 'fr',    // French
+  'hr': 'hr',    // Croatian
   'it': 'it',    // Italian
   'ja': 'ja',    // Japanese
   'ko': 'ko',    // Korean
