@@ -54,7 +54,8 @@
     "minimal": "Minimal",
     "allImages": "Alle Images",
     "insertDevice": "SD-Karte oder USB-Stick einstecken",
-    "refreshDevices": "Geräte aktualisieren"
+    "refreshDevices": "Geräte aktualisieren",
+    "loading": "Wird geladen..."
   },
   "device": {
     "system": "System",

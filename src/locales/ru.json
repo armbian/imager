@@ -54,7 +54,8 @@
     "minimal": "Минимальная",
     "allImages": "Все образы",
     "insertDevice": "Вставьте SD-карту или USB-накопитель",
-    "refreshDevices": "Обновить устройства"
+    "refreshDevices": "Обновить устройства",
+    "loading": "Загрузка..."
   },
   "device": {
     "system": "Системный",

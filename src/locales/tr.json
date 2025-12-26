@@ -54,7 +54,8 @@
     "minimal": "Minimal",
     "allImages": "Tüm İmajlar",
     "insertDevice": "Bir SD kart veya USB sürücü takın",
-    "refreshDevices": "Cihazları Yenile"
+    "refreshDevices": "Cihazları Yenile",
+    "loading": "Yükleniyor..."
   },
   "device": {
     "system": "Sistem",

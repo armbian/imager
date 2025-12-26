@@ -54,7 +54,8 @@
     "minimal": "最小化",
     "allImages": "所有镜像",
     "insertDevice": "请插入SD卡或U盘",
-    "refreshDevices": "刷新设备"
+    "refreshDevices": "刷新设备",
+    "loading": "加载中..."
   },
   "device": {
     "system": "系统",

@@ -54,7 +54,8 @@
     "minimal": "최소",
     "allImages": "모든 이미지",
     "insertDevice": "SD 카드 또는 USB 드라이브를 삽입하세요",
-    "refreshDevices": "장치 새로고침"
+    "refreshDevices": "장치 새로고침",
+    "loading": "로드 중..."
   },
   "device": {
     "system": "시스템",
