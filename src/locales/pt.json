@@ -53,7 +53,6 @@
     "apps": "Apps",
     "minimal": "Mínima",
     "allImages": "Todas as imagens",
-    "scanningDevices": "Procurando dispositivos...",
     "insertDevice": "Insira um cartão SD ou pendrive USB",
     "refreshDevices": "Atualizar dispositivos"
   },
@@ -64,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Atualizar"
+    "refresh": "Atualizar",
+    "showSystemDevices": "Mostrar unidades do sistema",
+    "hideSystemDevices": "Ocultar unidades do sistema"
   },
   "header": {
     "stepManufacturer": "Fabricante",
@@ -97,7 +98,8 @@
     "customImage": "Imagem personalizada"
   },
   "common": {
-    "unknown": "Desconhecido"
+    "unknown": "Desconhecido",
+    "confirm": "Confirmar"
   },
   "update": {
     "title": "Atualização disponível",
@@ -110,6 +112,13 @@
     "cancel": "Cancelar",
     "retry": "Tentar novamente",
     "readyMessage": "A atualização foi baixada. Reinicie o aplicativo para concluir a instalação.",
-    "errorMessage": "Não foi possível baixar a atualização. Por favor, tente novamente mais tarde."
+    "errorMessage": "Não foi possível baixar a atualização. Por favor, tente novamente mais tarde.",
+    "changelogTitle": "Novidades",
+    "viewChangelog": "Novidades",
+    "loadingChangelog": "Carregando changelog...",
+    "noChangelog": "Changelog não disponível",
+    "viewOnGitHub": "Ver no GitHub",
+    "contributors": "Colaboradores",
+    "changelogErrorHint": "Certifique-se de ter uma conexão com a internet e que a versão exista no GitHub."
   }
 }

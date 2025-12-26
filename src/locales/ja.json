@@ -53,7 +53,6 @@
     "apps": "アプリ",
     "minimal": "最小構成",
     "allImages": "すべてのイメージ",
-    "scanningDevices": "デバイスをスキャン中...",
     "insertDevice": "SDカードまたはUSBドライブを挿入してください",
     "refreshDevices": "デバイスを更新"
   },
@@ -64,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "更新"
+    "refresh": "更新",
+    "showSystemDevices": "システムドライブを表示",
+    "hideSystemDevices": "システムドライブを非表示"
   },
   "header": {
     "stepManufacturer": "メーカー",
@@ -97,7 +98,8 @@
     "customImage": "カスタムイメージ"
   },
   "common": {
-    "unknown": "不明"
+    "unknown": "不明",
+    "confirm": "確認"
   },
   "update": {
     "title": "アップデートが利用可能",
@@ -110,6 +112,13 @@
     "cancel": "キャンセル",
     "retry": "再試行",
     "readyMessage": "アップデートがダウンロードされました。インストールを完了するにはアプリケーションを再起動してください。",
-    "errorMessage": "アップデートのダウンロードに失敗しました。後でもう一度お試しください。"
+    "errorMessage": "アップデートのダウンロードに失敗しました。後でもう一度お試しください。",
+    "changelogTitle": "新機能",
+    "viewChangelog": "新機能",
+    "loadingChangelog": "変更履歴を読み込んでいます...",
+    "noChangelog": "変更履歴はありません",
+    "viewOnGitHub": "GitHub で見る",
+    "contributors": "貢献者",
+    "changelogErrorHint": "インターネット接続があり、バージョンが GitHub に存在することを確認してください。"
   }
 }

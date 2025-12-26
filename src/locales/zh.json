@@ -53,7 +53,6 @@
     "apps": "应用",
     "minimal": "最小化",
     "allImages": "所有镜像",
-    "scanningDevices": "正在扫描设备...",
     "insertDevice": "请插入SD卡或U盘",
     "refreshDevices": "刷新设备"
   },
@@ -64,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "showSystemDevices": "显示系统驱动器",
+    "hideSystemDevices": "隐藏系统驱动器"
   },
   "header": {
     "stepManufacturer": "制造商",
@@ -97,7 +98,8 @@
     "customImage": "自定义镜像"
   },
   "common": {
-    "unknown": "未知"
+    "unknown": "未知",
+    "confirm": "确认"
   },
   "update": {
     "title": "有可用更新",
@@ -110,6 +112,13 @@
     "cancel": "取消",
     "retry": "重试",
     "readyMessage": "更新已下载完成。请重启应用程序以完成安装。",
-    "errorMessage": "无法下载更新。请稍后再试。"
+    "errorMessage": "无法下载更新。请稍后再试。",
+    "changelogTitle": "新功能",
+    "viewChangelog": "新功能",
+    "loadingChangelog": "正在加载更新日志...",
+    "noChangelog": "没有可用的更新日志",
+    "viewOnGitHub": "在 GitHub 上查看",
+    "contributors": "贡献者",
+    "changelogErrorHint": "请确保您有互联网连接并且该版本在 GitHub 上存在。"
   }
 }

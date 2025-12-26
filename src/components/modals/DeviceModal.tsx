@@ -75,6 +75,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   const [selectedDevice, setSelectedDevice] = useState<BlockDevice | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
+  const [showSystemDevices, setShowSystemDevices] = useState(false);
 
   // Track previous devices for change detection
   const prevDevicesRef = useRef<BlockDevice[] | null>(null);
@@ -91,6 +92,14 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   const devicesReady = useMemo(() => {
     return devices && devices.length > 0;
   }, [devices]);
+
+  // Filter devices based on showSystemDevices toggle
+  const filteredDevices = useMemo(() => {
+    if (showSystemDevices) {
+      return devices;
+    }
+    return devices.filter(d => !d.is_system);
+  }, [devices, showSystemDevices]);
 
   // Show skeleton with minimum delay
   useEffect(() => {
@@ -158,10 +167,28 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
 
   return (
     <>
-      <Modal isOpen={isOpen && !showConfirm} onClose={onClose} title={t('modal.selectDevice')}>
-        <div className="modal-warning-banner">
-          <AlertTriangle size={16} />
-          <span>{t('flash.dataWarning')}</span>
+      <Modal
+        isOpen={isOpen && !showConfirm}
+        onClose={onClose}
+        title={t('modal.selectDevice')}
+      >
+        <div className="device-warning-banner">
+          <div className="device-warning-banner-content">
+            <div className="device-warning-banner-icon">
+              <AlertTriangle size={16} />
+            </div>
+            <div className="device-warning-banner-title">
+              {t('flash.dataWarning')}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowSystemDevices(!showSystemDevices)}
+            className={`system-devices-badge ${showSystemDevices ? 'active' : ''}`}
+          >
+            <Shield size={13} />
+            <span>{showSystemDevices ? t('device.hideSystemDevices') : t('device.showSystemDevices')}</span>
+          </button>
         </div>
 
         {error ? (
@@ -169,7 +196,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
         ) : (
           <>
             {showSkeleton && <ListItemSkeleton count={4} />}
-            {devices.length === 0 && !showSkeleton && (
+            {filteredDevices.length === 0 && !showSkeleton && (
               <div className="no-results">
                 <Usb size={40} />
                 <p>{t('modal.noDevices')}</p>
@@ -183,7 +210,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
               </div>
             )}
             <div className="modal-list no-animations">
-              {!showSkeleton && devices.map((device) => {
+              {!showSkeleton && filteredDevices.map((device) => {
                 const deviceType = getDeviceType(device);
                 const badge = getDeviceBadge(deviceType, t);
                 return (
@@ -217,7 +244,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
                 );
               })}
             </div>
-            {!showSkeleton && devices.length > 0 && (
+            {!showSkeleton && filteredDevices.length > 0 && (
               <div className="modal-refresh-bottom">
                 <button className="btn btn-secondary" onClick={reload} disabled={loading}>
                   <RefreshCw size={14} className={loading ? 'spin' : ''} />

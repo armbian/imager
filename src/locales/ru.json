@@ -53,7 +53,6 @@
     "apps": "Приложения",
     "minimal": "Минимальная",
     "allImages": "Все образы",
-    "scanningDevices": "Поиск устройств...",
     "insertDevice": "Вставьте SD-карту или USB-накопитель",
     "refreshDevices": "Обновить устройства"
   },
@@ -64,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Обновить"
+    "refresh": "Обновить",
+    "showSystemDevices": "Показать системные диски",
+    "hideSystemDevices": "Скрыть системные диски"
   },
   "header": {
     "stepManufacturer": "Производитель",
@@ -97,7 +98,8 @@
     "customImage": "Свой образ"
   },
   "common": {
-    "unknown": "Неизвестно"
+    "unknown": "Неизвестно",
+    "confirm": "Подтвердить"
   },
   "update": {
     "title": "Доступно обновление",
@@ -110,6 +112,13 @@
     "cancel": "Отмена",
     "retry": "Повторить",
     "readyMessage": "Обновление загружено. Перезапустите приложение для завершения установки.",
-    "errorMessage": "Не удалось загрузить обновление. Пожалуйста, попробуйте позже."
+    "errorMessage": "Не удалось загрузить обновление. Пожалуйста, попробуйте позже.",
+    "changelogTitle": "Что нового",
+    "viewChangelog": "Что нового",
+    "loadingChangelog": "Загрузка changelog...",
+    "noChangelog": "Changelog недоступен",
+    "viewOnGitHub": "Посмотреть на GitHub",
+    "contributors": "Участники",
+    "changelogErrorHint": "Убедитесь, что у вас есть подключение к Интернету и версия существует на GitHub."
   }
 }

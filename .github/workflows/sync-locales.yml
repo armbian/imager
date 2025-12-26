@@ -1,0 +1,86 @@
+name: Sync Translation Files
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run daily at 00:00 UTC
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-locales:
+    name: Sync locale files with en.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run sync script with AI translation
+        id: sync
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
+          OPENAI_API: ${{ vars.OPENAI_API || 'https://api.openai.com/v1' }}
+          OPENAI_TIER: ${{ vars.OPENAI_TIER || 'free' }}
+          RETRY_FAILED: ${{ vars.RETRY_FAILED || 'false' }}
+        run: |
+          node scripts/sync-locales.js
+        continue-on-error: true
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet src/locales/; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'i18n: sync and auto-translate locale files'
+          branch: sync/i18n-updates
+          title: 'i18n: Auto-translate and sync locale files'
+          body: |
+            ## Summary
+
+            This PR updates all translation files with missing keys from `en.json` (the source of truth) using AI-powered translation.
+
+            ## What changed
+
+            - New keys have been automatically translated using OpenAI
+            - Placeholders like `{{boardName}}` and `{{count}}` are preserved in translations
+            - Failed translations are marked with `TODO:` prefix
+
+            ## Translation quality
+
+            The AI translations provide a good starting point but may need review for:
+            - Context-specific terminology
+            - UI-specific phrasing
+            - Cultural nuances
+            - Gender agreement in plural forms
+
+            ## Next steps
+
+            Please review the translations and:
+            1. Test them in the application
+            2. Adjust any translations that don't fit the context
+            3. Remove `TODO:` markers from any failed translations
+
+            ---
+          labels: |
+            i18n
+            translation
+            automated
+          draft: false

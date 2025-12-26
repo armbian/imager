@@ -53,7 +53,6 @@
     "apps": "Aplikacije",
     "minimal": "Minimalna",
     "allImages": "Vse slike",
-    "scanningDevices": "Iskanje naprav...",
     "insertDevice": "Vstavite SD kartico ali USB pogon",
     "refreshDevices": "Osveži naprave"
   },
@@ -64,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Osveži"
+    "refresh": "Osveži",
+    "showSystemDevices": "Prikaži sistemske pogone",
+    "hideSystemDevices": "Skrij sistemske pogone"
   },
   "header": {
     "stepManufacturer": "Proizvajalec",
@@ -97,7 +98,8 @@
     "customImage": "Slika po meri"
   },
   "common": {
-    "unknown": "Neznano"
+    "unknown": "Neznano",
+    "confirm": "Potrdi"
   },
   "update": {
     "title": "Na voljo posodobitev",
@@ -110,6 +112,13 @@
     "cancel": "Prekliči",
     "retry": "Poskusi znova",
     "readyMessage": "Posodobitev je prenesena. Znova zaženite aplikacijo za dokončanje namestitve.",
-    "errorMessage": "Posodobitve ni bilo mogoče prenesti. Poskusite pozneje."
+    "errorMessage": "Posodobitve ni bilo mogoče prenesti. Poskusite pozneje.",
+    "changelogTitle": "Kaj je novega",
+    "viewChangelog": "Kaj je novega",
+    "loadingChangelog": "Nalaganje changelog...",
+    "noChangelog": "Changelog ni na voljo",
+    "viewOnGitHub": "Ogled na GitHubu",
+    "contributors": "Avtorji",
+    "changelogErrorHint": "Prepričajte se, da imate internetno povezavo in da različica obstaja na GitHubu."
   }
 }

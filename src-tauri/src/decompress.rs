@@ -1,24 +1,23 @@
 //! Decompression module
 //!
 //! Handles decompressing compressed image files (XZ, GZ, BZ2, ZST)
-//! using system tools or fallback Rust libraries.
+//! using Rust native libraries with multi-threading support.
 
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use bzip2::read::BzDecoder;
 use flate2::read::GzDecoder;
-use liblzma::read::XzDecoder;
+use lzma_rust2::XzReaderMt;
 use zstd::stream::read::Decoder as ZstdDecoder;
 
 use crate::config;
 use crate::download::DownloadState;
-use crate::utils::{find_binary, get_recommended_threads};
-use crate::{log_error, log_info, log_warn};
+use crate::log_info;
+use crate::utils::get_recommended_threads;
 
 const MODULE: &str = "decompress";
 
@@ -28,86 +27,7 @@ pub fn needs_decompression(path: &Path) -> bool {
     matches!(ext.to_lowercase().as_str(), "xz" | "gz" | "bz2" | "zst")
 }
 
-/// Decompress using system xz command (much faster, uses multiple threads)
-pub fn decompress_with_system_xz(
-    input_path: &Path,
-    output_path: &Path,
-    state: &Arc<DownloadState>,
-) -> Result<(), String> {
-    use std::io::Read as IoRead;
-    use std::process::Stdio;
-
-    let xz_path = find_binary("xz").ok_or("xz command not found")?;
-    let threads = get_recommended_threads();
-
-    log_info!(
-        MODULE,
-        "Using system xz at: {} with {} threads",
-        xz_path.display(),
-        threads
-    );
-
-    let mut child = Command::new(&xz_path)
-        .args(["-d", "-k", "-c"]) // decompress, keep original, output to stdout
-        .arg(format!("-T{}", threads))
-        .arg(input_path)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| {
-            log_error!(MODULE, "Failed to spawn xz: {}", e);
-            format!("Failed to spawn xz: {}", e)
-        })?;
-
-    let mut stdout = child.stdout.take().ok_or("Failed to capture xz stdout")?;
-
-    let mut output_file =
-        File::create(output_path).map_err(|e| format!("Failed to create output file: {}", e))?;
-
-    // Read in chunks to allow cancellation checks
-    let mut buffer = vec![0u8; config::download::CHUNK_SIZE];
-    loop {
-        // Check for cancellation
-        if state.is_cancelled.load(Ordering::SeqCst) {
-            log_info!(
-                MODULE,
-                "Decompression cancelled by user, killing xz process"
-            );
-            let _ = child.kill();
-            let _ = child.wait();
-            drop(output_file);
-            let _ = std::fs::remove_file(output_path);
-            return Err("Decompression cancelled".to_string());
-        }
-
-        let bytes_read = stdout
-            .read(&mut buffer)
-            .map_err(|e| format!("Failed to read from xz: {}", e))?;
-
-        if bytes_read == 0 {
-            break;
-        }
-
-        output_file
-            .write_all(&buffer[..bytes_read])
-            .map_err(|e| format!("Failed to write decompressed data: {}", e))?;
-    }
-
-    let status = child
-        .wait()
-        .map_err(|e| format!("Failed to wait for xz: {}", e))?;
-
-    if status.success() {
-        log_info!(MODULE, "System xz decompression complete");
-        Ok(())
-    } else {
-        let _ = std::fs::remove_file(output_path);
-        log_error!(MODULE, "xz decompression failed");
-        Err("xz decompression failed".to_string())
-    }
-}
-
-/// Decompress using Rust xz2 library (slower, single-threaded fallback)
+/// Decompress using Rust lzma-rust2 library (multi-threaded)
 pub fn decompress_with_rust_xz(
     input_path: &Path,
     output_path: &Path,
@@ -115,12 +35,22 @@ pub fn decompress_with_rust_xz(
 ) -> Result<(), String> {
     let input_file =
         File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
-    let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
-    let decoder = XzDecoder::new(buf_reader);
-    decompress_with_reader(decoder, output_path, state, "xz")
+    let threads = get_recommended_threads();
+
+    log_info!(
+        MODULE,
+        "Using Rust lzma-rust2 with {} threads for XZ decompression",
+        threads
+    );
+
+    // XzReaderMt requires Seek + Read, so we pass the file directly
+    let decoder = XzReaderMt::new(input_file, false, threads as u32)
+        .map_err(|e| format!("Failed to create XZ decoder: {}", e))?;
+
+    decompress_with_reader_mt(decoder, output_path, state, "xz")
 }
 
-/// Decompress gzip files using flate2
+/// Decompress gzip files using flate2 (single-threaded - TODO: add pigz system tool support)
 pub fn decompress_with_gz(
     input_path: &Path,
     output_path: &Path,
@@ -130,10 +60,10 @@ pub fn decompress_with_gz(
         File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
     let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
     let decoder = GzDecoder::new(buf_reader);
-    decompress_with_reader(decoder, output_path, state, "gz")
+    decompress_with_reader_mt(decoder, output_path, state, "gz")
 }
 
-/// Decompress bzip2 files
+/// Decompress bzip2 files using bzip2 (single-threaded - TODO: add parallel support)
 pub fn decompress_with_bz2(
     input_path: &Path,
     output_path: &Path,
@@ -143,10 +73,10 @@ pub fn decompress_with_bz2(
         File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
     let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
     let decoder = BzDecoder::new(buf_reader);
-    decompress_with_reader(decoder, output_path, state, "bz2")
+    decompress_with_reader_mt(decoder, output_path, state, "bz2")
 }
 
-/// Decompress zstd files
+/// Decompress zstd files (single-threaded - zstd doesn't have good multithreaded Rust support yet)
 pub fn decompress_with_zstd(
     input_path: &Path,
     output_path: &Path,
@@ -157,11 +87,11 @@ pub fn decompress_with_zstd(
     let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
     let decoder = ZstdDecoder::new(buf_reader)
         .map_err(|e| format!("Failed to create zstd decoder: {}", e))?;
-    decompress_with_reader(decoder, output_path, state, "zstd")
+    decompress_with_reader_mt(decoder, output_path, state, "zstd")
 }
 
-/// Generic decompression using any Read implementation
-fn decompress_with_reader<R: Read>(
+/// Generic decompression using any Read implementation (mut reference for multithreaded decoders)
+fn decompress_with_reader_mt<R: Read>(
     mut decoder: R,
     output_path: &Path,
     state: &Arc<DownloadState>,
@@ -251,21 +181,12 @@ pub fn decompress_local_file(
 
     // Handle different compression formats
     let result = if filename.ends_with(".xz") {
-        // Try system xz first (faster, multi-threaded), fall back to Rust library
-        log_info!(MODULE, "Decompressing XZ format");
-        if let Err(e) = decompress_with_system_xz(input_path, &output_path, state) {
-            if state.is_cancelled.load(Ordering::SeqCst) {
-                return Err("Decompression cancelled".to_string());
-            }
-            log_warn!(
-                MODULE,
-                "System xz failed: {}, falling back to Rust library (slower)",
-                e
-            );
-            decompress_with_rust_xz(input_path, &output_path, state)
-        } else {
-            Ok(())
-        }
+        // Use Rust lzma-rust2 library (multi-threaded) on all platforms
+        log_info!(
+            MODULE,
+            "Decompressing XZ format with Rust lzma-rust2 (multi-threaded)"
+        );
+        decompress_with_rust_xz(input_path, &output_path, state)
     } else if filename.ends_with(".gz") {
         log_info!(MODULE, "Decompressing GZ format");
         decompress_with_gz(input_path, &output_path, state)

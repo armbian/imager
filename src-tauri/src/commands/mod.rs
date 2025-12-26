@@ -9,6 +9,7 @@ pub mod progress;
 pub mod scraping;
 mod state;
 pub mod system;
+pub mod update;
 
 // Re-export state for use in main.rs
 pub use state::AppState;

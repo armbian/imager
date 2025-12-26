@@ -1,0 +1,128 @@
+{
+  "home": {
+    "manufacturer": "Tillverkare",
+    "board": "Kort",
+    "operatingSystem": "Operativsystem",
+    "storage": "Lagring",
+    "chooseBrand": "VÄLJ TILLVERKARE",
+    "chooseBoard": "VÄLJ KORT",
+    "chooseOs": "VÄLJ OPERATIVSYSTEM",
+    "chooseStorage": "VÄLJ LAGRING",
+    "useCustomImage": "Använd egen image",
+    "changeCustomImage": "Ändra egen image",
+    "images": "images",
+    "imageCount_one": "{{count}} image",
+    "imageCount_other": "{{count}} images",
+    "boardCount_one": "{{count}} kort",
+    "boardCount_other": "{{count}} kort"
+  },
+
+  "flash": {
+    "downloading": "Laddar ner image...",
+    "verifyingSha": "Verifierar nedladdningens integritet...",
+    "decompressing": "Packar upp image...",
+    "writing": "Skriver image till enhet...",
+    "verifying": "Verifierar skriven data...",
+    "complete": "Flashning klar!",
+    "failed": "Ett fel inträffade",
+    "cancel": "Avbryt",
+    "retry": "Försök igen",
+    "done": "Klar",
+    "flashAnother": "Flasha en till",
+    "authorizing": "Begär behörighet...",
+    "confirmTitle": "Bekräfta val",
+    "confirmText": "Du är på väg att skriva till:",
+    "confirmWarning": "ALL DATA KOMMER ATT RADERAS PERMANENT",
+    "eraseAndFlash": "Radera & flasha",
+    "dataWarning": "All data på vald enhet kommer att raderas",
+    "successHint": "Ditt SD-kort är klart! Du kan säkert ta bort enheten och sätta in den i din {{boardName}}.",
+    "successHintCustom": "Ditt SD-kort är klart! Du kan säkert ta bort enheten."
+  },
+
+  "modal": {
+    "selectManufacturer": "Välj tillverkare",
+    "selectBoard": "Välj kort",
+    "selectImage": "Välj operativsystem",
+    "selectDevice": "Välj lagringsenhet",
+    "searchManufacturer": "Sök tillverkare...",
+    "searchBoard": "Sök kort...",
+    "noManufacturers": "Inga tillverkare hittades",
+    "noBoards": "Inga kort hittades",
+    "noImages": "Inga images hittades",
+    "noDevices": "Inga enheter hittades",
+    "loading": "Laddar...",
+    "promoted": "Rekommenderad",
+    "stable": "Stabil",
+    "nightly": "Nightly",
+    "apps": "Appar",
+    "minimal": "Minimal",
+    "allImages": "Alla images",
+    "scanningDevices": "Söker efter enheter...",
+    "insertDevice": "Sätt i ett SD-kort eller USB-minne",
+    "refreshDevices": "Uppdatera enheter"
+  },
+
+  "device": {
+    "system": "System",
+    "sdCard": "SD-kort",
+    "usb": "USB",
+    "sata": "SATA",
+    "sas": "SAS",
+    "nvme": "NVMe",
+    "refresh": "Uppdatera"
+  },
+
+  "header": {
+    "stepManufacturer": "Tillverkare",
+    "stepBoard": "Kort",
+    "stepOs": "OS",
+    "stepStorage": "Lagring",
+    "stepImage": "Image",
+    "resetTooltip": "Börja om",
+    "stepTooltip": "Ändra {{step}}"
+  },
+
+  "errorDisplay": {
+    "retry": "Försök igen",
+    "uploadLogs": "Ladda upp loggar",
+    "uploading": "Laddar upp...",
+    "uploadingLogs": "Laddar upp loggar...",
+    "uploadLogsForSupport": "Ladda upp loggar för support",
+    "viewLogs": "Visa loggar",
+    "scanQrOrShare": "Skanna QR-koden eller dela denna länk:"
+  },
+
+  "error": {
+    "downloadFailed": "Nedladdning misslyckades",
+    "flashFailed": "Flashning misslyckades",
+    "authFailed": "Behörighet misslyckades",
+    "authCancelled": "Behörighet avbröts av användaren",
+    "decompressionFailed": "Uppackning misslyckades",
+    "uploadFailed": "Uppladdning misslyckades",
+    "deviceDisconnected": "Enheten kopplades bort"
+  },
+
+  "custom": {
+    "customImage": "Egen image"
+  },
+
+  "common": {
+    "unknown": "Okänd"
+  },
+
+  "update": {
+    "title": "Uppdatering tillgänglig",
+    "newVersionAvailable": "Ny version {{version}} tillgänglig",
+    "download": "Ladda ner",
+    "later": "Senare",
+    "downloading": "Laddar ner uppdatering...",
+    "ready": "Uppdatering klar",
+    "error": "Uppdatering misslyckades",
+    "installNow": "Installera nu",
+    "restartNow": "Starta om nu",
+    "cancel": "Avbryt",
+    "retry": "Försök igen",
+    "readyMessage": "Uppdateringen har laddats ner. Starta om programmet för att slutföra installationen.",
+    "errorMessage": "Det gick inte att ladda ner uppdateringen. Försök igen senare."
+  }
+}

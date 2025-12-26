@@ -53,7 +53,6 @@
     "apps": "앱",
     "minimal": "최소",
     "allImages": "모든 이미지",
-    "scanningDevices": "장치 검색 중...",
     "insertDevice": "SD 카드 또는 USB 드라이브를 삽입하세요",
     "refreshDevices": "장치 새로고침"
   },
@@ -64,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "새로고침"
+    "refresh": "새로고침",
+    "showSystemDevices": "시스템 드라이브 표시",
+    "hideSystemDevices": "시스템 드라이브 숨기기"
   },
   "header": {
     "stepManufacturer": "제조사",
@@ -97,7 +98,8 @@
     "customImage": "사용자 정의 이미지"
   },
   "common": {
-    "unknown": "알 수 없음"
+    "unknown": "알 수 없음",
+    "confirm": "확인"
   },
   "update": {
     "title": "업데이트 가능",
@@ -110,6 +112,13 @@
     "cancel": "취소",
     "retry": "다시 시도",
     "readyMessage": "업데이트가 다운로드되었습니다. 설치를 완료하려면 애플리케이션을 재시작하세요.",
-    "errorMessage": "업데이트를 다운로드하지 못했습니다. 나중에 다시 시도해 주세요."
+    "errorMessage": "업데이트를 다운로드하지 못했습니다. 나중에 다시 시도해 주세요.",
+    "changelogTitle": "새로운 기능",
+    "viewChangelog": "새로운 기능",
+    "loadingChangelog": "변경 로그 불러오는 중...",
+    "noChangelog": "변경 로그를 사용할 수 없음",
+    "viewOnGitHub": "GitHub에서 보기",
+    "contributors": "기여자",
+    "changelogErrorHint": "인터넷 연결이 있고 버전이 GitHub에 있는지 확인하세요."
   }
 }

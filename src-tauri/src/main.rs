@@ -108,6 +108,7 @@ fn main() {
             commands::system::open_url,
             commands::system::get_system_locale,
             commands::system::log_from_frontend,
+            commands::update::get_github_release,
             paste::upload::upload_logs,
         ])
         .setup(|app| {
