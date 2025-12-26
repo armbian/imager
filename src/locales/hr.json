@@ -1,0 +1,125 @@
+{
+  "home": {
+    "manufacturer": "Proizvođač",
+    "board": "Ploča",
+    "operatingSystem": "Operativni sustav",
+    "storage": "Pohrana",
+    "chooseBrand": "ODABERI PROIZVOĐAČA",
+    "chooseBoard": "ODABERI PLOČU",
+    "chooseOs": "ODABERI OS",
+    "chooseStorage": "ODABERI POHRANU",
+    "useCustomImage": "Koristi prilagođenu sliku",
+    "changeCustomImage": "Promijeni prilagođenu sliku",
+    "imageCount_one": "{{count}} slika",
+    "imageCount_other": "{{count}} slika",
+    "boardCount_one": "{{count}} ploča",
+    "boardCount_other": "{{count}} ploča"
+  },
+
+  "flash": {
+    "downloading": "Preuzimanje slike...",
+    "verifyingSha": "Provjera integriteta preuzimanja...",
+    "decompressing": "Raspakiravanje slike...",
+    "writing": "Zapisivanje slike na uređaj...",
+    "verifying": "Provjera zapisanih podataka...",
+    "complete": "Snimanje završeno!",
+    "failed": "Dogodila se greška",
+    "cancel": "Odustani",
+    "retry": "Pokušaj ponovno",
+    "done": "Gotovo",
+    "flashAnother": "Snimi drugu sliku",
+    "authorizing": "Traženje dopuštenja...",
+    "confirmTitle": "Potvrda odabira",
+    "confirmText": "Spremate se zapisati na:",
+    "confirmWarning": "SVI PODACI BIT ĆE TRAJNO IZBRISANI",
+    "eraseAndFlash": "Izbriši i snimi",
+    "dataWarning": "Svi podaci na odabranom uređaju bit će izbrisani",
+    "successHint": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj i umetnuti ga u {{boardName}}.",
+    "successHintCustom": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj."
+  },
+
+  "modal": {
+    "selectManufacturer": "Odaberi proizvođača",
+    "selectBoard": "Odaberi ploču",
+    "selectImage": "Odaberi operativni sustav",
+    "selectDevice": "Odaberi uređaj za pohranu",
+    "searchManufacturer": "Pretraži proizvođače...",
+    "searchBoard": "Pretraži ploče...",
+    "noManufacturers": "Nema pronađenih proizvođača",
+    "noBoards": "Nema pronađenih ploča",
+    "noImages": "Nema pronađenih slika",
+    "noDevices": "Nema pronađenih uređaja",
+    "promoted": "Preporučeno",
+    "stable": "Stabilno",
+    "nightly": "Noćno",
+    "apps": "Aplikacije",
+    "minimal": "Minimalno",
+    "allImages": "Sve slike",
+    "scanningDevices": "Pretraživanje uređaja...",
+    "insertDevice": "Umetnite SD karticu ili USB uređaj",
+    "refreshDevices": "Osvježi uređaje"
+  },
+
+  "device": {
+    "system": "Sustav",
+    "sdCard": "SD kartica",
+    "usb": "USB",
+    "sata": "SATA",
+    "sas": "SAS",
+    "nvme": "NVMe",
+    "refresh": "Osvježi"
+  },
+
+  "header": {
+    "stepManufacturer": "Proizvođač",
+    "stepBoard": "Ploča",
+    "stepOs": "OS",
+    "stepStorage": "Pohrana",
+    "stepImage": "Slika",
+    "resetTooltip": "Počni ispočetka",
+    "stepTooltip": "Promijeni {{step}}"
+  },
+
+  "errorDisplay": {
+    "retry": "Pokušaj ponovno",
+    "uploadLogs": "Pošalji zapise",
+    "uploading": "Slanje...",
+    "uploadingLogs": "Slanje zapisa...",
+    "uploadLogsForSupport": "Pošalji zapise za podršku",
+    "viewLogs": "Pregledaj zapise",
+    "scanQrOrShare": "Skenirajte QR kod ili podijelite ovu poveznicu:"
+  },
+
+  "error": {
+    "downloadFailed": "Preuzimanje neuspješno",
+    "flashFailed": "Snimanje neuspješno",
+    "authFailed": "Autorizacija neuspješna",
+    "authCancelled": "Autorizaciju je otkazao korisnik",
+    "decompressionFailed": "Raspakiravanje neuspješno",
+    "uploadFailed": "Slanje neuspješno",
+    "deviceDisconnected": "Uređaj je isključen"
+  },
+
+  "custom": {
+    "customImage": "Prilagođena slika"
+  },
+
+  "common": {
+    "unknown": "Nepoznato",
+    "confirm": "Potvrda"
+  },
+
+  "update": {
+    "title": "Dostupno ažuriranje",
+    "later": "Kasnije",
+    "downloading": "Preuzimanje ažuriranja...",
+    "ready": "Ažuriranje spremno",
+    "error": "Ažuriranje neuspješno",
+    "installNow": "Instaliraj sada",
+    "restartNow": "Ponovno pokreni",
+    "cancel": "Odustani",
+    "retry": "Pokušaj ponovno",
+    "readyMessage": "Ažuriranje je preuzeto. Ponovno pokrenite aplikaciju za dovršetak instalacije.",
+    "errorMessage": "Preuzimanje ažuriranja nije uspjelo. Pokušajte kasnije."
+  }
+}

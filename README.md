@@ -64,7 +64,7 @@ On first launch, macOS may block the application because it is not signed. If th
 
 ### Supported Languages
 
-English, Italian, German, French, Spanish, Portuguese, Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian
+English, Italian, German, French, Spanish, Portuguese, Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Croatian
 
 ## Development
 
