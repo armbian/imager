@@ -173,26 +173,26 @@ async function translateBatch(texts, targetLang, contexts = []) {
   let batchSize, batchDelay;
 
   if (OPENAI_MODEL.includes('gpt-4o-mini')) {
-    // Free tier: conservative 5 RPM, Paid tier: 200 RPM
+    // Free tier: strict 3 RPM (20s delay), Paid tier: 200 RPM (300ms delay)
     batchSize = isPaidTier ? 50 : 1;
-    batchDelay = isPaidTier ? 300 : 12000; // 300ms = ~200 RPM, 12s = 5 RPM
+    batchDelay = isPaidTier ? 300 : 21000; // 21s = ~3 RPM (safe margin), 300ms = ~200 RPM
   } else if (OPENAI_MODEL.includes('gpt-4o')) {
     batchSize = isPaidTier ? 40 : 1;
-    batchDelay = isPaidTier ? 750 : 12000;
+    batchDelay = isPaidTier ? 750 : 21000;
   } else if (OPENAI_MODEL.includes('gpt-3.5')) {
     batchSize = isPaidTier ? 100 : 1;
-    batchDelay = isPaidTier ? 500 : 12000;
+    batchDelay = isPaidTier ? 500 : 21000;
   } else {
     // Conservative defaults for unknown models
     batchSize = 1;
-    batchDelay = 12000;
+    batchDelay = 21000;
   }
 
   if (isPaidTier) {
     console.log(`  💰 Using paid tier rate limits (batch: ${batchSize}, delay: ${batchDelay}ms)`);
   } else {
-    console.log(`  ⭐ Using free tier rate limits (batch: ${batchSize}, delay: ${batchDelay}ms, ~5 RPM)`);
-    console.log(`  💡 Tip: Add OPENAI_TIER=paid for ~40x faster translations (200 RPM)`);
+    console.log(`  ⭐ Using free tier rate limits (batch: ${batchSize}, delay: ${batchDelay}ms, ~3 RPM)`);
+    console.log(`  💡 Tip: Add OPENAI_TIER=paid for ~65x faster translations (200 RPM)`);
   }
 
   for (let i = 0; i < texts.length; i += batchSize) {

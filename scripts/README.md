@@ -102,15 +102,15 @@ The script automatically adjusts speed based on your account tier:
 
 | Tier | RPM Limit | Batch Size | Delay | 100 Keys Time |
 |------|-----------|------------|-------|---------------|
-| **Free** | 5/min | 1 | 12s | ~20 min |
+| **Free** | 3/min | 1 | 21s | ~35 min |
 | **Paid (Tier 1-2)** | 200/min | 50 | 300ms | ~1 min |
 | **Paid (Tier 3-5)** | 500/min | 50 | 120ms | ~30 sec |
 
 To use paid tier rates:
-1. Add a payment method to your OpenAI account
+1. Add a payment method to your OpenAI account (even $5 works)
 2. Set `OPENAI_TIER=paid` environment variable
 
-**Recommendation**: Even with a small balance ($5), you get Tier 1-2 rates which are 40x faster than free tier.
+**Recommendation**: With just a $5 balance, you get Tier 1-2 rates which are **65x faster** than free tier.
 
 #### Choosing a Model
 
