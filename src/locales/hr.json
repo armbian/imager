@@ -1,0 +1,115 @@
+{
+  "home": {
+    "manufacturer": "Proizvođač",
+    "board": "Ploča",
+    "operatingSystem": "Operativni sustav",
+    "storage": "Pohrana",
+    "chooseBrand": "ODABERI BREND",
+    "chooseBoard": "ODABERI PLOČU",
+    "chooseOs": "ODABERI OS",
+    "chooseStorage": "ODABERI POHRANU",
+    "useCustomImage": "Koristi prilagođenu sliku",
+    "changeCustomImage": "Promijeni prilagođenu sliku",
+    "imageCount_one": "{{count}} slika",
+    "imageCount_other": "{{count}} slika",
+    "boardCount_one": "{{count}} ploča",
+    "boardCount_other": "{{count}} ploča"
+  },
+  "flash": {
+    "downloading": "Preuzimanje slike...",
+    "verifyingSha": "Provjera integriteta preuzimanja...",
+    "decompressing": "Raspakiravanje slike...",
+    "writing": "Pisanje slike na uređaj...",
+    "complete": "Bljesanje završeno!",
+    "failed": "Dogodila se greška",
+    "cancel": "Odustani",
+    "retry": "Pokušaj ponovo",
+    "verifying": "TODO: Verifying written data...",
+    "done": "TODO: Done",
+    "flashAnother": "TODO: Flash Another",
+    "authorizing": "TODO: Requesting authorization...",
+    "confirmTitle": "TODO: Confirm Selection",
+    "confirmText": "TODO: You are about to write to:",
+    "confirmWarning": "TODO: ALL DATA WILL BE PERMANENTLY ERASED",
+    "eraseAndFlash": "TODO: Erase & Flash",
+    "dataWarning": "TODO: All data on selected device will be erased",
+    "successHint": "TODO: Your SD card is ready! You can safely remove the device and insert it into your {{boardName}}.",
+    "successHintCustom": "TODO: Your SD card is ready! You can safely remove the device."
+  },
+  "modal": {
+    "selectManufacturer": "Odaberi proizvođača",
+    "selectBoard": "Odaberi ploču",
+    "searchManufacturer": "Pretraži proizvođače...",
+    "searchBoard": "Pretraži ploče...",
+    "selectImage": "TODO: Select Operating System",
+    "selectDevice": "TODO: Select Storage Device",
+    "noManufacturers": "TODO: No manufacturers found",
+    "noBoards": "TODO: No boards found",
+    "noImages": "TODO: No images found",
+    "noDevices": "TODO: No devices found",
+    "promoted": "TODO: Recommended",
+    "stable": "TODO: Stable",
+    "nightly": "TODO: Nightly",
+    "apps": "TODO: Apps",
+    "minimal": "TODO: Minimal",
+    "allImages": "TODO: All Images",
+    "scanningDevices": "TODO: Scanning devices...",
+    "insertDevice": "TODO: Insert an SD card or USB drive",
+    "refreshDevices": "TODO: Refresh Devices"
+  },
+  "device": {
+    "system": "Sustav",
+    "sdCard": "SD kartica",
+    "usb": "USB",
+    "sata": "TODO: SATA",
+    "sas": "TODO: SAS",
+    "nvme": "TODO: NVMe",
+    "refresh": "TODO: Refresh"
+  },
+  "header": {
+    "stepManufacturer": "TODO: Manufacturer",
+    "stepBoard": "TODO: Board",
+    "stepOs": "TODO: OS",
+    "stepStorage": "TODO: Storage",
+    "stepImage": "TODO: Image",
+    "resetTooltip": "TODO: Start over",
+    "stepTooltip": "TODO: Change {{step}}"
+  },
+  "errorDisplay": {
+    "retry": "TODO: Retry",
+    "uploadLogs": "TODO: Upload Logs",
+    "uploading": "TODO: Uploading...",
+    "uploadingLogs": "TODO: Uploading logs...",
+    "uploadLogsForSupport": "TODO: Upload Logs for Support",
+    "viewLogs": "TODO: View Logs",
+    "scanQrOrShare": "TODO: Scan QR or share this link:"
+  },
+  "error": {
+    "downloadFailed": "TODO: Download failed",
+    "flashFailed": "TODO: Flash failed",
+    "authFailed": "TODO: Authorization failed",
+    "authCancelled": "TODO: Authorization cancelled by user",
+    "decompressionFailed": "TODO: Decompression failed",
+    "uploadFailed": "TODO: Upload failed",
+    "deviceDisconnected": "TODO: Device was disconnected"
+  },
+  "custom": {
+    "customImage": "TODO: Custom Image"
+  },
+  "common": {
+    "unknown": "TODO: Unknown"
+  },
+  "update": {
+    "title": "TODO: Update Available",
+    "later": "TODO: Later",
+    "downloading": "TODO: Downloading Update...",
+    "ready": "TODO: Update Ready",
+    "error": "TODO: Update Failed",
+    "installNow": "TODO: Install Now",
+    "restartNow": "TODO: Restart Now",
+    "cancel": "TODO: Cancel",
+    "retry": "TODO: Retry",
+    "readyMessage": "TODO: The update has been downloaded. Restart the application to complete the installation.",
+    "errorMessage": "TODO: Failed to download the update. Please try again later."
+  }
+}
