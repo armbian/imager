@@ -129,7 +129,6 @@ To use paid tier rates:
 | `de` | German |
 | `es` | Spanish |
 | `fr` | French |
-| `hr` | Croatian |
 | `it` | Italian |
 | `ja` | Japanese |
 | `ko` | Korean |
