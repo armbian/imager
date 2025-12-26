@@ -13,41 +13,39 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const localesDir = path.resolve(__dirname, '../src/locales');
 const sourceFile = path.join(localesDir, 'en.json');
 
-// LibreTranslate configuration
-const LIBRE_TRANSLATE_API = process.env.LIBRE_TRANSLATE_API || 'https://libretranslate.com';
-const LIBRE_TRANSLATE_API_KEY = process.env.LIBRE_TRANSLATE_API_KEY || '';
+// OpenAI configuration
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const OPENAI_API = process.env.OPENAI_API || 'https://api.openai.com/v1';
 
-// Locale code mapping to LibreTranslate language codes
-const LOCALE_CODE_MAP = {
-  'de': 'de',    // German
-  'es': 'es',    // Spanish
-  'fr': 'fr',    // French
-  'hr': 'hr',    // Croatian
-  'it': 'it',    // Italian
-  'ja': 'ja',    // Japanese
-  'ko': 'ko',    // Korean
-  'nl': 'nl',    // Dutch
-  'pl': 'pl',    // Polish
-  'pt': 'pt',    // Portuguese
-  'ru': 'ru',    // Russian
-  'sl': 'sl',    // Slovenian
-  'tr': 'tr',    // Turkish
-  'uk': 'uk',    // Ukrainian
-  'zh': 'zh'     // Chinese
+// Language names for better context in translation
+const LANGUAGE_NAMES = {
+  'de': 'German',
+  'es': 'Spanish',
+  'fr': 'French',
+  'hr': 'Croatian',
+  'it': 'Italian',
+  'ja': 'Japanese',
+  'ko': 'Korean',
+  'nl': 'Dutch',
+  'pl': 'Polish',
+  'pt': 'Portuguese',
+  'ru': 'Russian',
+  'sl': 'Slovenian',
+  'tr': 'Turkish',
+  'uk': 'Ukrainian',
+  'zh': 'Chinese (Simplified)'
 };
 
 // All supported locale files
-const localeFiles = Object.keys(LOCALE_CODE_MAP).map(code => `${code}.json`);
+const localeFiles = Object.keys(LANGUAGE_NAMES).map(code => `${code}.json`);
 
 /**
- * Translate text using LibreTranslate
+ * Translate text using OpenAI API
  */
-async function translateText(text, targetLang) {
-  const sourceLang = 'en';
-  const langCode = LOCALE_CODE_MAP[targetLang];
-
-  if (!langCode) {
-    throw new Error(`Unsupported language code: ${targetLang}`);
+async function translateText(text, targetLang, context = '') {
+  if (!OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not set');
   }
 
   // Don't translate if it's a variable placeholder
@@ -60,38 +58,53 @@ async function translateText(text, targetLang) {
     return text;
   }
 
+  // Extract placeholders to preserve them
+  const placeholderRegex = /\{\{([^}]+)\}\}/g;
+  const placeholders = text.match(placeholderRegex) || [];
+
   try {
-    const body = {
-      q: text,
-      source: sourceLang,
-      target: langCode,
-      format: 'text'
-    };
+    const systemPrompt = `You are a professional translator for a software application called "Armbian Imager" - a tool for flashing operating system images to SD cards and USB drives.
 
-    const headers = {
-      'Content-Type': 'application/json'
-    };
+Translate the given text to ${LANGUAGE_NAMES[targetLang]}.
 
-    // Add API key if provided
-    if (LIBRE_TRANSLATE_API_KEY) {
-      headers['Authorization'] = `Bearer ${LIBRE_TRANSLATE_API_KEY}`;
-    }
+Important rules:
+1. Keep technical terms in English when appropriate (e.g., "SD card", "USB", "Flash", "Board", "Image")
+2. Preserve ALL placeholders exactly as they appear (e.g., {{count}}, {{boardName}}, {{step}})
+3. Use natural, concise UI text appropriate for buttons and labels
+4. Maintain formal but friendly tone
+5. For plural forms (text ending in _one or _other), translate appropriately for the grammatical number
+6. Keep keyboard shortcuts and hotkeys in English
+7. Only return the translated text, no explanations
 
-    const response = await fetch(`${LIBRE_TRANSLATE_API}/translate`, {
+${context ? `Context: ${context}` : ''}`;
+
+    const response = await fetch(`${OPENAI_API}/chat/completions`, {
       method: 'POST',
-      headers,
-      body: JSON.stringify(body)
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.3,
+        max_tokens: 500
+      })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Translation API error: ${response.status} - ${errorText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`OpenAI API error: ${response.status} - ${JSON.stringify(errorData)}`);
     }
 
     const data = await response.json();
+    const translatedText = data.choices[0]?.message?.content || text;
 
-    // Preserve placeholders in the translation
-    return preservePlaceholders(text, data.translatedText);
+    // Ensure placeholders are preserved
+    return preservePlaceholders(text, translatedText);
   } catch (error) {
     console.warn(`    ⚠️  Translation failed for "${text}": ${error.message}`);
     // Return original text with a marker if translation fails
@@ -115,23 +128,31 @@ function preservePlaceholders(original, translated) {
   // Replace placeholders back in translated text
   let result = translated;
   placeholders.forEach(placeholder => {
-    // Try to find if placeholder was translated and replace it back
     const varName = placeholder.match(/\{\{([^}]+)\}\}/)[1];
-    // Common patterns that might appear in translation
+
+    // Look for variations and replace with correct format
     const patterns = [
       `{{${varName}}}`,
       `{{ ${varName} }}`,
       `{${varName}}`,
       `{ ${varName} }`,
       `%{${varName}}`,
-      `%{${varName}}`
+      `%{ ${varName} }`
     ];
 
-    // Look for any variation and replace with correct format
     for (const pattern of patterns) {
       if (result.includes(pattern) && pattern !== placeholder) {
-        result = result.replace(pattern, placeholder);
+        result = result.replaceAll(pattern, placeholder);
         break;
+      }
+    }
+
+    // If placeholder completely missing, add it back
+    if (!result.includes(placeholder)) {
+      // Try to find where it should go (heuristic)
+      const originalWithoutPlaceholder = original.replace(placeholder, '');
+      if (translated.includes(originalWithoutPlaceholder)) {
+        result = result.replace(originalWithoutPlaceholder, original);
       }
     }
   });
@@ -142,21 +163,23 @@ function preservePlaceholders(original, translated) {
 /**
  * Translate multiple texts in batch for better performance
  */
-async function translateBatch(texts, targetLang) {
+async function translateBatch(texts, targetLang, contexts = []) {
   const results = [];
 
   // Process in smaller batches to avoid rate limiting
-  const batchSize = 5;
+  const batchSize = 10;
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
+    const batchContexts = contexts.slice(i, i + batchSize);
+
     const translations = await Promise.all(
-      batch.map(text => translateText(text, targetLang))
+      batch.map((text, idx) => translateText(text, targetLang, batchContexts[idx] || ''))
     );
     results.push(...translations);
 
     // Small delay between batches to be respectful to the API
     if (i + batchSize < texts.length) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
 
@@ -191,7 +214,9 @@ function collectMissingTranslations(source, target, path = '', missing = []) {
       if (typeof sourceValue === 'object' && sourceValue !== null && !Array.isArray(sourceValue)) {
         collectMissingTranslations(sourceValue, {}, fullKey, missing);
       } else {
-        missing.push({ path: fullKey, value: sourceValue });
+        // Provide context for better translations
+        const context = `Section: ${path}, Key: ${key}`;
+        missing.push({ path: fullKey, value: sourceValue, context });
       }
     } else if (typeof sourceValue === 'object' && sourceValue !== null && !Array.isArray(sourceValue)) {
       // Recurse into nested objects
@@ -224,13 +249,16 @@ function deepClone(obj) {
 }
 
 console.log('🔍 Syncing translation files with en.json (source of truth)\n');
-console.log(`🌐 Using LibreTranslate API: ${LIBRE_TRANSLATE_API}`);
+console.log(`🤖 Using OpenAI API: ${OPENAI_API}`);
+console.log(`📦 Model: ${OPENAI_MODEL}`);
 
-if (LIBRE_TRANSLATE_API_KEY) {
-  console.log('✅ API key is configured\n');
-} else {
-  console.log('⚠️  No API key configured - using public endpoint (rate limited)\n');
+if (!OPENAI_API_KEY) {
+  console.error('❌ OPENAI_API_KEY is not set!');
+  console.log('   Set it with: export OPENAI_API_KEY=your-key-here\n');
+  process.exit(1);
 }
+
+console.log('✅ API key is configured\n');
 
 // Read the source English file
 const sourceContent = fs.readFileSync(sourceFile, 'utf-8');
@@ -239,13 +267,15 @@ const sourceKeys = getKeys(sourceData);
 console.log(`✅ Source file has ${sourceKeys.length} keys\n`);
 
 let hasAnyChanges = false;
+let totalTranslated = 0;
+let totalFailed = 0;
 
 // Process each locale file
 for (const localeFile of localeFiles) {
   const localePath = path.join(localesDir, localeFile);
   const localeName = localeFile.replace('.json', '');
 
-  console.log(`📝 Processing ${localeName}...`);
+  console.log(`📝 Processing ${localeName} (${LANGUAGE_NAMES[localeName]})...`);
 
   // Read locale file
   const localeContent = fs.readFileSync(localePath, 'utf-8');
@@ -264,9 +294,15 @@ for (const localeFile of localeFiles) {
 
   // Translate missing keys
   const textsToTranslate = missingTranslations.map(t => t.value);
-  console.log(`  🌐 Translating ${textsToTranslate.length} strings...`);
+  const contexts = missingTranslations.map(t => t.context);
+  console.log(`  🤖 Translating ${textsToTranslate.length} strings with OpenAI...`);
 
-  const translatedTexts = await translateBatch(textsToTranslate, localeName);
+  const translatedTexts = await translateBatch(textsToTranslate, localeName, contexts);
+
+  // Count successes and failures
+  const failedCount = translatedTexts.filter(t => t.startsWith('TODO:')).length;
+  totalTranslated += translatedTexts.length - failedCount;
+  totalFailed += failedCount;
 
   // Create updated locale data
   const updatedLocaleData = deepClone(localeData);
@@ -278,16 +314,23 @@ for (const localeFile of localeFiles) {
 
   // Write updated file
   fs.writeFileSync(localePath, JSON.stringify(updatedLocaleData, null, 2) + '\n');
-  console.log(`  ✅ Updated ${localeName} with ${missingTranslations.length} new keys\n`);
+
+  if (failedCount > 0) {
+    console.log(`  ⚠️  Updated ${localeName}: ${translatedTexts.length - failedCount} translated, ${failedCount} failed\n`);
+  } else {
+    console.log(`  ✅ Updated ${localeName} with ${translatedTexts.length} new keys\n`);
+  }
   hasAnyChanges = true;
 }
 
 if (hasAnyChanges) {
   console.log('✨ Translation files updated successfully!');
-  console.log('\n📋 Summary:');
-  console.log('  - New keys have been automatically translated');
-  console.log('  - Please review translations for accuracy');
-  console.log('  - Some translations may need manual adjustment for context');
+  console.log('\n📊 Summary:');
+  console.log(`  - Total translated: ${totalTranslated} keys`);
+  if (totalFailed > 0) {
+    console.log(`  - Total failed: ${totalFailed} keys (marked with TODO:)`);
+  }
+  console.log('  - Please review translations for accuracy and context');
   process.exit(1); // Exit with error to indicate changes were made
 } else {
   console.log('✅ All translation files are up to date!');

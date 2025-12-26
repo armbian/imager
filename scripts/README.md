@@ -9,30 +9,34 @@ Automatically syncs all translation files with `src/locales/en.json` (the source
 ### Features
 
 - **Automatic Detection**: Finds missing keys in all locale files
-- **AI Translation**: Uses LibreTranslate to automatically translate new keys
+- **AI Translation**: Uses OpenAI API to automatically translate new keys with high quality
+- **Context-Aware**: Provides section/key context to the AI for better translations
 - **Placeholder Preservation**: Maintains i18next placeholders like `{{count}}` and `{{boardName}}`
-- **Batch Processing**: Translates in batches with rate limiting to be respectful to the API
+- **Batch Processing**: Translates in batches of 10 with rate limiting (1 second delay)
 - **Error Handling**: Falls back to `TODO:` prefix if translation fails
+- **Smart Prompts**: Uses specialized prompts for technical UI translation
 
 ### Usage
 
 #### Local Development
 
 ```bash
-# Basic usage (uses public LibreTranslate endpoint - rate limited)
+# Basic usage (requires OpenAI API key)
+export OPENAI_API_KEY=sk-...
 node scripts/sync-locales.js
 
-# With custom LibreTranslate instance
-LIBRE_TRANSLATE_API=https://your-instance.com node scripts/sync-locales.js
+# With custom model (default: gpt-4o-mini)
+OPENAI_MODEL=gpt-4o node scripts/sync-locales.js
 
-# With API key (for higher rate limits)
-LIBRE_TRANSLATE_API_KEY=your-api-key node scripts/sync-locales.js
+# With custom OpenAI-compatible API endpoint
+OPENAI_API=https://api.openai.com/v1 node scripts/sync-locales.js
 ```
 
 #### GitHub Actions
 
 The workflow runs automatically:
 - **Daily** at 00:00 UTC
+- **On push** to the branch
 - **On manual trigger** via workflow_dispatch
 
 ### Configuration
@@ -41,48 +45,48 @@ The workflow runs automatically:
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `LIBRE_TRANSLATE_API` | LibreTranslate API endpoint | `https://libretranslate.com` | No |
-| `LIBRE_TRANSLATE_API_KEY` | API key for authenticated requests | - | No |
+| `OPENAI_API_KEY` | OpenAI API key | - | Yes |
+| `OPENAI_MODEL` | Model to use for translation | `gpt-4o-mini` | No |
+| `OPENAI_API` | API endpoint URL | `https://api.openai.com/v1` | No |
 
 #### GitHub Secrets/Variables
 
 To configure the GitHub Action:
 
-1. **Optional - Add API key** (recommended for higher rate limits):
+1. **Required - Add API key**:
    ```bash
-   gh secret set LIBRE_TRANSLATE_API_KEY
+   gh secret set OPENAI_API_KEY
    ```
 
-2. **Optional - Custom endpoint**:
+2. **Optional - Custom model** (for cost/quality tuning):
    ```bash
-   gh variable set LIBRE_TRANSLATE_API --value "https://your-instance.com"
+   gh variable set OPENAI_MODEL --value "gpt-4o-mini"
    ```
 
-### LibreTranslate Setup
+3. **Optional - Custom endpoint** (for OpenAI-compatible APIs):
+   ```bash
+   gh variable set OPENAI_API --value "https://api.openai.com/v1"
+   ```
 
-#### Option 1: Use Public Endpoint
+### OpenAI Setup
 
-The script works out-of-the-box using `https://libretranslate.com` with rate limitations.
+#### Getting an API Key
 
-#### Option 2: Get an API Key
+1. Visit [platform.openai.com](https://platform.openai.com/)
+2. Sign up or log in
+3. Navigate to API Keys section
+4. Create a new API key
+5. Add it to your environment or GitHub secrets
 
-1. Visit [LibreTranslate Cloud](https://libretranslate.com/)
-2. Sign up for an account
-3. Generate an API key
-4. Add it to your GitHub secrets or use locally
+#### Choosing a Model
 
-#### Option 3: Self-Hosted Instance
+| Model | Cost | Quality | Speed | Best For |
+|-------|------|---------|-------|----------|
+| `gpt-4o-mini` | Low | High | Fast | Most translations (default) |
+| `gpt-4o` | Medium | Very High | Fast | Complex UI text |
+| `gpt-3.5-turbo` | Very Low | Medium | Very Fast | Simple translations |
 
-Deploy your own LibreTranslate instance for better performance and privacy:
-
-```bash
-docker run -ti --rm -p 5000:5000 libretranslate/libretranslate
-```
-
-Then configure:
-```bash
-export LIBRE_TRANSLATE_API=http://localhost:5000
-```
+**Recommendation**: Start with `gpt-4o-mini` for the best balance of cost, quality, and speed.
 
 ### Supported Languages
 
@@ -91,6 +95,7 @@ export LIBRE_TRANSLATE_API=http://localhost:5000
 | `de` | German |
 | `es` | Spanish |
 | `fr` | French |
+| `hr` | Croatian |
 | `it` | Italian |
 | `ja` | Japanese |
 | `ko` | Korean |
@@ -101,71 +106,106 @@ export LIBRE_TRANSLATE_API=http://localhost:5000
 | `sl` | Slovenian |
 | `tr` | Turkish |
 | `uk` | Ukrainian |
-| `zh` | Chinese |
+| `zh` | Chinese (Simplified) |
 
 ### Output
 
 The script will:
 1. ✅ Show which keys are missing for each language
-2. 🌐 Translate missing keys automatically
-3. ⚠️  Warn about any translation failures
-4. 💾 Update locale files with translated content
-5. 🔍 Exit with code 1 if changes were made (useful for CI/CD)
+2. 🤖 Translate missing keys with OpenAI
+3. 📊 Show translation statistics (success/failure)
+4. ⚠️  Warn about any translation failures
+5. 💾 Update locale files with translated content
+6. 🔍 Exit with code 1 if changes were made (useful for CI/CD)
 
 ### Example Output
 
 ```
 🔍 Syncing translation files with en.json (source of truth)
 
-🌐 Using LibreTranslate API: https://libretranslate.com
+🤖 Using OpenAI API: https://api.openai.com/v1
+📦 Model: gpt-4o-mini
 ✅ API key is configured
 
-✅ Source file has 245 keys
+✅ Source file has 93 keys
 
-📝 Processing de...
-  ⚠️  Found 3 missing keys
-  🌐 Translating 3 strings...
-  ✅ Updated de with 3 new keys
+📝 Processing de (German)...
+  ✅ de is up to date (93 keys)
 
-📝 Processing es...
-  ✅ es is up to date (245 keys)
-
-...
+📝 Processing hr (Croatian)...
+  ⚠️  Found 64 missing keys
+  🤖 Translating 64 strings with OpenAI...
+  ✅ Updated hr with 64 new keys
 
 ✨ Translation files updated successfully!
 
-📋 Summary:
-  - New keys have been automatically translated
-  - Please review translations for accuracy
-  - Some translations may need manual adjustment for context
+📊 Summary:
+  - Total translated: 64 keys
+  - Please review translations for accuracy and context
 ```
+
+### AI Translation Features
+
+The script uses specialized prompts to ensure:
+
+1. **Context Awareness**: Provides section/key context for each translation
+2. **Technical Terminology**: Knows when to keep terms like "Flash", "SD card", "USB" in English
+3. **Placeholder Preservation**: Maintains `{{variables}}` exactly as they appear
+4. **UI Appropriateness**: Uses concise, natural text for buttons and labels
+5. **Plural Forms**: Handles i18next plural suffixes (_one, _other) correctly
+6. **Consistent Tone**: Maintains formal but friendly tone throughout
 
 ### Best Practices
 
-1. **Review Translations**: AI translations are good starting points but may need context-specific adjustments
+1. **Review Translations**: AI translations are excellent but may need context-specific adjustments
 2. **Test in App**: Always test translations in the actual application
 3. **Handle Plurals**: The script preserves `_one` and `_other` suffixes for plural forms
 4. **Check Placeholders**: Verify that `{{variables}}` are correctly preserved
 5. **Cultural Nuances**: Review translations for cultural appropriateness
+6. **Cost Management**: Use `gpt-4o-mini` for best cost/quality balance
 
 ### Troubleshooting
 
-#### Rate Limiting
+#### API Key Not Found
 
-If you see rate limit errors:
-- Get an API key from LibreTranslate
-- Or deploy your own instance
+```
+❌ OPENAI_API_KEY is not set!
+```
 
-#### Translation Quality
+**Solution**: Set the environment variable or GitHub secret:
+```bash
+export OPENAI_API_KEY=sk-...
+```
+
+#### Translation Failures
+
+If some translations fail with `TODO:`:
+- Check your API key has sufficient credits
+- Verify API endpoint is accessible
+- Check rate limits (especially for larger translation batches
+
+#### Poor Quality Translations
 
 If translations seem off:
-- The translation might lack UI context
-- Manually edit the JSON files
-- Consider professional translation for key user-facing text
+- The AI might lack specific UI context
+- Try a more capable model like `gpt-4o`
+- Manually edit the JSON files to fix issues
+- Consider the translation context provided in the prompt
 
-#### Placeholders Broken
+#### Cost Concerns
 
-If placeholders like `{{count}}` are malformed:
-- The script attempts to preserve them
-- Edit the locale file manually to fix format
-- Report the issue if it happens consistently
+For cost optimization:
+- Use `gpt-4o-mini` (very cost-effective)
+- Run the script less frequently
+- Review and merge translations in batches
+- Consider caching previous translations
+
+### Cost Estimation
+
+Approximate costs for translating missing keys (using `gpt-4o-mini`):
+
+- **10 keys**: ~$0.00001
+- **50 keys**: ~$0.00005
+- **100 keys**: ~$0.0001
+
+*Costs vary based on text length and model used.*

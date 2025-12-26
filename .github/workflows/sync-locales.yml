@@ -27,8 +27,9 @@ jobs:
       - name: Run sync script with AI translation
         id: sync
         env:
-          LIBRE_TRANSLATE_API: ${{ vars.LIBRE_TRANSLATE_API || 'https://libretranslate.com' }}
-          LIBRE_TRANSLATE_API_KEY: ${{ secrets.LIBRE_TRANSLATE_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
+          OPENAI_API: ${{ vars.OPENAI_API || 'https://api.openai.com/v1' }}
         run: |
           node scripts/sync-locales.js
         continue-on-error: true
@@ -57,7 +58,7 @@ jobs:
 
             ## What changed
 
-            - New keys have been automatically translated using LibreTranslate
+            - New keys have been automatically translated using OpenAI
             - Placeholders like `{{boardName}}` and `{{count}}` are preserved in translations
             - Failed translations are marked with `TODO:` prefix
 
@@ -76,7 +77,7 @@ jobs:
             2. Adjust any translations that don't fit the context
             3. Remove `TODO:` markers from any failed translations
 
-            ---            
+            ---
           labels: |
             i18n
             translation
