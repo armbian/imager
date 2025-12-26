@@ -30,6 +30,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4o-mini' }}
           OPENAI_API: ${{ vars.OPENAI_API || 'https://api.openai.com/v1' }}
+          OPENAI_TIER: ${{ vars.OPENAI_TIER || 'free' }}
         run: |
           node scripts/sync-locales.js
         continue-on-error: true
@@ -50,7 +51,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'i18n: sync and auto-translate locale files'
           branch: sync/i18n-updates
-          title: '🌐 i18n: Auto-translate and sync locale files'
+          title: 'i18n: Auto-translate and sync locale files'
           body: |
             ## Summary
 
