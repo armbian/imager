@@ -122,8 +122,8 @@
     "viewChangelog": "Vad är nytt",
     "loadingChangelog": "Laddar ändringslogg...",
     "noChangelog": "Ingen changelog tillgänglig",
-    "viewOnGitHub": "TODO: View on GitHub",
-    "contributors": "TODO: Contributors",
-    "changelogErrorHint": "TODO: Make sure you have an internet connection and the version exists on GitHub."
+    "viewOnGitHub": "Visa på GitHub",
+    "contributors": "Bidragsgivare",
+    "changelogErrorHint": "Se till att du har en internetanslutning och att versionen finns på GitHub."
   }
 }
