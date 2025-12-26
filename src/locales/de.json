@@ -63,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Aktualisieren"
+    "refresh": "Aktualisieren",
+    "showSystemDevices": "Systemlaufwerke anzeigen",
+    "hideSystemDevices": "Systemlaufwerke ausblenden"
   },
   "header": {
     "stepManufacturer": "Hersteller",

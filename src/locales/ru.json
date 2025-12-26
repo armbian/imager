@@ -63,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Обновить"
+    "refresh": "Обновить",
+    "showSystemDevices": "Показать системные диски",
+    "hideSystemDevices": "Скрыть системные диски"
   },
   "header": {
     "stepManufacturer": "Производитель",

@@ -63,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Actualiser"
+    "refresh": "Actualiser",
+    "showSystemDevices": "Afficher les disques système",
+    "hideSystemDevices": "Masquer les disques système"
   },
   "header": {
     "stepManufacturer": "Fabricant",

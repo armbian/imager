@@ -63,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "showSystemDevices": "显示系统驱动器",
+    "hideSystemDevices": "隐藏系统驱动器"
   },
   "header": {
     "stepManufacturer": "制造商",

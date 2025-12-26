@@ -63,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Yenile"
+    "refresh": "Yenile",
+    "showSystemDevices": "Sistem sürücülerini göster",
+    "hideSystemDevices": "Sistem sürücülerini gizle"
   },
   "header": {
     "stepManufacturer": "Üretici",

@@ -63,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "更新"
+    "refresh": "更新",
+    "showSystemDevices": "システムドライブを表示",
+    "hideSystemDevices": "システムドライブを非表示"
   },
   "header": {
     "stepManufacturer": "メーカー",

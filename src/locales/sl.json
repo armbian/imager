@@ -63,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Osveži"
+    "refresh": "Osveži",
+    "showSystemDevices": "Prikaži sistemske pogone",
+    "hideSystemDevices": "Skrij sistemske pogone"
   },
   "header": {
     "stepManufacturer": "Proizvajalec",

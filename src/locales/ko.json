@@ -63,7 +63,9 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "새로고침"
+    "refresh": "새로고침",
+    "showSystemDevices": "시스템 드라이브 표시",
+    "hideSystemDevices": "시스템 드라이브 숨기기"
   },
   "header": {
     "stepManufacturer": "제조사",

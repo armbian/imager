@@ -695,7 +695,121 @@
 }
 
 /* ========================================
-   DEVICE SECTION
+   DEVICE WARNING BANNER
+   ======================================== */
+.device-warning-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.08);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  .device-warning-banner {
+    background: rgba(239, 68, 68, 0.12);
+    border-bottom-color: rgba(239, 68, 68, 0.2);
+  }
+}
+
+.device-warning-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.device-warning-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .device-warning-banner-icon {
+    background: rgba(239, 68, 68, 0.2);
+  }
+}
+
+.device-warning-banner-icon svg {
+  color: var(--armbian-red);
+}
+
+.device-warning-banner-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* System Devices Badge */
+.system-devices-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.system-devices-badge:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+.system-devices-badge.active {
+  background-color: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--armbian-red);
+  animation: badge-pulse 2s infinite;
+}
+
+.system-devices-badge.active:hover {
+  background-color: rgba(239, 68, 68, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  .system-devices-badge.active {
+    background-color: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+
+  .system-devices-badge.active:hover {
+    background-color: rgba(239, 68, 68, 0.24);
+  }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .system-devices-badge {
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .system-devices-badge.active {
+    animation: none;
+  }
+}
+
+/* ========================================
+   DEVICE SECTION (Legacy)
    ======================================== */
 .device-warning {
   display: flex;
