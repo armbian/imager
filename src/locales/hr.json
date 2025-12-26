@@ -15,7 +15,6 @@
     "boardCount_one": "{{count}} ploča",
     "boardCount_other": "{{count}} ploča"
   },
-
   "flash": {
     "downloading": "Preuzimanje slike...",
     "verifyingSha": "Provjera integriteta preuzimanja...",
@@ -37,7 +36,6 @@
     "successHint": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj i umetnuti ga u {{boardName}}.",
     "successHintCustom": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj."
   },
-
   "modal": {
     "selectManufacturer": "Odaberi proizvođača",
     "selectBoard": "Odaberi ploču",
@@ -59,7 +57,6 @@
     "insertDevice": "Umetnite SD karticu ili USB uređaj",
     "refreshDevices": "Osvježi uređaje"
   },
-
   "device": {
     "system": "Sustav",
     "sdCard": "SD kartica",
@@ -67,9 +64,10 @@
     "sata": "SATA",
     "sas": "SAS",
     "nvme": "NVMe",
-    "refresh": "Osvježi"
+    "refresh": "Osvježi",
+    "showSystemDevices": "Prikaži sustavne diskove",
+    "hideSystemDevices": "Sakrij sustavne uređaje"
   },
-
   "header": {
     "stepManufacturer": "Proizvođač",
     "stepBoard": "Ploča",
@@ -79,7 +77,6 @@
     "resetTooltip": "Počni ispočetka",
     "stepTooltip": "Promijeni {{step}}"
   },
-
   "errorDisplay": {
     "retry": "Pokušaj ponovno",
     "uploadLogs": "Pošalji zapise",
@@ -89,7 +86,6 @@
     "viewLogs": "Pregledaj zapise",
     "scanQrOrShare": "Skenirajte QR kod ili podijelite ovu poveznicu:"
   },
-
   "error": {
     "downloadFailed": "Preuzimanje neuspješno",
     "flashFailed": "Snimanje neuspješno",
@@ -99,16 +95,13 @@
     "uploadFailed": "Slanje neuspješno",
     "deviceDisconnected": "Uređaj je isključen"
   },
-
   "custom": {
     "customImage": "Prilagođena slika"
   },
-
   "common": {
     "unknown": "Nepoznato",
     "confirm": "Potvrda"
   },
-
   "update": {
     "title": "Dostupno ažuriranje",
     "later": "Kasnije",
@@ -120,6 +113,13 @@
     "cancel": "Odustani",
     "retry": "Pokušaj ponovno",
     "readyMessage": "Ažuriranje je preuzeto. Ponovno pokrenite aplikaciju za dovršetak instalacije.",
-    "errorMessage": "Preuzimanje ažuriranja nije uspjelo. Pokušajte kasnije."
+    "errorMessage": "Preuzimanje ažuriranja nije uspjelo. Pokušajte kasnije.",
+    "changelogTitle": "Što je novo",
+    "viewChangelog": "Što je novo",
+    "loadingChangelog": "Učitavanje changeloga...",
+    "noChangelog": "Nema dostupnog changeloga",
+    "viewOnGitHub": "Pogledajte na GitHubu",
+    "contributors": "Suradnici",
+    "changelogErrorHint": "Provjerite imate li internetsku vezu i da verzija postoji na GitHubu."
   }
 }
