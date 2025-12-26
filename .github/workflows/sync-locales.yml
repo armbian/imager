@@ -76,8 +76,7 @@ jobs:
             2. Adjust any translations that don't fit the context
             3. Remove `TODO:` markers from any failed translations
 
-            ---
-            🤖 Generated with [Claude Code](https://claude.com/claude-code)
+            ---            
           labels: |
             i18n
             translation
