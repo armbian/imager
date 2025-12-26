@@ -104,23 +104,23 @@ npm run tauri:dev
 ### Single Platform
 
 ```bash
-./scripts/build-macos.sh      # macOS (Intel + ARM)
-./scripts/build-linux.sh      # Linux (x64 + ARM)
-npm run tauri:build          # Windows
+./scripts/build/build-macos.sh      # macOS (Intel + ARM)
+./scripts/build/build-linux.sh      # Linux (x64 + ARM)
+npm run tauri:build                # Windows
 ```
 
 ### All Platforms
 
 ```bash
-./scripts/build-all.sh
+./scripts/build/build-all.sh
 ```
 
 ### Build Options
 
 ```bash
-./scripts/build-macos.sh --clean  # Clean build
-./scripts/build-macos.sh --dev    # Debug symbols
-./scripts/build-macos.sh --clean --dev  # Both
+./scripts/build/build-macos.sh --clean  # Clean build
+./scripts/build/build-macos.sh --dev    # Debug symbols
+./scripts/build/build-macos.sh --clean --dev  # Both
 ```
 
 ### Output
@@ -132,46 +132,106 @@ npm run tauri:build          # Windows
 
 ## Project Structure
 
+### Directory Overview
+
 ```
 armbian-imager/
 ├── src/                          # React Frontend
 │   ├── components/               # UI Components
-│   │   ├── flash/                # Flash progress
-│   │   ├── layout/               # Header, HomePage
-│   │   ├── modals/               # Board, Image, Device, Manufacturer
+│   │   ├── flash/                # Flash progress components
+│   │   │   ├── FlashActions.tsx  # Action buttons (cancel, retry)
+│   │   │   ├── FlashProgress.tsx # Progress display
+│   │   │   └── FlashStageIcon.tsx # Stage indicators
+│   │   ├── layout/               # Main layout
+│   │   │   ├── Header.tsx        # Top navigation bar
+│   │   │   └── HomePage.tsx      # Main page
+│   │   ├── modals/               # Selection flow modals
+│   │   │   ├── ManufacturerModal.tsx
+│   │   │   ├── BoardModal.tsx
+│   │   │   ├── ImageModal.tsx
+│   │   │   └── DeviceModal.tsx
 │   │   └── shared/               # Reusable components
-│   ├── hooks/                    # React Hooks
-│   ├── config/                   # Badges, manufacturers, OS info
-│   ├── locales/                  # i18n (15 languages)
+│   │       ├── AppVersion.tsx    # Version display
+│   │       ├── ErrorDisplay.tsx  # Error presentation
+│   │       ├── LoadingState.tsx  # Loading indicators
+│   │       └── SearchBox.tsx     # Search functionality
+│   ├── hooks/                    # Custom React Hooks
+│   │   ├── useTauri.ts           # Tauri IPC wrappers
+│   │   ├── useVendorLogos.ts     # Logo validation
+│   │   └── useAsyncData.ts       # Async data fetching pattern
+│   ├── config/                   # Static configuration
+│   │   ├── constants.ts          # App constants
+│   │   ├── deviceColors.ts       # Device color mapping
+│   │   └── os-info.ts            # OS information
+│   ├── locales/                  # i18n translations (15 languages)
 │   ├── styles/                   # Modular CSS
+│   │   ├── theme.css             # Theme variables (light/dark)
+│   │   ├── components.css        # Component styles
+│   │   └── responsive.css        # Responsive design
 │   ├── types/                    # TypeScript interfaces
-│   ├── utils/                    # Utilities
-│   └── assets/                   # Images, logos, icons
+│   ├── utils/                    # Utility functions
+│   ├── assets/                   # Static assets
+│   ├── App.tsx                   # Main app component
+│   └── main.tsx                  # React entry point
 │
 ├── src-tauri/                    # Rust Backend
 │   ├── src/
-│   │   ├── commands/             # Tauri IPC handlers
-│   │   ├── config/               # Configuration
-│   │   ├── devices/              # Device detection
-│   │   ├── flash/                # Platform flash implementations
-│   │   ├── images/               # Image management
+│   │   ├── commands/             # Tauri IPC command handlers
+│   │   │   ├── board_queries.rs  # Board/image API queries
+│   │   │   ├── operations.rs     # Download & flash operations
+│   │   │   ├── custom_image.rs   # Custom image handling
+│   │   │   ├── progress.rs       # Progress event emission
+│   │   │   ├── system.rs         # System utilities
+│   │   │   └── state.rs          # Shared application state
+│   │   ├── devices/              # Platform-specific device detection
+│   │   │   ├── linux.rs          # Linux (UDisks2)
+│   │   │   ├── macos.rs          # macOS (diskutil)
+│   │   │   └── windows.rs        # Windows (WMI)
+│   │   ├── flash/                # Platform-specific flash operations
+│   │   │   ├── linux/            # Linux implementation
+│   │   │   ├── macos/            # macOS implementation
+│   │   │   └── windows/          # Windows implementation
+│   │   ├── images/               # Image file management
 │   │   ├── logging/              # Session logging
-│   │   ├── paste/                # Log upload
-│   │   ├── utils/                # Utilities
-│   │   ├── download.rs           # HTTP downloads
-│   │   └── decompress.rs         # XZ, GZ, ZSTD
-│   ├── icons/                    # App icons
+│   │   ├── paste/                # Log upload service
+│   │   ├── utils/                # Rust utilities
+│   │   ├── download.rs           # HTTP streaming downloads
+│   │   ├── decompress.rs         # Archive extraction
+│   │   └── main.rs               # Rust entry point
+│   ├── icons/                    # App icons (all platforms)
+│   ├── Cargo.toml                # Rust dependencies
+│   ├── tauri.conf.json           # Tauri configuration
 │   └── target/                   # Compiled binaries (gitignored)
 │
-├── scripts/                      # Build and setup
-│   ├── build-*.sh                # Platform build scripts
+├── scripts/                      # Build and utility scripts
+│   ├── build/                    # Platform build scripts
+│   │   ├── build-all.sh          # All platforms
+│   │   ├── build-linux.sh        # Linux builds
+│   │   └── build-macos.sh        # macOS universal binaries
+│   ├── locales/                  # Locale management
+│   │   └── sync-locales.js       # Translation sync script
 │   └── setup/                    # Dependency installation
-│       ├── install.sh
-│       ├── install-linux.sh
-│       ├── install-macos.sh
-│       └── install-windows.ps1
+│       ├── install.sh            # Universal installer
+│       ├── install-linux.sh      # Linux dependencies
+│       ├── install-macos.sh      # macOS dependencies
+│       └── install-windows.ps1   # Windows dependencies
 │
-└── .github/workflows/            # CI/CD
+├── .github/workflows/            # CI/CD pipelines
+│   ├── build.yml                 # CI builds
+│   ├── build-artifacts.yml       # Release builds
+│   ├── pr-check.yml              # PR validation
+│   └── sync-locales.yml          # Auto translation sync
+│
+├── public/                       # Static assets
+│   └── locales/                  # i18n fallback data
+│
+├── docs/                         # Additional documentation
+├── images/                       # Project images/screenshots
+├── package.json                  # Node dependencies & scripts
+│
+├── CONTRIBUTING.md               # Contribution guidelines
+├── DEVELOPMENT.md                # This file
+└── README.md                     # Project overview
 ```
 
 ---

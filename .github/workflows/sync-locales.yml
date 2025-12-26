@@ -32,7 +32,7 @@ jobs:
           OPENAI_TIER: ${{ vars.OPENAI_TIER || 'free' }}
           RETRY_FAILED: ${{ vars.RETRY_FAILED || 'false' }}
         run: |
-          node scripts/sync-locales.js
+          node scripts/locales/sync-locales.js
         continue-on-error: true
 
       - name: Check for changes
