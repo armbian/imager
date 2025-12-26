@@ -162,33 +162,37 @@ function preservePlaceholders(original, translated) {
 async function translateBatch(texts, targetLang, contexts = []) {
   const results = [];
 
-  // Rate limit configuration based on model
-  // Free tier limits (approximate): gpt-4o-mini = 3/min, gpt-4o = 3/min
-  // Paid tier limits (approximate): gpt-4o-mini = 500/min, gpt-4o = 200/min
+  // Rate limit configuration based on model and tier
+  // Actual OpenAI rate limits:
+  // Free tier: gpt-4o-mini = 3-10 RPM
+  // Tier 1-2 (paid): gpt-4o-mini = 200 RPM
+  // Tier 3-5 (paid): gpt-4o-mini = 500 RPM
+  // Tier 1-5 (paid): gpt-4o = 80-500 RPM
   const isPaidTier = process.env.OPENAI_TIER === 'paid';
 
   let batchSize, batchDelay;
 
   if (OPENAI_MODEL.includes('gpt-4o-mini')) {
+    // Free tier: conservative 5 RPM, Paid tier: 200 RPM
     batchSize = isPaidTier ? 50 : 1;
-    batchDelay = isPaidTier ? 1000 : 22000;
+    batchDelay = isPaidTier ? 300 : 12000; // 300ms = ~200 RPM, 12s = 5 RPM
   } else if (OPENAI_MODEL.includes('gpt-4o')) {
-    batchSize = isPaidTier ? 20 : 1;
-    batchDelay = isPaidTier ? 1500 : 22000;
+    batchSize = isPaidTier ? 40 : 1;
+    batchDelay = isPaidTier ? 750 : 12000;
   } else if (OPENAI_MODEL.includes('gpt-3.5')) {
     batchSize = isPaidTier ? 100 : 1;
-    batchDelay = isPaidTier ? 500 : 22000;
+    batchDelay = isPaidTier ? 500 : 12000;
   } else {
     // Conservative defaults for unknown models
     batchSize = 1;
-    batchDelay = 22000;
+    batchDelay = 12000;
   }
 
   if (isPaidTier) {
     console.log(`  💰 Using paid tier rate limits (batch: ${batchSize}, delay: ${batchDelay}ms)`);
   } else {
-    console.log(`  ⭐ Using free tier rate limits (batch: ${batchSize}, delay: ${batchDelay}ms)`);
-    console.log(`  💡 Tip: Add OPENAI_TIER=paid environment variable for faster translations`);
+    console.log(`  ⭐ Using free tier rate limits (batch: ${batchSize}, delay: ${batchDelay}ms, ~5 RPM)`);
+    console.log(`  💡 Tip: Add OPENAI_TIER=paid for ~40x faster translations (200 RPM)`);
   }
 
   for (let i = 0; i < texts.length; i += batchSize) {
