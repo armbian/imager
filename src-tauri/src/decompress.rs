@@ -142,18 +142,29 @@ pub fn decompress_local_file(
         .and_then(|n| n.to_str())
         .ok_or("Invalid filename")?;
 
-    // Determine output filename (remove compression extension)
-    let output_filename = filename
+    // Extract base filename (remove compression extension)
+    let base_filename = filename
         .trim_end_matches(".xz")
         .trim_end_matches(".gz")
         .trim_end_matches(".bz2")
         .trim_end_matches(".zst");
 
-    // Output to same directory as input
-    let output_path = input_path
-        .parent()
-        .ok_or("Invalid input path")?
-        .join(output_filename);
+    // Generate unique filename with timestamp to handle concurrent operations
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| format!("Failed to get timestamp: {}", e))?
+        .as_millis();
+
+    // Use base_filename directly (it already has the correct .img extension)
+    let output_filename = format!("{}-{}", base_filename, timestamp);
+
+    // Output to cache directory instead of user's directory
+    let custom_cache_dir = crate::utils::get_cache_dir(config::app::NAME).join("custom-decompress");
+
+    std::fs::create_dir_all(&custom_cache_dir)
+        .map_err(|e| format!("Failed to create cache directory: {}", e))?;
+
+    let output_path = custom_cache_dir.join(&output_filename);
 
     // Check if already decompressed
     if output_path.exists() {
