@@ -11,6 +11,7 @@ import {
   cancelOperation,
   getBoardImageUrl,
   deleteDownloadedImage,
+  deleteDecompressedCustomImage,
   requestWriteAuthorization,
   checkNeedsDecompression,
   decompressCustomImage,
@@ -51,10 +52,28 @@ export function FlashProgress({
   const hasStartedRef = useRef<boolean>(false);
   const deviceDisconnectedRef = useRef<boolean>(false);
 
-  // Cleanup downloaded image file (skip for custom images)
+  // Debug logging for board detection
+  useEffect(() => {
+    console.log('[FlashProgress] Board received:', {
+      slug: board.slug,
+      name: board.name,
+      is_custom: image.is_custom,
+    });
+  }, [board.slug, board.name, image.is_custom]);
+
+  // Cleanup downloaded image file or decompressed custom image
   async function cleanupImage(path: string | null) {
-    if (image.is_custom) return;
-    if (path) {
+    if (!path) return;
+
+    if (image.is_custom) {
+      // Cleanup decompressed custom images
+      try {
+        await deleteDecompressedCustomImage(path);
+      } catch {
+        // Ignore cleanup errors
+      }
+    } else {
+      // Cleanup downloaded images
       try {
         await deleteDownloadedImage(path);
       } catch {
@@ -289,6 +308,8 @@ export function FlashProgress({
       if (intervalRef.current) clearInterval(intervalRef.current);
       setStage('complete');
       setProgress(100);
+      // Cleanup decompressed file after successful flash
+      await cleanupImage(path);
     } catch (err) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (deviceDisconnectedRef.current) return;
@@ -304,6 +325,8 @@ export function FlashProgress({
         // If we can't check, assume disconnected on certain errors
       }
 
+      // Cleanup decompressed file before showing error
+      await cleanupImage(path);
       setError(err instanceof Error ? err.message : t('error.flashFailed'));
       setStage('error');
     }
@@ -365,11 +388,21 @@ export function FlashProgress({
     <div className={`flash-container ${!showHeader ? 'centered' : ''}`}>
       {showHeader && (
         <div className="flash-header">
-          {image.is_custom ? (
+          {(() => {
+            const showGenericIcon = image.is_custom && board.slug === 'custom';
+            console.log('[FlashProgress] Image display logic:', {
+              is_custom: image.is_custom,
+              board_slug: board.slug,
+              showGenericIcon,
+            });
+            return showGenericIcon;
+          })() ? (
+            // Generic icon for non-Armbian or undetected custom images
             <div className="flash-board-image flash-custom-image-icon">
               <FileImage size={40} />
             </div>
           ) : (
+            // Board image for detected Armbian custom images OR standard images
             <img
               src={imageLoadError ? fallbackImage : (boardImageUrl || fallbackImage)}
               alt={board.name}

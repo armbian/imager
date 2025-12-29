@@ -6,7 +6,10 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tauri::State;
 
+use crate::config;
 use crate::decompress::{decompress_local_file, needs_decompression};
+use crate::images::{extract_images, fetch_all_images, get_unique_boards, BoardInfo};
+use crate::utils::{get_cache_dir, normalize_slug};
 use crate::{log_error, log_info};
 
 use super::state::AppState;
@@ -129,4 +132,177 @@ pub async fn select_custom_image(window: tauri::Window) -> Result<Option<CustomI
             Ok(None)
         }
     }
+}
+
+/// Delete a decompressed custom image file
+#[tauri::command]
+pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), String> {
+    log_info!(
+        "custom_image",
+        "Deleting decompressed custom image: {}",
+        image_path
+    );
+    let path = PathBuf::from(&image_path);
+
+    // Safety check: only delete files in our custom-decompress directory
+    let custom_decompress_dir = get_cache_dir(config::app::NAME).join("custom-decompress");
+
+    if !path.starts_with(&custom_decompress_dir) {
+        log_error!(
+            "custom_image",
+            "Attempted to delete file outside custom-decompress cache: {}",
+            image_path
+        );
+        return Err("Cannot delete files outside custom-decompress directory".to_string());
+    }
+
+    if path.exists() {
+        std::fs::remove_file(&path).map_err(|e| {
+            log_error!(
+                "custom_image",
+                "Failed to delete decompressed image {}: {}",
+                image_path,
+                e
+            );
+            format!("Failed to delete decompressed image: {}", e)
+        })?;
+        log_info!("custom_image", "Deleted decompressed image: {}", image_path);
+    }
+
+    // Try to remove empty parent directory (ignore errors)
+    let _ = std::fs::remove_dir(&custom_decompress_dir);
+
+    Ok(())
+}
+
+/// Detect board information from custom image filename
+/// Parses Armbian naming convention: Armbian_VERSION_BOARD_DISTRO_VENDOR_KERNEL_FLAVOR.img.xz
+#[tauri::command]
+pub async fn detect_board_from_filename(
+    filename: String,
+    state: State<'_, AppState>,
+) -> Result<Option<BoardInfo>, String> {
+    log_info!(
+        "custom_image",
+        "=== Starting board detection from filename: {} ===",
+        filename
+    );
+
+    // 1. Extract filename from path (remove directory)
+    let path = PathBuf::from(&filename);
+    let filename_only = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or("Invalid filename")?;
+
+    // 2. Remove extension(s) - handle .img.xz, .img.gz, .img.zst, .img.bz2, .img
+    let stem = filename_only
+        .strip_suffix(".xz")
+        .or_else(|| filename_only.strip_suffix(".gz"))
+        .or_else(|| filename_only.strip_suffix(".zst"))
+        .or_else(|| filename_only.strip_suffix(".bz2"))
+        .or_else(|| filename_only.strip_suffix(".img"))
+        .unwrap_or(filename_only);
+
+    // 3. Parse Armbian naming pattern: Armbian_VERSION_BOARD_DISTRO_VENDOR_KERNEL_FLAVOR
+    let parts: Vec<&str> = stem.split('_').collect();
+
+    // 4. Validate Armbian format (at least 4 parts, starts with "Armbian")
+    if parts.len() < 4 || !parts[0].eq_ignore_ascii_case("Armbian") {
+        log_info!(
+            "custom_image",
+            "Not an Armbian image or invalid format: {}",
+            filename_only
+        );
+        return Ok(None);
+    }
+
+    // 5. Extract board name (index 2)
+    let board_name = parts[2];
+    log_info!(
+        "custom_image",
+        "Extracted board name from filename: {}",
+        board_name
+    );
+
+    // 6. Normalize board name to slug format
+    let normalized_slug = normalize_slug(board_name);
+    log_info!("custom_image", "Normalized board slug: {}", normalized_slug);
+
+    // 7. Ensure board data is loaded (auto-load if not cached)
+    // Use compare-and-swap pattern to prevent race conditions
+    log_info!("custom_image", "Checking if board data is cached...");
+    {
+        let needs_loading = {
+            let json_guard = state.images_json.lock().await;
+            json_guard.is_none()
+        };
+
+        if needs_loading {
+            log_info!(
+                "custom_image",
+                "Board data not cached, fetching from API..."
+            );
+            let json = fetch_all_images().await.map_err(|e| {
+                log_error!("custom_image", "Failed to fetch board data: {}", e);
+                format!("Failed to fetch board data: {}", e)
+            })?;
+
+            // Cache the fetched data
+            let mut json_guard = state.images_json.lock().await;
+            // Double-check: another thread might have loaded it while we were fetching
+            if json_guard.is_none() {
+                *json_guard = Some(json);
+                log_info!("custom_image", "Board data cached successfully");
+            } else {
+                log_info!(
+                    "custom_image",
+                    "Board data was already cached by another thread"
+                );
+            }
+        }
+    }
+
+    // 8. Get cached boards data (now guaranteed to be loaded)
+    // Extract boards in a scoped block to release lock early
+    let matching_board = {
+        log_info!("custom_image", "Accessing cached board data...");
+        let json_guard = state.images_json.lock().await;
+        let json = json_guard.as_ref().ok_or("Images not loaded")?;
+
+        log_info!("custom_image", "Loaded images JSON, extracting boards...");
+        let images = extract_images(json);
+        log_info!("custom_image", "Extracted {} images", images.len());
+        let boards = get_unique_boards(&images);
+        log_info!(
+            "custom_image",
+            "Found {} unique boards in database",
+            boards.len()
+        );
+        // Lock released here
+
+        // 9. Find matching board by slug
+        boards
+            .iter()
+            .find(|board| board.slug == normalized_slug)
+            .cloned()
+    }; // matching_board is now owned, lock is released
+
+    if let Some(ref board) = matching_board {
+        log_info!(
+            "custom_image",
+            "Detected board: {} (slug: {})",
+            board.name,
+            board.slug
+        );
+    } else {
+        log_info!(
+            "custom_image",
+            "Board not found in database: {}",
+            normalized_slug
+        );
+    }
+
+    log_info!("custom_image", "Board detection completed successfully");
+    Ok(matching_board)
 }

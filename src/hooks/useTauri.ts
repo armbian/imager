@@ -61,6 +61,21 @@ export async function deleteDownloadedImage(imagePath: string): Promise<void> {
   return invoke('delete_downloaded_image', { imagePath });
 }
 
+export async function deleteDecompressedCustomImage(imagePath: string): Promise<void> {
+  return invoke('delete_decompressed_custom_image', { imagePath });
+}
+
+/**
+ * Detects board information from custom image filename
+ * Parses Armbian naming convention to extract board slug and match against database
+ *
+ * @param filename - Filename (can include path)
+ * @returns Promise resolving to BoardInfo if detected, null otherwise
+ */
+export async function detectBoardFromFilename(filename: string): Promise<BoardInfo | null> {
+  return invoke('detect_board_from_filename', { filename });
+}
+
 // Re-export CustomImageInfo for backward compatibility
 export type { CustomImageInfo } from '../types';
 

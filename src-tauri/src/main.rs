@@ -39,6 +39,30 @@ fn cleanup_download_cache() {
     }
 }
 
+/// Clean up orphaned decompressed custom images from previous sessions
+fn cleanup_custom_decompress_cache() {
+    let custom_dir = get_cache_dir(config::app::NAME).join("custom-decompress");
+
+    if custom_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&custom_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    log_info!(
+                        "main",
+                        "Cleaning up orphaned decompressed file: {}",
+                        path.display()
+                    );
+                    let _ = std::fs::remove_file(&path);
+                }
+            }
+        }
+
+        // Remove empty directory
+        let _ = std::fs::remove_dir(&custom_dir);
+    }
+}
+
 /// Returns true if running as AppImage (APPIMAGE env var is set by AppImage runtime)
 #[cfg(target_os = "linux")]
 fn is_appimage() -> bool {
@@ -68,6 +92,7 @@ fn main() {
 
     // Clean up any leftover download images from previous sessions
     cleanup_download_cache();
+    cleanup_custom_decompress_cache();
 
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -105,6 +130,8 @@ fn main() {
             commands::custom_image::select_custom_image,
             commands::custom_image::check_needs_decompression,
             commands::custom_image::decompress_custom_image,
+            commands::custom_image::delete_decompressed_custom_image,
+            commands::custom_image::detect_board_from_filename,
             commands::system::open_url,
             commands::system::get_system_locale,
             commands::system::log_from_frontend,

@@ -4,7 +4,7 @@ import { Header, HomePage } from './components/layout';
 import { ManufacturerModal, BoardModal, ImageModal, DeviceModal } from './components/modals';
 import { FlashProgress } from './components/flash';
 import { AppVersion } from './components/shared';
-import { selectCustomImage } from './hooks/useTauri';
+import { selectCustomImage, detectBoardFromFilename, logInfo } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep, Manufacturer } from './types';
 import './styles/index.css';
@@ -68,6 +68,18 @@ function App() {
     try {
       const result = await selectCustomImage();
       if (result) {
+        // Detect board from filename
+        let detectedBoard: BoardInfo | null = null;
+        try {
+          detectedBoard = await detectBoardFromFilename(result.name);
+          if (detectedBoard) {
+            logInfo('App', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
+          }
+        } catch (err) {
+          // Ignore detection errors, fall back to generic
+          console.warn('Failed to detect board from filename:', err);
+        }
+
         // Create a custom ImageInfo object
         const customImage: ImageInfo = {
           armbian_version: 'Custom',
@@ -83,9 +95,12 @@ function App() {
           is_custom: true,
           custom_path: result.path,
         };
-        // Reset selections and set custom board/image for display purposes
+
+        // Reset selections and set board for display
         resetSelectionsFrom('manufacturer');
-        setSelectedBoard({
+
+        // Use detected board if found, otherwise use generic custom board
+        const displayBoard = detectedBoard || {
           slug: 'custom',
           name: t('custom.customImage'),
           vendor: 'custom',
@@ -98,7 +113,9 @@ function App() {
           has_eos_support: false,
           has_tvb_support: false,
           has_wip_support: false,
-        });
+        };
+
+        setSelectedBoard(displayBoard);
         setSelectedImage(customImage);
       }
     } catch (err) {
