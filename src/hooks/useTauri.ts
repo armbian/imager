@@ -108,6 +108,10 @@ export async function logInfo(module: string, message: string): Promise<void> {
   return invoke('log_from_frontend', { module, message });
 }
 
+export async function logDebug(module: string, message: string): Promise<void> {
+  return invoke('log_debug_from_frontend', { module, message });
+}
+
 export interface GitHubRelease {
   tag_name: string;
   name: string;
@@ -124,4 +128,73 @@ export interface GitHubRelease {
  */
 export async function getGithubRelease(version: string): Promise<GitHubRelease> {
   return invoke('get_github_release', { version });
+}
+
+/**
+ * Get the current theme preference
+ */
+export async function getTheme(): Promise<string> {
+  return invoke('get_theme');
+}
+
+/**
+ * Set the theme preference
+ */
+export async function setTheme(theme: string): Promise<void> {
+  return invoke('set_theme', { theme });
+}
+
+/**
+ * Get the current language preference
+ */
+export async function getLanguage(): Promise<string> {
+  return invoke('get_language');
+}
+
+/**
+ * Set the language preference
+ */
+export async function setLanguage(language: string): Promise<void> {
+  return invoke('set_language', { language });
+}
+
+/**
+ * Get the real system platform and architecture
+ */
+export async function getSystemInfo(): Promise<{ platform: string; arch: string }> {
+  return invoke('get_system_info');
+}
+
+/**
+ * Get the Tauri framework version
+ */
+export async function getTauriVersion(): Promise<string> {
+  return invoke('get_tauri_version');
+}
+
+/**
+ * Get the current log file contents
+ *
+ * Retrieves the contents of the current log file. For large log files (>5MB),
+ * only the last 10,000 lines are returned to prevent memory issues.
+ *
+ * @returns Promise resolving to the log file contents with ANSI color codes preserved
+ * @throws Error if log file cannot be read or does not exist
+ *
+ * @example
+ * // Display full log contents
+ * const logs = await getLogs();
+ * console.log(logs); // Full log contents with colors
+ *
+ * @example
+ * // Handle errors gracefully
+ * try {
+ *   const logs = await getLogs();
+ *   // Process logs...
+ * } catch (error) {
+ *   console.error('Failed to retrieve logs:', error);
+ * }
+ */
+export async function getLogs(): Promise<string> {
+  return invoke('get_logs');
 }

@@ -486,13 +486,54 @@
 }
 
 /* ========================================
-   APP VERSION (footer)
+   SETTINGS BUTTON (footer)
    ======================================== */
-.app-version {
+.settings-button {
   position: fixed;
   bottom: 8px;
   right: 12px;
-  font-size: 10px;
-  color: var(--text-muted);
-  opacity: 0.5;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.settings-button:hover {
+  opacity: 1;
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  transform: scale(1.1);
+  color: var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.settings-button:active {
+  transform: scale(1.05);
+}
+
+.settings-button svg {
+  display: block;
+  transition: transform 0.6s ease;
+}
+
+.settings-button:hover svg {
+  transform: rotate(360deg);
+}
+
+@keyframes settings-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

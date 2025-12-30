@@ -51,6 +51,12 @@ On first launch, macOS may block the application because it is not signed. If th
 3. **Select Image** — Choose desktop or server, kernel variant, and stable or nightly builds
 4. **Flash** — Download, decompress, write, and verify automatically
 
+## Customization
+
+- **Theme Selection**: Light, dark, or automatic based on system preferences
+- **Developer Mode**: Enable detailed logging and view application logs
+- **Language Selection**: 17 languages with automatic system detection
+
 ## Platform Support
 
 | Platform | Architecture | Notes |

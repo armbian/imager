@@ -1151,8 +1151,12 @@
 
 .update-modal-close:hover {
   background: var(--bg-hover);
-  color: var(--text-primary);
+  color: var(--accent);
   transform: rotate(90deg);
+}
+
+.update-modal-close:active {
+  transform: rotate(90deg) scale(0.95);
 }
 
 .update-modal {

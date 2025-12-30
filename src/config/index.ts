@@ -23,7 +23,7 @@ export {
 } from './badges';
 
 // Constants and polling intervals
-export { POLLING, type DeviceType } from './constants';
+export { POLLING, LINKS, TIMING, type DeviceType } from './constants';
 
 // Device colors
 export { DEVICE_COLORS, getDeviceColors, type DeviceColorConfig } from './deviceColors';

@@ -20,6 +20,7 @@ mod utils;
 use commands::AppState;
 #[allow(unused_imports)] // Used by get_webview_window in debug builds
 use tauri::Manager;
+use tauri_plugin_store::StoreExt;
 
 use crate::utils::get_cache_dir;
 
@@ -97,7 +98,8 @@ fn main() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_process::init());
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_store::Builder::new().build());
 
     // Enable updater only for AppImage on Linux (other formats like .deb don't support it)
     #[cfg(target_os = "linux")]
@@ -135,8 +137,22 @@ fn main() {
             commands::system::open_url,
             commands::system::get_system_locale,
             commands::system::log_from_frontend,
+            commands::system::log_debug_from_frontend,
             commands::update::get_github_release,
             paste::upload::upload_logs,
+            commands::settings::get_theme,
+            commands::settings::set_theme,
+            commands::settings::get_language,
+            commands::settings::set_language,
+            commands::settings::get_show_motd,
+            commands::settings::set_show_motd,
+            commands::settings::get_show_updater_modal,
+            commands::settings::set_show_updater_modal,
+            commands::settings::get_developer_mode,
+            commands::settings::set_developer_mode,
+            commands::settings::get_logs,
+            commands::settings::get_system_info,
+            commands::settings::get_tauri_version,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]
@@ -145,6 +161,31 @@ fn main() {
                     window.open_devtools();
                 }
             }
+
+            // Initialize log level based on developer mode setting
+            match app.store("settings.json") {
+                Ok(store) => {
+                    let developer_mode = store
+                        .get("developer_mode")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false);
+
+                    if developer_mode {
+                        log_info!("main", "Developer mode enabled, setting log level to DEBUG");
+                        logging::set_log_level(true);
+                    } else {
+                        log_info!("main", "Developer mode disabled, using default log level");
+                    }
+                }
+                Err(e) => {
+                    log_warn!(
+                        "main",
+                        "Failed to access settings store: {}. Using default log level (INFO).",
+                        e
+                    );
+                }
+            }
+
             let _ = app; // Suppress unused warning in release
             Ok(())
         })

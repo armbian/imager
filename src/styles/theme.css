@@ -4,12 +4,13 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-:root {
+:root,
+.theme-light {
   /* Armbian Brand */
   --armbian-orange: #f26522;
   --armbian-red: #cc3333;
 
-  /* Light Theme (default) */
+  /* Light Theme */
   --bg-app: #f8f9fa;
   --bg-secondary: #eef0f2;
   --bg-card: #ffffff;
@@ -41,8 +42,37 @@
 }
 
 /* Dark Theme */
+.theme-dark {
+  --bg-app: #1a1a1a;
+  --bg-secondary: #252525;
+  --bg-card: #2a2a2a;
+  --bg-hover: #333333;
+  --bg-modal: #2a2a2a;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --text-muted: #777777;
+
+  --border-color: #404040;
+  --border-light: #333333;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  /* Header - Dark */
+  --header-bg: #1a1a1a;
+  --header-border: #333333;
+  --header-steps-bg: rgba(255, 255, 255, 0.05);
+  --header-steps-border: rgba(255, 255, 255, 0.1);
+  --header-step-bg: rgba(255, 255, 255, 0.1);
+  --header-step-color: #888888;
+}
+
+/* Auto Theme - System Preference */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.theme-light):not(.theme-dark) {
     --bg-app: #1a1a1a;
     --bg-secondary: #252525;
     --bg-card: #2a2a2a;

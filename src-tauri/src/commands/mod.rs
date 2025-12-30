@@ -7,6 +7,7 @@ pub mod custom_image;
 pub mod operations;
 pub mod progress;
 pub mod scraping;
+pub mod settings;
 mod state;
 pub mod system;
 pub mod update;

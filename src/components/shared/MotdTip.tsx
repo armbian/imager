@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Lightbulb, ExternalLink } from 'lucide-react';
 import { openUrl } from '../../hooks/useTauri';
-
-// Configuration
-const MOTD_URL = 'https://raw.githubusercontent.com/armbian/os/main/motd.json';
-const ROTATE_INTERVAL_MS = 30000; // 30 seconds
+import { getShowMotd } from '../../hooks/useSettings';
+import { LINKS, TIMING } from '../../config/constants';
 
 interface MotdMessage {
   message: string;
@@ -14,8 +12,10 @@ interface MotdMessage {
 
 export function MotdTip() {
   const [tip, setTip] = useState<MotdMessage | null>(null);
+  const [showMotd, setShowMotd] = useState<boolean | null>(null);
   const messagesRef = useRef<MotdMessage[]>([]);
   const currentIndexRef = useRef(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const pickNextMessage = useCallback(() => {
     if (messagesRef.current.length === 0) return;
@@ -26,10 +26,32 @@ export function MotdTip() {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchMotd = async () => {
       try {
-        const response = await fetch(MOTD_URL);
+        // Load MOTD preference
+        const motdEnabled = await getShowMotd();
+
+        if (!isMounted) return;
+
+        setShowMotd(motdEnabled);
+
+        // Clear any existing interval
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+
+        if (!motdEnabled) {
+          setTip(null); // Clear the tip
+          return; // Don't fetch MOTD if disabled
+        }
+
+        const response = await fetch(LINKS.MOTD);
         const messages: MotdMessage[] = await response.json();
+
+        if (!isMounted) return;
 
         // Filter out expired messages
         const now = new Date();
@@ -44,6 +66,9 @@ export function MotdTip() {
           // Pick a random starting message
           currentIndexRef.current = Math.floor(Math.random() * validMessages.length);
           setTip(validMessages[currentIndexRef.current]);
+
+          // Start rotation interval
+          intervalRef.current = setInterval(pickNextMessage, TIMING.MOTD_ROTATION);
         }
       } catch (err) {
         console.error('Failed to fetch MOTD:', err);
@@ -52,12 +77,27 @@ export function MotdTip() {
 
     fetchMotd();
 
-    // Rotate messages every 30 seconds
-    const interval = setInterval(pickNextMessage, ROTATE_INTERVAL_MS);
-    return () => clearInterval(interval);
+    // Listen for MOTD setting changes only
+    const handleMotdChange = () => {
+      fetchMotd();
+    };
+
+    window.addEventListener('armbian-motd-changed', handleMotdChange);
+
+    return () => {
+      isMounted = false;
+      // Cleanup interval and event listener
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      window.removeEventListener('armbian-motd-changed', handleMotdChange);
+    };
   }, [pickNextMessage]);
 
-  if (!tip) return null;
+  // Don't render if we haven't loaded the setting yet, if MOTD is disabled, or if no tip
+  if (showMotd !== true || !tip) {
+    return null;
+  }
 
   const handleClick = () => {
     openUrl(tip.url).catch(console.error);

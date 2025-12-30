@@ -14,3 +14,21 @@ export const POLLING = {
 
 /** Device type identifiers */
 export type DeviceType = 'system' | 'sd' | 'usb' | 'sata' | 'sas' | 'nvme' | 'hdd';
+
+/** External links */
+export const LINKS = {
+  /** GitHub repository URL */
+  GITHUB_REPO: 'https://github.com/armbian/imager',
+  /** Documentation URL */
+  DOCS: 'https://docs.armbian.com',
+  /** Community forum URL */
+  FORUM: 'https://forum.armbian.com',
+  /** MOTD (Message of the Day) JSON file */
+  MOTD: 'https://raw.githubusercontent.com/armbian/os/main/motd.json',
+} as const;
+
+/** Message rotation intervals */
+export const TIMING = {
+  /** MOTD rotation interval in milliseconds */
+  MOTD_ROTATION: 30000, // 30 seconds
+} as const;

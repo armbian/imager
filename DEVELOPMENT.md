@@ -150,6 +150,13 @@ armbian-imager/
 │   │   │   ├── BoardModal.tsx
 │   │   │   ├── ImageModal.tsx
 │   │   │   └── DeviceModal.tsx
+│   │   ├── settings/             # Settings modal components
+│   │   │   ├── SettingsModal.tsx # Main settings modal
+│   │   │   ├── GeneralSection.tsx# General settings (MOTD, updates)
+│   │   │   ├── ThemeSection.tsx  # Theme selection (light/dark/auto)
+│   │   │   ├── LanguageSection.tsx# Language selection (17 languages)
+│   │   │   ├── AdvancedSection.tsx# Developer mode & logs
+│   │   │   └── AboutSection.tsx  # App info & links
 │   │   └── shared/               # Reusable components
 │   │       ├── AppVersion.tsx    # Version display
 │   │       ├── ErrorDisplay.tsx  # Error presentation
@@ -158,12 +165,16 @@ armbian-imager/
 │   ├── hooks/                    # Custom React Hooks
 │   │   ├── useTauri.ts           # Tauri IPC wrappers
 │   │   ├── useVendorLogos.ts     # Logo validation
-│   │   └── useAsyncData.ts       # Async data fetching pattern
+│   │   ├── useAsyncData.ts       # Async data fetching pattern
+│   │   └── useSettings.ts        # Settings persistence hook
+│   ├── contexts/                 # React Context providers
+│   │   └── ThemeContext.tsx      # Theme state management (light/dark/auto)
 │   ├── config/                   # Static configuration
 │   │   ├── constants.ts          # App constants
 │   │   ├── deviceColors.ts       # Device color mapping
-│   │   └── os-info.ts            # OS information
-│   ├── locales/                  # i18n translations (15 languages)
+│   │   ├── os-info.ts            # OS information
+│   │   └── i18n.ts               # i18n config & language metadata
+│   ├── locales/                  # i18n translations (17 languages)
 │   ├── styles/                   # Modular CSS
 │   │   ├── theme.css             # Theme variables (light/dark)
 │   │   ├── components.css        # Component styles
@@ -181,6 +192,7 @@ armbian-imager/
 │   │   │   ├── operations.rs     # Download & flash operations
 │   │   │   ├── custom_image.rs   # Custom image handling
 │   │   │   ├── progress.rs       # Progress event emission
+│   │   │   ├── settings.rs       # Settings commands (get/set dev mode, logs)
 │   │   │   ├── system.rs         # System utilities
 │   │   │   └── state.rs          # Shared application state
 │   │   ├── devices/              # Platform-specific device detection
@@ -245,7 +257,8 @@ armbian-imager/
 | React 19 | UI Framework |
 | TypeScript | Type Safety |
 | Vite | Build Tool & Dev Server |
-| i18next | i18n (15 languages) |
+| React Context API | State Management (Theme) |
+| i18next | i18n (17 languages) |
 | Lucide | Icons |
 
 ### Backend
@@ -254,6 +267,7 @@ armbian-imager/
 |------------|---------|
 | Rust | Systems Programming |
 | Tauri 2 | Desktop Framework |
+| Tauri Store Plugin | Persistent Settings |
 | Tokio | Async Runtime |
 | Serde | Serialization |
 | Reqwest | HTTP Client |

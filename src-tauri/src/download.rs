@@ -14,7 +14,7 @@ use tokio::sync::Mutex;
 
 use crate::config;
 use crate::decompress::decompress_with_rust_xz;
-use crate::{log_error, log_info, log_warn};
+use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "download";
 
@@ -59,12 +59,15 @@ impl Default for DownloadState {
 
 /// Extract filename from URL
 fn extract_filename(url: &str) -> Result<&str, String> {
+    log_debug!(MODULE, "Extracting filename from URL: {}", url);
     let url_path = url.split('?').next().unwrap_or(url);
-    url_path
+    let filename = url_path
         .split('/')
         .next_back()
         .filter(|s| !s.is_empty())
-        .ok_or_else(|| "Invalid URL: no filename".to_string())
+        .ok_or_else(|| "Invalid URL: no filename".to_string())?;
+    log_debug!(MODULE, "Extracted filename: {}", filename);
+    Ok(filename)
 }
 
 /// Fetch expected SHA256 from URL
@@ -108,10 +111,16 @@ async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, St
 /// Calculate SHA256 of a file
 fn calculate_file_sha256(path: &Path, state: &Arc<DownloadState>) -> Result<String, String> {
     log_info!(MODULE, "Calculating SHA256 of: {}", path.display());
+    log_debug!(
+        MODULE,
+        "File size: {:?} bytes",
+        path.metadata().ok().map(|m| m.len())
+    );
 
     let mut file = File::open(path).map_err(|e| format!("Failed to open file for SHA: {}", e))?;
     let mut hasher = Sha256::new();
     let mut buffer = [0u8; 8192];
+    let mut bytes_processed = 0u64;
 
     loop {
         // Check for cancellation
@@ -127,6 +136,16 @@ fn calculate_file_sha256(path: &Path, state: &Arc<DownloadState>) -> Result<Stri
             break;
         }
         hasher.update(&buffer[..bytes_read]);
+        bytes_processed += bytes_read as u64;
+
+        // Log progress every 10MB in debug mode
+        if bytes_processed % (10 * 1024 * 1024) == 0 {
+            log_debug!(
+                MODULE,
+                "SHA256 calculation progress: {} MB",
+                bytes_processed / (1024 * 1024)
+            );
+        }
     }
 
     let result = hasher.finalize();
