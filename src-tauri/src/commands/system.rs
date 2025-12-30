@@ -2,15 +2,21 @@
 //!
 //! Platform-specific system operations like opening URLs and locale detection.
 
-use crate::log_info;
+use crate::{log_debug, log_info};
 use sys_locale::get_locale;
 
 const MODULE: &str = "commands::system";
 
-/// Log a message from the frontend
+/// Log a message from the frontend (INFO level)
 #[tauri::command]
 pub fn log_from_frontend(module: String, message: String) {
     log_info!(&format!("frontend::{}", module), "{}", message);
+}
+
+/// Log a debug message from the frontend (DEBUG level - only shown in developer mode)
+#[tauri::command]
+pub fn log_debug_from_frontend(module: String, message: String) {
+    log_debug!(&format!("frontend::{}", module), "{}", message);
 }
 
 /// Get the system locale (e.g., "en-US", "it-IT", "de-DE")

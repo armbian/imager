@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useCallback, useState, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronLeft } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -7,9 +7,11 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   searchBar?: ReactNode;
+  showBack?: boolean;
+  onBack?: () => void;
 }
 
-export function Modal({ isOpen, onClose, title, children, searchBar }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, searchBar, showBack, onBack }: ModalProps) {
   const [isExiting, setIsExiting] = useState(false);
   const isExitingRef = useRef(false);
 
@@ -26,9 +28,13 @@ export function Modal({ isOpen, onClose, title, children, searchBar }: ModalProp
 
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {
-      handleClose();
+      if (showBack && onBack) {
+        onBack();
+      } else {
+        handleClose();
+      }
     }
-  }, [handleClose]);
+  }, [handleClose, showBack, onBack]);
 
   useEffect(() => {
     if (isOpen) {
@@ -52,7 +58,14 @@ export function Modal({ isOpen, onClose, title, children, searchBar }: ModalProp
     <div className={`modal-overlay ${animationClass}`} onClick={handleClose}>
       <div className={`modal ${animationClass}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">{title}</h2>
+          <div className="modal-header-left">
+            {showBack && onBack && (
+              <button className="modal-back" onClick={onBack}>
+                <ChevronLeft size={20} />
+              </button>
+            )}
+            <h2 className="modal-title">{title}</h2>
+          </div>
           <button className="modal-close" onClick={handleClose}>
             <X size={20} />
           </button>

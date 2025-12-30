@@ -1,71 +1,59 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
-
-import en from './locales/en.json';
-import it from './locales/it.json';
-import de from './locales/de.json';
-import fr from './locales/fr.json';
-import es from './locales/es.json';
-import pt from './locales/pt.json';
-import nl from './locales/nl.json';
-import pl from './locales/pl.json';
-import ru from './locales/ru.json';
-import zh from './locales/zh.json';
-import ja from './locales/ja.json';
-import ko from './locales/ko.json';
-import uk from './locales/uk.json';
-import tr from './locales/tr.json';
-import sl from './locales/sl.json';
-import hr from './locales/hr.json';
-import sv from './locales/sv.json';
-
-const resources = {
-  en: { translation: en },
-  it: { translation: it },
-  de: { translation: de },
-  fr: { translation: fr },
-  es: { translation: es },
-  pt: { translation: pt },
-  nl: { translation: nl },
-  pl: { translation: pl },
-  ru: { translation: ru },
-  zh: { translation: zh },
-  ja: { translation: ja },
-  ko: { translation: ko },
-  uk: { translation: uk },
-  tr: { translation: tr },
-  sl: { translation: sl },
-  hr: { translation: hr },
-  sv: { translation: sv },
-};
-
-// Supported languages
-const supportedLanguages = ['en', 'it', 'de', 'fr', 'es', 'pt', 'nl', 'pl', 'ru', 'zh', 'ja', 'ko', 'uk', 'tr', 'sl', 'sv', 'hr'];
+import { load } from '@tauri-apps/plugin-store';
+import { SUPPORTED_LANGUAGES, getLanguageFromLocale } from './config/i18n';
 
 /**
- * Extract language code from locale string
- * e.g., "en-US" -> "en", "it-IT" -> "it"
+ * Dynamically load all translation files
+ *
+ * Uses Vite's import.meta.glob to load all JSON files in locales directory.
+ * This eliminates the need for static imports and automatically includes
+ * any new language files added to the locales folder.
  */
-function getLanguageFromLocale(locale: string): string {
-  const lang = locale.split('-')[0].toLowerCase();
-  return supportedLanguages.includes(lang) ? lang : 'en';
-}
+const localeModules = import.meta.glob('./locales/*.json', { eager: true });
 
 /**
- * Initialize i18n with system locale detection
+ * Build resources object from dynamically loaded locale files
+ *
+ * Extracts the language code from the filename (e.g., './locales/en.json' -> 'en')
+ * and creates the i18next-compatible resources structure.
+ */
+const resources = Object.entries(localeModules).reduce((acc, [path, module]) => {
+  // Extract language code from path: './locales/en.json' -> 'en'
+  const langCode = path.match(/\.\/locales\/(.+)\.json$/)?.[1];
+  if (langCode && module) {
+    acc[langCode] = { translation: module as Record<string, unknown> };
+  }
+  return acc;
+}, {} as Record<string, { translation: Record<string, unknown> }>);
+
+// Export supported language codes for use in other components
+export const supportedLanguages = SUPPORTED_LANGUAGES.map((lang) => lang.code);
+
+/**
+ * Initialize i18n with saved language or system locale detection
  */
 export async function initI18n(): Promise<void> {
-  let systemLocale = 'en-US';
+  let language = 'en';
 
   try {
-    // Get system locale from Tauri backend
-    systemLocale = await invoke<string>('get_system_locale');
-  } catch (error) {
-    console.warn('Failed to get system locale, using default:', error);
+    // Try to load saved language first using Store plugin
+    const store = await load('settings.json', { autoSave: true, defaults: {} });
+    const savedLanguage = await store.get<string>('language');
+    if (savedLanguage) {
+      language = savedLanguage;
+    }
+  } catch {
+    // If no saved language, detect from system locale
+    try {
+      const systemLocale = await invoke<string>('get_system_locale');
+      language = getLanguageFromLocale(systemLocale);
+    } catch (localeError) {
+      console.warn('Failed to get system locale, using default:', localeError);
+      language = 'en';
+    }
   }
-
-  const language = getLanguageFromLocale(systemLocale);
 
   await i18n
     .use(initReactI18next)
@@ -80,6 +68,57 @@ export async function initI18n(): Promise<void> {
         useSuspense: false, // Disable suspense for sync initialization
       },
     });
+}
+
+/**
+ * Change the current language and persist to storage
+ * @param lang - Language code to change to (e.g., 'en', 'it', 'auto')
+ */
+export async function changeLanguage(lang: string): Promise<void> {
+  const store = await load('settings.json', { autoSave: true, defaults: {} });
+
+  if (lang === 'auto') {
+    // Remove saved language to enable auto-detection
+    try {
+      await store.delete('language');
+    } catch (error) {
+      console.error('Failed to delete language from storage:', error);
+    }
+
+    // Detect system locale and change to it
+    try {
+      const systemLocale = await invoke<string>('get_system_locale');
+      const detectedLang = getLanguageFromLocale(systemLocale);
+      await i18n.changeLanguage(detectedLang);
+    } catch (localeError) {
+      console.warn('Failed to get system locale, using default:', localeError);
+      await i18n.changeLanguage('en');
+    }
+  } else {
+    // Change language in i18next
+    await i18n.changeLanguage(lang);
+
+    // Persist to storage using Store plugin
+    try {
+      await store.set('language', lang);
+    } catch (error) {
+      console.error('Failed to save language to storage:', error);
+    }
+  }
+}
+
+/**
+ * Get the current language
+ */
+export function getCurrentLanguage(): string {
+  return i18n.language;
+}
+
+/**
+ * Check if a language is supported
+ */
+export function isLanguageSupported(lang: string): boolean {
+  return supportedLanguages.includes(lang);
 }
 
 export default i18n;

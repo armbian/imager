@@ -6,6 +6,7 @@ import { relaunch } from '@tauri-apps/plugin-process';
 import { logInfo } from '../../hooks/useTauri';
 import { formatFileSize, getErrorMessage } from '../../utils';
 import { ChangelogModal } from './ChangelogModal';
+import { getShowUpdaterModal } from '../../hooks/useSettings';
 
 type UpdateState = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
 
@@ -23,10 +24,23 @@ export function UpdateModal() {
   const [dismissed, setDismissed] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const hasCheckedRef = useRef(false);
+  const hasLoggedDisabledRef = useRef(false);
 
   const checkForUpdate = useCallback(async () => {
     if (hasCheckedRef.current) return;
     hasCheckedRef.current = true;
+
+    // Check if updater modal is enabled in settings
+    const showModal = await getShowUpdaterModal();
+    if (!showModal) {
+      // Log this message only once per session
+      if (!hasLoggedDisabledRef.current) {
+        logInfo('updater', 'Updater modal disabled in settings, skipping update check');
+        hasLoggedDisabledRef.current = true;
+      }
+      setState('idle');
+      return;
+    }
 
     setState('checking');
     setError(null);

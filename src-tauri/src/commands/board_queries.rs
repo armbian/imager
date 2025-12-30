@@ -13,7 +13,7 @@ use crate::images::{
     extract_images, fetch_all_images, filter_images_for_board, get_unique_boards, BoardInfo,
     ImageInfo,
 };
-use crate::{log_error, log_info};
+use crate::{log_debug, log_error, log_info};
 
 use super::state::AppState;
 
@@ -59,6 +59,13 @@ pub async fn get_images_for_board(
         board_slug,
         stable_only
     );
+    log_debug!(
+        "board_queries",
+        "Filters - preapp: {:?}, kernel: {:?}, variant: {:?}",
+        preapp_filter,
+        kernel_filter,
+        variant_filter
+    );
 
     let json_guard = state.images_json.lock().await;
     let json = json_guard.as_ref().ok_or_else(|| {
@@ -71,6 +78,7 @@ pub async fn get_images_for_board(
     })?;
 
     let images = extract_images(json);
+    log_debug!("board_queries", "Total images available: {}", images.len());
     let filtered = filter_images_for_board(
         &images,
         &board_slug,
@@ -78,6 +86,12 @@ pub async fn get_images_for_board(
         kernel_filter.as_deref(),
         variant_filter.as_deref(),
         stable_only,
+    );
+    log_debug!(
+        "board_queries",
+        "Filtered down to {} images for board {}",
+        filtered.len(),
+        board_slug
     );
     log_info!(
         "board_queries",

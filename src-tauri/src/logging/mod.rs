@@ -78,6 +78,11 @@ impl Logger {
         }
     }
 
+    /// Update the minimum log level at runtime
+    fn set_min_level(&mut self, level: LogLevel) {
+        self.config.min_level = level;
+    }
+
     fn create_log_file() -> (Option<File>, Option<PathBuf>) {
         let log_dir = get_log_dir();
 
@@ -214,6 +219,30 @@ pub fn warn(module: &str, message: &str) {
 pub fn error(module: &str, message: &str) {
     if let Ok(mut logger) = LOGGER.lock() {
         logger.log(LogLevel::Error, module, message);
+    }
+}
+
+/// Set the minimum log level at runtime
+///
+/// This function allows dynamically changing the log level, for example
+/// when developer mode is toggled. When enabled, debug messages are shown.
+/// When disabled, only info and above are shown.
+pub fn set_log_level(debug_enabled: bool) {
+    if let Ok(mut logger) = LOGGER.lock() {
+        let new_level = if debug_enabled {
+            LogLevel::Debug
+        } else {
+            LogLevel::Info
+        };
+        logger.set_min_level(new_level);
+
+        // Log the change after setting it (using the new level)
+        let level_str = if debug_enabled { "DEBUG" } else { "INFO" };
+        logger.log(
+            LogLevel::Info,
+            "logging",
+            &format!("Log level changed to {}", level_str),
+        );
     }
 }
 

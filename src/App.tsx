@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Header, HomePage } from './components/layout';
 import { ManufacturerModal, BoardModal, ImageModal, DeviceModal } from './components/modals';
 import { FlashProgress } from './components/flash';
-import { AppVersion } from './components/shared';
+import { SettingsButton } from './components/settings';
 import { selectCustomImage, detectBoardFromFilename, logInfo } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep, Manufacturer } from './types';
@@ -208,7 +208,7 @@ function App() {
         onSelect={handleDeviceSelect}
       />
 
-      <AppVersion />
+      {!isFlashing && <SettingsButton />}
     </div>
   );
 }

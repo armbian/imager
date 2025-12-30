@@ -31,16 +31,19 @@
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",
     "@tauri-apps/plugin-fs": "^2.4.4",
-    "@tauri-apps/plugin-shell": "^2.3.3",
-    "@tauri-apps/plugin-updater": "^2",
     "@tauri-apps/plugin-process": "^2",
+    "@tauri-apps/plugin-shell": "^2.3.3",
+    "@tauri-apps/plugin-store": "^2.4.1",
+    "@tauri-apps/plugin-updater": "^2",
     "@types/qrcode": "^1.5.6",
+    "ansi-to-html": "^0.7.0",
     "i18next": "^25.7.2",
     "lucide-react": "^0.560.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.2",
     "react-dom": "^19.2.2",
-    "react-i18next": "^16.5.0"
+    "react-i18next": "^16.5.0",
+    "twemoji": "^14.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

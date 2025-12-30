@@ -5,6 +5,9 @@
 // Layout
 export * from './layout';
 
+// Settings
+export * from './settings';
+
 // Modals
 export * from './modals';
 

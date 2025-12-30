@@ -3,13 +3,13 @@
 //! Handles download and flash operations.
 
 use std::path::PathBuf;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::config;
 use crate::download::download_image as do_download;
 use crate::flash::{flash_image as do_flash, request_authorization};
 use crate::utils::get_cache_dir;
-use crate::{log_error, log_info};
+use crate::{log_debug, log_error, log_info};
 
 use super::state::AppState;
 
@@ -57,10 +57,16 @@ pub async fn download_image(
     state: State<'_, AppState>,
 ) -> Result<String, String> {
     log_info!("operations", "Starting download: {}", file_url);
+    log_debug!(
+        "operations",
+        "Download directory: {:?}",
+        get_cache_dir(config::app::NAME).join("images")
+    );
     if let Some(ref sha) = file_url_sha {
         log_info!("operations", "SHA URL: {}", sha);
     } else {
         log_info!("operations", "No SHA URL provided");
+        log_debug!("operations", "SHA verification will be skipped");
     }
     let download_dir = get_cache_dir(config::app::NAME).join("images");
 
@@ -92,6 +98,7 @@ pub async fn flash_image(
     device_path: String,
     verify: bool,
     state: State<'_, AppState>,
+    _app: AppHandle,
 ) -> Result<(), String> {
     log_info!(
         "operations",
@@ -100,15 +107,32 @@ pub async fn flash_image(
         device_path,
         verify
     );
+    log_debug!(
+        "operations",
+        "Image path exists: {}",
+        std::path::Path::new(&image_path).exists()
+    );
+    log_debug!(
+        "operations",
+        "Device path exists: {}",
+        std::path::Path::new(&device_path).exists()
+    );
+    log_debug!("operations", "Verification enabled: {}", verify);
+
     let path = PathBuf::from(&image_path);
     let flash_state = state.flash_state.clone();
 
     let result = do_flash(&path, &device_path, flash_state, verify).await;
-    if let Err(ref e) = result {
-        log_error!("operations", "Flash failed: {}", e);
-    } else {
-        log_info!("operations", "Flash completed successfully");
+
+    match &result {
+        Ok(_) => {
+            log_info!("operations", "Flash completed successfully");
+        }
+        Err(e) => {
+            log_error!("operations", "Flash failed: {}", e);
+        }
     }
+
     result
 }
 
