@@ -48,6 +48,7 @@
     "longDescription": "Armbian Imager is a utility for flashing Armbian OS images to SD cards and USB drives for single board computers.",
     "macOS": {
       "entitlements": "./entitlements.plist",
+      "signingIdentity": null,
       "minimumSystemVersion": "10.15",
       "dmg": {
         "background": "./dmg-background.png",

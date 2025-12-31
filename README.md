@@ -40,10 +40,6 @@ Prebuilt binaries are available for all supported platforms.
 | Intel & Apple Silicon | x64 & ARM64 | x64 & ARM64 |
 | <code>.dmg</code> / <code>.app.zip</code> | <code>.exe</code> / <code>.msi</code> | <code>.deb</code> / <code>.AppImage</code> |
 
-**macOS: First Launch**
-
-On first launch, macOS may block the application because it is not signed. If this happens, open **System Settings → Privacy & Security** and click **Open Anyway** next to *Armbian Imager was blocked*. This only needs to be done once.
-
 ## How It Works
 
 1. **Select Manufacturer** — Choose from 70+ supported SBC manufacturers or load a custom image
