@@ -306,11 +306,37 @@ jobs:
     permissions:
       contents: write
     env:
-      # Ad-hoc signing: allows app to run after "xattr -cr" on macOS
-      APPLE_SIGNING_IDENTITY: "-"
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Import Apple Developer Certificate
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          # Create a temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo -n "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security import certificate.p12 -k "$KEYCHAIN_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Verify certificate
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+          # Set as default keychain
+          security default-keychain -s "$KEYCHAIN_PATH"
 
       - name: Set version from release tag
         shell: bash
@@ -396,6 +422,54 @@ jobs:
             base="$(basename "$sig" .tar.gz.sig)"
             mv "$sig" "$CARGO_TARGET_DIR/release/bundle/macos/${base}-${{ matrix.arch }}.tar.gz.sig"
           done
+
+      - name: Notarize and staple .app and DMG
+        shell: bash
+        env:
+          CARGO_TARGET_DIR: src-tauri/target/${{ matrix.target }}
+        run: |
+          set -euo pipefail
+
+          # Find the .app bundle
+          APP_FILE=$(find "$CARGO_TARGET_DIR/release/bundle/macos/" -name "*.app" -type d | head -n 1)
+
+          # Find the DMG file
+          DMG_FILE=$(find "$CARGO_TARGET_DIR/release/bundle/dmg/" -name "*.dmg" -type f | head -n 1)
+
+          if [[ -z "$APP_FILE" ]]; then
+            echo "No .app bundle found"
+            exit 1
+          fi
+
+          if [[ -z "$DMG_FILE" ]]; then
+            echo "No DMG file found"
+            exit 1
+          fi
+
+          echo "Notarizing .app bundle: $APP_FILE"
+          echo "Notarizing DMG: $DMG_FILE"
+
+          # Submit .app for notarization (primary artifact)
+          xcrun notarytool submit "$APP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_ID_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --output-format json
+
+          # Staple the notarization ticket to .app
+          xcrun stapler staple "$APP_FILE"
+
+          # Verify .app stapling
+          xcrun stapler validate -v "$APP_FILE"
+
+          # Staple the notarization ticket to DMG
+          xcrun stapler staple "$DMG_FILE"
+
+          # Verify DMG stapling
+          xcrun stapler validate -v "$DMG_FILE"
+
+          echo "Notarization completed successfully for both .app and DMG"
 
       - name: Upload macOS artifacts to GitHub Release
         uses: ncipollo/release-action@v1
