@@ -98,6 +98,7 @@ jobs:
     needs: [create-release]
     if: ${{ github.event_name == 'push' || inputs.build_linux_x64 }}
     runs-on: ubuntu-24.04
+    container: { image: "debian:oldstable" }
     permissions:
       contents: write
     steps:
@@ -127,8 +128,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          apt-get update
+          apt-get install -y \
             libwebkit2gtk-4.1-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
@@ -195,6 +196,7 @@ jobs:
     needs: [create-release]
     if: ${{ github.event_name == 'push' || inputs.build_linux_arm64 }}
     runs-on: ubuntu-24.04-arm
+    container: { image: "debian:oldstable" }
     permissions:
       contents: write
     steps:
@@ -224,8 +226,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          apt-get update
+          apt-get install -y \
             libwebkit2gtk-4.1-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
