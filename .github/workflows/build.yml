@@ -6,12 +6,8 @@ on:
       - 'v*'
   workflow_dispatch:
     inputs:
-      build_linux_x64:
-        description: 'Build Linux x64'
-        type: boolean
-        default: true
-      build_linux_arm64:
-        description: 'Build Linux ARM64'
+      build_linux:
+        description: 'Build Linux (x64 + ARM64)'
         type: boolean
         default: true
       build_macos:
@@ -93,11 +89,35 @@ jobs:
           omitNameDuringUpdate: true
           replacesArtifacts: false
 
-  build-linux-x64:
-    name: build-linux (x86_64-unknown-linux-gnu)
-    needs: [create-release]
-    if: ${{ github.event_name == 'push' || inputs.build_linux_x64 }}
-    runs-on: ubuntu-24.04
+  build-linux:
+    name: build-linux ${{ matrix.type.name }} (${{ matrix.arch.name }}/${{ matrix.type.distro_id }})
+    needs: [ create-release ]
+    if: ${{ github.event_name == 'push' || inputs.build_linux }} # can't use matrix here; if is evaluated before matrix expansion
+    strategy:
+      fail-fast: false # let other jobs try to complete if one fails
+      matrix:
+        arch:
+          - { name: 'amd64', runner: 'ubuntu-24.04' }
+          - { name: 'arm64', runner: "ubuntu-24.04-arm" }
+        type:
+          # deb: build in the oldest still-supported matching container: oldstable (bookworm)
+          - name: 'deb'
+            distro_id: "bookworm"
+            container: { image: 'debian:bookworm' }
+            bundles: 'deb'
+            deps: "apt"
+            artifacts: "src-tauri/target/release/bundle/deb/*.deb"
+          # appimage: doesn't use a container (instead, runs directly on the runner); requires sudo to install deps
+          - name: 'appimage'
+            distro_id: "gharunner"
+            bundles: 'appimage'
+            deps: "apt"
+            deps_gain_root: "sudo"
+            artifacts: |
+              src-tauri/target/release/bundle/appimage/*.AppImage
+              src-tauri/target/release/bundle/appimage/*.AppImage.sig
+    runs-on: ${{ matrix.arch.runner }}
+    container: ${{ matrix.type.container }}
     permissions:
       contents: write
     steps:
@@ -125,10 +145,13 @@ jobs:
             -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
             src-tauri/tauri.conf.json
 
-      - name: Install dependencies
+      - name: Install dependencies (apt)
+        if: ${{ matrix.type.deps == 'apt' }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          ${{ matrix.type.deps_gain_root || '' }} apt-get update
+          ${{ matrix.type.deps_gain_root || '' }} apt-get install -y \
+            build-essential \
+            curl \
             libwebkit2gtk-4.1-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
@@ -172,7 +195,7 @@ jobs:
           fi
 
       - name: Build Tauri app
-        run: cargo tauri build --bundles deb,appimage
+        run: cargo tauri build --bundles "${{ matrix.type.bundles }}"
 
       - name: Upload artifacts to GitHub Release
         uses: ncipollo/release-action@v1
@@ -186,106 +209,7 @@ jobs:
           omitNameDuringUpdate: true
           replacesArtifacts: false
           artifacts: |
-            src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/appimage/*.AppImage
-            src-tauri/target/release/bundle/appimage/*.AppImage.sig
-
-  build-linux-arm64:
-    name: build-linux (aarch64-unknown-linux-gnu)
-    needs: [create-release]
-    if: ${{ github.event_name == 'push' || inputs.build_linux_arm64 }}
-    runs-on: ubuntu-24.04-arm
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set version from release tag
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          TAG='${{ needs.create-release.outputs.release_tag }}'
-          VERSION="${TAG#v}"
-
-          echo "Setting version to $VERSION"
-
-          sed -i \
-            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
-            package.json
-
-          sed -i \
-            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
-            src-tauri/Cargo.toml
-
-          sed -i \
-            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
-            src-tauri/tauri.conf.json
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            libssl-dev \
-            libgtk-3-dev \
-            squashfs-tools \
-            xdg-utils
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-
-      - name: Cache cargo bin (tauri-cli)
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin
-          key: cargo-bin-${{ runner.os }}-${{ runner.arch }}-stable-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Install npm dependencies
-        run: npm ci
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Install Tauri CLI (if missing)
-        shell: bash
-        run: |
-          if ! command -v cargo-tauri >/dev/null 2>&1; then
-            cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
-          fi
-
-      - name: Build Tauri app
-        run: cargo tauri build --bundles deb,appimage
-
-      - name: Upload artifacts to GitHub Release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ needs.create-release.outputs.release_tag }}
-          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
-          draft: true
-          prerelease: false
-          allowUpdates: true
-          omitBodyDuringUpdate: true
-          omitNameDuringUpdate: true
-          replacesArtifacts: false
-          artifacts: |
-            src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/appimage/*.AppImage
-            src-tauri/target/release/bundle/appimage/*.AppImage.sig
+            ${{ matrix.type.artifacts }}
 
   build-macos:
     name: build-macos (${{ matrix.target }})
@@ -653,8 +577,7 @@ jobs:
     name: Generate latest.json for updater
     needs:
       - create-release
-      - build-linux-x64
-      - build-linux-arm64
+      - build-linux
       - build-macos
       - build-windows-x64
       - build-windows-arm64
@@ -770,8 +693,7 @@ jobs:
     name: Publish release (draft -> false) + cleanup
     needs:
       - create-release
-      - build-linux-x64
-      - build-linux-arm64
+      - build-linux
       - build-macos
       - build-windows-x64
       - build-windows-arm64
