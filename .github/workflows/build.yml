@@ -30,7 +30,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   NODE_VERSION: '20'
-  TAURI_CLI_VERSION: '^2'
+  TAURI_CLI_VERSION: '2.9.6'
   # Tauri updater signing key (set in GitHub Secrets)
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
