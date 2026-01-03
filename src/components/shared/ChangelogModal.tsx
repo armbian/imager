@@ -120,17 +120,21 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
 
         const itemContent = line.replace(/^\s*[-*]\s+/, '');
         const formattedItem = itemContent
+          // Remove PR/issue URLs and replace with #number
+          .replace(/ https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)/g, ' #PR$1 ')
+          .replace(/\[[^\]]+\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)\)/g, '#PR$1')
+          // NOW do HTML escape (won't break the text)
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
+          // Replace placeholders with actual HTML
+          .replace(/#PR(\d+)/g, '<span class="pr-number">#$1</span>')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\*([^*]+)\*/g, '<em>$1</em>')
           .replace(/`([^`]+)`/g, '<code>$1</code>')
-          // Remove markdown GitHub links (PRs, issues, commits)
+          // Remove remaining markdown GitHub links (commits, etc)
           .replace(/\[([^\]]+)\]\(https:\/\/github\.com\/[^)]+\)/g, '$1')
-          // Remove "in https://github.com/..." but keep "by @username"
-          .replace(/(by @[a-zA-Z0-9_-]+) in https:\/\/github\.com\/[^\s]+/g, '$1')
-          // Remove any remaining bare GitHub URLs
+          // Remove any remaining bare GitHub URLs (commits, etc)
           .replace(/https:\/\/github\.com\/[^\s]+/g, '')
           .replace(/,\s*$/g, '') // Remove trailing comma after URL removal
           .replace(/\s+/g, ' ') // Clean up extra whitespace
@@ -164,17 +168,21 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
 
         // Regular paragraph line
         const formattedLine = line
+          // Remove PR/issue URLs and replace with #number
+          .replace(/ https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)/g, ' #PR$1 ')
+          .replace(/\[[^\]]+\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)\)/g, '#PR$1')
+          // NOW do HTML escape (won't break the text)
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
+          // Replace placeholders with actual HTML
+          .replace(/#PR(\d+)/g, '<span class="pr-number">#$1</span>')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\*([^*]+)\*/g, '<em>$1</em>')
           .replace(/`([^`]+)`/g, '<code>$1</code>')
-          // Remove markdown GitHub links (PRs, issues, commits)
+          // Remove remaining markdown GitHub links (commits, etc)
           .replace(/\[([^\]]+)\]\(https:\/\/github\.com\/[^)]+\)/g, '$1')
-          // Remove "in https://github.com/..." but keep "by @username"
-          .replace(/(by @[a-zA-Z0-9_-]+) in https:\/\/github\.com\/[^\s]+/g, '$1')
-          // Remove any remaining bare GitHub URLs
+          // Remove any remaining bare GitHub URLs (commits, etc)
           .replace(/https:\/\/github\.com\/[^\s]+/g, '')
           .replace(/,\s*$/g, '') // Remove trailing comma after URL removal
           .replace(/\s+/g, ' ') // Clean up extra whitespace
@@ -193,6 +201,11 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
 
     // Remove trailing <br /> tags to avoid extra space at the end
     html = html.replace(/(<br\s*\/?>)+$/g, '');
+
+    // Remove multiple <br /> tags and <br /> before headers to avoid extra spacing
+    html = html.replace(/(<br\s*\/?>){2,}/g, '<br />');
+    html = html.replace(/<br\s*\/?>\s*<h2>/g, '<h2>');
+    html = html.replace(/<br\s*\/?>\s*<h3>/g, '<h3>');
 
     return html;
   };

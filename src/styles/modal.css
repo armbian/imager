@@ -1260,3 +1260,8 @@
   text-decoration: underline;
 }
 
+/* Changelog Modal */
+.changelog-body .pr-number {
+  color: var(--armbian-orange);
+  font-weight: 500;
+}
