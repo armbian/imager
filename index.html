@@ -1,13 +1,427 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/armbian-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Armbian Imager</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Armbian Imager - Download</title>
+    <style>
+        /* --- CSS Reset & Base Variables --- */
+        :root {
+            --primary: #f98d05; /* Armbian Orange */
+            --primary-hover: #d67d04;
+            --dark-bg: #1a1a1a;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #666666;
+            --border-radius: 8px;
+            --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--dark-bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header --- */
+        header {
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo { font-weight: 700; font-size: 24px; color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .logo span { color: var(--primary); }
+        .nav-links a { color: #ccc; text-decoration: none; margin-left: 20px; font-size: 14px; transition: 0.2s; }
+        .nav-links a:hover { color: white; }
+
+        /* --- Hero Section --- */
+        .hero {
+            background: linear-gradient(135deg, #2b2b2b 0%, #1a1a1a 100%);
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+        .hero h1 { font-size: 3rem; color: white; margin-bottom: 15px; font-weight: 700; }
+        .hero p { font-size: 1.2rem; color: #aaa; max-width: 600px; margin: 0 auto; }
+
+        /* --- Main Download Card --- */
+        .download-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        /* 1. Auto Download Area */
+        .auto-download {
+            padding: 40px;
+            background: #f9f9f9;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        .auto-label { text-transform: uppercase; letter-spacing: 1px; font-size: 12px; color: var(--text-light); margin-bottom: 15px; display: block; }
+        
+        .main-btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            padding: 18px 40px;
+            font-size: 20px;
+            font-weight: 700;
+            border-radius: 50px; /* Pill shape */
+            box-shadow: 0 4px 15px rgba(249, 141, 5, 0.4);
+            transition: transform 0.2s, background-color 0.2s;
+            cursor: pointer;
+            pointer-events: none; /* Disabled until loaded */
+            opacity: 0.8;
+            min-width: 300px;
+        }
+        .main-btn:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
+        .main-btn.ready { pointer-events: auto; opacity: 1; }
+        .main-btn .sub { display: block; font-size: 14px; font-weight: 400; opacity: 0.9; margin-top: 4px; }
+
+        .detected-info { margin-top: 15px; font-size: 14px; color: var(--text-light); }
+
+        /* 2. Manual Tabs Area */
+        .manual-download { padding: 30px; min-height: 200px; }
+        
+        .tabs-header { display: flex; justify-content: center; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .tab-btn {
+            background: none; border: none; padding: 10px 20px;
+            font-size: 16px; font-weight: 600; color: var(--text-light);
+            cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s;
+        }
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn.active { border-bottom-color: var(--primary); color: var(--text-main); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+
+        .file-list { list-style: none; }
+        .file-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; border-bottom: 1px solid #f0f0f0; transition: 0.2s;
+        }
+        .file-item:hover { background-color: #fafafa; }
+        .file-name { font-weight: 500; color: #333; display: flex; align-items: center; gap: 10px; }
+        .file-meta { font-size: 13px; color: #888; text-align: right; }
+        .download-link { 
+            color: var(--primary); text-decoration: none; font-weight: 600; margin-left: 15px; 
+            border: 1px solid var(--primary); padding: 5px 12px; border-radius: 4px;
+            font-size: 12px;
+        }
+        .download-link:hover { background-color: var(--primary); color: white; }
+        
+        .empty-msg { text-align: center; color: #999; font-style: italic; padding: 20px; }
+
+        /* Loading Spinner */
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; margin-bottom: 5px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Footer */
+        footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <span>Armbian</span> Imager
+        </a>
+        <nav class="nav-links">
+            <a href="#">Docs</a>
+            <a href="#">Source</a>
+            <a href="#">Community</a>
+        </nav>
+    </header>
+
+    <div class="hero">
+        <h1>Flash OS images easily</h1>
+        <p>The ultimate tool for creating bootable USB drives and SD cards for Armbian.</p>
+    </div>
+
+    <div class="download-section">
+        <div class="card">
+            
+            <!-- Automatic Section -->
+            <div class="auto-download">
+                <span class="auto-label">Recommended for your system</span>
+                <br>
+                <a id="main-btn" href="#" class="main-btn">
+                    <span class="spinner"></span> Detecting...
+                </a>
+                <div id="detected-info" class="detected-info"></div>
+            </div>
+
+            <!-- Manual Section -->
+            <div class="manual-download">
+                <div class="tabs-header">
+                    <button class="tab-btn active" onclick="switchTab('windows')">Windows</button>
+                    <button class="tab-btn" onclick="switchTab('mac')">macOS</button>
+                    <button class="tab-btn" onclick="switchTab('linux')">Linux</button>
+                </div>
+
+                <div id="tab-windows" class="tab-content active">
+                    <ul class="file-list" id="list-windows"></ul>
+                </div>
+                <div id="tab-mac" class="tab-content">
+                    <ul class="file-list" id="list-mac"></ul>
+                </div>
+                <div id="tab-linux" class="tab-content">
+                    <ul class="file-list" id="list-linux"></ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2024 Armbian. Open Source software.
+    </footer>
+
+    <script>
+        //const REPO_OWNER = "armbian";
+        //const REPO_NAME = "imager";
+        //const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
+        // This points to the file generated by the GitHub Action
+        const API_URL = `./latest.json`;
+
+        const mainBtn = document.getElementById('main-btn');
+        const infoDiv = document.getElementById('detected-info');
+
+        // --- 1. INIT ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Fetch Data
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("API Limit Reached");
+                const release = await response.json();
+                
+                // Detect Client
+                const { os, arch } = await getClientInfo();
+
+                // Render Auto Button
+                renderAutoButton(release, os, arch);
+
+                // Render Manual Lists (Updated Logic)
+                renderManualLists(release);
+
+            } catch (err) {
+                console.error(err);
+                mainBtn.innerHTML = "Manual Download";
+                mainBtn.href = `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
+                mainBtn.classList.add('ready');
+                infoDiv.innerText = "Could not auto-detect. Please select manually below.";
+            }
+        });
+
+        // --- 2. RENDER FUNCTIONS ---
+
+        function renderAutoButton(release, os, arch) {
+            const asset = findBestAsset(release.assets, os, arch);
+            const tagName = release.tag_name;
+
+            if (asset) {
+                mainBtn.href = asset.browser_download_url;
+                mainBtn.setAttribute('download', asset.name);
+                
+                const osDisplay = os.charAt(0).toUpperCase() + os.slice(1);
+                
+                mainBtn.innerHTML = `Download for ${osDisplay}`;
+                const sub = document.createElement('span');
+                sub.className = 'sub';
+                sub.innerText = `${tagName} • ${formatBytes(asset.size)}`;
+                mainBtn.appendChild(sub);
+
+                mainBtn.classList.add('ready');
+                infoDiv.innerText = `Detected Architecture: ${arch.toUpperCase()}`;
+            } else {
+                mainBtn.innerHTML = "Download Latest";
+                mainBtn.href = `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
+                mainBtn.classList.add('ready');
+                infoDiv.innerText = `We couldn't find a specific file for ${os} (${arch}). Check the tabs below.`;
+            }
+        }
+
+        function renderManualLists(release) {
+            const assets = release.assets;
+            
+            // Helper to add "No files found" message if empty
+            const checkEmpty = (id) => {
+                const el = document.getElementById(id);
+                if(el.children.length === 0) {
+                    el.innerHTML = `<li class="empty-msg">No files found for this OS in this release.</li>`;
+                }
+            };
+
+            // Clear lists
+            document.getElementById('list-windows').innerHTML = '';
+            document.getElementById('list-mac').innerHTML = '';
+            document.getElementById('list-linux').innerHTML = '';
+
+            let processedCount = 0;
+
+            assets.forEach(asset => {
+                const name = asset.name;
+                const lowerName = name.toLowerCase();
+
+                // Filter out non-binary files
+                if (name.endsWith('.txt') || name.endsWith('.json') || name.endsWith('.sha256') || name.endsWith('.md5')) return;
+
+                let targetListId = null;
+
+                // --- IMPROVED FILTERING LOGIC ---
+                
+                // 1. Windows Check
+                if (lowerName.includes('win') || name.endsWith('.exe')) {
+                    targetListId = 'list-windows';
+                }
+                
+                // 2. macOS Check
+                else if (lowerName.includes('mac') || lowerName.includes('darwin') || name.endsWith('.dmg')) {
+                    targetListId = 'list-mac';
+                }
+
+                // 3. Linux Check (Specific formats)
+                else if (name.endsWith('.AppImage') || name.endsWith('.deb') || name.endsWith('.rpm')) {
+                    targetListId = 'list-linux';
+                }
+                
+                // 4. Ambiguous Files (.zip, .tar, etc.)
+                else if (name.endsWith('.zip')) {
+                    // For zips, we rely heavily on naming
+                    if (lowerName.includes('win')) targetListId = 'list-windows';
+                    else if (lowerName.includes('mac')) targetListId = 'list-mac';
+                    else if (lowerName.includes('linux') || lowerName.includes('arm64') || lowerName.includes('amd64')) {
+                         // Assuming zips with arch keywords are Linux unless proven otherwise
+                         targetListId = 'list-linux';
+                    }
+                }
+
+                // If we found a target, render it
+                if (targetListId) {
+                    processedCount++;
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    li.innerHTML = `
+                        <div class="file-name">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            ${name}
+                        </div>
+                        <div class="file-meta">
+                            ${formatBytes(asset.size)}
+                            <a href="${asset.browser_download_url}" class="download-link">Download</a>
+                        </div>
+                    `;
+                    document.getElementById(targetListId).appendChild(li);
+                }
+            });
+            
+            console.log(`Processed ${processedCount} assets out of ${assets.length} total.`);
+
+            // Final check for empty tabs
+            checkEmpty('list-windows');
+            checkEmpty('list-mac');
+            checkEmpty('list-linux');
+        }
+
+        // --- 3. LOGIC HELPERS ---
+
+        function switchTab(os) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`tab-${os}`).classList.add('active');
+        }
+
+        async function getClientInfo() {
+            if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+                const uaData = await navigator.userAgentData.getHighEntropyValues(['architecture', 'platform']);
+                return {
+                    os: normalizeOS(uaData.platform),
+                    arch: normalizeArch(uaData.architecture)
+                };
+            }
+            const ua = navigator.userAgent;
+            let os = "unknown", arch = "unknown";
+            if (ua.indexOf("Win") !== -1) os = "windows";
+            else if (ua.indexOf("Mac") !== -1) os = "mac";
+            else if (ua.indexOf("Linux") !== -1) os = "linux";
+
+            if (ua.indexOf("arm") !== -1 || ua.indexOf("aarch64") !== -1) arch = "arm64";
+            else if (ua.indexOf("x86_64") !== -1 || ua.indexOf("x64") !== -1) arch = "x64";
+            else if (os === "mac") arch = "arm64"; 
+            else arch = "x64"; 
+            return { os, arch };
+        }
+
+        function normalizeOS(platform) {
+            if (platform === "Windows") return "windows";
+            if (platform === "macOS") return "mac";
+            if (platform === "Linux") return "linux";
+            return platform.toLowerCase();
+        }
+
+        function normalizeArch(arch) {
+            if (arch === "arm" || arch === "arm64" || arch === "aarch64") return "arm64";
+            if (arch === "x86" || arch === "x86_64" || arch === "x64") return "x64";
+            return "unknown";
+        }
+
+        function findBestAsset(assets, os, arch) {
+            const compatible = assets.filter(a => {
+                const name = a.name.toLowerCase();
+                if (os === 'windows') {
+                    if (arch === 'x64') return name.includes('win') && name.includes('x64');
+                }
+                if (os === 'mac') {
+                    if (arch === 'arm64') return name.includes('macos') && (name.includes('arm64') || name.includes('aarch64'));
+                    if (arch === 'x64') return name.includes('macos') && name.includes('x64');
+                }
+                if (os === 'linux') {
+                    if (name.includes('win') || name.includes('macos') || name.includes('darwin')) return false;
+                    if (arch === 'x64') return name.includes('amd64') || name.includes('x86_64') || name.includes('x64');
+                    if (arch === 'arm64') return name.includes('arm64') || name.includes('aarch64');
+                }
+                return false;
+            });
+            // Prefer AppImage
+            compatible.sort((a, b) => {
+                const nameA = a.name.toLowerCase();
+                const nameB = b.name.toLowerCase();
+                if (nameA.includes('appimage') && !nameB.includes('appimage')) return -1;
+                return 0;
+            });
+            return compatible[0] || null;
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
 </html>
