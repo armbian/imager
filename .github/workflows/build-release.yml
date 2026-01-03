@@ -1,22 +1,22 @@
-# Build Artifacts (No Release)
+# Build and Release
 #
-# This workflow builds and uploads artifacts without creating releases.
-# It calls the reusable build-reusable.yml workflow with upload_target='artifacts'.
-# Artifacts are retained for 30 days.
+# This workflow creates production releases with GitHub Releases.
+# It calls the reusable build-reusable.yml workflow with upload_target='release'.
 #
-# Can be triggered manually from any branch.
+# Triggers:
+# - Push to tags matching 'v*' (e.g., v1.0.0, v2.1.3)
+# - Manual workflow dispatch with platform selection options
 
-name: Build Artifacts (No Release)
+name: Build and Release
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
-      build_linux_x64:
-        description: 'Build Linux x64'
-        type: boolean
-        default: true
-      build_linux_arm64:
-        description: 'Build Linux ARM64'
+      build_linux:
+        description: 'Build Linux (x64 + ARM64)'
         type: boolean
         default: true
       build_macos:
@@ -38,35 +38,39 @@ concurrency:
 
 jobs:
   # --------------------------------------------------------------------------
-  # Call the reusable build workflow with artifact upload configuration
+  # Call the reusable build workflow with release configuration
   # --------------------------------------------------------------------------
   # This job forwards all inputs and secrets to the reusable workflow.
   # The reusable workflow handles all build logic for all platforms.
+  #
+  # For tag pushes: all platforms are built by default.
+  # For manual dispatch: platform selection is controlled by inputs.
   # --------------------------------------------------------------------------
 
-  call-build-artifacts:
-    name: Build Artifacts
+  call-build-release:
+    name: Build Release
     uses: ./.github/workflows/build-reusable.yml
     with:
-      # Upload to GitHub Artifacts (30-day retention)
-      upload_target: 'artifacts'
+      # Upload to GitHub Releases (permanent)
+      upload_target: 'release'
 
-      # Don't create GitHub Release
-      create_release: false
+      # Create GitHub Release (draft, published by finalize job)
+      create_release: true
 
       # Enable code signing for macOS (notarization)
       enable_signing: true
 
-      # Use manual version (from package.json, no modifications)
-      version_strategy: 'manual'
-      manual_version: '1.0.0'
+      # Auto-increment version for production releases
+      version_strategy: 'auto'
 
-      # Platform build flags (from user inputs)
-      build_linux_x64: ${{ inputs.build_linux_x64 }}
-      build_linux_arm64: ${{ inputs.build_linux_arm64 }}
-      build_macos: ${{ inputs.build_macos }}
-      build_windows_x64: ${{ inputs.build_windows_x64 }}
-      build_windows_arm64: ${{ inputs.build_windows_arm64 }}
+      # Platform build flags
+      # For tag pushes: always build all platforms
+      # For manual dispatch: use user inputs
+      build_linux_x64: ${{ github.event_name == 'push' || inputs.build_linux }}
+      build_linux_arm64: ${{ github.event_name == 'push' || inputs.build_linux }}
+      build_macos: ${{ github.event_name == 'push' || inputs.build_macos }}
+      build_windows_x64: ${{ github.event_name == 'push' || inputs.build_windows_x64 }}
+      build_windows_arm64: ${{ github.event_name == 'push' || inputs.build_windows_arm64 }}
 
     secrets:
       # Forward all required secrets to the reusable workflow
