@@ -22,6 +22,9 @@
 
 ### Testimonials
 
+> "What a fantastic tool for getting people started with a non Raspberry PI"
+> — *Interfacing Linux*, *Hardware and software guides for Linux creatives.* ([source](https://www.youtube.com/watch?v=RAxQebKsnuc)) 
+
 > “A proper multi-platform desktop app that actually works, which is rarer than you’d think.”
 > — *Bruno Verachten*, *Senior Developer Relations Engineer* ([source](https://www.linkedin.com/pulse/adding-risc-v-support-armbian-imager-tale-qemu-tauri-deja-verachten-86fxe))
 
