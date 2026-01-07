@@ -35,6 +35,7 @@ const LANGUAGES: LanguageMetadata[] = [
   { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
   { code: 'pl', name: 'Polski', flag: '🇵🇱' },
   { code: 'pt', name: 'Português', flag: '🇵🇹' },
+  { code: 'pt-BR', name: 'Português do Brasil', flag: '🇧🇷' },
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
   { code: 'sl', name: 'Slovenščina', flag: '🇸🇮' },
   { code: 'sv', name: 'Svenska', flag: '🇸🇪' },
