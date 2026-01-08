@@ -482,11 +482,12 @@
                     if (arch === 'x64') return name.includes('win') && name.includes('x64');
                 }
                 if (os === 'mac') {
-                    if (arch === 'arm64') return name.includes('macos') && (name.includes('arm64') || name.includes('aarch64'));
-                    if (arch === 'x64') return name.includes('macos') && name.includes('x64');
+                    const isMac = name.includes('macos') || name.includes('darwin') || name.endsWith('.dmg');
+                    if (arch === 'arm64') return isMac && (name.includes('arm64') || name.includes('aarch64'));
+                    if (arch === 'x64') return isMac && name.includes('x64');
                 }
                 if (os === 'linux') {
-                    if (name.includes('win') || name.includes('macos') || name.includes('darwin')) return false;
+                    if (name.includes('win') || name.includes('macos') || name.includes('darwin') || name.endsWith('.dmg')) return false;
                     if (arch === 'x64') return name.includes('amd64') || name.includes('x86_64') || name.includes('x64');
                     if (arch === 'arm64') return name.includes('arm64') || name.includes('aarch64');
                 }
