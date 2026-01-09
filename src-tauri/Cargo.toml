@@ -32,12 +32,15 @@ dirs = "5"
 once_cell = "1.21.3"
 chrono = "0.4"
 sys-locale = "0.3"
+filetime = "0.2"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 # Linux-specific dependencies for block device access
 libc = "0.2"
 # UDisks2 for privilege escalation via polkit
 udisks2 = "0.3"
+# Pin zbus to 5.12 to avoid breaking changes in 5.13+ (Rust 2024 edition)
+zbus = "=5.12.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 # macOS-specific dependencies

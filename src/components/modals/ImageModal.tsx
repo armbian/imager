@@ -14,6 +14,7 @@ import {
   DESKTOP_BADGES,
   KERNEL_BADGES,
   DESKTOP_ENVIRONMENTS,
+  UI,
 } from '../../config';
 import { formatFileSize, DEFAULT_COLOR } from '../../utils';
 
@@ -156,7 +157,7 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
         <ErrorDisplay error={error} onRetry={reload} compact />
       ) : (
         <>
-          {showSkeleton && <ListItemSkeleton count={6} />}
+          {showSkeleton && <ListItemSkeleton count={UI.SKELETON.IMAGE_MODAL} />}
           {filteredImages.length === 0 && !showSkeleton && (
             <div className="no-results">
               <Package size={48} />

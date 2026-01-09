@@ -211,11 +211,11 @@ pub async fn download_image(
     log_info!(MODULE, "Download requested: {}", url);
     log_info!(MODULE, "Output path: {}", output_path.display());
 
-    // Check if already exists
-    if output_path.exists() {
-        log_info!(MODULE, "Image already exists, skipping download");
-        *state.output_path.lock().await = Some(output_path.clone());
-        return Ok(output_path);
+    // Check if image is already in cache (also updates mtime for LRU)
+    if let Some(cached_path) = crate::cache::get_cached_image(output_filename) {
+        log_info!(MODULE, "Using cached image: {}", cached_path.display());
+        *state.output_path.lock().await = Some(cached_path.clone());
+        return Ok(cached_path);
     }
 
     // Create output directory if needed

@@ -4,6 +4,7 @@
 
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
+use tauri_plugin_store::StoreExt;
 
 use crate::config;
 use crate::download::download_image as do_download;
@@ -136,26 +137,116 @@ pub async fn flash_image(
     result
 }
 
-/// Delete a downloaded image file
+/// Force delete a cached image regardless of cache settings
+///
+/// Used when an image repeatedly fails to flash, suggesting the cached
+/// file may be corrupted. Bypasses the cache_enabled check.
 #[tauri::command]
-pub async fn delete_downloaded_image(image_path: String) -> Result<(), String> {
-    log_info!("operations", "Deleting downloaded image: {}", image_path);
+pub async fn force_delete_cached_image(image_path: String) -> Result<(), String> {
+    log_info!("operations", "Force delete cached image: {}", image_path);
+
     let path = PathBuf::from(&image_path);
 
     // Safety check: only delete files in our cache directory
-    let cache_dir = get_cache_dir(config::app::NAME);
+    // Use canonicalize() to resolve symlinks and prevent path traversal attacks
+    let cache_dir = get_cache_dir(config::app::NAME)
+        .canonicalize()
+        .map_err(|e| format!("Failed to resolve cache directory: {}", e))?;
 
-    if !path.starts_with(&cache_dir) {
+    let canonical_path = path
+        .canonicalize()
+        .map_err(|e| format!("Failed to resolve image path: {}", e))?;
+
+    if !canonical_path.starts_with(&cache_dir) {
         log_error!(
             "operations",
-            "Attempted to delete file outside cache: {}",
-            image_path
+            "Attempted to force delete file outside cache: {} (resolved: {})",
+            image_path,
+            canonical_path.display()
         );
         return Err("Cannot delete files outside cache directory".to_string());
     }
 
     if path.exists() {
         std::fs::remove_file(&path).map_err(|e| {
+            log_error!(
+                "operations",
+                "Failed to force delete image {}: {}",
+                image_path,
+                e
+            );
+            format!("Failed to delete image: {}", e)
+        })?;
+        log_info!("operations", "Force deleted cached image: {}", image_path);
+    } else {
+        log_debug!("operations", "Image already deleted: {}", image_path);
+    }
+
+    Ok(())
+}
+
+/// Delete a downloaded image file
+///
+/// If image caching is enabled, the file is kept for future use.
+/// If caching is disabled, the file is deleted.
+#[tauri::command]
+pub async fn delete_downloaded_image(image_path: String, app: AppHandle) -> Result<(), String> {
+    log_info!("operations", "Delete request for image: {}", image_path);
+
+    // Check if cache is enabled
+    let cache_enabled = match app.store("settings.json") {
+        Ok(store) => store
+            .get("cache_enabled")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true),
+        Err(_) => true, // Default to cache enabled
+    };
+
+    if cache_enabled {
+        log_info!("operations", "Cache enabled, keeping image: {}", image_path);
+        return Ok(());
+    }
+
+    let path = PathBuf::from(&image_path);
+
+    // Safety check: only delete files in our cache directory
+    // Use canonicalize() to resolve symlinks and prevent path traversal attacks
+    let cache_dir = match get_cache_dir(config::app::NAME).canonicalize() {
+        Ok(dir) => dir,
+        Err(e) => {
+            log_debug!(
+                "operations",
+                "Cache directory doesn't exist yet, skipping delete: {}",
+                e
+            );
+            return Ok(());
+        }
+    };
+
+    let canonical_path = match path.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            log_debug!(
+                "operations",
+                "Image path doesn't exist or can't be resolved, skipping delete: {}",
+                e
+            );
+            return Ok(());
+        }
+    };
+
+    if !canonical_path.starts_with(&cache_dir) {
+        log_error!(
+            "operations",
+            "Attempted to delete file outside cache: {} (resolved: {})",
+            image_path,
+            canonical_path.display()
+        );
+        return Err("Cannot delete files outside cache directory".to_string());
+    }
+
+    if canonical_path.exists() {
+        std::fs::remove_file(&canonical_path).map_err(|e| {
             log_error!("operations", "Failed to delete image {}: {}", image_path, e);
             format!("Failed to delete image: {}", e)
         })?;

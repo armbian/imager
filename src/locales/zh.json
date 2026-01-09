@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "未知",
-    "confirm": "确认"
+    "confirm": "确认",
+    "cancel": "取消"
   },
   "settings": {
     "title": "设置",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "显示应用程序日志以进行调试",
     "noLogsAvailable": "没有可用的日志",
     "copyLogs": "复制日志",
-    "copied": "已复制！"
+    "copied": "已复制！",
+    "notificationsCategory": "通知",
+    "cacheCategory": "缓存",
+    "enableCache": "启用镜像缓存",
+    "enableCacheDescription": "保留已下载的镜像，以便在烧录失败时快速重试",
+    "maxCacheSize": "最大缓存大小",
+    "maxCacheSizeDescription": "超出限制时自动删除最旧的镜像",
+    "cacheSize": "缓存大小",
+    "noCachedImages": "没有缓存的镜像",
+    "clearCache": "清除缓存",
+    "clearCacheConfirm": "您确定要删除所有缓存的镜像吗？此操作无法撤消。"
   },
   "update": {
     "title": "有可用更新",

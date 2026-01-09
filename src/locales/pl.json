@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Nieznany",
-    "confirm": "Potwierdź"
+    "confirm": "Potwierdź",
+    "cancel": "Anuluj"
   },
   "settings": {
     "title": "Ustawienia",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Pokaż logi aplikacji do debugowania",
     "noLogsAvailable": "Brak dostępnych logów",
     "copyLogs": "Kopiuj logi",
-    "copied": "Skopiowano!"
+    "copied": "Skopiowano!",
+    "notificationsCategory": "POWIADOMIENIA",
+    "cacheCategory": "PAMIĘĆ PODRĘCZNA",
+    "enableCache": "Włącz pamięć podręczną obrazów",
+    "enableCacheDescription": "Zachowaj pobrane obrazy dla szybszej ponownej próby w przypadku niepowodzenia zapisu",
+    "maxCacheSize": "Maksymalny rozmiar pamięci podręcznej",
+    "maxCacheSizeDescription": "Automatycznie usuń najstarsze obrazy po przekroczeniu limitu",
+    "cacheSize": "Rozmiar pamięci podręcznej",
+    "noCachedImages": "Brak obrazów w pamięci podręcznej",
+    "clearCache": "Wyczyść pamięć podręczną",
+    "clearCacheConfirm": "Czy na pewno chcesz usunąć wszystkie obrazy z pamięci podręcznej? Tej akcji nie można cofnąć."
   },
   "update": {
     "title": "Dostępna aktualizacja",

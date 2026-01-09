@@ -5,6 +5,7 @@
 import type { ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { COLORS } from '../../config';
 
 interface ConfirmationDialogProps {
   /** Whether the dialog is visible */
@@ -52,7 +53,7 @@ export function ConfirmationDialog({
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal confirm-modal" onClick={(e) => e.stopPropagation()}>
         <div className="confirm-icon">
-          <AlertTriangle size={32} color="#f59e0b" />
+          <AlertTriangle size={32} color={COLORS.ALERT_WARNING} />
         </div>
         <h3 className="confirm-title">{title}</h3>
         <p className="confirm-text">{message}</p>
@@ -60,7 +61,7 @@ export function ConfirmationDialog({
         {warning && <p className="confirm-warning">{warning}</p>}
         <div className="confirm-actions">
           <button className="btn btn-secondary" onClick={onCancel}>
-            {cancelText || t('flash.cancel')}
+            {cancelText || t('common.cancel')}
           </button>
           <button
             className={`btn ${isDanger ? 'btn-danger' : 'btn-primary'}`}

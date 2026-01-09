@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Okänd",
-    "confirm": "Bekräfta"
+    "confirm": "Bekräfta",
+    "cancel": "Avbryt"
   },
   "settings": {
     "title": "Inställningar",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Visa applikationsloggar för felsökning",
     "noLogsAvailable": "Inga loggar tillgängliga",
     "copyLogs": "Kopiera loggar",
-    "copied": "Kopierad!"
+    "copied": "Kopierad!",
+    "notificationsCategory": "AVISERINGAR",
+    "cacheCategory": "CACHE",
+    "enableCache": "Aktivera image-cache",
+    "enableCacheDescription": "Behåll nedladdade images för snabbare nytt försök om flashning misslyckas",
+    "maxCacheSize": "Maximal cachestorlek",
+    "maxCacheSizeDescription": "Ta automatiskt bort äldsta images när gränsen överskrids",
+    "cacheSize": "Cachestorlek",
+    "noCachedImages": "Inga cachade images",
+    "clearCache": "Rensa cache",
+    "clearCacheConfirm": "Är du säker på att du vill ta bort alla cachade images? Denna åtgärd kan inte ångras."
   },
   "update": {
     "title": "Uppdatering tillgänglig",

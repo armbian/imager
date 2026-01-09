@@ -6,7 +6,7 @@ import { ErrorDisplay, ConfirmationDialog, ListItemSkeleton } from '../shared';
 import type { BlockDevice } from '../../types';
 import { getBlockDevices } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
-import { POLLING, type DeviceType } from '../../config';
+import { POLLING, UI, type DeviceType } from '../../config';
 import { getDeviceColors } from '../../config/deviceColors';
 import { getDeviceType } from '../../utils/deviceUtils';
 
@@ -195,7 +195,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
           <ErrorDisplay error={error} onRetry={reload} compact />
         ) : (
           <>
-            {showSkeleton && <ListItemSkeleton count={4} />}
+            {showSkeleton && <ListItemSkeleton count={UI.SKELETON.DEVICE_MODAL} />}
             {filteredDevices.length === 0 && !showSkeleton && (
               <div className="no-results">
                 <Usb size={40} />

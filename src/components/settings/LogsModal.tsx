@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { X, Copy, Check } from 'lucide-react';
 import Ansi from 'ansi-to-html';
 import { getLogs } from '../../hooks/useTauri';
+import { TIMING } from '../../config';
 
 /**
  * Strip ANSI escape codes from text
@@ -62,7 +63,7 @@ export function LogsModal({ isOpen, onClose }: LogsModalProps) {
       const plainText = stripAnsiCodes(logs);
       await navigator.clipboard.writeText(plainText);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), TIMING.COPIED_NOTIFICATION);
     } catch (err) {
       console.error('Failed to copy logs:', err);
     }

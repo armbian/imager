@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Desconocido",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
   },
   "settings": {
     "title": "Configuración",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Mostrar los registros de la aplicación para depuración",
     "noLogsAvailable": "No hay registros disponibles",
     "copyLogs": "Copiar registros",
-    "copied": "¡Copiado!"
+    "copied": "¡Copiado!",
+    "notificationsCategory": "NOTIFICACIONES",
+    "cacheCategory": "CACHÉ",
+    "enableCache": "Habilitar caché de imágenes",
+    "enableCacheDescription": "Mantener las imágenes descargadas para un reintento más rápido si falla la escritura",
+    "maxCacheSize": "Tamaño máximo de caché",
+    "maxCacheSizeDescription": "Eliminar automáticamente las imágenes más antiguas cuando se exceda el límite",
+    "cacheSize": "Tamaño de caché",
+    "noCachedImages": "Sin imágenes en caché",
+    "clearCache": "Limpiar caché",
+    "clearCacheConfirm": "¿Estás seguro de que quieres eliminar todas las imágenes en caché? Esta acción no se puede deshacer."
   },
   "update": {
     "title": "Actualización disponible",

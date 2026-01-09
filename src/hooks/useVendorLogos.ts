@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { BoardInfo } from '../types';
 import { preloadImage } from '../utils';
+import { VENDOR } from '../config';
 
 interface VendorLogoState {
   failedLogos: Set<string>;
@@ -30,7 +31,7 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
 
     const vendorLogos = new Map<string, string>();
     for (const board of boards) {
-      if (board.vendor && board.vendor !== 'other' && board.vendor_logo) {
+      if (board.vendor && board.vendor !== VENDOR.FALLBACK_ID && board.vendor_logo) {
         vendorLogos.set(board.vendor, board.vendor_logo);
       }
     }
@@ -59,9 +60,9 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
   // Helper to get effective vendor (considering failed logos)
   const getEffectiveVendor = useCallback((board: BoardInfo): string => {
     if (!board.vendor_logo || state.failedLogos.has(board.vendor)) {
-      return 'other';
+      return VENDOR.FALLBACK_ID;
     }
-    return board.vendor || 'other';
+    return board.vendor || VENDOR.FALLBACK_ID;
   }, [state.failedLogos]);
 
   // Check if a vendor has a valid logo
@@ -112,7 +113,7 @@ export function useManufacturerList(
     // Build vendor map with board counts, platinum board counts, and standard board counts
     for (const board of boards) {
       const validLogo = hasValidLogo(board);
-      const vendorId = validLogo ? (board.vendor || 'other') : 'other';
+      const vendorId = validLogo ? (board.vendor || VENDOR.FALLBACK_ID) : VENDOR.FALLBACK_ID;
       const vendorName = validLogo ? (board.vendor_name || 'Other') : 'Other';
       const vendorLogo = validLogo ? board.vendor_logo : null;
 
@@ -153,8 +154,8 @@ export function useManufacturerList(
       }))
       .sort((a, b) => {
         // "Other" category always goes to the bottom
-        if (a.id === 'other') return 1;
-        if (b.id === 'other') return -1;
+        if (a.id === VENDOR.FALLBACK_ID) return 1;
+        if (b.id === VENDOR.FALLBACK_ID) return -1;
 
         // Tier 1: Vendors with MORE than 1 platinum board (highest priority)
         const aMultiPlatinum = a.platinumCount > 1;

@@ -2,8 +2,10 @@
  * Shared utility functions and constants
  */
 
+import { COLORS } from '../config';
+
 /** Default color for icons without specific branding */
-export const DEFAULT_COLOR = '#64748b';
+export const DEFAULT_COLOR = COLORS.DEFAULT_ICON;
 
 /**
  * Format file size in human-readable format

@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Nepoznato",
-    "confirm": "Potvrda"
+    "confirm": "Potvrda",
+    "cancel": "Odustani"
   },
   "settings": {
     "title": "Postavke",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Prikaži zapise aplikacije za otklanjanje pogrešaka",
     "noLogsAvailable": "Nema dostupnih zapisa",
     "copyLogs": "Kopiraj zapise",
-    "copied": "Kopirano!"
+    "copied": "Kopirano!",
+    "notificationsCategory": "OBAVIJESTI",
+    "cacheCategory": "PREDMEMORIJA",
+    "enableCache": "Omogući predmemoriju slika",
+    "enableCacheDescription": "Zadrži preuzete slike za brži ponovni pokušaj ako snimanje ne uspije",
+    "maxCacheSize": "Maksimalna veličina predmemorije",
+    "maxCacheSizeDescription": "Automatski ukloni najstarije slike kada se prekorači ograničenje",
+    "cacheSize": "Veličina predmemorije",
+    "noCachedImages": "Nema slika u predmemoriji",
+    "clearCache": "Očisti predmemoriju",
+    "clearCacheConfirm": "Jeste li sigurni da želite izbrisati sve slike iz predmemorije? Ova radnja se ne može poništiti."
   },
   "update": {
     "title": "Dostupno ažuriranje",

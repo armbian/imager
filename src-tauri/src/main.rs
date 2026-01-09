@@ -6,6 +6,7 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod cache;
 mod commands;
 mod config;
 mod decompress;
@@ -24,18 +25,49 @@ use tauri_plugin_store::StoreExt;
 
 use crate::utils::get_cache_dir;
 
-/// Clean up cached download images from previous sessions
-fn cleanup_download_cache() {
-    let images_dir = get_cache_dir(config::app::NAME).join("images");
+/// Manage cached download images based on cache settings
+///
+/// If cache is disabled, clears all cached images.
+/// If cache is enabled, enforces the maximum cache size by evicting oldest files.
+fn manage_download_cache(app: &tauri::App) {
+    // Load cache settings from store
+    let (cache_enabled, cache_max_size) = match app.store("settings.json") {
+        Ok(store) => {
+            let enabled = store
+                .get("cache_enabled")
+                .and_then(|v| v.as_bool())
+                .unwrap_or(true);
+            let max_size = store
+                .get("cache_max_size")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(cache::DEFAULT_MAX_SIZE);
+            (enabled, max_size)
+        }
+        Err(e) => {
+            log_warn!(
+                "main",
+                "Failed to load cache settings: {}. Using defaults.",
+                e
+            );
+            (true, cache::DEFAULT_MAX_SIZE)
+        }
+    };
 
-    if images_dir.exists() {
-        if let Ok(entries) = std::fs::read_dir(&images_dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() {
-                    let _ = std::fs::remove_file(&path);
-                }
-            }
+    if !cache_enabled {
+        // Cache disabled - clear all cached images
+        log_info!("main", "Image cache disabled, clearing cache directory");
+        if let Err(e) = cache::clear_cache() {
+            log_warn!("main", "Failed to clear cache: {}", e);
+        }
+    } else {
+        // Cache enabled - enforce size limit
+        log_info!(
+            "main",
+            "Image cache enabled with {} GB limit",
+            cache_max_size / (1024 * 1024 * 1024)
+        );
+        if let Err(e) = cache::evict_to_size(cache_max_size) {
+            log_warn!("main", "Failed to enforce cache size limit: {}", e);
         }
     }
 }
@@ -91,8 +123,8 @@ fn main() {
         config::urls::BOARD_IMAGES_BASE
     );
 
-    // Clean up any leftover download images from previous sessions
-    cleanup_download_cache();
+    // Clean up orphaned custom decompressed images from previous sessions
+    // (Cache management is done in setup with access to settings)
     cleanup_custom_decompress_cache();
 
     let mut builder = tauri::Builder::default()
@@ -126,6 +158,7 @@ fn main() {
             commands::operations::download_image,
             commands::operations::flash_image,
             commands::operations::delete_downloaded_image,
+            commands::operations::force_delete_cached_image,
             commands::progress::cancel_operation,
             commands::progress::get_download_progress,
             commands::progress::get_flash_progress,
@@ -153,6 +186,12 @@ fn main() {
             commands::settings::get_logs,
             commands::settings::get_system_info,
             commands::settings::get_tauri_version,
+            commands::settings::get_cache_enabled,
+            commands::settings::set_cache_enabled,
+            commands::settings::get_cache_max_size,
+            commands::settings::set_cache_max_size,
+            commands::settings::get_cache_size,
+            commands::settings::clear_cache,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]
@@ -186,7 +225,9 @@ fn main() {
                 }
             }
 
-            let _ = app; // Suppress unused warning in release
+            // Manage download cache based on settings
+            manage_download_cache(app);
+
             Ok(())
         })
         .run(tauri::generate_context!())

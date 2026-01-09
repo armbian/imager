@@ -12,6 +12,7 @@ import {
   getBoardImageUrl,
   deleteDownloadedImage,
   deleteDecompressedCustomImage,
+  forceDeleteCachedImage,
   requestWriteAuthorization,
   checkNeedsDecompression,
   decompressCustomImage,
@@ -21,7 +22,7 @@ import { FlashStageIcon, getStageKey, type FlashStage } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
 import { ErrorDisplay, MarqueeText } from '../shared';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
-import { POLLING } from '../../config';
+import { POLLING, CACHE, STORAGE_KEYS } from '../../config';
 import { isDeviceConnected } from '../../utils/deviceUtils';
 
 interface FlashProgressProps {
@@ -52,14 +53,38 @@ export function FlashProgress({
   const hasStartedRef = useRef<boolean>(false);
   const deviceDisconnectedRef = useRef<boolean>(false);
 
-  // Debug logging for board detection
-  useEffect(() => {
-    console.log('[FlashProgress] Board received:', {
-      slug: board.slug,
-      name: board.name,
-      is_custom: image.is_custom,
-    });
-  }, [board.slug, board.name, image.is_custom]);
+  // Generate a storage key based on the image URL for persisting failure count
+  // This ensures the count survives component unmount/remount
+  const failureStorageKey = `${STORAGE_KEYS.FLASH_FAILURE_PREFIX}${image.file_url}`;
+
+  /**
+   * Get the current flash failure count from sessionStorage
+   * Falls back to 0 if not found or on error
+   */
+  const getFlashFailureCount = (): number => {
+    try {
+      const stored = sessionStorage.getItem(failureStorageKey);
+      return stored ? parseInt(stored, 10) : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  /**
+   * Set the flash failure count in sessionStorage
+   */
+  const setFlashFailureCount = (count: number): void => {
+    try {
+      if (count === 0) {
+        sessionStorage.removeItem(failureStorageKey);
+      } else {
+        sessionStorage.setItem(failureStorageKey, count.toString());
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
 
   // Cleanup downloaded image file or decompressed custom image
   async function cleanupImage(path: string | null) {
@@ -308,6 +333,8 @@ export function FlashProgress({
       if (intervalRef.current) clearInterval(intervalRef.current);
       setStage('complete');
       setProgress(100);
+      // Reset failure count on success
+      setFlashFailureCount(0);
       // Cleanup decompressed file after successful flash
       await cleanupImage(path);
     } catch (err) {
@@ -323,6 +350,22 @@ export function FlashProgress({
         }
       } catch {
         // If we can't check, assume disconnected on certain errors
+      }
+
+      // Increment failure count for non-custom images (cached images)
+      if (!image.is_custom) {
+        const currentCount = getFlashFailureCount() + 1;
+        setFlashFailureCount(currentCount);
+
+        // Auto-drop cached image after too many failures (possibly corrupted)
+        if (currentCount >= CACHE.MAX_FLASH_FAILURES) {
+          try {
+            await forceDeleteCachedImage(path);
+            setFlashFailureCount(0); // Reset after deletion
+          } catch {
+            // Ignore deletion errors
+          }
+        }
       }
 
       // Cleanup decompressed file before showing error
@@ -388,15 +431,7 @@ export function FlashProgress({
     <div className={`flash-container ${!showHeader ? 'centered' : ''}`}>
       {showHeader && (
         <div className="flash-header">
-          {(() => {
-            const showGenericIcon = image.is_custom && board.slug === 'custom';
-            console.log('[FlashProgress] Image display logic:', {
-              is_custom: image.is_custom,
-              board_slug: board.slug,
-              showGenericIcon,
-            });
-            return showGenericIcon;
-          })() ? (
+          {image.is_custom && board.slug === 'custom' ? (
             // Generic icon for non-Armbian or undetected custom images
             <div className="flash-board-image flash-custom-image-icon">
               <FileImage size={40} />

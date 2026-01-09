@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Bilinmeyen",
-    "confirm": "Onayla"
+    "confirm": "Onayla",
+    "cancel": "İptal"
   },
   "settings": {
     "title": "Ayarlar",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Hata ayıklama için uygulama günlüklerini göster",
     "noLogsAvailable": "Kullanılabilir günlük yok",
     "copyLogs": "Günlükleri kopyala",
-    "copied": "Kopyalandı!"
+    "copied": "Kopyalandı!",
+    "notificationsCategory": "BİLDİRİMLER",
+    "cacheCategory": "ÖNBELLEK",
+    "enableCache": "İmaj önbelleğini etkinleştir",
+    "enableCacheDescription": "Yazma başarısız olursa daha hızlı yeniden deneme için indirilen imajları sakla",
+    "maxCacheSize": "Maksimum önbellek boyutu",
+    "maxCacheSizeDescription": "Limit aşıldığında en eski imajları otomatik olarak sil",
+    "cacheSize": "Önbellek boyutu",
+    "noCachedImages": "Önbelleğe alınmış imaj yok",
+    "clearCache": "Önbelleği temizle",
+    "clearCacheConfirm": "Önbelleğe alınmış tüm imajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
   },
   "update": {
     "title": "Güncelleme mevcut",

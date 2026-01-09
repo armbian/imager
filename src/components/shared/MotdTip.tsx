@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Lightbulb, ExternalLink } from 'lucide-react';
 import { openUrl } from '../../hooks/useTauri';
 import { getShowMotd } from '../../hooks/useSettings';
-import { LINKS, TIMING } from '../../config/constants';
+import { LINKS, TIMING, EVENTS } from '../../config';
 
 interface MotdMessage {
   message: string;
@@ -82,7 +82,7 @@ export function MotdTip() {
       fetchMotd();
     };
 
-    window.addEventListener('armbian-motd-changed', handleMotdChange);
+    window.addEventListener(EVENTS.MOTD_CHANGED, handleMotdChange);
 
     return () => {
       isMounted = false;
@@ -90,7 +90,7 @@ export function MotdTip() {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-      window.removeEventListener('armbian-motd-changed', handleMotdChange);
+      window.removeEventListener(EVENTS.MOTD_CHANGED, handleMotdChange);
     };
   }, [pickNextMessage]);
 

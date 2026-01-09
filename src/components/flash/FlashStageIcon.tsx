@@ -8,6 +8,7 @@ import {
   Shield,
   ShieldCheck,
 } from 'lucide-react';
+import { UI } from '../../config';
 
 export type FlashStage =
   | 'authorizing'
@@ -24,7 +25,7 @@ interface FlashStageIconProps {
   size?: number;
 }
 
-export function FlashStageIcon({ stage, size = 32 }: FlashStageIconProps) {
+export function FlashStageIcon({ stage, size = UI.ICON_SIZE.FLASH_STAGE }: FlashStageIconProps) {
   switch (stage) {
     case 'authorizing':
       return <Shield size={size} className="stage-icon authorizing" />;

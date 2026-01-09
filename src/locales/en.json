@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Unknown",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   },
   "settings": {
     "title": "Settings",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Show application logs for debugging",
     "noLogsAvailable": "No logs available",
     "copyLogs": "Copy logs",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "notificationsCategory": "NOTIFICATIONS",
+    "cacheCategory": "CACHE",
+    "enableCache": "Enable image cache",
+    "enableCacheDescription": "Keep downloaded images for faster retry if flashing fails",
+    "maxCacheSize": "Maximum cache size",
+    "maxCacheSizeDescription": "Automatically remove oldest images when limit is exceeded",
+    "cacheSize": "Cache size",
+    "noCachedImages": "No cached images",
+    "clearCache": "Clear cache",
+    "clearCacheConfirm": "Are you sure you want to delete all cached images? This cannot be undone."
   },
   "update": {
     "title": "Update Available",

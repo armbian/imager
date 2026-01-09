@@ -61,6 +61,19 @@ export async function deleteDownloadedImage(imagePath: string): Promise<void> {
   return invoke('delete_downloaded_image', { imagePath });
 }
 
+/**
+ * Force delete a cached image regardless of cache settings
+ *
+ * Used when an image repeatedly fails to flash, suggesting the cached
+ * file may be corrupted. Bypasses the cache_enabled check.
+ *
+ * @param imagePath - Path to the cached image file
+ * @throws Error if deletion fails or path is outside cache directory
+ */
+export async function forceDeleteCachedImage(imagePath: string): Promise<void> {
+  return invoke('force_delete_cached_image', { imagePath });
+}
+
 export async function deleteDecompressedCustomImage(imagePath: string): Promise<void> {
   return invoke('delete_decompressed_custom_image', { imagePath });
 }
@@ -197,4 +210,32 @@ export async function getTauriVersion(): Promise<string> {
  */
 export async function getLogs(): Promise<string> {
   return invoke('get_logs');
+}
+
+// ============================================================================
+// Cache Management
+// ============================================================================
+
+/**
+ * Get the current cache size in bytes
+ *
+ * Calculates the total size of all cached images in the cache directory.
+ *
+ * @returns Promise resolving to cache size in bytes
+ * @throws Error if cache size cannot be calculated
+ */
+export async function getCacheSize(): Promise<number> {
+  return invoke('get_cache_size');
+}
+
+/**
+ * Clear all cached images
+ *
+ * Removes all files from the image cache directory.
+ * This is an irreversible operation.
+ *
+ * @throws Error if cache cannot be cleared
+ */
+export async function clearCache(): Promise<void> {
+  return invoke('clear_cache');
 }

@@ -7,12 +7,13 @@ import { getBoards } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
 import { useManufacturerList, type ManufacturerData } from '../../hooks/useVendorLogos';
 import { DEFAULT_COLOR } from '../../utils';
+import { UI, VENDOR } from '../../config';
 
 // Re-export Manufacturer type for backward compatibility
 export type { Manufacturer } from '../../types';
 
 function ManufacturerIcon({ manufacturer }: { manufacturer: ManufacturerData }) {
-  if (!manufacturer.logo || manufacturer.id === 'other') {
+  if (!manufacturer.logo || manufacturer.id === VENDOR.FALLBACK_ID) {
     return (
       <div className="list-item-icon" style={{ backgroundColor: DEFAULT_COLOR }}>
         {manufacturer.name.substring(0, 2).toUpperCase()}
@@ -91,7 +92,7 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
         <ErrorDisplay error={error} onRetry={reload} compact />
       ) : (
         <>
-          {showSkeleton && <ListItemSkeleton count={6} />}
+          {showSkeleton && <ListItemSkeleton count={UI.SKELETON.MANUFACTURER_MODAL} />}
           <div className="modal-list">
             {!showSkeleton && manufacturers.map((mfr) => (
               <button

@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "不明",
-    "confirm": "確認"
+    "confirm": "確認",
+    "cancel": "キャンセル"
   },
   "settings": {
     "title": "設定",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "デバッグのためにアプリケーションログを表示",
     "noLogsAvailable": "利用可能なログはありません",
     "copyLogs": "ログをコピー",
-    "copied": "コピーしました！"
+    "copied": "コピーしました！",
+    "notificationsCategory": "通知",
+    "cacheCategory": "キャッシュ",
+    "enableCache": "イメージキャッシュを有効にする",
+    "enableCacheDescription": "書き込みに失敗した場合に備えて、ダウンロードしたイメージを保持する",
+    "maxCacheSize": "最大キャッシュサイズ",
+    "maxCacheSizeDescription": "制限を超えた場合、古いイメージを自動的に削除",
+    "cacheSize": "キャッシュサイズ",
+    "noCachedImages": "キャッシュされたイメージはありません",
+    "clearCache": "キャッシュをクリア",
+    "clearCacheConfirm": "キャッシュされたすべてのイメージを削除しますか？この操作は元に戻せません。"
   },
   "update": {
     "title": "アップデートが利用可能",

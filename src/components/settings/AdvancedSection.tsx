@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Code, FileText } from 'lucide-react';
 import { getDeveloperMode, setDeveloperMode } from '../../hooks/useSettings';
 import { LogsModal } from './LogsModal';
+import { EVENTS } from '../../config';
 
 /**
  * Advanced settings section for power users
@@ -45,7 +46,7 @@ export function AdvancedSection() {
       await setDeveloperMode(newValue);
 
       // Notify other components that settings changed
-      window.dispatchEvent(new Event('armbian-settings-changed'));
+      window.dispatchEvent(new Event(EVENTS.SETTINGS_CHANGED));
     } catch (error) {
       // Rollback on error
       console.error('Failed to set developer mode preference:', error);

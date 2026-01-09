@@ -31,6 +31,14 @@ fn default_developer_mode() -> bool {
     false
 }
 
+fn default_cache_enabled() -> bool {
+    true
+}
+
+fn default_cache_max_size() -> u64 {
+    crate::cache::DEFAULT_MAX_SIZE
+}
+
 /// Get the current theme preference
 #[tauri::command]
 pub fn get_theme(app: tauri::AppHandle) -> String {
@@ -299,4 +307,125 @@ pub fn get_logs() -> Result<String, String> {
         }
         None => Ok("No log file available".to_string()),
     }
+}
+
+// ============================================================================
+// Cache Settings
+// ============================================================================
+
+/// Get the cache enabled preference
+///
+/// Returns whether image caching is enabled (default: true).
+#[tauri::command]
+pub fn get_cache_enabled(app: tauri::AppHandle) -> bool {
+    match app.store(SETTINGS_STORE) {
+        Ok(store) => match store.get("cache_enabled") {
+            Some(value) => value.as_bool().unwrap_or_else(default_cache_enabled),
+            None => {
+                log_info!(MODULE, "cache_enabled not found in store, using default");
+                default_cache_enabled()
+            }
+        },
+        Err(e) => {
+            log_info!(
+                MODULE,
+                "Error loading store, using default cache_enabled: {}",
+                e
+            );
+            default_cache_enabled()
+        }
+    }
+}
+
+/// Set the cache enabled preference
+#[tauri::command]
+pub fn set_cache_enabled(enabled: bool, app: tauri::AppHandle) -> Result<(), String> {
+    log_info!(MODULE, "Setting cache_enabled to: {}", enabled);
+
+    match app.store(SETTINGS_STORE) {
+        Ok(store) => {
+            store.set("cache_enabled", enabled);
+            Ok(())
+        }
+        Err(e) => Err(format!("Failed to access store: {}", e)),
+    }
+}
+
+/// Get the maximum cache size in bytes
+///
+/// Returns the configured maximum cache size (default: 20 GB).
+#[tauri::command]
+pub fn get_cache_max_size(app: tauri::AppHandle) -> u64 {
+    match app.store(SETTINGS_STORE) {
+        Ok(store) => match store.get("cache_max_size") {
+            Some(value) => value.as_u64().unwrap_or_else(default_cache_max_size),
+            None => {
+                log_info!(MODULE, "cache_max_size not found in store, using default");
+                default_cache_max_size()
+            }
+        },
+        Err(e) => {
+            log_info!(
+                MODULE,
+                "Error loading store, using default cache_max_size: {}",
+                e
+            );
+            default_cache_max_size()
+        }
+    }
+}
+
+/// Set the maximum cache size in bytes
+///
+/// The size is validated to be between 1 GB and 500 GB.
+#[tauri::command]
+pub fn set_cache_max_size(size: u64, app: tauri::AppHandle) -> Result<(), String> {
+    use crate::config::cache::{MAX_SIZE, MIN_SIZE};
+
+    // Validate cache size bounds
+    if size < MIN_SIZE {
+        return Err(format!(
+            "Cache size too small: {} bytes (minimum: {} bytes / 1 GB)",
+            size, MIN_SIZE
+        ));
+    }
+
+    if size > MAX_SIZE {
+        return Err(format!(
+            "Cache size too large: {} bytes (maximum: {} bytes / 100 GB)",
+            size, MAX_SIZE
+        ));
+    }
+
+    log_info!(MODULE, "Setting cache_max_size to: {} bytes", size);
+
+    match app.store(SETTINGS_STORE) {
+        Ok(store) => {
+            store.set("cache_max_size", size);
+
+            // Trigger eviction if needed
+            if let Err(e) = crate::cache::evict_to_size(size) {
+                log_info!(MODULE, "Failed to evict cache after size change: {}", e);
+            }
+
+            Ok(())
+        }
+        Err(e) => Err(format!("Failed to access store: {}", e)),
+    }
+}
+
+/// Get the current cache size in bytes
+///
+/// Calculates and returns the total size of all cached images.
+#[tauri::command]
+pub fn get_cache_size() -> Result<u64, String> {
+    crate::cache::calculate_cache_size()
+}
+
+/// Clear all cached images
+///
+/// Removes all files from the image cache directory.
+#[tauri::command]
+pub fn clear_cache() -> Result<(), String> {
+    crate::cache::clear_cache()
 }

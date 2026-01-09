@@ -3,6 +3,7 @@ import { Upload, ExternalLink, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { uploadLogs, openUrl } from '../../hooks/useTauri';
 import QRCode from 'qrcode';
+import { COLORS, QR_CODE } from '../../config';
 
 interface ErrorDisplayProps {
   error: string;
@@ -27,11 +28,11 @@ export function ErrorDisplay({ error, onRetry, compact = false }: ErrorDisplayPr
 
       if (!compact) {
         const qrDataUrl = await QRCode.toDataURL(result.url, {
-          width: 120,
-          margin: 1,
+          width: QR_CODE.WIDTH,
+          margin: QR_CODE.MARGIN,
           color: {
-            dark: '#000000',
-            light: '#ffffff',
+            dark: COLORS.QR_DARK,
+            light: COLORS.QR_LIGHT,
           },
         });
         setQrCodeDataUrl(qrDataUrl);

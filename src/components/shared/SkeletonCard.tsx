@@ -3,6 +3,8 @@
  * Displays animated placeholders while content is loading
  */
 
+import { UI } from '../../config';
+
 interface BoardCardSkeletonProps {
   count?: number;
 }
@@ -11,7 +13,7 @@ interface BoardCardSkeletonProps {
  * Skeleton component for board grid cards
  * Shows placeholders matching the board card layout
  */
-export function BoardCardSkeleton({ count = 8 }: BoardCardSkeletonProps) {
+export function BoardCardSkeleton({ count = UI.SKELETON.BOARD_GRID_COUNT }: BoardCardSkeletonProps) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (
@@ -38,7 +40,7 @@ interface ListItemSkeletonProps {
  * Skeleton component for list items
  * Shows placeholders matching the list item layout
  */
-export function ListItemSkeleton({ count = 6 }: ListItemSkeletonProps) {
+export function ListItemSkeleton({ count = UI.SKELETON.LIST_COUNT }: ListItemSkeletonProps) {
   return (
     <>
       {Array.from({ length: count }).map((_, index) => (

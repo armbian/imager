@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Inconnu",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "cancel": "Annuler"
   },
   "settings": {
     "title": "Paramètres",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Afficher les journaux de l'application pour le débogage",
     "noLogsAvailable": "Aucun journal disponible",
     "copyLogs": "Copier les journaux",
-    "copied": "Copié !"
+    "copied": "Copié !",
+    "notificationsCategory": "NOTIFICATIONS",
+    "cacheCategory": "CACHE",
+    "enableCache": "Activer le cache d'images",
+    "enableCacheDescription": "Conserver les images téléchargées pour une nouvelle tentative plus rapide en cas d'échec du flash",
+    "maxCacheSize": "Taille maximale du cache",
+    "maxCacheSizeDescription": "Supprimer automatiquement les images les plus anciennes lorsque la limite est dépassée",
+    "cacheSize": "Taille du cache",
+    "noCachedImages": "Aucune image en cache",
+    "clearCache": "Vider le cache",
+    "clearCacheConfirm": "Êtes-vous sûr de vouloir supprimer toutes les images en cache ? Cette action est irréversible."
   },
   "update": {
     "title": "Mise à jour disponible",

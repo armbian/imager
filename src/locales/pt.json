@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Desconhecido",
-    "confirm": "Confirmar"
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
   },
   "settings": {
     "title": "Definições",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Mostrar registos da aplicação para depuração",
     "noLogsAvailable": "Nenhum registo disponível",
     "copyLogs": "Copiar registos",
-    "copied": "Copiado!"
+    "copied": "Copiado!",
+    "notificationsCategory": "NOTIFICAÇÕES",
+    "cacheCategory": "CACHE",
+    "enableCache": "Ativar cache de imagens",
+    "enableCacheDescription": "Manter as imagens transferidas para uma nova tentativa mais rápida se a gravação falhar",
+    "maxCacheSize": "Tamanho máximo da cache",
+    "maxCacheSizeDescription": "Remover automaticamente as imagens mais antigas quando o limite for excedido",
+    "cacheSize": "Tamanho da cache",
+    "noCachedImages": "Sem imagens em cache",
+    "clearCache": "Limpar cache",
+    "clearCacheConfirm": "Tem a certeza de que pretende eliminar todas as imagens em cache? Esta ação é irreversível."
   },
   "update": {
     "title": "Atualização disponível",

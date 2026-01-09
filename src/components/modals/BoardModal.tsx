@@ -139,10 +139,11 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
                 <Download size={10} />{board.image_count}
               </span>
               <div className="board-grid-image">
-                {boardsReady && boardImages[board.slug] ? (
+                {boardsReady && board.slug in boardImages ? (
                   <img
-                    src={boardImages[board.slug] ?? undefined}
+                    src={boardImages[board.slug] ?? fallbackImage}
                     alt={board.name}
+                    className={boardImages[board.slug] ? '' : 'fallback-image'}
                     onError={(e) => {
                       const img = e.currentTarget;
                       if (img.src !== fallbackImage) {

@@ -3,6 +3,7 @@
  */
 
 import { Search } from 'lucide-react';
+import { UI } from '../../config';
 
 interface SearchBoxProps {
   /** Current search value */
@@ -11,9 +12,9 @@ interface SearchBoxProps {
   onChange: (value: string) => void;
   /** Placeholder text */
   placeholder: string;
-  /** Icon size (default: 18) */
+  /** Icon size */
   iconSize?: number;
-  /** Auto focus the input (default: true) */
+  /** Auto focus the input */
   autoFocus?: boolean;
 }
 
@@ -24,7 +25,7 @@ export function SearchBox({
   value,
   onChange,
   placeholder,
-  iconSize = 18,
+  iconSize = UI.ICON_SIZE.SEARCH,
   autoFocus = true,
 }: SearchBoxProps) {
   return (

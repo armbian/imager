@@ -88,3 +88,18 @@ pub mod images {
     /// Temporary download file suffix
     pub const DOWNLOAD_SUFFIX: &str = ".downloading";
 }
+
+/// Cache management settings
+pub mod cache {
+    /// Minimum cache size: 1 GB
+    pub const MIN_SIZE: u64 = 1024 * 1024 * 1024;
+
+    /// Maximum cache size: 100 GB
+    pub const MAX_SIZE: u64 = 100 * 1024 * 1024 * 1024;
+
+    /// Default maximum cache size (20 GB)
+    pub const DEFAULT_MAX_SIZE: u64 = 20 * 1024 * 1024 * 1024;
+
+    /// Maximum consecutive flash failures before auto-deleting cached image
+    pub const MAX_FLASH_FAILURES: u32 = 3;
+}

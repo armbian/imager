@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Onbekend",
-    "confirm": "Bevestigen"
+    "confirm": "Bevestigen",
+    "cancel": "Annuleren"
   },
   "settings": {
     "title": "Instellingen",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Toon applicatielogs voor foutopsporing",
     "noLogsAvailable": "Geen logs beschikbaar",
     "copyLogs": "Logs kopiëren",
-    "copied": "Gekopieerd!"
+    "copied": "Gekopieerd!",
+    "notificationsCategory": "MELDINGEN",
+    "cacheCategory": "CACHE",
+    "enableCache": "Image-cache inschakelen",
+    "enableCacheDescription": "Gedownloade images bewaren voor snellere herpoging bij mislukte flash",
+    "maxCacheSize": "Maximale cachegrootte",
+    "maxCacheSizeDescription": "Oudste images automatisch verwijderen wanneer limiet wordt overschreden",
+    "cacheSize": "Cachegrootte",
+    "noCachedImages": "Geen gecachte images",
+    "clearCache": "Cache wissen",
+    "clearCacheConfirm": "Weet u zeker dat u alle gecachte images wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt."
   },
   "update": {
     "title": "Update beschikbaar",

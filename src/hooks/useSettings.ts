@@ -6,8 +6,7 @@
  */
 
 import { load } from '@tauri-apps/plugin-store';
-
-const SETTINGS_FILE = 'settings.json';
+import { CACHE, SETTINGS } from '../config';
 let storeInstance: Awaited<ReturnType<typeof load>> | null = null;
 let storePromise: Promise<Awaited<ReturnType<typeof load>>> | null = null;
 
@@ -26,7 +25,7 @@ async function getStore() {
   }
 
   if (!storePromise) {
-    storePromise = load(SETTINGS_FILE, { autoSave: true, defaults: {} })
+    storePromise = load(SETTINGS.FILE, { autoSave: true, defaults: {} })
       .then(store => {
         storeInstance = store;
         storePromise = null;
@@ -50,7 +49,7 @@ async function getStore() {
 export async function getTheme(): Promise<string> {
   try {
     const store = await getStore();
-    return (await store.get<string>('theme')) || 'auto';
+    return (await store.get<string>(SETTINGS.KEYS.THEME)) || SETTINGS.DEFAULTS.THEME;
   } catch (error) {
     throw new Error(`Failed to get theme: ${error}`);
   }
@@ -65,7 +64,7 @@ export async function getTheme(): Promise<string> {
 export async function setTheme(theme: string): Promise<void> {
   try {
     const store = await getStore();
-    await store.set('theme', theme);
+    await store.set(SETTINGS.KEYS.THEME, theme);
     await store.save(); // Explicitly save to ensure persistence
   } catch (error) {
     throw new Error(`Failed to set theme: ${error}`);
@@ -81,7 +80,7 @@ export async function setTheme(theme: string): Promise<void> {
 export async function getLanguage(): Promise<string> {
   try {
     const store = await getStore();
-    return (await store.get<string>('language')) || 'en';
+    return (await store.get<string>(SETTINGS.KEYS.LANGUAGE)) || SETTINGS.DEFAULTS.LANGUAGE;
   } catch (error) {
     throw new Error(`Failed to get language: ${error}`);
   }
@@ -96,7 +95,7 @@ export async function getLanguage(): Promise<string> {
 export async function setLanguage(language: string): Promise<void> {
   try {
     const store = await getStore();
-    await store.set('language', language);
+    await store.set(SETTINGS.KEYS.LANGUAGE, language);
     await store.save(); // Explicitly save to ensure persistence
   } catch (error) {
     throw new Error(`Failed to set language: ${error}`);
@@ -112,8 +111,8 @@ export async function setLanguage(language: string): Promise<void> {
 export async function getShowMotd(): Promise<boolean> {
   try {
     const store = await getStore();
-    const value = await store.get<boolean>('show_motd');
-    return value ?? true; // Default to true if not set
+    const value = await store.get<boolean>(SETTINGS.KEYS.SHOW_MOTD);
+    return value ?? SETTINGS.DEFAULTS.SHOW_MOTD;
   } catch (error) {
     throw new Error(`Failed to get MOTD preference: ${error}`);
   }
@@ -128,7 +127,7 @@ export async function getShowMotd(): Promise<boolean> {
 export async function setShowMotd(show: boolean): Promise<void> {
   try {
     const store = await getStore();
-    await store.set('show_motd', show);
+    await store.set(SETTINGS.KEYS.SHOW_MOTD, show);
     await store.save(); // Explicitly save to ensure persistence
   } catch (error) {
     throw new Error(`Failed to set MOTD preference: ${error}`);
@@ -144,8 +143,8 @@ export async function setShowMotd(show: boolean): Promise<void> {
 export async function getShowUpdaterModal(): Promise<boolean> {
   try {
     const store = await getStore();
-    const value = await store.get<boolean>('show_updater_modal');
-    return value ?? true; // Default to true if not set
+    const value = await store.get<boolean>(SETTINGS.KEYS.SHOW_UPDATER_MODAL);
+    return value ?? SETTINGS.DEFAULTS.SHOW_UPDATER_MODAL;
   } catch (error) {
     throw new Error(`Failed to get updater modal preference: ${error}`);
   }
@@ -160,7 +159,7 @@ export async function getShowUpdaterModal(): Promise<boolean> {
 export async function setShowUpdaterModal(show: boolean): Promise<void> {
   try {
     const store = await getStore();
-    await store.set('show_updater_modal', show);
+    await store.set(SETTINGS.KEYS.SHOW_UPDATER_MODAL, show);
     await store.save(); // Explicitly save to ensure persistence
   } catch (error) {
     throw new Error(`Failed to set updater modal preference: ${error}`);
@@ -176,8 +175,8 @@ export async function setShowUpdaterModal(show: boolean): Promise<void> {
 export async function getDeveloperMode(): Promise<boolean> {
   try {
     const store = await getStore();
-    const value = await store.get<boolean>('developer_mode');
-    return value ?? false; // Default to false if not set
+    const value = await store.get<boolean>(SETTINGS.KEYS.DEVELOPER_MODE);
+    return value ?? SETTINGS.DEFAULTS.DEVELOPER_MODE;
   } catch (error) {
     throw new Error(`Failed to get developer mode preference: ${error}`);
   }
@@ -195,9 +194,91 @@ export async function getDeveloperMode(): Promise<boolean> {
 export async function setDeveloperMode(enabled: boolean): Promise<void> {
   try {
     const store = await getStore();
-    await store.set('developer_mode', enabled);
+    await store.set(SETTINGS.KEYS.DEVELOPER_MODE, enabled);
     await store.save(); // Explicitly save to ensure persistence
   } catch (error) {
     throw new Error(`Failed to set developer mode preference: ${error}`);
+  }
+}
+
+// ============================================================================
+// Cache Settings
+// ============================================================================
+
+// Note: The canonical default cache size is defined in the Rust backend
+// (src-tauri/src/config/mod.rs). This fallback is only used if the
+// backend value cannot be retrieved. The backend is the source of truth.
+
+/**
+ * Get the cache enabled preference
+ *
+ * @returns Promise resolving to true if image caching is enabled, false otherwise
+ * @throws Error if store access fails
+ */
+export async function getCacheEnabled(): Promise<boolean> {
+  try {
+    const store = await getStore();
+    const value = await store.get<boolean>(SETTINGS.KEYS.CACHE_ENABLED);
+    return value ?? SETTINGS.DEFAULTS.CACHE_ENABLED;
+  } catch (error) {
+    throw new Error(`Failed to get cache enabled preference: ${error}`);
+  }
+}
+
+/**
+ * Set the cache enabled preference
+ *
+ * When enabled, downloaded images are kept for faster retry if flashing fails.
+ * When disabled, images are deleted after successful flash.
+ *
+ * @param enabled - true to enable image caching, false to disable
+ * @throws Error if store access or save fails
+ */
+export async function setCacheEnabled(enabled: boolean): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.CACHE_ENABLED, enabled);
+    await store.save();
+  } catch (error) {
+    throw new Error(`Failed to set cache enabled preference: ${error}`);
+  }
+}
+
+/**
+ * Get the maximum cache size in bytes
+ *
+ * If no value is stored, returns null to indicate the backend default should be used.
+ * The caller should handle null by using the backend's default value.
+ *
+ * @returns Promise resolving to maximum cache size in bytes, or null if not set
+ * @throws Error if store access fails
+ */
+export async function getCacheMaxSize(): Promise<number> {
+  try {
+    const store = await getStore();
+    const value = await store.get<number>(SETTINGS.KEYS.CACHE_MAX_SIZE);
+    // Return a reasonable fallback if not set - matches backend default
+    // This is only a fallback; the backend is the source of truth
+    return value ?? CACHE.DEFAULT_SIZE;
+  } catch (error) {
+    throw new Error(`Failed to get cache max size: ${error}`);
+  }
+}
+
+/**
+ * Set the maximum cache size in bytes
+ *
+ * When the cache exceeds this size, oldest images are automatically removed.
+ *
+ * @param size - Maximum cache size in bytes
+ * @throws Error if store access or save fails
+ */
+export async function setCacheMaxSize(size: number): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.CACHE_MAX_SIZE, size);
+    await store.save();
+  } catch (error) {
+    throw new Error(`Failed to set cache max size: ${error}`);
   }
 }

@@ -100,7 +100,8 @@
   },
   "common": {
     "unknown": "Unbekannt",
-    "confirm": "Bestätigen"
+    "confirm": "Bestätigen",
+    "cancel": "Abbrechen"
   },
   "settings": {
     "title": "Einstellungen",
@@ -136,7 +137,17 @@
     "viewLogsDescription": "Anwendungsprotokolle zur Fehlerbehebung anzeigen",
     "noLogsAvailable": "Keine Protokolle verfügbar",
     "copyLogs": "Protokolle kopieren",
-    "copied": "Kopiert!"
+    "copied": "Kopiert!",
+    "notificationsCategory": "BENACHRICHTIGUNGEN",
+    "cacheCategory": "CACHE",
+    "enableCache": "Image-Cache aktivieren",
+    "enableCacheDescription": "Heruntergeladene Images für schnellere Wiederholung bei fehlgeschlagenem Flash behalten",
+    "maxCacheSize": "Maximale Cache-Größe",
+    "maxCacheSizeDescription": "Älteste Images automatisch entfernen, wenn Limit überschritten wird",
+    "cacheSize": "Cache-Größe",
+    "noCachedImages": "Keine zwischengespeicherten Images",
+    "clearCache": "Cache leeren",
+    "clearCacheConfirm": "Sind Sie sicher, dass Sie alle zwischengespeicherten Images löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "update": {
     "title": "Update verfügbar",

@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
+import { UI } from '../../config';
 
 interface MarqueeTextProps {
   text: string;
@@ -7,7 +8,7 @@ interface MarqueeTextProps {
 }
 
 // Component for text that scrolls automatically if it overflows
-export function MarqueeText({ text, maxWidth = 180, className = '' }: MarqueeTextProps) {
+export function MarqueeText({ text, maxWidth = UI.MARQUEE.DEFAULT_WIDTH, className = '' }: MarqueeTextProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
   const [isOverflow, setIsOverflow] = useState(false);
   const [scrollPercent, setScrollPercent] = useState(50);
@@ -45,8 +46,7 @@ export function MarqueeText({ text, maxWidth = 180, className = '' }: MarqueeTex
       setIsOverflow(overflow);
 
       if (overflow) {
-        const separatorWidth = 5;
-        const scrollDistance = singleTextWidth + separatorWidth;
+        const scrollDistance = singleTextWidth + UI.MARQUEE.SEPARATOR_WIDTH;
         const totalWidth = scrollDistance * 2;
         setScrollPercent((scrollDistance / totalWidth) * 100);
       }
