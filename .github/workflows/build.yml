@@ -161,7 +161,8 @@ jobs:
             libssl-dev \
             libgtk-3-dev \
             squashfs-tools \
-            xdg-utils
+            xdg-utils \
+            xvfb
 
       - name: Setup Node.js
         uses: actions/setup-node@v6

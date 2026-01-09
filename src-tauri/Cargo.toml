@@ -38,6 +38,8 @@ sys-locale = "0.3"
 libc = "0.2"
 # UDisks2 for privilege escalation via polkit
 udisks2 = "0.3"
+# Required for udisks2's derive macros (zvariant::Type) - fixes compatibility with Tauri PR #12491
+zvariant = { version = "5", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 # macOS-specific dependencies
