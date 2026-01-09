@@ -1,0 +1,82 @@
+version: 2
+updates:
+  # ===========================================
+  # NPM Dependencies (Root package.json)
+  # ===========================================
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    # Group low-risk type definition updates together
+    groups:
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "typescript-eslint"
+        exclude-patterns:
+          - "@types/react"
+          - "@types/react-dom"
+    # Maintain version constraints (don't update lock file only)
+    versioning-strategy: "increase"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+    rebase-strategy: "auto"
+
+  # ===========================================
+  # Rust/Cargo Dependencies (src-tauri/Cargo.toml)
+  # ===========================================
+  - package-ecosystem: "cargo"
+    directory: "/src-tauri"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    versioning-strategy: "increase"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+    rebase-strategy: "auto"
+    # Ignore major Tauri updates (requires manual migration)
+    ignore:
+      - dependency-name: "tauri"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tauri-cli"
+        update-types: ["version-update:semver-major"]
+
+  # ===========================================
+  # GitHub Actions Dependencies
+  # ===========================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    # Separate PRs for each action
+    groups: []
+    versioning-strategy: "increase"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+    rebase-strategy: "auto"
