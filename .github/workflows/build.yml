@@ -210,7 +210,7 @@ jobs:
         shell: bash
         run: |
           if ! command -v cargo-tauri >/dev/null 2>&1; then
-            cargo install tauri-cli --git https://github.com/tauri-apps/tauri --branch feat/truly-portable-appimage --locked
+            cargo install tauri-cli --git https://github.com/tauri-apps/tauri --branch feat/truly-portable-appimage
           fi
 
       - name: Install Tauri CLI (stable version for deb and other platforms)
