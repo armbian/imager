@@ -1,17 +1,13 @@
 name: Build Artifacts (No Release)
 
-# Workflow to build and upload artifacts without creating releases
-# Can be triggered manually from any branch
+# Workflow to build and upload artifacts for internal testing
+# Simplified version of build.yml without signing, updater, or release management
 
 on:
   workflow_dispatch:
     inputs:
-      build_linux_x64:
-        description: 'Build Linux x64'
-        type: boolean
-        default: true
-      build_linux_arm64:
-        description: 'Build Linux ARM64'
+      build_linux:
+        description: 'Build Linux (x64 + ARM64)'
         type: boolean
         default: true
       build_macos:
@@ -34,22 +30,50 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   NODE_VERSION: '20'
-  TAURI_CLI_VERSION: '^2'
+  TAURI_CLI_VERSION: '2.9.6'
   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
 jobs:
-  build-linux-x64:
-    name: Linux x64
-    if: ${{ inputs.build_linux_x64 }}
-    runs-on: ubuntu-24.04
+  build-linux:
+    name: build-linux ${{ matrix.type.name }} (${{ matrix.arch.name }}/${{ matrix.type.distro_id }})
+    if: ${{ inputs.build_linux }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - { name: 'amd64', runner: 'ubuntu-24.04' }
+          - { name: 'arm64', runner: "ubuntu-24.04-arm" }
+        type:
+          # deb: build in the oldest still-supported matching container: oldstable (bookworm)
+          - name: 'deb'
+            distro_id: "bookworm"
+            container: { image: 'debian:bookworm' }
+            bundles: 'deb'
+            deps: "apt"
+            artifacts: "src-tauri/target/release/bundle/deb/*.deb"
+          # appimage: doesn't use a container (instead, runs directly on the runner); requires sudo to install deps
+          - name: 'appimage'
+            distro_id: "gharunner"
+            bundles: 'appimage'
+            deps: "apt"
+            deps_gain_root: "sudo"
+            artifacts: |
+              src-tauri/target/release/bundle/appimage/*.AppImage
+    runs-on: ${{ matrix.arch.runner }}
+    container: ${{ matrix.type.container }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install dependencies (apt)
+        if: ${{ matrix.type.deps == 'apt' }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          ${{ matrix.type.deps_gain_root || '' }} apt-get update
+
+          # Install standard dependencies for all builds
+          ${{ matrix.type.deps_gain_root || '' }} apt-get install -y \
+            build-essential \
+            curl \
             libwebkit2gtk-4.1-dev \
             libayatana-appindicator3-dev \
             librsvg2-dev \
@@ -60,10 +84,17 @@ jobs:
             xdg-utils
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          package-manager-cache: false # setup-node can't add key to cache, so we do it ourselves in below step
+
+      # Cache npm, just like setup-node would do it with "cache: npm", but with our own key that includes arch and distro
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-${{ hashFiles('**/package-lock.json') }}
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -72,12 +103,16 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          # ensure cache separation per host distro and tauri-cli version/branch
+          key: "rust-cache-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-${{ matrix.type.name == 'appimage' && 'feat-portable-appimage' || env.TAURI_CLI_VERSION }}"
+          # @TODO: Cargo.lock is in gitignore, so it's not included here - it would via rust-cache Action magic, no need to specify it.
 
-      - name: Cache cargo bin (tauri-cli)
+      - name: Cache cargo bin (tauri-cli) # @TODO: Swatinem/rust-cache already caches this. maybe just drop this.
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin
-          key: cargo-bin-${{ runner.os }}-${{ runner.arch }}-stable-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.type.name == 'appimage' && 'cargo-bin-feat-portable-appimage' || 'cargo-bin' }}-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-${{ hashFiles('**/Cargo.lock') }}
+          # @TODO: Cargo.lock is in gitignore, so it's not included here, albeit being specified.
 
       - name: Install npm dependencies
         run: npm ci
@@ -85,92 +120,46 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Install Tauri CLI (if missing)
+      # NOTE: Using experimental "truly portable AppImage" format from Tauri PR #12491
+      # This format bundles ALL dependencies including WebKitGTK, avoiding EGL_BAD_PARAMETER
+      # errors on Fedora, Arch, and other distributions. See: https://github.com/tauri-apps/tauri/pull/12491
+      # Once merged into Tauri mainline, we can revert to using TAURI_CLI_VERSION
+      - name: Install Tauri CLI (AppImage - experimental portable format)
+        if: ${{ matrix.type.name == 'appimage' }}
+        shell: bash
+        run: |
+          if ! command -v cargo-tauri >/dev/null 2>&1; then
+            cargo install tauri-cli --git https://github.com/tauri-apps/tauri --branch feat/truly-portable-appimage --locked
+          fi
+
+      - name: Install Tauri CLI (stable version for deb and other platforms)
+        if: ${{ matrix.type.name != 'appimage' }}
         shell: bash
         run: |
           if ! command -v cargo-tauri >/dev/null 2>&1; then
             cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
           fi
 
-      - name: Build Tauri app
-        run: cargo tauri build --bundles deb,appimage
+      - name: Build Tauri app (AppImage with new portable format)
+        if: ${{ matrix.type.name == 'appimage' }}
+        env:
+          TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: "true"
+        run: cargo tauri build --bundles "${{ matrix.type.bundles }}"
+
+      - name: Build Tauri app (standard build)
+        if: ${{ matrix.type.name != 'appimage' }}
+        run: cargo tauri build --bundles "${{ matrix.type.bundles }}"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-x64
+          name: linux-${{ matrix.arch.name }}-${{ matrix.type.name }}
           path: |
-            src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/appimage/*.AppImage
-          retention-days: 30
-
-  build-linux-arm64:
-    name: Linux ARM64
-    if: ${{ inputs.build_linux_arm64 }}
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            libssl-dev \
-            libgtk-3-dev \
-            squashfs-tools \
-            xdg-utils
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri
-
-      - name: Cache cargo bin (tauri-cli)
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin
-          key: cargo-bin-${{ runner.os }}-${{ runner.arch }}-stable-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Install npm dependencies
-        run: npm ci
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Install Tauri CLI (if missing)
-        shell: bash
-        run: |
-          if ! command -v cargo-tauri >/dev/null 2>&1; then
-            cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
-          fi
-
-      - name: Build Tauri app
-        run: cargo tauri build --bundles deb,appimage
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-arm64
-          path: |
-            src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/appimage/*.AppImage
+            ${{ matrix.type.artifacts }}
           retention-days: 30
 
   build-macos:
-    name: macOS (${{ matrix.arch }})
+    name: build-macos (${{ matrix.target }})
     if: ${{ inputs.build_macos }}
     strategy:
       fail-fast: false
@@ -182,39 +171,11 @@ jobs:
           - target: aarch64-apple-darwin
             arch: arm64
             os: macos-latest
+
     runs-on: ${{ matrix.os }}
-    env:
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Import Apple Developer Certificate
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-        run: |
-          # Create a temporary keychain
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-
-          # Import certificate
-          echo -n "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
-          security import certificate.p12 -k "$KEYCHAIN_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-
-          # Verify certificate
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
-
-          # Set as default keychain
-          security default-keychain -s "$KEYCHAIN_PATH"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -252,12 +213,12 @@ jobs:
             cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
           fi
 
-      - name: Build Tauri app
+      - name: Build Tauri app (per-target output dir)
         shell: bash
         run: |
           cargo tauri build --target "${{ matrix.target }}" --bundles dmg,app
 
-      - name: Zip .app bundle
+      - name: Zip .app bundle(s)
         shell: bash
         env:
           CARGO_TARGET_DIR: src-tauri/target/${{ matrix.target }}
@@ -269,50 +230,17 @@ jobs:
             ditto -c -k --sequesterRsrc --keepParent "$app" "$CARGO_TARGET_DIR/release/bundle/macos/${base}-${{ matrix.arch }}.app.zip"
           done
 
-      - name: Notarize and staple DMG
-        shell: bash
-        env:
-          CARGO_TARGET_DIR: src-tauri/target/${{ matrix.target }}
-        run: |
-          set -euo pipefail
-
-          # Find the DMG file
-          DMG_FILE=$(find "$CARGO_TARGET_DIR/release/bundle/dmg/" -name "*.dmg" -type f | head -n 1)
-
-          if [[ -z "$DMG_FILE" ]]; then
-            echo "No DMG file found"
-            exit 1
-          fi
-
-          echo "Notarizing: $DMG_FILE"
-
-          # Submit DMG for notarization
-          xcrun notarytool submit "$DMG_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_ID_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait \
-            --output-format json
-
-          # Staple the notarization ticket to DMG
-          xcrun stapler staple "$DMG_FILE"
-
-          # Verify stapling
-          xcrun stapler validate -v "$DMG_FILE"
-
-          echo "Notarization completed successfully"
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-${{ matrix.arch }}
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.zip
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*-${{ matrix.arch }}.app.zip
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
           retention-days: 30
 
   build-windows-x64:
-    name: Windows x64
+    name: build-windows (x86_64-pc-windows-msvc)
     if: ${{ inputs.build_windows_x64 }}
     runs-on: windows-latest
     steps:
@@ -366,7 +294,7 @@ jobs:
           retention-days: 30
 
   build-windows-arm64:
-    name: Windows ARM64
+    name: build-windows (aarch64-pc-windows-msvc)
     if: ${{ inputs.build_windows_arm64 }}
     runs-on: windows-latest
     steps:
@@ -424,8 +352,7 @@ jobs:
   summary:
     name: Build Summary
     needs:
-      - build-linux-x64
-      - build-linux-arm64
+      - build-linux
       - build-macos
       - build-windows-x64
       - build-windows-arm64
@@ -438,8 +365,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Linux x64 | ${{ needs.build-linux-x64.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Linux ARM64 | ${{ needs.build-linux-arm64.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linux | ${{ needs.build-linux.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| macOS | ${{ needs.build-macos.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Windows x64 | ${{ needs.build-windows-x64.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Windows ARM64 | ${{ needs.build-windows-arm64.result }} |" >> $GITHUB_STEP_SUMMARY

@@ -149,6 +149,8 @@ jobs:
         if: ${{ matrix.type.deps == 'apt' }}
         run: |
           ${{ matrix.type.deps_gain_root || '' }} apt-get update
+
+          # Install standard dependencies for all builds
           ${{ matrix.type.deps_gain_root || '' }} apt-get install -y \
             build-essential \
             curl \
@@ -181,15 +183,15 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
-          # ensure cache separation per host distro; this also ends up caching tauri-cli, so add that to key too.
-          key: "rust-cache-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-${{env.TAURI_CLI_VERSION}}"
+          # ensure cache separation per host distro and tauri-cli version/branch
+          key: "rust-cache-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-${{ matrix.type.name == 'appimage' && 'feat-portable-appimage' || env.TAURI_CLI_VERSION }}"
           # @TODO: Cargo.lock is in gitignore, so it's not included here - it would via rust-cache Action magic, no need to specify it.
 
       - name: Cache cargo bin (tauri-cli) # @TODO: Swatinem/rust-cache already caches this. maybe just drop this.
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin
-          key: "cargo-bin-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-stable-${{env.TAURI_CLI_VERSION}}-${{ hashFiles('**/Cargo.lock') }}"
+          key: ${{ matrix.type.name == 'appimage' && 'cargo-bin-feat-portable-appimage' || 'cargo-bin' }}-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-${{ hashFiles('**/Cargo.lock') }}
           # @TODO: Cargo.lock is in gitignore, so it's not included here, albeit being specified.
 
       - name: Install npm dependencies
@@ -198,14 +200,34 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Install Tauri CLI (if missing)
+      # NOTE: Using experimental "truly portable AppImage" format from Tauri PR #12491
+      # This format bundles ALL dependencies including WebKitGTK, avoiding EGL_BAD_PARAMETER
+      # errors on Fedora, Arch, and other distributions. See: https://github.com/tauri-apps/tauri/pull/12491
+      # Once merged into Tauri mainline, we can revert to using TAURI_CLI_VERSION
+      - name: Install Tauri CLI (AppImage - experimental portable format)
+        if: ${{ matrix.type.name == 'appimage' }}
+        shell: bash
+        run: |
+          if ! command -v cargo-tauri >/dev/null 2>&1; then
+            cargo install tauri-cli --git https://github.com/tauri-apps/tauri --branch feat/truly-portable-appimage --locked
+          fi
+
+      - name: Install Tauri CLI (stable version for deb and other platforms)
+        if: ${{ matrix.type.name != 'appimage' }}
         shell: bash
         run: |
           if ! command -v cargo-tauri >/dev/null 2>&1; then
             cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
           fi
 
-      - name: Build Tauri app
+      - name: Build Tauri app (AppImage with new portable format)
+        if: ${{ matrix.type.name == 'appimage' }}
+        env:
+          TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: "true"
+        run: cargo tauri build --bundles "${{ matrix.type.bundles }}"
+
+      - name: Build Tauri app (standard build)
+        if: ${{ matrix.type.name != 'appimage' }}
         run: cargo tauri build --bundles "${{ matrix.type.bundles }}"
 
       - name: Upload artifacts to GitHub Release
