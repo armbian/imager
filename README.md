@@ -34,6 +34,9 @@
 > "According to Armbian, this results in less RAM and storage usage and a faster experience."
 > — *Jordan Gloor*, *HowtoGeek.com* ([source](https://www.howtogeek.com/armbians-raspberry-pi-imager-alternative-is-here/))
 
+> "It's super easy to write an operating system... I'm always happy when an Armbian version comes out because you've got more stability and much more compatibility."
+> — *leepspvideo*, *Simple Linux install for 300+ Arm devices* ([source](https://www.youtube.com/watch?v=vUvGD2GSALI))
+
 ## Download
 
 Prebuilt binaries are available for all supported platforms.
