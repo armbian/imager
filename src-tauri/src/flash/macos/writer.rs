@@ -11,6 +11,7 @@ use std::sync::Arc;
 
 use crate::config;
 use crate::flash::{sync_device, unmount_device, FlashState};
+use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_debug, log_error, log_info};
 
 use super::authorization::{free_authorization, SAVED_AUTH};
@@ -198,7 +199,7 @@ pub fn quick_erase(device: &mut File, device_fd: i32) -> Result<(), String> {
     let erase_size = config::flash::QUICK_ERASE_SIZE;
     let chunk_size = config::flash::ERASE_CHUNK_SIZE;
 
-    log_info!(
+    log_debug!(
         MODULE,
         "Quick erase: writing zeros to first {} MB",
         erase_size / (1024 * 1024)
@@ -231,7 +232,7 @@ pub fn quick_erase(device: &mut File, device_fd: i32) -> Result<(), String> {
         libc::lseek(device_fd, 0, libc::SEEK_SET);
     }
 
-    log_info!(MODULE, "Quick erase complete");
+    log_debug!(MODULE, "Quick erase complete");
     Ok(())
 }
 
@@ -258,10 +259,12 @@ pub async fn flash_image(
     unmount_device(device_path)?;
 
     // Small delay to ensure unmount completes
-    std::thread::sleep(std::time::Duration::from_millis(500));
+    std::thread::sleep(std::time::Duration::from_millis(
+        config::flash::UNMOUNT_DELAY_MS,
+    ));
 
     // Open device using saved authorization (no dialog here!)
-    log_info!(MODULE, "Opening device with saved authorization");
+    log_debug!(MODULE, "Opening device with saved authorization");
     let open_result = open_device_with_saved_auth(&raw_device)?;
     let mut device = open_result.file;
     let device_fd = device.as_raw_fd();
@@ -319,11 +322,19 @@ async fn do_flash_work(
     let mut buffer = vec![0u8; chunk_size];
     let mut written: u64 = 0;
 
+    // Use ProgressTracker for automatic progress logging
+    let mut tracker = ProgressTracker::new(
+        "Write",
+        MODULE,
+        image_size,
+        config::logging::WRITE_LOG_INTERVAL_MB,
+    );
+
     log_info!(
         MODULE,
         "Starting to write {} bytes ({:.2} GB)",
         image_size,
-        image_size as f64 / 1024.0 / 1024.0 / 1024.0
+        bytes_to_gb(image_size)
     );
 
     loop {
@@ -356,17 +367,13 @@ async fn do_flash_work(
         written += bytes_read as u64;
         state.written_bytes.store(written, Ordering::SeqCst);
 
-        // Log progress every 512MB
-        if written % (512 * 1024 * 1024) == 0 {
-            log_info!(
-                MODULE,
-                "Progress: {:.1}%",
-                (written as f64 / image_size as f64) * 100.0
-            );
-        }
+        // ProgressTracker handles logging automatically
+        tracker.update(bytes_read as u64);
     }
 
-    log_info!(MODULE, "Write complete, syncing...");
+    // Log final summary
+    tracker.finish();
+    log_debug!(MODULE, "Syncing...");
 
     // Sync to ensure all data is written
     device.flush().ok();

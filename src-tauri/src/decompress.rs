@@ -17,7 +17,7 @@ use zstd::stream::read::Decoder as ZstdDecoder;
 use crate::config;
 use crate::download::DownloadState;
 use crate::log_info;
-use crate::utils::get_recommended_threads;
+use crate::utils::{get_recommended_threads, strip_compression_ext, ProgressTracker};
 
 const MODULE: &str = "decompress";
 
@@ -104,6 +104,16 @@ fn decompress_with_reader_mt<R: Read>(
         BufWriter::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, output_file);
     let mut buffer = vec![0u8; config::download::CHUNK_SIZE];
 
+    // Progress tracking - we don't know the decompressed size (0), so track output bytes
+    // Use config interval for consistent logging
+    let operation_name = format!("Decompress ({})", format_name);
+    let mut tracker = ProgressTracker::new(
+        &operation_name,
+        MODULE,
+        0, // Unknown total size for decompression
+        config::logging::DECOMPRESS_LOG_INTERVAL_MB,
+    );
+
     loop {
         if state.is_cancelled.load(Ordering::SeqCst) {
             drop(buf_writer);
@@ -122,11 +132,17 @@ fn decompress_with_reader_mt<R: Read>(
         buf_writer
             .write_all(&buffer[..bytes_read])
             .map_err(|e| format!("Failed to write decompressed data: {}", e))?;
+
+        // ProgressTracker handles logging automatically
+        tracker.update(bytes_read as u64);
     }
 
     buf_writer
         .flush()
         .map_err(|e| format!("Failed to flush output: {}", e))?;
+
+    // Log final summary
+    tracker.finish();
 
     Ok(())
 }
@@ -143,11 +159,7 @@ pub fn decompress_local_file(
         .ok_or("Invalid filename")?;
 
     // Extract base filename (remove compression extension)
-    let base_filename = filename
-        .trim_end_matches(".xz")
-        .trim_end_matches(".gz")
-        .trim_end_matches(".bz2")
-        .trim_end_matches(".zst");
+    let base_filename = strip_compression_ext(filename);
 
     // Generate unique filename with timestamp to handle concurrent operations
     let timestamp = std::time::SystemTime::now()

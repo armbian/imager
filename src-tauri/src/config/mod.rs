@@ -54,6 +54,42 @@ pub mod flash {
 
     /// Progress log interval (percentage points)
     pub const LOG_INTERVAL_PERCENT: u64 = 6;
+
+    /// Delay after unmount before writing (milliseconds)
+    pub const UNMOUNT_DELAY_MS: u64 = 500;
+}
+
+/// Progress logging intervals
+pub mod logging {
+    /// SHA256 calculation buffer size
+    pub const SHA_BUFFER_SIZE: usize = 8192;
+
+    /// SHA256 progress log interval (MB)
+    pub const SHA_LOG_INTERVAL_MB: u64 = 50;
+
+    /// Download progress log interval (MB)
+    pub const DOWNLOAD_LOG_INTERVAL_MB: u64 = 10;
+
+    /// Write progress log interval (MB)
+    pub const WRITE_LOG_INTERVAL_MB: u64 = 512;
+
+    /// Decompression progress log interval (MB)
+    pub const DECOMPRESS_LOG_INTERVAL_MB: u64 = 100;
+
+    /// Linux sync interval for flush operations
+    pub const LINUX_SYNC_INTERVAL: u64 = 32 * 1024 * 1024;
+}
+
+/// Log paste service settings
+pub mod paste {
+    /// Maximum lines to show in truncated preview
+    pub const TRUNCATE_LINES: usize = 500;
+
+    /// Maximum log file size to upload (5 MB)
+    pub const MAX_LOG_SIZE: u64 = 5 * 1024 * 1024;
+
+    /// Maximum log lines to process
+    pub const MAX_LOG_LINES: usize = 10_000;
 }
 
 /// Device detection settings

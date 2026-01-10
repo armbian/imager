@@ -4,6 +4,7 @@
 
 use super::FlashState;
 use crate::config;
+use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_debug, log_error, log_info, log_warn};
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -52,24 +53,34 @@ pub async fn flash_image(
         MODULE,
         "Image size: {} bytes ({:.2} GB)",
         image_size,
-        image_size as f64 / 1024.0 / 1024.0 / 1024.0
+        bytes_to_gb(image_size)
     );
 
     let disk_number = extract_disk_number(device_path)?;
 
     log_info!(MODULE, "Locking volumes on disk {}...", disk_number);
     let _volume_locks = lock_disk_volumes(disk_number)?;
-    std::thread::sleep(std::time::Duration::from_millis(500));
+    std::thread::sleep(std::time::Duration::from_millis(
+        config::flash::UNMOUNT_DELAY_MS,
+    ));
 
     let mut image_file =
         std::fs::File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
 
-    log_info!(MODULE, "Opening device for writing...");
+    log_debug!(MODULE, "Opening device for writing...");
     let mut device = open_device_for_write(device_path)?;
 
     let chunk_size = config::flash::CHUNK_SIZE;
     let mut buffer = vec![0u8; chunk_size];
     let mut written: u64 = 0;
+
+    // Use ProgressTracker for automatic progress logging
+    let mut tracker = ProgressTracker::new(
+        "Write",
+        MODULE,
+        image_size,
+        config::logging::WRITE_LOG_INTERVAL_MB,
+    );
 
     log_info!(MODULE, "Writing image to device...");
 
@@ -96,25 +107,23 @@ pub async fn flash_image(
         written += bytes_read as u64;
         state.written_bytes.store(written, Ordering::SeqCst);
 
-        if written % (512 * 1024 * 1024) == 0 {
-            log_info!(
-                MODULE,
-                "Write progress: {:.1}%",
-                (written as f64 / image_size as f64) * 100.0
-            );
-        }
+        // ProgressTracker handles logging automatically
+        tracker.update(bytes_read as u64);
     }
 
-    log_info!(MODULE, "Flushing write cache...");
+    log_debug!(MODULE, "Flushing write cache...");
     device.flush().ok();
     flush_device_buffers(&device)?;
 
-    log_info!(MODULE, "Write complete!");
+    // Log final summary
+    tracker.finish();
 
     if verify {
         log_info!(MODULE, "Starting verification...");
         drop(device);
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        std::thread::sleep(std::time::Duration::from_millis(
+            config::flash::UNMOUNT_DELAY_MS,
+        ));
         let device = open_device_for_read(device_path)?;
         verify_with_sector_alignment(image_path, device, state)?;
     }
@@ -397,7 +406,7 @@ fn verify_with_sector_alignment(
         MODULE,
         "Verifying {} bytes ({:.2} GB)",
         image_size,
-        image_size as f64 / 1024.0 / 1024.0 / 1024.0
+        bytes_to_gb(image_size)
     );
 
     let sector_size = get_device_sector_size(&device)?;
@@ -414,6 +423,14 @@ fn verify_with_sector_alignment(
     let mut image_buffer = vec![0u8; aligned_chunk_size];
     let mut device_buffer = vec![0u8; aligned_chunk_size];
     let mut verified: u64 = 0;
+
+    // Use ProgressTracker for automatic progress logging
+    let mut tracker = ProgressTracker::new(
+        "Verify",
+        MODULE,
+        image_size,
+        config::logging::WRITE_LOG_INTERVAL_MB,
+    );
 
     while verified < image_size {
         if state.is_cancelled.load(Ordering::SeqCst) {
@@ -473,16 +490,12 @@ fn verify_with_sector_alignment(
         verified += image_read as u64;
         state.verified_bytes.store(verified, Ordering::SeqCst);
 
-        if verified % (512 * 1024 * 1024) == 0 {
-            log_info!(
-                MODULE,
-                "Verification progress: {:.1}%",
-                (verified as f64 / image_size as f64) * 100.0
-            );
-        }
+        // ProgressTracker handles logging automatically
+        tracker.update(image_read as u64);
     }
 
-    log_info!(MODULE, "Verification complete!");
+    // Log final summary
+    tracker.finish();
     Ok(())
 }
 

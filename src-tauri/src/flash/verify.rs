@@ -6,6 +6,7 @@
 #![allow(dead_code)]
 
 use crate::config;
+use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_error, log_info};
 use std::fs::File;
 use std::io::Read;
@@ -42,15 +43,22 @@ pub fn verify_data<R: Read>(
     let mut image_buffer = vec![0u8; chunk_size];
     let mut device_buffer = vec![0u8; chunk_size];
     let mut verified: u64 = 0;
-    let mut last_logged_percent: u64 = 0;
 
     let image_size = state.total_bytes.load(Ordering::SeqCst);
+
+    // Use ProgressTracker for automatic progress logging
+    let mut tracker = ProgressTracker::new(
+        "Verify",
+        MODULE,
+        image_size,
+        config::logging::WRITE_LOG_INTERVAL_MB,
+    );
 
     log_info!(
         MODULE,
         "Starting verification of {} bytes ({:.2} GB)",
         image_size,
-        image_size as f64 / 1024.0 / 1024.0 / 1024.0
+        bytes_to_gb(image_size)
     );
 
     while verified < image_size {
@@ -109,19 +117,12 @@ pub fn verify_data<R: Read>(
         verified += image_read as u64;
         state.verified_bytes.store(verified, Ordering::SeqCst);
 
-        // Log progress at configured interval
-        let current_percent = verified * 100 / image_size;
-        if current_percent >= last_logged_percent + config::flash::LOG_INTERVAL_PERCENT {
-            log_info!(
-                MODULE,
-                "Progress: {:.1}%",
-                (verified as f64 / image_size as f64) * 100.0
-            );
-            last_logged_percent = current_percent;
-        }
+        // ProgressTracker handles logging automatically
+        tracker.update(image_read as u64);
     }
 
-    log_info!(MODULE, "Verification complete!");
+    // Log final summary
+    tracker.finish();
     Ok(())
 }
 

@@ -12,7 +12,8 @@ use std::sync::Arc;
 
 use crate::config;
 use crate::flash::{sync_device, unmount_device, FlashState};
-use crate::{log_error, log_info};
+use crate::utils::{bytes_to_gb, ProgressTracker};
+use crate::{log_debug, log_error, log_info};
 
 const MODULE: &str = "flash::linux::writer";
 
@@ -21,7 +22,7 @@ const MODULE: &str = "flash::linux::writer";
 async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
     use std::collections::HashMap;
 
-    log_info!(MODULE, "Opening device via UDisks2: {}", device_path);
+    log_debug!(MODULE, "Opening device via UDisks2: {}", device_path);
 
     // Create UDisks2 client
     let client = udisks2::Client::new()
@@ -35,7 +36,7 @@ async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
 
     let object_path = format!("/org/freedesktop/UDisks2/block_devices/{}", dev_name);
 
-    log_info!(MODULE, "UDisks2 object path: {}", object_path);
+    log_debug!(MODULE, "UDisks2 object path: {}", object_path);
 
     // Get the block device object
     let object = client
@@ -56,7 +57,7 @@ async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
         .await
         .map_err(|e| format!("Failed to open device (polkit auth may have failed): {}", e))?;
 
-    log_info!(MODULE, "Device opened successfully via UDisks2");
+    log_debug!(MODULE, "Device opened successfully via UDisks2");
 
     // Convert the file descriptor to a File
     // OwnedFd implements AsRawFd, so we get the raw fd and create a File from it
@@ -72,7 +73,7 @@ async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
 fn open_device_direct(device_path: &str) -> Result<File, String> {
     use std::fs::OpenOptions;
 
-    log_info!(MODULE, "Attempting direct device open: {}", device_path);
+    log_debug!(MODULE, "Attempting direct device open: {}", device_path);
 
     OpenOptions::new()
         .read(true)
@@ -108,7 +109,7 @@ pub async fn flash_image(
         MODULE,
         "Image size: {} bytes ({:.2} GB)",
         image_size,
-        image_size as f64 / 1024.0 / 1024.0 / 1024.0
+        bytes_to_gb(image_size)
     );
 
     // Unmount the device first
@@ -116,15 +117,17 @@ pub async fn flash_image(
     unmount_device(device_path)?;
 
     // Small delay to ensure unmount completes
-    std::thread::sleep(std::time::Duration::from_millis(500));
+    std::thread::sleep(std::time::Duration::from_millis(
+        config::flash::UNMOUNT_DELAY_MS,
+    ));
 
     // Try to open device via UDisks2 first (handles polkit auth)
     // Fall back to direct open if UDisks2 fails (e.g., if running as root)
-    log_info!(MODULE, "Opening device for writing...");
+    log_debug!(MODULE, "Opening device for writing...");
     let mut device = match open_device_udisks2(device_path).await {
         Ok(file) => file,
         Err(e) => {
-            log_info!(MODULE, "UDisks2 open failed ({}), trying direct open...", e);
+            log_debug!(MODULE, "UDisks2 open failed ({}), trying direct open...", e);
             open_device_direct(device_path)?
         }
     };
@@ -143,11 +146,18 @@ pub async fn flash_image(
     let mut buffer = vec![0u8; chunk_size];
     let mut written: u64 = 0;
 
+    // Use ProgressTracker for automatic progress logging
+    let mut tracker = ProgressTracker::new(
+        "Write",
+        MODULE,
+        image_size,
+        config::logging::WRITE_LOG_INTERVAL_MB,
+    );
+
     log_info!(MODULE, "Writing image...");
 
-    // Sync interval: sync every 32MB to show real progress (not just cache writes)
+    // Sync interval to show real progress (not just cache writes)
     // This ensures the progress bar reflects actual disk writes, not just memory cache
-    const SYNC_INTERVAL: u64 = 32 * 1024 * 1024;
     let mut bytes_since_sync: u64 = 0;
 
     loop {
@@ -172,7 +182,7 @@ pub async fn flash_image(
         bytes_since_sync += bytes_read as u64;
 
         // Periodic sync to flush data to disk and show real progress
-        if bytes_since_sync >= SYNC_INTERVAL {
+        if bytes_since_sync >= config::logging::LINUX_SYNC_INTERVAL {
             unsafe {
                 libc::fdatasync(device_fd);
             }
@@ -180,17 +190,13 @@ pub async fn flash_image(
             state.written_bytes.store(written, Ordering::SeqCst);
         }
 
-        // Log progress every 512MB
-        if written % (512 * 1024 * 1024) == 0 {
-            log_info!(
-                MODULE,
-                "Progress: {:.1}%",
-                (written as f64 / image_size as f64) * 100.0
-            );
-        }
+        // ProgressTracker handles logging automatically
+        tracker.update(bytes_read as u64);
     }
 
-    log_info!(MODULE, "Write complete, syncing...");
+    // Log final summary
+    tracker.finish();
+    log_debug!(MODULE, "Syncing...");
 
     // Sync
     device.flush().ok();
@@ -228,7 +234,7 @@ fn quick_erase(device: &mut File) -> Result<(), String> {
     let erase_size = config::flash::QUICK_ERASE_SIZE;
     let chunk_size = config::flash::ERASE_CHUNK_SIZE;
 
-    log_info!(
+    log_debug!(
         MODULE,
         "Quick erase: writing zeros to first {} MB",
         erase_size / (1024 * 1024)
@@ -258,7 +264,7 @@ fn quick_erase(device: &mut File) -> Result<(), String> {
         .seek(SeekFrom::Start(0))
         .map_err(|e| format!("Failed to seek to start: {}", e))?;
 
-    log_info!(MODULE, "Quick erase complete");
+    log_debug!(MODULE, "Quick erase complete");
     Ok(())
 }
 

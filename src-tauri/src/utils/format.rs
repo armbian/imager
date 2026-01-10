@@ -2,6 +2,23 @@
 //!
 //! Provides consistent formatting functions for the application.
 
+/// Bytes per megabyte constant
+pub const MB: u64 = 1024 * 1024;
+/// Bytes per gigabyte constant
+pub const GB: u64 = 1024 * 1024 * 1024;
+
+/// Convert bytes to megabytes as f64 (for calculations and logging)
+#[inline]
+pub fn bytes_to_mb(bytes: u64) -> f64 {
+    bytes as f64 / MB as f64
+}
+
+/// Convert bytes to gigabytes as f64 (for calculations and logging)
+#[inline]
+pub fn bytes_to_gb(bytes: u64) -> f64 {
+    bytes as f64 / GB as f64
+}
+
 /// Format bytes into human-readable size string (e.g., "1.5 GB", "256 MB")
 pub fn format_size(bytes: u64) -> String {
     const KB: u64 = 1024;
@@ -55,5 +72,19 @@ mod tests {
         assert_eq!(normalize_slug("Orange-Pi-5"), "orange-pi-5");
         assert_eq!(normalize_slug("rock__pi__4"), "rock-pi-4");
         assert_eq!(normalize_slug("Banana PI M5"), "banana-pi-m5");
+    }
+
+    #[test]
+    fn test_bytes_to_mb() {
+        assert!((bytes_to_mb(0) - 0.0).abs() < f64::EPSILON);
+        assert!((bytes_to_mb(1048576) - 1.0).abs() < f64::EPSILON);
+        assert!((bytes_to_mb(10485760) - 10.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_bytes_to_gb() {
+        assert!((bytes_to_gb(0) - 0.0).abs() < f64::EPSILON);
+        assert!((bytes_to_gb(1073741824) - 1.0).abs() < f64::EPSILON);
+        assert!((bytes_to_gb(2147483648) - 2.0).abs() < f64::EPSILON);
     }
 }

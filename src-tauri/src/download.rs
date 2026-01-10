@@ -14,6 +14,7 @@ use tokio::sync::Mutex;
 
 use crate::config;
 use crate::decompress::decompress_with_rust_xz;
+use crate::utils::{bytes_to_mb, ProgressTracker};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "download";
@@ -72,7 +73,7 @@ fn extract_filename(url: &str) -> Result<&str, String> {
 
 /// Fetch expected SHA256 from URL
 async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, String> {
-    log_info!(MODULE, "Fetching SHA256 from: {}", sha_url);
+    log_debug!(MODULE, "Fetching SHA256 from: {}", sha_url);
 
     let response = client
         .get(sha_url)
@@ -104,13 +105,13 @@ async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, St
         return Err(format!("Invalid SHA256 hash format: {}", hash));
     }
 
-    log_info!(MODULE, "Expected SHA256: {}", hash);
+    log_debug!(MODULE, "Expected SHA256: {}", hash);
     Ok(hash)
 }
 
 /// Calculate SHA256 of a file
 fn calculate_file_sha256(path: &Path, state: &Arc<DownloadState>) -> Result<String, String> {
-    log_info!(MODULE, "Calculating SHA256 of: {}", path.display());
+    log_debug!(MODULE, "Calculating SHA256 of: {}", path.display());
     log_debug!(
         MODULE,
         "File size: {:?} bytes",
@@ -150,7 +151,7 @@ fn calculate_file_sha256(path: &Path, state: &Arc<DownloadState>) -> Result<Stri
 
     let result = hasher.finalize();
     let hash = format!("{:x}", result);
-    log_info!(MODULE, "Calculated SHA256: {}", hash);
+    log_debug!(MODULE, "Calculated SHA256: {}", hash);
     Ok(hash)
 }
 
@@ -209,7 +210,7 @@ pub async fn download_image(
     let output_path = output_dir.join(output_filename);
 
     log_info!(MODULE, "Download requested: {}", url);
-    log_info!(MODULE, "Output path: {}", output_path.display());
+    log_debug!(MODULE, "Output path: {}", output_path.display());
 
     // Check if image is already in cache (also updates mtime for LRU)
     if let Some(cached_path) = crate::cache::get_cached_image(output_filename) {
@@ -250,7 +251,7 @@ pub async fn download_image(
         MODULE,
         "Download size: {} bytes ({:.2} MB)",
         total_size,
-        total_size as f64 / 1024.0 / 1024.0
+        bytes_to_mb(total_size)
     );
 
     // Create temp file for compressed data
@@ -258,9 +259,15 @@ pub async fn download_image(
     let mut temp_file =
         File::create(&temp_path).map_err(|e| format!("Failed to create temp file: {}", e))?;
 
-    // Download with progress
+    // Download with progress tracking
     let mut stream = response.bytes_stream();
     let mut downloaded: u64 = 0;
+    let mut tracker = ProgressTracker::new(
+        "Download",
+        MODULE,
+        total_size,
+        config::logging::DOWNLOAD_LOG_INTERVAL_MB,
+    );
 
     while let Some(chunk) = stream.next().await {
         if state.is_cancelled.load(Ordering::SeqCst) {
@@ -277,10 +284,11 @@ pub async fn download_image(
 
         downloaded += chunk.len() as u64;
         state.downloaded_bytes.store(downloaded, Ordering::SeqCst);
+        tracker.update(chunk.len() as u64);
     }
 
     drop(temp_file);
-    log_info!(MODULE, "Download complete: {} bytes", downloaded);
+    tracker.finish();
 
     // Verify SHA256 if URL provided
     if let Some(sha_url) = sha_url {
