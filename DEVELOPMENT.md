@@ -229,8 +229,8 @@ armbian-imager/
 │       └── install-windows.ps1   # Windows dependencies
 │
 ├── .github/workflows/            # CI/CD pipelines
-│   ├── build.yml                 # CI builds
-│   ├── build-artifacts.yml       # Release builds
+│   ├── build.yml                 # Test/development builds (no release)
+│   ├── release.yml               # Release builds with code signing
 │   ├── pr-check.yml              # PR validation
 │   └── sync-locales.yml          # Auto translation sync
 │
