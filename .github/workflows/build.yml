@@ -107,6 +107,13 @@ jobs:
             bundles: 'deb'
             deps: "apt"
             artifacts: "src-tauri/target/release/bundle/deb/*.deb"
+          # rpm: build in the oldest still-supported matching container: Fedora 40 for rpm
+          - name: 'rpm'
+            distro_id: "fedora40"
+            container: { image: 'fedora:40' }
+            bundles: 'rpm'
+            deps: "rpm"
+            artifacts: "src-tauri/target/release/bundle/rpm/*.rpm"
           # appimage: doesn't use a container (instead, runs directly on the runner); requires sudo to install deps
           - name: 'appimage'
             distro_id: "gharunner"
@@ -160,6 +167,25 @@ jobs:
             libgtk-3-dev \
             squashfs-tools \
             xdg-utils
+
+      - name: Install dependencies (rpm)
+        if: ${{ matrix.type.deps == 'rpm' }}
+        run: |
+          dnf update -y
+          dnf install -y \
+            webkit2gtk4.1-devel \
+            openssl-devel \
+            curl \
+            wget \
+            file \
+            libappindicator-gtk3-devel \
+            librsvg2-devel \
+            libxdo-devel \
+            patchelf \
+            gtk3-devel \
+            squashfs-tools \
+            xdg-utils
+          dnf -y group install "c-development"
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
