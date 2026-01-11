@@ -1,0 +1,837 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      build_linux:
+        description: 'Build Linux (x64 + ARM64)'
+        type: boolean
+        default: true
+      build_macos:
+        description: 'Build macOS (x64 + ARM64)'
+        type: boolean
+        default: true
+      build_windows_x64:
+        description: 'Build Windows x64'
+        type: boolean
+        default: true
+      build_windows_arm64:
+        description: 'Build Windows ARM64'
+        type: boolean
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_VERSION: '20'
+  TAURI_CLI_VERSION: '2.9.6'
+  # Tauri updater signing key (set in GitHub Secrets)
+  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+jobs:
+  create-release:
+    name: Create draft release (early)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_tag: ${{ steps.relmeta.outputs.tag }}
+      release_name: ${{ steps.relmeta.outputs.name }}
+    steps:
+      - name: Compute release tag/name (start at v1.0.0)
+        id: relmeta
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+            NAME="${GITHUB_REF_NAME}"
+          else
+            # Get latest release tag (if any)
+            LAST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
+
+            if [[ -z "$LAST_TAG" ]]; then
+              TAG="v1.0.0"
+            else
+              # Expect vMAJOR.MINOR.PATCH
+              IFS='.' read -r MAJOR MINOR PATCH <<<"${LAST_TAG#v}"
+              PATCH=$((PATCH + 1))
+              TAG="v${MAJOR}.${MINOR}.${PATCH}"
+            fi
+
+            NAME="$TAG"
+          fi
+
+          echo "tag=$TAG" >>"$GITHUB_OUTPUT"
+          echo "name=$NAME" >>"$GITHUB_OUTPUT"
+
+      - name: Create/Update GitHub Release (draft ${{ steps.relmeta.outputs.tag }})
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.relmeta.outputs.tag }}
+          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
+          commit: ${{ github.sha }}
+          draft: true
+          prerelease: false
+          generateReleaseNotes: true
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          replacesArtifacts: false
+
+  build-linux:
+    name: build-linux ${{ matrix.type.name }} (${{ matrix.arch.name }}/${{ matrix.type.distro_id }})
+    needs: [ create-release ]
+    if: ${{ github.event_name == 'push' || inputs.build_linux }} # can't use matrix here; if is evaluated before matrix expansion
+    strategy:
+      fail-fast: false # let other jobs try to complete if one fails
+      matrix:
+        arch:
+          - { name: 'amd64', runner: 'ubuntu-24.04' }
+          - { name: 'arm64', runner: "ubuntu-24.04-arm" }
+        type:
+          # deb: build in the oldest still-supported matching container: oldstable (bookworm)
+          - name: 'deb'
+            distro_id: "bookworm"
+            container: { image: 'debian:bookworm' }
+            bundles: 'deb'
+            deps: "apt"
+            artifacts: "src-tauri/target/release/bundle/deb/*.deb"
+          # appimage: doesn't use a container (instead, runs directly on the runner); requires sudo to install deps
+          - name: 'appimage'
+            distro_id: "gharunner"
+            bundles: 'appimage'
+            deps: "apt"
+            deps_gain_root: "sudo"
+            artifacts: |
+              src-tauri/target/release/bundle/appimage/*.AppImage
+              src-tauri/target/release/bundle/appimage/*.AppImage.sig
+    runs-on: ${{ matrix.arch.runner }}
+    container: ${{ matrix.type.container }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
+
+      - name: Install dependencies (apt)
+        if: ${{ matrix.type.deps == 'apt' }}
+        run: |
+          ${{ matrix.type.deps_gain_root || '' }} apt-get update
+          ${{ matrix.type.deps_gain_root || '' }} apt-get install -y \
+            build-essential \
+            curl \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libgtk-3-dev \
+            squashfs-tools \
+            xdg-utils
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false # setup-node can't add key to cache, so we do it ourselves in below step
+
+      # Cache npm, just like setup-node would do it with "cache: npm", but with our own key that includes arch and distro
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          # ensure cache separation per host distro; this also ends up caching tauri-cli, so add that to key too.
+          key: "rust-cache-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-${{env.TAURI_CLI_VERSION}}"
+          # @TODO: Cargo.lock is in gitignore, so it's not included here - it would via rust-cache Action magic, no need to specify it.
+
+      - name: Cache cargo bin (tauri-cli) # @TODO: Swatinem/rust-cache already caches this. maybe just drop this.
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin
+          key: "cargo-bin-${{ matrix.arch.runner }}-${{ matrix.arch.name }}-${{ matrix.type.distro_id }}-stable-${{env.TAURI_CLI_VERSION}}-${{ hashFiles('**/Cargo.lock') }}"
+          # @TODO: Cargo.lock is in gitignore, so it's not included here, albeit being specified.
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install Tauri CLI (if missing)
+        shell: bash
+        run: |
+          if ! command -v cargo-tauri >/dev/null 2>&1; then
+            cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
+          fi
+
+      - name: Build Tauri app
+        run: cargo tauri build --bundles "${{ matrix.type.bundles }}"
+
+      - name: Upload artifacts to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
+          draft: true
+          prerelease: false
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          replacesArtifacts: false
+          artifacts: |
+            ${{ matrix.type.artifacts }}
+
+  build-macos:
+    name: build-macos (${{ matrix.target }})
+    needs: [create-release]
+    if: ${{ github.event_name == 'push' || inputs.build_macos }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            arch: x64
+            os: macos-15
+          - target: aarch64-apple-darwin
+            arch: arm64
+            os: macos-latest
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    env:
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import Apple Developer Certificate
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          # Create a temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo -n "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security import certificate.p12 -k "$KEYCHAIN_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Verify certificate
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+          # Set as default keychain
+          security default-keychain -s "$KEYCHAIN_PATH"
+
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Rust (add target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          # ensure cache separation per target
+          key: macos-${{ matrix.target }}
+
+      - name: Cache cargo bin (tauri-cli)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin
+          key: cargo-bin-${{ runner.os }}-${{ runner.arch }}-stable-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install Tauri CLI (if missing)
+        shell: bash
+        run: |
+          if ! command -v cargo-tauri >/dev/null 2>&1; then
+            cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
+          fi
+
+      - name: Build Tauri app (per-target output dir)
+        shell: bash
+        run: |
+          cargo tauri build --target "${{ matrix.target }}" --bundles dmg,app
+
+      - name: Zip .app bundle(s) and rename updater artifacts
+        shell: bash
+        env:
+          CARGO_TARGET_DIR: src-tauri/target/${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for app in "$CARGO_TARGET_DIR/release/bundle/macos/"*.app; do
+            base="$(basename "$app" .app)"
+            ditto -c -k --sequesterRsrc --keepParent "$app" "$CARGO_TARGET_DIR/release/bundle/macos/${base}-${{ matrix.arch }}.app.zip"
+          done
+          # Rename updater tar.gz to include arch
+          for tarball in "$CARGO_TARGET_DIR/release/bundle/macos/"*.tar.gz; do
+            base="$(basename "$tarball" .tar.gz)"
+            mv "$tarball" "$CARGO_TARGET_DIR/release/bundle/macos/${base}-${{ matrix.arch }}.tar.gz"
+          done
+          for sig in "$CARGO_TARGET_DIR/release/bundle/macos/"*.tar.gz.sig; do
+            base="$(basename "$sig" .tar.gz.sig)"
+            mv "$sig" "$CARGO_TARGET_DIR/release/bundle/macos/${base}-${{ matrix.arch }}.tar.gz.sig"
+          done
+
+      - name: Notarize and staple DMG
+        shell: bash
+        env:
+          CARGO_TARGET_DIR: src-tauri/target/${{ matrix.target }}
+        run: |
+          set -euo pipefail
+
+          # Find the DMG file
+          DMG_FILE=$(find "$CARGO_TARGET_DIR/release/bundle/dmg/" -name "*.dmg" -type f | head -n 1)
+
+          if [[ -z "$DMG_FILE" ]]; then
+            echo "No DMG file found"
+            exit 1
+          fi
+
+          echo "Notarizing: $DMG_FILE"
+
+          # Submit DMG for notarization
+          xcrun notarytool submit "$DMG_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_ID_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --output-format json
+
+          # Staple the notarization ticket to DMG
+          xcrun stapler staple "$DMG_FILE"
+
+          # Verify stapling
+          xcrun stapler validate -v "$DMG_FILE"
+
+          echo "Notarization completed successfully"
+
+      - name: Upload macOS artifacts to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
+          draft: true
+          prerelease: false
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          replacesArtifacts: false
+          artifacts: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*-${{ matrix.arch }}.app.zip
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*-${{ matrix.arch }}.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*-${{ matrix.arch }}.tar.gz.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+
+  build-windows-x64:
+    name: build-windows (x86_64-pc-windows-msvc)
+    needs: [create-release]
+    if: ${{ github.event_name == 'push' || inputs.build_windows_x64 }}
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
+
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Cache cargo bin (tauri-cli)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~\.cargo\bin
+          key: cargo-bin-${{ runner.os }}-${{ runner.arch }}-stable-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install Tauri CLI (if missing)
+        shell: bash
+        run: |
+          if ! command -v cargo-tauri >/dev/null 2>&1; then
+            cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
+          fi
+
+      - name: Build Tauri app
+        run: cargo tauri build --target x86_64-pc-windows-msvc --bundles msi,nsis
+
+      # Upload unsigned artifacts for SignPath signing
+      - name: Upload unsigned artifacts for signing
+        id: upload-unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-unsigned
+          if-no-files-found: error
+          path: |
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+
+      # Upload Tauri updater signatures directly (not for Windows code signing)
+      - name: Upload Tauri updater signatures to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
+          draft: true
+          prerelease: false
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          replacesArtifacts: false
+          artifacts: |
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe.sig
+
+    outputs:
+      artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+
+  build-windows-arm64:
+    name: build-windows (aarch64-pc-windows-msvc)
+    needs: [create-release]
+    if: ${{ github.event_name == 'push' || inputs.build_windows_arm64 }}
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version from release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG='${{ needs.create-release.outputs.release_tag }}'
+          VERSION="${TAG#v}"
+
+          echo "Setting version to $VERSION"
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            package.json
+
+          sed -i \
+            -e "s/^version = \".*\"/version = \"$VERSION\"/" \
+            src-tauri/Cargo.toml
+
+          sed -i \
+            -e "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" \
+            src-tauri/tauri.conf.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-pc-windows-msvc
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Cache cargo bin (tauri-cli)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~\.cargo\bin
+          key: cargo-bin-${{ runner.os }}-${{ runner.arch }}-stable-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Install Tauri CLI (if missing)
+        shell: bash
+        run: |
+          if ! command -v cargo-tauri >/dev/null 2>&1; then
+            cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
+          fi
+
+      - name: Build Tauri app
+        run: cargo tauri build --target aarch64-pc-windows-msvc --bundles msi,nsis
+
+      # Upload unsigned artifacts for SignPath signing
+      - name: Upload unsigned artifacts for signing
+        id: upload-unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm64-unsigned
+          if-no-files-found: error
+          path: |
+            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/*.msi
+            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
+
+      # Upload Tauri updater signatures directly (not for Windows code signing)
+      - name: Upload Tauri updater signatures to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
+          draft: true
+          prerelease: false
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          replacesArtifacts: false
+          artifacts: |
+            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe.sig
+
+    outputs:
+      artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+
+  # Sign Windows artifacts using SignPath
+  sign-windows:
+    name: Sign Windows artifacts with SignPath
+    needs: [create-release, build-windows-x64, build-windows-arm64]
+    if: |
+      always() &&
+      (needs.build-windows-x64.result == 'success' || needs.build-windows-arm64.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+      id-token: write
+    steps:
+      # Sign Windows x64 artifacts
+      - name: Sign Windows x64 artifacts
+        if: needs.build-windows-x64.result == 'success'
+        id: sign-x64
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ vars.SIGNPATH_ORGANIZATION_ID }}'
+          project-slug: 'imager'
+          signing-policy-slug: 'test-signing'
+          github-artifact-id: '${{ needs.build-windows-x64.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: 'signed-x64'
+
+      # Sign Windows ARM64 artifacts
+      - name: Sign Windows ARM64 artifacts
+        if: needs.build-windows-arm64.result == 'success'
+        id: sign-arm64
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ vars.SIGNPATH_ORGANIZATION_ID }}'
+          project-slug: 'imager'
+          signing-policy-slug: 'test-signing'
+          github-artifact-id: '${{ needs.build-windows-arm64.outputs.artifact-id }}'
+          wait-for-completion: true
+          output-artifact-directory: 'signed-arm64'
+
+      # Upload signed x64 artifacts to GitHub Release
+      - name: Upload signed x64 artifacts to GitHub Release
+        if: needs.build-windows-x64.result == 'success'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
+          draft: true
+          prerelease: false
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          replacesArtifacts: false
+          artifacts: |
+            signed-x64/**/*.msi
+            signed-x64/**/*.exe
+
+      # Upload signed ARM64 artifacts to GitHub Release
+      - name: Upload signed ARM64 artifacts to GitHub Release
+        if: needs.build-windows-arm64.result == 'success'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
+          draft: true
+          prerelease: false
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          replacesArtifacts: false
+          artifacts: |
+            signed-arm64/**/*.msi
+            signed-arm64/**/*.exe
+
+  generate-update-manifest:
+    name: Generate latest.json for updater
+    needs:
+      - create-release
+      - build-linux
+      - build-macos
+      - sign-windows
+    if: |
+      always() &&
+      (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release assets and generate latest.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.create-release.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          VERSION="${TAG#v}"
+          REPO="${{ github.repository }}"
+          BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Function to get signature content from release
+          get_sig() {
+            local asset_name="$1"
+            gh release download "$TAG" --pattern "${asset_name}.sig" --output - 2>/dev/null || echo ""
+          }
+
+          # Wait for assets to be available
+          sleep 10
+
+          # Get list of assets
+          ASSETS=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+
+          # Initialize platforms object
+          declare -A PLATFORMS
+
+          # macOS x64
+          MAC_X64_SIG=$(get_sig "Armbian.Imager.app-x64.tar.gz" || echo "")
+          if [[ -n "$MAC_X64_SIG" ]]; then
+            PLATFORMS["darwin-x86_64"]="{\"signature\": \"${MAC_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager.app-x64.tar.gz\"}"
+          fi
+
+          # macOS ARM64
+          MAC_ARM_SIG=$(get_sig "Armbian.Imager.app-arm64.tar.gz" || echo "")
+          if [[ -n "$MAC_ARM_SIG" ]]; then
+            PLATFORMS["darwin-aarch64"]="{\"signature\": \"${MAC_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager.app-arm64.tar.gz\"}"
+          fi
+
+          # Linux x64
+          LINUX_X64_SIG=$(get_sig "Armbian.Imager_${VERSION}_amd64.AppImage" || echo "")
+          if [[ -n "$LINUX_X64_SIG" ]]; then
+            PLATFORMS["linux-x86_64"]="{\"signature\": \"${LINUX_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager_${VERSION}_amd64.AppImage\"}"
+          fi
+
+          # Linux ARM64
+          LINUX_ARM_SIG=$(get_sig "Armbian.Imager_${VERSION}_aarch64.AppImage" || echo "")
+          if [[ -n "$LINUX_ARM_SIG" ]]; then
+            PLATFORMS["linux-aarch64"]="{\"signature\": \"${LINUX_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager_${VERSION}_aarch64.AppImage\"}"
+          fi
+
+          # Windows x64
+          WIN_X64_SIG=$(get_sig "Armbian.Imager_${VERSION}_x64-setup.exe" || echo "")
+          if [[ -n "$WIN_X64_SIG" ]]; then
+            PLATFORMS["windows-x86_64"]="{\"signature\": \"${WIN_X64_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager_${VERSION}_x64-setup.exe\"}"
+          fi
+
+          # Windows ARM64
+          WIN_ARM_SIG=$(get_sig "Armbian.Imager_${VERSION}_arm64-setup.exe" || echo "")
+          if [[ -n "$WIN_ARM_SIG" ]]; then
+            PLATFORMS["windows-aarch64"]="{\"signature\": \"${WIN_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager_${VERSION}_arm64-setup.exe\"}"
+          fi
+
+          # Build platforms JSON
+          PLATFORMS_JSON="{"
+          first=true
+          for key in "${!PLATFORMS[@]}"; do
+            if [[ "$first" == "true" ]]; then
+              first=false
+            else
+              PLATFORMS_JSON+=","
+            fi
+            PLATFORMS_JSON+="\"${key}\": ${PLATFORMS[$key]}"
+          done
+          PLATFORMS_JSON+="}"
+
+          # Generate latest.json
+          cat > latest.json <<EOF
+          {
+            "version": "${VERSION}",
+            "pub_date": "${PUB_DATE}",
+            "platforms": ${PLATFORMS_JSON}
+          }
+          EOF
+
+          # Pretty print for debugging
+          cat latest.json | jq .
+
+      - name: Upload latest.json to release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          artifacts: latest.json
+
+  finalize-release:
+    name: Publish release (draft -> false) + cleanup
+    needs:
+      - create-release
+      - build-linux
+      - build-macos
+      - sign-windows
+      - generate-update-manifest
+    if: |
+      always() &&
+      (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Publish GitHub Release (set draft=false)
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          draft: false
+          prerelease: false
+
+      - name: Delete old workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 7
+          keep_minimum_runs: 5

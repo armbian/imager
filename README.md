@@ -74,6 +74,12 @@ Prebuilt binaries are available for all supported platforms.
 
 English, Italian, German, French, Spanish, Portuguese, Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian
 
+## Why We Sign Our Code
+
+Downloading software shouldn't require a leap of faith. Every Windows release carries a cryptographic signature — proof that what you download is exactly what we built, untouched and authentic.
+
+This is made possible by [SignPath Foundation](https://signpath.org?utm_source=foundation&utm_medium=github&utm_campaign=armbian-imager), who provide free code signing certificates to open source projects, and [SignPath.io](https://signpath.io?utm_source=foundation&utm_medium=github&utm_campaign=armbian-imager) for their signing infrastructure.
+
 ## Development
 
 Development setup, build instructions, and project structure are documented in  [DEVELOPMENT.md](DEVELOPMENT.md).
