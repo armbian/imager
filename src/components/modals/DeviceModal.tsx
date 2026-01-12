@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { HardDrive, RefreshCw, AlertTriangle, Shield, MemoryStick, Usb } from 'lucide-react';
+import { HardDrive, RefreshCw, AlertTriangle, Shield, MemoryStick, Usb, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { ErrorDisplay, ConfirmationDialog, ListItemSkeleton } from '../shared';
@@ -68,14 +68,16 @@ interface DeviceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (device: BlockDevice) => void;
+  onDownloadOnly?: (decompress: boolean) => void;
 }
 
-export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
+export function DeviceModal({ isOpen, onClose, onSelect, onDownloadOnly }: DeviceModalProps) {
   const { t } = useTranslation();
   const [selectedDevice, setSelectedDevice] = useState<BlockDevice | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [showSystemDevices, setShowSystemDevices] = useState(false);
+  const [decompressImage, setDecompressImage] = useState(true);
 
   // Track previous devices for change detection
   const prevDevicesRef = useRef<BlockDevice[] | null>(null);
@@ -171,6 +173,23 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
         isOpen={isOpen && !showConfirm}
         onClose={onClose}
         title={t('modal.selectDevice')}
+        footer={onDownloadOnly && (
+          <div className="modal-footer-download">
+            <span className="modal-footer-download-text">{t('modal.insteadSaveToDisk')}</span>
+            <label className="modal-footer-checkbox">
+              <input
+                type="checkbox"
+                checked={decompressImage}
+                onChange={(e) => setDecompressImage(e.target.checked)}
+              />
+              <span>{t('modal.decompressImage')}</span>
+            </label>
+            <button className="btn btn-secondary" onClick={() => onDownloadOnly(decompressImage)}>
+              <Download size={16} />
+              {t('modal.downloadOnly')}
+            </button>
+          </div>
+        )}
       >
         <div className="device-warning-banner">
           <div className="device-warning-banner-content">

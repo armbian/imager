@@ -296,6 +296,49 @@
   gap: 6px;
 }
 
+/* Modal Footer - Download Only */
+.modal-footer-download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-secondary);
+}
+
+.modal-footer-download-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.modal-footer-download .btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-footer-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.modal-footer-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.modal-footer-checkbox:hover {
+  color: var(--text-primary);
+}
+
 .modal-filter-bar {
   display: flex;
   gap: 8px;

@@ -55,7 +55,10 @@
     "allImages": "All Images",
     "insertDevice": "Insert an SD card or USB drive",
     "refreshDevices": "Refresh Devices",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "insteadSaveToDisk": "Instead save to disk",
+    "downloadOnly": "Download Only",
+    "decompressImage": "Decompress image"
   },
   "device": {
     "system": "System",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Decompression failed",
     "uploadFailed": "Upload failed",
     "deviceDisconnected": "Device was disconnected"
+  },
+  "download": {
+    "selecting": "Choose save location...",
+    "downloading": "Downloading image...",
+    "verifyingSha": "Verifying download integrity...",
+    "decompressing": "Decompressing image...",
+    "complete": "Download complete!",
+    "failed": "Download failed",
+    "cancelled": "Download cancelled",
+    "successHint": "Image saved to: {{path}}",
+    "savingToDisk": "Saving to disk",
+    "downloadAnother": "Download Another"
   },
   "custom": {
     "customImage": "Custom Image"
