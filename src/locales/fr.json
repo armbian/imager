@@ -55,7 +55,10 @@
     "allImages": "Toutes les images",
     "insertDevice": "Insérez une carte SD ou une clé USB",
     "refreshDevices": "Actualiser les périphériques",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "insteadSaveToDisk": "Enregistrer sur le disque à la place",
+    "downloadOnly": "Télécharger uniquement",
+    "decompressImage": "Décompresser l'image"
   },
   "device": {
     "system": "Système",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Échec de la décompression",
     "uploadFailed": "Échec du téléversement",
     "deviceDisconnected": "L'appareil a été déconnecté"
+  },
+  "download": {
+    "selecting": "Choisir l'emplacement de sauvegarde...",
+    "downloading": "Téléchargement de l'image...",
+    "verifyingSha": "Vérification de l'intégrité du téléchargement...",
+    "decompressing": "Décompression de l'image...",
+    "complete": "Téléchargement terminé !",
+    "failed": "Échec du téléchargement",
+    "cancelled": "Téléchargement annulé",
+    "successHint": "Image enregistrée dans : {{path}}",
+    "savingToDisk": "Enregistrement sur le disque",
+    "downloadAnother": "Télécharger une autre"
   },
   "custom": {
     "customImage": "Image personnalisée"

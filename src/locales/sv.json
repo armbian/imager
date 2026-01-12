@@ -55,7 +55,10 @@
     "minimal": "Minimal",
     "allImages": "Alla images",
     "insertDevice": "Sätt i ett SD-kort eller USB-minne",
-    "refreshDevices": "Uppdatera enheter"
+    "refreshDevices": "Uppdatera enheter",
+    "insteadSaveToDisk": "Spara till disk istället",
+    "downloadOnly": "Endast nedladdning",
+    "decompressImage": "Packa upp image"
   },
   "device": {
     "system": "System",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Uppackning misslyckades",
     "uploadFailed": "Uppladdning misslyckades",
     "deviceDisconnected": "Enheten kopplades bort"
+  },
+  "download": {
+    "selecting": "Välj sparplats...",
+    "downloading": "Laddar ner image...",
+    "verifyingSha": "Verifierar nedladdningens integritet...",
+    "decompressing": "Packar upp image...",
+    "complete": "Nedladdning klar!",
+    "failed": "Nedladdning misslyckades",
+    "cancelled": "Nedladdning avbruten",
+    "successHint": "Image sparad till: {{path}}",
+    "savingToDisk": "Sparar till disk",
+    "downloadAnother": "Ladda ner en till"
   },
   "custom": {
     "customImage": "Egen image"

@@ -55,7 +55,10 @@
     "allImages": "Alle Images",
     "insertDevice": "SD-Karte oder USB-Stick einstecken",
     "refreshDevices": "Geräte aktualisieren",
-    "loading": "Wird geladen..."
+    "loading": "Wird geladen...",
+    "insteadSaveToDisk": "Stattdessen auf Festplatte speichern",
+    "downloadOnly": "Nur herunterladen",
+    "decompressImage": "Image dekomprimieren"
   },
   "device": {
     "system": "System",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Dekomprimierung fehlgeschlagen",
     "uploadFailed": "Hochladen fehlgeschlagen",
     "deviceDisconnected": "Gerät wurde getrennt"
+  },
+  "download": {
+    "selecting": "Speicherort auswählen...",
+    "downloading": "Image wird heruntergeladen...",
+    "verifyingSha": "Download-Integrität wird überprüft...",
+    "decompressing": "Image wird dekomprimiert...",
+    "complete": "Download abgeschlossen!",
+    "failed": "Download fehlgeschlagen",
+    "cancelled": "Download abgebrochen",
+    "successHint": "Image gespeichert unter: {{path}}",
+    "savingToDisk": "Auf Festplatte speichern",
+    "downloadAnother": "Weiteres herunterladen"
   },
   "custom": {
     "customImage": "Benutzerdefiniertes Image"

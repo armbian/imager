@@ -9,9 +9,10 @@ interface ModalProps {
   searchBar?: ReactNode;
   showBack?: boolean;
   onBack?: () => void;
+  footer?: ReactNode;
 }
 
-export function Modal({ isOpen, onClose, title, children, searchBar, showBack, onBack }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, searchBar, showBack, onBack, footer }: ModalProps) {
   const [isExiting, setIsExiting] = useState(false);
   const isExitingRef = useRef(false);
 
@@ -74,6 +75,7 @@ export function Modal({ isOpen, onClose, title, children, searchBar, showBack, o
         <div className="modal-body">
           {children}
         </div>
+        {footer}
       </div>
     </div>
   );

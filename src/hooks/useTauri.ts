@@ -37,6 +37,22 @@ export async function downloadImage(fileUrl: string, fileUrlSha?: string | null)
   return invoke('download_image', { fileUrl, fileUrlSha });
 }
 
+export async function selectSavePath(
+  suggestedFilename: string,
+  decompress: boolean = true
+): Promise<string | null> {
+  return invoke('select_save_path', { suggestedFilename, decompress });
+}
+
+export async function downloadToPath(
+  fileUrl: string,
+  fileUrlSha: string | null,
+  savePath: string,
+  decompress: boolean = true
+): Promise<string> {
+  return invoke('download_to_path', { fileUrl, fileUrlSha, savePath, decompress });
+}
+
 export async function getDownloadProgress(): Promise<DownloadProgress> {
   return invoke('get_download_progress');
 }

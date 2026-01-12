@@ -55,7 +55,10 @@
     "allImages": "所有镜像",
     "insertDevice": "请插入SD卡或U盘",
     "refreshDevices": "刷新设备",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "insteadSaveToDisk": "改为保存到磁盘",
+    "downloadOnly": "仅下载",
+    "decompressImage": "解压镜像"
   },
   "device": {
     "system": "系统",
@@ -94,6 +97,18 @@
     "decompressionFailed": "解压失败",
     "uploadFailed": "上传失败",
     "deviceDisconnected": "设备已断开连接"
+  },
+  "download": {
+    "selecting": "选择保存位置...",
+    "downloading": "正在下载镜像...",
+    "verifyingSha": "正在验证下载完整性...",
+    "decompressing": "正在解压镜像...",
+    "complete": "下载完成！",
+    "failed": "下载失败",
+    "cancelled": "下载已取消",
+    "successHint": "镜像已保存到：{{path}}",
+    "savingToDisk": "正在保存到磁盘",
+    "downloadAnother": "下载另一个"
   },
   "custom": {
     "customImage": "自定义镜像"

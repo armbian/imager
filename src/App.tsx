@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header, HomePage } from './components/layout';
 import { ManufacturerModal, BoardModal, ImageModal, DeviceModal } from './components/modals';
-import { FlashProgress } from './components/flash';
+import { FlashProgress, DownloadProgress } from './components/flash';
 import { SettingsButton } from './components/settings';
 import { selectCustomImage, detectBoardFromFilename, logInfo } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
@@ -12,6 +12,8 @@ import './styles/index.css';
 function App() {
   const { t } = useTranslation();
   const [isFlashing, setIsFlashing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadDecompress, setDownloadDecompress] = useState(true);
   const [activeModal, setActiveModal] = useState<ModalType>('none');
   const [selectedManufacturer, setSelectedManufacturer] = useState<Manufacturer | null>(null);
   const [selectedBoard, setSelectedBoard] = useState<BoardInfo | null>(null);
@@ -125,12 +127,23 @@ function App() {
 
   function handleComplete() {
     setIsFlashing(false);
+    setIsDownloading(false);
     resetSelectionsFrom('manufacturer'); // Reset all selections
   }
 
   function handleBackFromFlash() {
     setIsFlashing(false);
     setSelectedDevice(null); // Reset device to allow re-selection
+  }
+
+  function handleBackFromDownload() {
+    setIsDownloading(false);
+  }
+
+  function handleDownloadOnly(decompress: boolean) {
+    setActiveModal('none');
+    setDownloadDecompress(decompress);
+    setIsDownloading(true);
   }
 
   function handleReset() {
@@ -152,11 +165,11 @@ function App() {
         selectedDevice={selectedDevice}
         onReset={handleReset}
         onNavigateToStep={handleNavigateToStep}
-        isFlashing={isFlashing}
+        isFlashing={isFlashing || isDownloading}
       />
 
       <main className="main-content">
-        {!isFlashing ? (
+        {!isFlashing && !isDownloading ? (
           <HomePage
             selectedManufacturer={selectedManufacturer}
             selectedBoard={selectedBoard}
@@ -168,7 +181,7 @@ function App() {
             onChooseDevice={() => setActiveModal('device')}
             onChooseCustomImage={handleCustomImage}
           />
-        ) : (
+        ) : isFlashing ? (
           selectedBoard && selectedImage && selectedDevice && (
             <FlashProgress
               board={selectedBoard}
@@ -176,6 +189,16 @@ function App() {
               device={selectedDevice}
               onComplete={handleComplete}
               onBack={handleBackFromFlash}
+            />
+          )
+        ) : (
+          selectedBoard && selectedImage && (
+            <DownloadProgress
+              board={selectedBoard}
+              image={selectedImage}
+              decompress={downloadDecompress}
+              onComplete={handleComplete}
+              onBack={handleBackFromDownload}
             />
           )
         )}
@@ -206,9 +229,10 @@ function App() {
         isOpen={activeModal === 'device'}
         onClose={() => setActiveModal('none')}
         onSelect={handleDeviceSelect}
+        onDownloadOnly={selectedImage && !selectedImage.is_custom ? handleDownloadOnly : undefined}
       />
 
-      {!isFlashing && <SettingsButton />}
+      {!isFlashing && !isDownloading && <SettingsButton />}
     </div>
   );
 }

@@ -55,7 +55,10 @@
     "allImages": "Усі образи",
     "insertDevice": "Вставте SD-картку або USB-накопичувач",
     "refreshDevices": "Оновити пристрої",
-    "loading": "Завантаження..."
+    "loading": "Завантаження...",
+    "insteadSaveToDisk": "Зберегти на диск замість цього",
+    "downloadOnly": "Лише завантажити",
+    "decompressImage": "Розпакувати образ"
   },
   "device": {
     "system": "Системний",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Помилка розпакування",
     "uploadFailed": "Помилка завантаження",
     "deviceDisconnected": "Пристрій було від'єднано"
+  },
+  "download": {
+    "selecting": "Виберіть місце збереження...",
+    "downloading": "Завантаження образу...",
+    "verifyingSha": "Перевірка цілісності завантаження...",
+    "decompressing": "Розпакування образу...",
+    "complete": "Завантаження завершено!",
+    "failed": "Помилка завантаження",
+    "cancelled": "Завантаження скасовано",
+    "successHint": "Образ збережено в: {{path}}",
+    "savingToDisk": "Збереження на диск",
+    "downloadAnother": "Завантажити інший"
   },
   "custom": {
     "customImage": "Власний образ"

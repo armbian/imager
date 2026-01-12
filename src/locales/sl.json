@@ -55,7 +55,10 @@
     "allImages": "Vse slike",
     "insertDevice": "Vstavite SD kartico ali USB pogon",
     "refreshDevices": "Osveži naprave",
-    "loading": "Nalaganje..."
+    "loading": "Nalaganje...",
+    "insteadSaveToDisk": "Namesto tega shrani na disk",
+    "downloadOnly": "Samo prenesi",
+    "decompressImage": "Razširi sliko"
   },
   "device": {
     "system": "Sistemska",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Razširjanje ni uspelo",
     "uploadFailed": "Nalaganje ni uspelo",
     "deviceDisconnected": "Naprava je bila odklopljena"
+  },
+  "download": {
+    "selecting": "Izberi lokacijo shranjevanja...",
+    "downloading": "Prenašanje slike...",
+    "verifyingSha": "Preverjanje celovitosti prenosa...",
+    "decompressing": "Razširjanje slike...",
+    "complete": "Prenos končan!",
+    "failed": "Prenos ni uspel",
+    "cancelled": "Prenos preklican",
+    "successHint": "Slika shranjena v: {{path}}",
+    "savingToDisk": "Shranjevanje na disk",
+    "downloadAnother": "Prenesi drugo"
   },
   "custom": {
     "customImage": "Slika po meri"

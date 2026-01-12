@@ -55,7 +55,10 @@
     "allImages": "Alle images",
     "insertDevice": "Plaats een SD-kaart of USB-stick",
     "refreshDevices": "Apparaten vernieuwen",
-    "loading": "Laden..."
+    "loading": "Laden...",
+    "insteadSaveToDisk": "In plaats daarvan opslaan op schijf",
+    "downloadOnly": "Alleen downloaden",
+    "decompressImage": "Image uitpakken"
   },
   "device": {
     "system": "Systeem",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Uitpakken mislukt",
     "uploadFailed": "Upload mislukt",
     "deviceDisconnected": "Apparaat is losgekoppeld"
+  },
+  "download": {
+    "selecting": "Kies opslaglocatie...",
+    "downloading": "Image downloaden...",
+    "verifyingSha": "Download-integriteit controleren...",
+    "decompressing": "Image uitpakken...",
+    "complete": "Download voltooid!",
+    "failed": "Download mislukt",
+    "cancelled": "Download geannuleerd",
+    "successHint": "Image opgeslagen in: {{path}}",
+    "savingToDisk": "Opslaan op schijf",
+    "downloadAnother": "Nog een downloaden"
   },
   "custom": {
     "customImage": "Aangepaste image"

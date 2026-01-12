@@ -159,6 +159,8 @@ fn main() {
             commands::operations::flash_image,
             commands::operations::delete_downloaded_image,
             commands::operations::force_delete_cached_image,
+            commands::operations::select_save_path,
+            commands::operations::download_to_path,
             commands::progress::cancel_operation,
             commands::progress::get_download_progress,
             commands::progress::get_flash_progress,

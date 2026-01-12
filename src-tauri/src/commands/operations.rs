@@ -4,6 +4,7 @@
 
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
+use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_store::StoreExt;
 
 use crate::config;
@@ -254,4 +255,160 @@ pub async fn delete_downloaded_image(image_path: String, app: AppHandle) -> Resu
     }
 
     Ok(())
+}
+
+/// Show save file dialog and return selected path
+///
+/// This is separated from download_to_path so the frontend can
+/// start progress polling AFTER the dialog closes.
+#[tauri::command]
+pub async fn select_save_path(
+    suggested_filename: String,
+    decompress: bool,
+    window: tauri::Window,
+) -> Result<Option<String>, String> {
+    log_info!(
+        "operations",
+        "Showing save dialog (suggested: {}, decompress: {})",
+        suggested_filename,
+        decompress
+    );
+
+    // Determine save filename based on decompress option
+    let save_filename = if decompress {
+        suggested_filename
+            .strip_suffix(".xz")
+            .unwrap_or(&suggested_filename)
+            .to_string()
+    } else {
+        suggested_filename.clone()
+    };
+
+    // Set up file filter based on decompress option
+    let file_filter = if decompress {
+        vec!["img", "iso", "raw"]
+    } else {
+        vec!["xz", "img", "iso", "raw"]
+    };
+
+    // Show save file dialog
+    let save_path = window
+        .dialog()
+        .file()
+        .set_file_name(&save_filename)
+        .add_filter("Disk Images", &file_filter)
+        .set_title("Save Image As")
+        .blocking_save_file();
+
+    match save_path {
+        Some(path) => {
+            let path_buf = path.as_path().ok_or_else(|| {
+                log_error!("operations", "Invalid save path selected");
+                "Invalid save path selected".to_string()
+            })?;
+            log_info!(
+                "operations",
+                "User selected save path: {}",
+                path_buf.display()
+            );
+            Ok(Some(path_buf.to_string_lossy().to_string()))
+        }
+        None => {
+            log_info!("operations", "Save dialog cancelled by user");
+            Ok(None)
+        }
+    }
+}
+
+/// Download an image to a specified path
+///
+/// Downloads the image, optionally decompresses, and saves to the given path.
+/// Progress can be tracked via get_download_progress.
+#[tauri::command]
+pub async fn download_to_path(
+    file_url: String,
+    file_url_sha: Option<String>,
+    save_path: String,
+    decompress: bool,
+    state: State<'_, AppState>,
+) -> Result<String, String> {
+    log_info!(
+        "operations",
+        "Download to path requested: {} -> {} (decompress: {})",
+        file_url,
+        save_path,
+        decompress
+    );
+
+    let save_path = PathBuf::from(&save_path);
+    let download_dir = get_cache_dir(config::app::NAME).join("images");
+    let download_state = state.download_state.clone();
+
+    if decompress {
+        // Normal flow: download and decompress
+        let cached_path = do_download(
+            &file_url,
+            file_url_sha.as_deref(),
+            &download_dir,
+            download_state,
+        )
+        .await?;
+
+        log_info!(
+            "operations",
+            "Download complete, moving to: {}",
+            save_path.display()
+        );
+
+        // Move/copy the file to the user's selected location
+        std::fs::copy(&cached_path, &save_path).map_err(|e| {
+            log_error!(
+                "operations",
+                "Failed to copy image to {}: {}",
+                save_path.display(),
+                e
+            );
+            format!("Failed to save image: {}", e)
+        })?;
+
+        // Delete the cached copy (ignore errors)
+        let _ = std::fs::remove_file(&cached_path);
+    } else {
+        // Skip decompression: download raw compressed file
+        let cached_path = crate::download::download_image_raw(
+            &file_url,
+            file_url_sha.as_deref(),
+            &download_dir,
+            download_state,
+        )
+        .await?;
+
+        log_info!(
+            "operations",
+            "Download complete (compressed), moving to: {}",
+            save_path.display()
+        );
+
+        // Move/copy the compressed file to the user's selected location
+        std::fs::copy(&cached_path, &save_path).map_err(|e| {
+            log_error!(
+                "operations",
+                "Failed to copy image to {}: {}",
+                save_path.display(),
+                e
+            );
+            format!("Failed to save image: {}", e)
+        })?;
+
+        // Delete the cached copy (ignore errors)
+        let _ = std::fs::remove_file(&cached_path);
+    }
+
+    log_info!(
+        "operations",
+        "Image saved successfully to: {}",
+        save_path.display()
+    );
+
+    Ok(save_path.to_string_lossy().to_string())
 }
