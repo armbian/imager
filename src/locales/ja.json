@@ -55,7 +55,10 @@
     "allImages": "すべてのイメージ",
     "insertDevice": "SDカードまたはUSBドライブを挿入してください",
     "refreshDevices": "デバイスを更新",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "insteadSaveToDisk": "代わりにディスクに保存",
+    "downloadOnly": "ダウンロードのみ",
+    "decompressImage": "イメージを解凍"
   },
   "device": {
     "system": "システム",
@@ -94,6 +97,18 @@
     "decompressionFailed": "解凍失敗",
     "uploadFailed": "アップロード失敗",
     "deviceDisconnected": "デバイスが切断されました"
+  },
+  "download": {
+    "selecting": "保存場所を選択...",
+    "downloading": "イメージをダウンロード中...",
+    "verifyingSha": "ダウンロードの整合性を検証中...",
+    "decompressing": "イメージを解凍中...",
+    "complete": "ダウンロード完了！",
+    "failed": "ダウンロード失敗",
+    "cancelled": "ダウンロードがキャンセルされました",
+    "successHint": "イメージの保存先: {{path}}",
+    "savingToDisk": "ディスクに保存中",
+    "downloadAnother": "別のイメージをダウンロード"
   },
   "custom": {
     "customImage": "カスタムイメージ"

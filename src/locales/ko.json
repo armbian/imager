@@ -55,7 +55,10 @@
     "allImages": "모든 이미지",
     "insertDevice": "SD 카드 또는 USB 드라이브를 삽입하세요",
     "refreshDevices": "장치 새로고침",
-    "loading": "로드 중..."
+    "loading": "로드 중...",
+    "insteadSaveToDisk": "대신 디스크에 저장",
+    "downloadOnly": "다운로드만",
+    "decompressImage": "이미지 압축 해제"
   },
   "device": {
     "system": "시스템",
@@ -94,6 +97,18 @@
     "decompressionFailed": "압축 해제 실패",
     "uploadFailed": "업로드 실패",
     "deviceDisconnected": "장치 연결이 해제되었습니다"
+  },
+  "download": {
+    "selecting": "저장 위치 선택...",
+    "downloading": "이미지 다운로드 중...",
+    "verifyingSha": "다운로드 무결성 확인 중...",
+    "decompressing": "이미지 압축 해제 중...",
+    "complete": "다운로드 완료!",
+    "failed": "다운로드 실패",
+    "cancelled": "다운로드 취소됨",
+    "successHint": "이미지 저장 위치: {{path}}",
+    "savingToDisk": "디스크에 저장 중",
+    "downloadAnother": "다른 이미지 다운로드"
   },
   "custom": {
     "customImage": "사용자 정의 이미지"

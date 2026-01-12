@@ -55,7 +55,10 @@
     "allImages": "Все образы",
     "insertDevice": "Вставьте SD-карту или USB-накопитель",
     "refreshDevices": "Обновить устройства",
-    "loading": "Загрузка..."
+    "loading": "Загрузка...",
+    "insteadSaveToDisk": "Сохранить на диск вместо этого",
+    "downloadOnly": "Только скачать",
+    "decompressImage": "Распаковать образ"
   },
   "device": {
     "system": "Системный",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Ошибка распаковки",
     "uploadFailed": "Ошибка загрузки",
     "deviceDisconnected": "Устройство было отключено"
+  },
+  "download": {
+    "selecting": "Выберите место сохранения...",
+    "downloading": "Загрузка образа...",
+    "verifyingSha": "Проверка целостности загрузки...",
+    "decompressing": "Распаковка образа...",
+    "complete": "Загрузка завершена!",
+    "failed": "Ошибка загрузки",
+    "cancelled": "Загрузка отменена",
+    "successHint": "Образ сохранён в: {{path}}",
+    "savingToDisk": "Сохранение на диск",
+    "downloadAnother": "Скачать другой"
   },
   "custom": {
     "customImage": "Свой образ"

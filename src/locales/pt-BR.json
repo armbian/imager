@@ -55,7 +55,10 @@
     "allImages": "Todas as imagens",
     "insertDevice": "Insira um cartão SD ou pendrive USB",
     "refreshDevices": "Atualizar dispositivos",
-    "loading": "Carregando..."
+    "loading": "Carregando...",
+    "insteadSaveToDisk": "Em vez disso, salvar no disco",
+    "downloadOnly": "Apenas baixar",
+    "decompressImage": "Descompactar imagem"
   },
   "device": {
     "system": "Sistema",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Falha na descompactação",
     "uploadFailed": "Falha no envio",
     "deviceDisconnected": "Dispositivo foi desconectado"
+  },
+  "download": {
+    "selecting": "Escolher local para salvar...",
+    "downloading": "Baixando imagem...",
+    "verifyingSha": "Verificando integridade do download...",
+    "decompressing": "Descompactando imagem...",
+    "complete": "Download concluído!",
+    "failed": "Download falhou",
+    "cancelled": "Download cancelado",
+    "successHint": "Imagem salva em: {{path}}",
+    "savingToDisk": "Salvando no disco",
+    "downloadAnother": "Baixar outra"
   },
   "custom": {
     "customImage": "Imagem personalizada"

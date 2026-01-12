@@ -55,7 +55,10 @@
     "allImages": "Tüm İmajlar",
     "insertDevice": "Bir SD kart veya USB sürücü takın",
     "refreshDevices": "Cihazları Yenile",
-    "loading": "Yükleniyor..."
+    "loading": "Yükleniyor...",
+    "insteadSaveToDisk": "Bunun yerine diske kaydet",
+    "downloadOnly": "Sadece indir",
+    "decompressImage": "İmajı aç"
   },
   "device": {
     "system": "Sistem",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Açma başarısız",
     "uploadFailed": "Yükleme başarısız",
     "deviceDisconnected": "Cihaz bağlantısı kesildi"
+  },
+  "download": {
+    "selecting": "Kayıt konumu seç...",
+    "downloading": "İmaj indiriliyor...",
+    "verifyingSha": "İndirme bütünlüğü doğrulanıyor...",
+    "decompressing": "İmaj açılıyor...",
+    "complete": "İndirme tamamlandı!",
+    "failed": "İndirme başarısız",
+    "cancelled": "İndirme iptal edildi",
+    "successHint": "İmaj kaydedildi: {{path}}",
+    "savingToDisk": "Diske kaydediliyor",
+    "downloadAnother": "Başka bir tane indir"
   },
   "custom": {
     "customImage": "Özel İmaj"

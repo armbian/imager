@@ -55,7 +55,10 @@
     "allImages": "Wszystkie obrazy",
     "insertDevice": "Włóż kartę SD lub pendrive USB",
     "refreshDevices": "Odśwież urządzenia",
-    "loading": "Ładowanie..."
+    "loading": "Ładowanie...",
+    "insteadSaveToDisk": "Zamiast tego zapisz na dysku",
+    "downloadOnly": "Tylko pobierz",
+    "decompressImage": "Rozpakuj obraz"
   },
   "device": {
     "system": "System",
@@ -94,6 +97,18 @@
     "decompressionFailed": "Rozpakowywanie nie powiodło się",
     "uploadFailed": "Przesyłanie nie powiodło się",
     "deviceDisconnected": "Urządzenie zostało odłączone"
+  },
+  "download": {
+    "selecting": "Wybierz lokalizację zapisu...",
+    "downloading": "Pobieranie obrazu...",
+    "verifyingSha": "Weryfikacja integralności pobierania...",
+    "decompressing": "Rozpakowywanie obrazu...",
+    "complete": "Pobieranie zakończone!",
+    "failed": "Pobieranie nie powiodło się",
+    "cancelled": "Pobieranie anulowane",
+    "successHint": "Obraz zapisany w: {{path}}",
+    "savingToDisk": "Zapisywanie na dysku",
+    "downloadAnother": "Pobierz kolejny"
   },
   "custom": {
     "customImage": "Własny obraz"
