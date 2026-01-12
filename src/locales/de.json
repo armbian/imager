@@ -34,7 +34,9 @@
     "eraseAndFlash": "Löschen & Flashen",
     "dataWarning": "Alle Daten auf dem ausgewählten Gerät werden gelöscht",
     "successHint": "Ihre SD-Karte ist bereit! Sie können das Gerät sicher entfernen und in Ihr {{boardName}} einsetzen.",
-    "successHintCustom": "Ihre SD-Karte ist bereit! Sie können das Gerät sicher entfernen."
+    "successHintCustom": "Ihre SD-Karte ist bereit! Sie können das Gerät sicher entfernen.",
+    "noShaTitle": "Integritätsprüfung nicht verfügbar",
+    "noShaMessage": "Die SHA-Prüfsumme für dieses Image ist nicht verfügbar. Das Flashen wird ohne Integritätsprüfung fortgesetzt."
   },
   "modal": {
     "selectManufacturer": "Hersteller auswählen",

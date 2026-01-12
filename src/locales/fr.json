@@ -34,7 +34,9 @@
     "eraseAndFlash": "Effacer et Flasher",
     "dataWarning": "Toutes les données sur le périphérique sélectionné seront effacées",
     "successHint": "Votre carte SD est prête ! Vous pouvez retirer le périphérique en toute sécurité et l'insérer dans votre {{boardName}}.",
-    "successHintCustom": "Votre carte SD est prête ! Vous pouvez retirer le périphérique en toute sécurité."
+    "successHintCustom": "Votre carte SD est prête ! Vous pouvez retirer le périphérique en toute sécurité.",
+    "noShaTitle": "Vérification d'intégrité non disponible",
+    "noShaMessage": "La somme de contrôle SHA pour cette image n'est pas disponible. Le flashage se poursuivra sans vérification d'intégrité."
   },
   "modal": {
     "selectManufacturer": "Sélectionner le fabricant",

@@ -34,7 +34,9 @@
     "eraseAndFlash": "Sil ve Yaz",
     "dataWarning": "Seçili cihazdaki tüm veriler silinecek",
     "successHint": "SD kartınız hazır! Cihazı güvenle çıkarabilir ve {{boardName}} cihazınıza takabilirsiniz.",
-    "successHintCustom": "SD kartınız hazır! Cihazı güvenle çıkarabilirsiniz."
+    "successHintCustom": "SD kartınız hazır! Cihazı güvenle çıkarabilirsiniz.",
+    "noShaTitle": "Bütünlük kontrolü kullanılamıyor",
+    "noShaMessage": "Bu imaj için SHA sağlama toplamı mevcut değil. Yazma bütünlük doğrulaması olmadan devam edecek."
   },
   "modal": {
     "selectManufacturer": "Üretici Seç",

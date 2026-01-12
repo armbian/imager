@@ -34,7 +34,9 @@
     "eraseAndFlash": "삭제 및 플래시",
     "dataWarning": "선택한 장치의 모든 데이터가 삭제됩니다",
     "successHint": "SD 카드가 준비되었습니다! 장치를 안전하게 제거하고 {{boardName}}에 삽입할 수 있습니다.",
-    "successHintCustom": "SD 카드가 준비되었습니다! 장치를 안전하게 제거할 수 있습니다."
+    "successHintCustom": "SD 카드가 준비되었습니다! 장치를 안전하게 제거할 수 있습니다.",
+    "noShaTitle": "무결성 검사 불가",
+    "noShaMessage": "이 이미지의 SHA 체크섬을 사용할 수 없습니다. 무결성 확인 없이 플래시가 계속됩니다."
   },
   "modal": {
     "selectManufacturer": "제조사 선택",

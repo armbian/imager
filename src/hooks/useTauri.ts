@@ -74,6 +74,25 @@ export async function forceDeleteCachedImage(imagePath: string): Promise<void> {
   return invoke('force_delete_cached_image', { imagePath });
 }
 
+/**
+ * Continue download without SHA verification (uses already downloaded file)
+ * Called when user confirms to proceed after SHA unavailable error
+ *
+ * @returns Promise resolving to the path of the decompressed image
+ * @throws Error if no pending download or decompression fails
+ */
+export async function continueDownloadWithoutSha(): Promise<string> {
+  return invoke('continue_download_without_sha');
+}
+
+/**
+ * Clean up temp file from a failed download
+ * Called when user cancels after SHA unavailable error
+ */
+export async function cleanupFailedDownload(): Promise<void> {
+  return invoke('cleanup_failed_download');
+}
+
 export async function deleteDecompressedCustomImage(imagePath: string): Promise<void> {
   return invoke('delete_decompressed_custom_image', { imagePath });
 }

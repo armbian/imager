@@ -34,7 +34,9 @@
     "eraseAndFlash": "Wissen en Flashen",
     "dataWarning": "Alle data op het geselecteerde apparaat wordt gewist",
     "successHint": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen en in je {{boardName}} plaatsen.",
-    "successHintCustom": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen."
+    "successHintCustom": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen.",
+    "noShaTitle": "Integriteitscontrole niet beschikbaar",
+    "noShaMessage": "De SHA-checksum voor deze afbeelding is niet beschikbaar. Het flashen gaat verder zonder integriteitsverificatie."
   },
   "modal": {
     "selectManufacturer": "Selecteer fabrikant",

@@ -34,7 +34,9 @@
     "eraseAndFlash": "Borrar y Flashear",
     "dataWarning": "Todos los datos en el dispositivo seleccionado serán borrados",
     "successHint": "¡Tu tarjeta SD está lista! Puedes retirar el dispositivo de forma segura e insertarlo en tu {{boardName}}.",
-    "successHintCustom": "¡Tu tarjeta SD está lista! Puedes retirar el dispositivo de forma segura."
+    "successHintCustom": "¡Tu tarjeta SD está lista! Puedes retirar el dispositivo de forma segura.",
+    "noShaTitle": "Verificación de integridad no disponible",
+    "noShaMessage": "La suma de verificación SHA para esta imagen no está disponible. La escritura continuará sin verificación de integridad."
   },
   "modal": {
     "selectManufacturer": "Seleccionar fabricante",

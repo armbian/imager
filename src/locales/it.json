@@ -34,7 +34,9 @@
     "eraseAndFlash": "Cancella e Scrivi",
     "dataWarning": "Tutti i dati sul dispositivo selezionato saranno cancellati",
     "successHint": "La tua scheda SD è pronta! Puoi rimuovere il dispositivo in sicurezza e inserirlo nella tua {{boardName}}.",
-    "successHintCustom": "La tua scheda SD è pronta! Puoi rimuovere il dispositivo in sicurezza."
+    "successHintCustom": "La tua scheda SD è pronta! Puoi rimuovere il dispositivo in sicurezza.",
+    "noShaTitle": "Verifica integrità non disponibile",
+    "noShaMessage": "Il checksum SHA per questa immagine non è disponibile. La scrittura procederà senza verifica di integrità."
   },
   "modal": {
     "selectManufacturer": "Seleziona Produttore",

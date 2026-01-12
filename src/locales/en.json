@@ -34,7 +34,9 @@
     "eraseAndFlash": "Erase & Flash",
     "dataWarning": "All data on selected device will be erased",
     "successHint": "Your SD card is ready! You can safely remove the device and insert it into your {{boardName}}.",
-    "successHintCustom": "Your SD card is ready! You can safely remove the device."
+    "successHintCustom": "Your SD card is ready! You can safely remove the device.",
+    "noShaTitle": "Integrity Check Unavailable",
+    "noShaMessage": "The SHA checksum for this image is not available. Flashing will proceed without integrity verification."
   },
   "modal": {
     "selectManufacturer": "Select Manufacturer",

@@ -28,6 +28,8 @@ pub struct DownloadState {
     pub is_cancelled: AtomicBool,
     pub error: Mutex<Option<String>>,
     pub output_path: Mutex<Option<PathBuf>>,
+    /// Temp file path for SHA unavailable retry (file kept for user decision)
+    pub temp_path: Mutex<Option<PathBuf>>,
 }
 
 impl DownloadState {
@@ -40,6 +42,7 @@ impl DownloadState {
             is_cancelled: AtomicBool::new(false),
             error: Mutex::new(None),
             output_path: Mutex::new(None),
+            temp_path: Mutex::new(None),
         }
     }
 
@@ -72,6 +75,7 @@ fn extract_filename(url: &str) -> Result<&str, String> {
 }
 
 /// Fetch expected SHA256 from URL
+/// Errors are prefixed with [SHA_UNAVAILABLE] to distinguish from SHA mismatch
 async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, String> {
     log_debug!(MODULE, "Fetching SHA256 from: {}", sha_url);
 
@@ -79,11 +83,11 @@ async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, St
         .get(sha_url)
         .send()
         .await
-        .map_err(|e| format!("Failed to fetch SHA: {}", e))?;
+        .map_err(|e| format!("[SHA_UNAVAILABLE] Failed to fetch SHA: {}", e))?;
 
     if !response.status().is_success() {
         return Err(format!(
-            "SHA fetch failed with status: {}",
+            "[SHA_UNAVAILABLE] SHA fetch failed with status: {}",
             response.status()
         ));
     }
@@ -91,18 +95,21 @@ async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, St
     let content = response
         .text()
         .await
-        .map_err(|e| format!("Failed to read SHA response: {}", e))?;
+        .map_err(|e| format!("[SHA_UNAVAILABLE] Failed to read SHA response: {}", e))?;
 
     // Parse SHA file format: "hash *filename" or "hash  filename"
     let hash = content
         .split_whitespace()
         .next()
-        .ok_or("Invalid SHA file format")?
+        .ok_or("[SHA_UNAVAILABLE] Invalid SHA file format")?
         .to_lowercase();
 
     // Validate it looks like a SHA256 hash (64 hex chars)
     if hash.len() != 64 || !hash.chars().all(|c| c.is_ascii_hexdigit()) {
-        return Err(format!("Invalid SHA256 hash format: {}", hash));
+        return Err(format!(
+            "[SHA_UNAVAILABLE] Invalid SHA256 hash format: {}",
+            hash
+        ));
     }
 
     log_debug!(MODULE, "Expected SHA256: {}", hash);
@@ -202,6 +209,8 @@ pub async fn download_image(
     state: Arc<DownloadState>,
 ) -> Result<PathBuf, String> {
     state.reset();
+    // Clear any stale temp_path from previous failed downloads
+    *state.temp_path.lock().await = None;
 
     let filename = extract_filename(url)?;
 
@@ -301,11 +310,26 @@ pub async fn download_image(
             Err(e) => {
                 log_error!(MODULE, "SHA256 verification failed: {}", e);
                 state.is_verifying_sha.store(false, Ordering::SeqCst);
-                let _ = std::fs::remove_file(&temp_path);
+
                 // Check if it was a cancellation
                 if state.is_cancelled.load(Ordering::SeqCst) {
+                    let _ = std::fs::remove_file(&temp_path);
                     return Err("Download cancelled".to_string());
                 }
+
+                // If SHA is unavailable (fetch failed), keep the file for user decision
+                if e.contains("[SHA_UNAVAILABLE]") {
+                    log_info!(
+                        MODULE,
+                        "SHA unavailable, keeping temp file for user decision: {}",
+                        temp_path.display()
+                    );
+                    *state.temp_path.lock().await = Some(temp_path.clone());
+                    return Err(format!("SHA256 verification failed: {}", e));
+                }
+
+                // SHA mismatch (hash different) → delete file (corrupted image)
+                let _ = std::fs::remove_file(&temp_path);
                 return Err(format!("SHA256 verification failed: {}", e));
             }
         }
@@ -337,4 +361,91 @@ pub async fn download_image(
     log_info!(MODULE, "Image ready: {}", output_path.display());
     *state.output_path.lock().await = Some(output_path.clone());
     Ok(output_path)
+}
+
+/// Continue download without SHA verification (uses already downloaded file)
+/// Called when user confirms to proceed after SHA unavailable error
+pub async fn continue_without_sha(
+    state: Arc<DownloadState>,
+    output_dir: &Path,
+) -> Result<PathBuf, String> {
+    let temp_path = state
+        .temp_path
+        .lock()
+        .await
+        .take()
+        .ok_or("No pending download to continue")?;
+
+    // Defense in depth: verify temp_path is within cache directory
+    if let Ok(canonical_temp) = temp_path.canonicalize() {
+        if let Ok(canonical_cache) = output_dir.canonicalize() {
+            if !canonical_temp.starts_with(&canonical_cache) {
+                log_error!(
+                    MODULE,
+                    "Security: temp_path {} is outside cache directory {}",
+                    canonical_temp.display(),
+                    canonical_cache.display()
+                );
+                return Err("Invalid temp file location".to_string());
+            }
+        }
+    }
+
+    log_info!(
+        MODULE,
+        "Continuing without SHA verification: {}",
+        temp_path.display()
+    );
+
+    let filename = temp_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or("Invalid temp path")?;
+
+    // temp_path is "filename.xz.downloading" or "filename.img.downloading"
+    // Remove .downloading to get the original filename
+    let original_filename = filename.trim_end_matches(".downloading");
+    // Output without .xz extension
+    let output_filename = original_filename.trim_end_matches(".xz");
+    let output_path = output_dir.join(output_filename);
+
+    log_info!(MODULE, "Output path: {}", output_path.display());
+
+    // Decompress if needed
+    if original_filename.ends_with(".xz") {
+        state.is_decompressing.store(true, Ordering::SeqCst);
+        log_info!(
+            MODULE,
+            "Starting decompression with Rust lzma-rust2 (multi-threaded)..."
+        );
+
+        decompress_with_rust_xz(&temp_path, &output_path, &state)?;
+
+        state.is_decompressing.store(false, Ordering::SeqCst);
+        log_info!(MODULE, "Decompression complete");
+
+        // Clean up compressed temp file
+        let _ = std::fs::remove_file(&temp_path);
+    } else {
+        // No decompression needed, just rename
+        std::fs::rename(&temp_path, &output_path)
+            .map_err(|e| format!("Failed to move file: {}", e))?;
+    }
+
+    log_info!(MODULE, "Image ready: {}", output_path.display());
+    *state.output_path.lock().await = Some(output_path.clone());
+    Ok(output_path)
+}
+
+/// Clean up temp file from a failed download
+/// Called when user cancels after SHA unavailable error
+pub async fn cleanup_pending_download(state: Arc<DownloadState>) {
+    if let Some(temp_path) = state.temp_path.lock().await.take() {
+        log_info!(
+            MODULE,
+            "Cleaning up pending download: {}",
+            temp_path.display()
+        );
+        let _ = std::fs::remove_file(&temp_path);
+    }
 }

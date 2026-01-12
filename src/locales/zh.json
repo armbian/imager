@@ -34,7 +34,9 @@
     "eraseAndFlash": "擦除并烧录",
     "dataWarning": "所选设备上的所有数据将被删除",
     "successHint": "您的SD卡已准备就绪！您可以安全地移除设备并将其插入您的{{boardName}}。",
-    "successHintCustom": "您的SD卡已准备就绪！您可以安全地移除设备。"
+    "successHintCustom": "您的SD卡已准备就绪！您可以安全地移除设备。",
+    "noShaTitle": "完整性检查不可用",
+    "noShaMessage": "此映像的 SHA 校验和不可用。烧录将继续进行，但不进行完整性验证。"
   },
   "modal": {
     "selectManufacturer": "选择制造商",

@@ -34,7 +34,9 @@
     "eraseAndFlash": "消去して書き込む",
     "dataWarning": "選択したデバイスのすべてのデータが消去されます",
     "successHint": "SDカードの準備ができました！デバイスを安全に取り外して{{boardName}}に挿入できます。",
-    "successHintCustom": "SDカードの準備ができました！デバイスを安全に取り外せます。"
+    "successHintCustom": "SDカードの準備ができました！デバイスを安全に取り外せます。",
+    "noShaTitle": "整合性チェック利用不可",
+    "noShaMessage": "このイメージのSHAチェックサムは利用できません。整合性検証なしで書き込みを続行します。"
   },
   "modal": {
     "selectManufacturer": "メーカーを選択",

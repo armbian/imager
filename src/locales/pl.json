@@ -34,7 +34,9 @@
     "eraseAndFlash": "Wymaż i Flashuj",
     "dataWarning": "Wszystkie dane na wybranym urządzeniu zostaną usunięte",
     "successHint": "Twoja karta SD jest gotowa! Możesz bezpiecznie wyjąć urządzenie i włożyć je do swojego {{boardName}}.",
-    "successHintCustom": "Twoja karta SD jest gotowa! Możesz bezpiecznie wyjąć urządzenie."
+    "successHintCustom": "Twoja karta SD jest gotowa! Możesz bezpiecznie wyjąć urządzenie.",
+    "noShaTitle": "Weryfikacja integralności niedostępna",
+    "noShaMessage": "Suma kontrolna SHA dla tego obrazu nie jest dostępna. Zapis będzie kontynuowany bez weryfikacji integralności."
   },
   "modal": {
     "selectManufacturer": "Wybierz producenta",

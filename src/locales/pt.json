@@ -34,7 +34,9 @@
     "eraseAndFlash": "Apagar e Gravar",
     "dataWarning": "Todos os dados no dispositivo selecionado serão apagados",
     "successHint": "O seu cartão SD está pronto! Pode remover o dispositivo em segurança e inseri-lo no seu {{boardName}}.",
-    "successHintCustom": "O seu cartão SD está pronto! Pode remover o dispositivo em segurança."
+    "successHintCustom": "O seu cartão SD está pronto! Pode remover o dispositivo em segurança.",
+    "noShaTitle": "Verificação de integridade não disponível",
+    "noShaMessage": "O checksum SHA para esta imagem não está disponível. A gravação continuará sem verificação de integridade."
   },
   "modal": {
     "selectManufacturer": "Selecionar fabricante",

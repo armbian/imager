@@ -34,7 +34,9 @@
     "eraseAndFlash": "Radera & flasha",
     "dataWarning": "All data på vald enhet kommer att raderas",
     "successHint": "Ditt SD-kort är klart! Du kan säkert ta bort enheten och sätta in den i din {{boardName}}.",
-    "successHintCustom": "Ditt SD-kort är klart! Du kan säkert ta bort enheten."
+    "successHintCustom": "Ditt SD-kort är klart! Du kan säkert ta bort enheten.",
+    "noShaTitle": "Integritetskontroll ej tillgänglig",
+    "noShaMessage": "SHA-kontrollsumman för denna image är inte tillgänglig. Flashningen fortsätter utan integritetsverifiering."
   },
   "modal": {
     "selectManufacturer": "Välj tillverkare",

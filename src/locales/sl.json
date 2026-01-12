@@ -34,7 +34,9 @@
     "eraseAndFlash": "Izbriši in zapiši",
     "dataWarning": "Vsi podatki na izbrani napravi bodo izbrisani",
     "successHint": "Vaša SD kartica je pripravljena! Napravo lahko varno odstranite in jo vstavite v {{boardName}}.",
-    "successHintCustom": "Vaša SD kartica je pripravljena! Napravo lahko varno odstranite."
+    "successHintCustom": "Vaša SD kartica je pripravljena! Napravo lahko varno odstranite.",
+    "noShaTitle": "Preverjanje celovitosti ni na voljo",
+    "noShaMessage": "Kontrolna vsota SHA za to sliko ni na voljo. Zapisovanje bo nadaljevalo brez preverjanja celovitosti."
   },
   "modal": {
     "selectManufacturer": "Izberi proizvajalca",

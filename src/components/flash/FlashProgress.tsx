@@ -17,10 +17,12 @@ import {
   checkNeedsDecompression,
   decompressCustomImage,
   getBlockDevices,
+  continueDownloadWithoutSha,
+  cleanupFailedDownload,
 } from '../../hooks/useTauri';
 import { FlashStageIcon, getStageKey, type FlashStage } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
-import { ErrorDisplay, MarqueeText } from '../shared';
+import { ErrorDisplay, MarqueeText, ConfirmationDialog } from '../shared';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
 import { POLLING, CACHE, STORAGE_KEYS } from '../../config';
 import { isDeviceConnected } from '../../utils/deviceUtils';
@@ -47,6 +49,7 @@ export function FlashProgress({
   const [boardImageUrl, setBoardImageUrl] = useState<string | null>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
   const [imagePath, setImagePath] = useState<string | null>(null);
+  const [showShaWarning, setShowShaWarning] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const deviceMonitorRef = useRef<number | null>(null);
   const maxProgressRef = useRef<number>(0);
@@ -85,6 +88,14 @@ export function FlashProgress({
     }
   };
 
+  /**
+   * Check if error indicates SHA is unavailable (fetch failed)
+   * Distinguishes from SHA mismatch which indicates corrupted file
+   */
+  const isShaUnavailableError = (error: string): boolean => {
+    return error.includes('[SHA_UNAVAILABLE]');
+  };
+
 
   // Cleanup downloaded image file or decompressed custom image
   async function cleanupImage(path: string | null) {
@@ -110,6 +121,15 @@ export function FlashProgress({
   // Handle device disconnection during flashing
   const handleDeviceDisconnected = useCallback(async () => {
     deviceDisconnectedRef.current = true;
+
+    // Close SHA warning modal if open and cleanup pending download
+    setShowShaWarning(false);
+    try {
+      await cleanupFailedDownload();
+    } catch {
+      // Ignore cleanup errors
+    }
+
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (deviceMonitorRef.current) clearInterval(deviceMonitorRef.current);
     try {
@@ -284,6 +304,14 @@ export function FlashProgress({
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (deviceDisconnectedRef.current) return;
 
+      const errorMsg = err instanceof Error ? err.message : String(err);
+
+      // SHA fetch failed → show modal (file already downloaded, not deleted)
+      if (isShaUnavailableError(errorMsg)) {
+        setShowShaWarning(true);
+        return;
+      }
+
       // Check if device is still connected before showing download error
       try {
         const devices = await getBlockDevices();
@@ -418,6 +446,48 @@ export function FlashProgress({
     onBack();
   }
 
+  /**
+   * Handle confirmation from SHA unavailable modal
+   * Proceeds with decompression/flashing without re-downloading
+   */
+  async function handleShaWarningConfirm() {
+    setShowShaWarning(false);
+
+    // Check device is still connected before proceeding
+    try {
+      const devices = await getBlockDevices();
+      if (!isDeviceConnected(device.path, devices)) {
+        handleDeviceDisconnected();
+        return;
+      }
+    } catch {
+      // Continue if we can't check
+    }
+
+    setStage('decompressing');
+    setProgress(0);
+
+    try {
+      const path = await continueDownloadWithoutSha();
+      setImagePath(path);
+      startFlash(path);
+    } catch (err) {
+      if (deviceDisconnectedRef.current) return;
+      setError(err instanceof Error ? err.message : t('error.decompressionFailed'));
+      setStage('error');
+    }
+  }
+
+  /**
+   * Handle cancellation from SHA unavailable modal
+   * Deletes temp file and returns to selection
+   */
+  async function handleShaWarningCancel() {
+    setShowShaWarning(false);
+    await cleanupFailedDownload();
+    onBack();
+  }
+
   function getImageDisplayText(): string {
     if (image.is_custom) {
       return image.distro_release;
@@ -523,6 +593,18 @@ export function FlashProgress({
           onCancel={handleCancel}
         />
       </div>
+
+      {showShaWarning && (
+        <ConfirmationDialog
+          isOpen={showShaWarning}
+          title={t('flash.noShaTitle')}
+          message={t('flash.noShaMessage')}
+          confirmText={t('common.confirm')}
+          isDanger={false}
+          onCancel={handleShaWarningCancel}
+          onConfirm={handleShaWarningConfirm}
+        />
+      )}
     </div>
   );
 }

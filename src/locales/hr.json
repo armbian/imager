@@ -34,7 +34,9 @@
     "eraseAndFlash": "Izbriši i snimi",
     "dataWarning": "Svi podaci na odabranom uređaju bit će izbrisani",
     "successHint": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj i umetnuti ga u {{boardName}}.",
-    "successHintCustom": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj."
+    "successHintCustom": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj.",
+    "noShaTitle": "Provjera integriteta nije dostupna",
+    "noShaMessage": "SHA kontrolna suma za ovu sliku nije dostupna. Zapisivanje će se nastaviti bez provjere integriteta."
   },
   "modal": {
     "selectManufacturer": "Odaberi proizvođača",

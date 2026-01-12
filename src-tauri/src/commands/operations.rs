@@ -255,3 +255,35 @@ pub async fn delete_downloaded_image(image_path: String, app: AppHandle) -> Resu
 
     Ok(())
 }
+
+/// Continue a download that failed due to SHA unavailable
+/// Uses the already downloaded file without re-downloading
+#[tauri::command]
+pub async fn continue_download_without_sha(state: State<'_, AppState>) -> Result<String, String> {
+    log_info!("operations", "Continuing download without SHA verification");
+
+    let download_dir = get_cache_dir(config::app::NAME).join("images");
+    let download_state = state.download_state.clone();
+
+    let result = crate::download::continue_without_sha(download_state, &download_dir).await;
+
+    match &result {
+        Ok(path) => {
+            log_info!("operations", "Continue completed: {}", path.display());
+            Ok(path.to_string_lossy().to_string())
+        }
+        Err(e) => {
+            log_error!("operations", "Continue failed: {}", e);
+            Err(e.clone())
+        }
+    }
+}
+
+/// Clean up a failed download (delete temp file)
+/// Called when user cancels after SHA unavailable error
+#[tauri::command]
+pub async fn cleanup_failed_download(state: State<'_, AppState>) -> Result<(), String> {
+    log_info!("operations", "Cleaning up failed download");
+    crate::download::cleanup_pending_download(state.download_state.clone()).await;
+    Ok(())
+}
