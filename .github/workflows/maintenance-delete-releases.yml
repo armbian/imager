@@ -1,4 +1,4 @@
-name: Delete old releases
+name: "Maintenance: Delete old releases"
 
 on:
   schedule:

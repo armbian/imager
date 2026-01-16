@@ -1,4 +1,4 @@
-name: Sync Labels
+name: "Infrastructure: Sync labels"
 
 on:
   push:

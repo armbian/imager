@@ -1,4 +1,4 @@
-name: PR Check
+name: "Maintenance: PR check"
 
 on:
   pull_request:

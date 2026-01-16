@@ -1,4 +1,4 @@
-name: Sync Translation Files
+name: "Data: Sync translation files"
 
 on:
   workflow_dispatch:

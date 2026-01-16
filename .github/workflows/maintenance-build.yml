@@ -1,4 +1,4 @@
-name: Build
+name: "Maintenance: Build"
 
 # Workflow to build and upload artifacts without creating releases
 # Used for testing and development - can be triggered manually from any branch
