@@ -30,6 +30,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  TAURI_CLI_VERSION: '2.9.6'
 
 jobs:
   # ===========================================
@@ -138,27 +139,60 @@ jobs:
           # Linux x64
           - platform: linux-x64
             os: ubuntu-24.04
-
-          # Linux ARM64 (native runner)
-          - platform: linux-arm64
-            os: ubuntu-24.04-arm
+            bundles: deb,appimage
+            artifact_path: |
+              src-tauri/target/release/bundle/deb/*.deb
+              src-tauri/target/release/bundle/appimage/*.AppImage
 
           # Windows x64
           - platform: windows-x64
             os: windows-latest
-
-          # macOS Intel
-          - platform: macos-intel
-            os: macos-15
+            bundles: nsis
+            artifact_path: |
+              src-tauri/target/release/bundle/nsis/*.exe
 
           # macOS Apple Silicon
           - platform: macos-arm
             os: macos-latest
+            bundles: dmg
+            artifact_path: |
+              src-tauri/target/release/bundle/dmg/*.dmg
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set trunk version and disable signing/updater
+        shell: bash
+        run: |
+          VERSION="0.0.0-pr.${{ github.event.pull_request.number }}"
+          echo "Setting version to $VERSION"
+          echo "Disabling code signing and updater for test builds"
+
+          # Update version in package.json
+          jq --arg v "$VERSION" '.version = $v' package.json > tmp.json && mv tmp.json package.json
+
+          # Update version and disable updater in tauri.conf.json
+          jq --arg v "$VERSION" '
+            .version = $v |
+            .bundle.createUpdaterArtifacts = false |
+            .plugins.updater.endpoints = []
+          ' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
+
+          # Update version in Cargo.toml (no jq for TOML, use sed)
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
+          else
+            sed -i "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
+          fi
+
+          echo "=== Configuration updated ==="
+          echo "package.json version: $(jq -r '.version' package.json)"
+          echo "tauri.conf.json version: $(jq -r '.version' src-tauri/tauri.conf.json)"
+          echo "createUpdaterArtifacts: $(jq -r '.bundle.createUpdaterArtifacts' src-tauri/tauri.conf.json)"
+          echo "updater endpoints: $(jq -r '.plugins.updater.endpoints' src-tauri/tauri.conf.json)"
+          grep "^version" src-tauri/Cargo.toml
 
       # Linux dependencies
       - name: Install Linux dependencies
@@ -197,15 +231,151 @@ jobs:
           cache-on-failure: true
           shared-key: ${{ matrix.platform }}
 
+      - name: Cache Tauri CLI
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin
+          key: cargo-bin-${{ runner.os }}-${{ runner.arch }}-tauri-${{ env.TAURI_CLI_VERSION }}
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Build frontend
-        run: npm run build
+      - name: Install Tauri CLI
+        shell: bash
+        run: |
+          if ! command -v cargo-tauri >/dev/null 2>&1; then
+            cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
+          fi
 
-      - name: Cargo check
-        working-directory: src-tauri
-        run: cargo check --all-targets
+      - name: Build application
+        run: cargo tauri build --bundles ${{ matrix.bundles }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: ${{ matrix.artifact_path }}
+          retention-days: 7
+
+  # ===========================================
+  # Post PR Comment with Artifact Links
+  # ===========================================
+  comment:
+    name: Post Artifact Links
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: always() && needs.build.result != 'cancelled'
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Post comment with artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ github.event.pull_request.number }};
+            const runId = context.runId;
+            const version = `0.0.0-pr.${prNumber}`;
+
+            // nightly.link provides public download URLs without GitHub login
+            const nightlyBase = `https://nightly.link/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+
+            // Check which artifacts were uploaded
+            const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId
+            });
+
+            const artifactNames = new Set(artifacts.map(a => a.name));
+
+            const platforms = [
+              { name: 'linux-x64', label: 'Linux x64', files: '.deb / .AppImage' },
+              { name: 'windows-x64', label: 'Windows x64', files: '.exe' },
+              { name: 'macos-arm', label: 'macOS ARM64', files: '.dmg' }
+            ];
+
+            const rows = platforms.map(({ name, label, files }) => {
+              if (artifactNames.has(name)) {
+                return `| ${label} | [📦 ${files}](${nightlyBase}/${name}.zip) |`;
+              }
+              return `| ${label} | ⏭️ Skipped |`;
+            }).join('\n');
+
+            const buildSuccess = platforms.some(p => artifactNames.has(p.name));
+            const statusIcon = buildSuccess ? '🧪' : '❌';
+            const statusText = buildSuccess ? 'ready for testing' : 'failed';
+
+            const body = [
+              `## ${statusIcon} Test Builds`,
+              '',
+              `**Version:** \`${version}\` | **PR:** #${prNumber} | **Status:** ${statusText}`,
+              '',
+              '| Platform | Download |',
+              '|----------|----------|',
+              rows,
+              '',
+              '<details>',
+              '<summary>ℹ️ About these builds</summary>',
+              '',
+              '- 🔓 **Public downloads** via [nightly.link](https://nightly.link) (no GitHub login required)',
+              '- ⚠️ **Unsigned builds** for testing purposes only',
+              '- ⏰ **Expires in 7 days**',
+              '- 🔄 Updated on every push to this PR',
+              '',
+              '</details>'
+            ].join('\n');
+
+            // Find and update or create comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            const marker = '## 🧪 Test Builds';
+            const altMarker = '## ❌ Test Builds';
+            const existingComment = comments.find(c =>
+              c.user.type === 'Bot' &&
+              (c.body.includes(marker) || c.body.includes(altMarker))
+            );
+
+            const commentParams = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            };
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                ...commentParams,
+                comment_id: existingComment.id
+              });
+              core.info(`Updated comment ${existingComment.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                ...commentParams,
+                issue_number: prNumber
+              });
+              core.info('Created new comment');
+            }
+
+            // Add "status: ready for review" label if all builds succeeded
+            const allBuildsSucceeded = platforms.every(p => artifactNames.has(p.name));
+            if (allBuildsSucceeded) {
+              const labelName = 'status: ready for review';
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  labels: [labelName]
+                });
+                core.info(`Added label: ${labelName}`);
+              } catch (e) {
+                core.warning(`Failed to add label: ${e.message}`);
+              }
+            }
 
   # ===========================================
   # Security Audit
@@ -261,7 +431,7 @@ jobs:
   cleanup:
     name: Cleanup
     runs-on: ubuntu-latest
-    needs: [frontend, rust-lint, build, security]
+    needs: [frontend, rust-lint, build, comment, security]
     if: always()
     permissions:
       actions: write
