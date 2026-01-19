@@ -57,7 +57,10 @@
     "allImages": "Todas as imagens",
     "insertDevice": "Insira um cartão SD ou pendrive USB",
     "refreshDevices": "Atualizar dispositivos",
-    "loading": "Carregando..."
+    "loading": "Carregando...",
+    "imageStatusTitle": "Aviso de estado da imagem",
+    "nightlyBuildMessage": "Versões Nightly são versões de desenvolvimento automáticas que podem conter recursos não testados e bugs. Não são recomendadas para uso em produção.",
+    "communityBoardMessage": "Esta placa é mantida pela comunidade. As imagens podem não inicializar ou funcionar corretamente. Suporte limitado disponível. Use compilações oficiais quando possível."
   },
   "device": {
     "system": "Sistema",

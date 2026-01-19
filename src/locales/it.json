@@ -57,7 +57,10 @@
     "allImages": "Tutte le Immagini",
     "insertDevice": "Inserisci una scheda SD o una chiavetta USB",
     "refreshDevices": "Aggiorna Dispositivi",
-    "loading": "Caricamento..."
+    "loading": "Caricamento...",
+    "imageStatusTitle": "Avviso sullo stato dell'immagine",
+    "nightlyBuildMessage": "Le build Nightly sono versioni di sviluppo automatiche che possono contenere funzionalità non testate e bug. Non sono consigliate per l'uso in produzione.",
+    "communityBoardMessage": "Questa scheda è mantenuta dalla community. Le immagini potrebbero non avviarsi o funzionare correttamente. Supporto limitato disponibile. Usa le build ufficiali quando possibile."
   },
   "device": {
     "system": "Sistema",

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Download, Package, Monitor, Terminal, Zap, Star, Layers, Shield, FlaskConical, AppWindow, Box } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
-import { ErrorDisplay, ListItemSkeleton } from '../shared';
+import { ErrorDisplay, ListItemSkeleton, ConfirmationDialog } from '../shared';
 import type { BoardInfo, ImageInfo, ImageFilterType } from '../../types';
 import { getImagesForBoard } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
@@ -75,6 +75,9 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
   const { t } = useTranslation();
   const [filterType, setFilterType] = useState<ImageFilterType>('all');
   const [showSkeleton, setShowSkeleton] = useState(false);
+  // State for unstable image warning
+  const [pendingImage, setPendingImage] = useState<ImageInfo | null>(null);
+  const [showUnstableWarning, setShowUnstableWarning] = useState(false);
 
   // Use hook for async data fetching
   const { data: allImages, loading, error, reload } = useAsyncDataWhen<ImageInfo[]>(
@@ -108,6 +111,53 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
       }
     };
   }, [loading, imagesReady]);
+
+  // Reset warning state when modal is closed
+  useEffect(() => {
+    if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset warning state when modal closes to prevent stale state from leaking into next session
+      setPendingImage(null);
+      setShowUnstableWarning(false);
+    }
+  }, [isOpen]);
+
+  /**
+   * Handle image click - show warning for unstable images before selecting
+   */
+  function handleImageClick(image: ImageInfo) {
+    // Check if warning is needed
+    const isNightly = image.armbian_version.includes('trunk');
+    const isCommunityBoard = board?.has_community_support === true;
+
+    // No warning for custom images or stable images on supported boards
+    if (!isNightly && !isCommunityBoard) {
+      onSelect(image);
+      return;
+    }
+
+    // Show warning for nightly builds or community-supported boards
+    setPendingImage(image);
+    setShowUnstableWarning(true);
+  }
+
+  /**
+   * Confirm unstable image selection - proceed with pending image
+   */
+  function handleUnstableWarningConfirm() {
+    if (pendingImage) {
+      onSelect(pendingImage);
+      setPendingImage(null);
+    }
+    setShowUnstableWarning(false);
+  }
+
+  /**
+   * Cancel unstable image selection - return to image list
+   */
+  function handleUnstableWarningCancel() {
+    setPendingImage(null);
+    setShowUnstableWarning(false);
+  }
 
   // Calculate available filters based on all images
   const availableFilters = useMemo(() => {
@@ -181,7 +231,7 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
               <button
                 key={index}
                 className={`list-item ${image.promoted ? 'promoted' : ''}`}
-                onClick={() => onSelect(image)}
+                onClick={() => handleImageClick(image)}
               >
                 {/* OS/App Icon */}
                 <div className="list-item-icon os-icon" style={{ backgroundColor: displayInfo?.color || DEFAULT_COLOR }}>
@@ -236,6 +286,24 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
           })}
           </div>
         </>
+      )}
+
+      {/* Image status warning dialog */}
+      {showUnstableWarning && pendingImage && (
+        <ConfirmationDialog
+          isOpen={showUnstableWarning}
+          title={t('modal.imageStatusTitle')}
+          message={
+            board?.has_community_support === true
+              ? t('modal.communityBoardMessage')
+              : t('modal.nightlyBuildMessage')
+          }
+          confirmText={t('common.confirm')}
+          cancelText={t('common.cancel')}
+          isDanger={false}
+          onCancel={handleUnstableWarningCancel}
+          onConfirm={handleUnstableWarningConfirm}
+        />
       )}
     </Modal>
   );

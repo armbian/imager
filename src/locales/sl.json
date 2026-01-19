@@ -57,7 +57,10 @@
     "allImages": "Vse slike",
     "insertDevice": "Vstavite SD kartico ali USB pogon",
     "refreshDevices": "Osveži naprave",
-    "loading": "Nalaganje..."
+    "loading": "Nalaganje...",
+    "imageStatusTitle": "Opozorilo o stanu slike",
+    "nightlyBuildMessage": "Različice Nightly so samodejne razvojne različice, ki lahko vsebujejo nepreizkušene funkcije in napake. Niso priporočene za proizvodnjo.",
+    "communityBoardMessage": "To ploščo vzdržuje skupnost. Slike morda ne bodo zagnale ali delovale pravilno. Na voljo je omejena podpora. Ko je mogoče, uporabite uradne različice."
   },
   "device": {
     "system": "Sistemska",

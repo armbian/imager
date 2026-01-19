@@ -57,7 +57,10 @@
     "allImages": "Sve slike",
     "insertDevice": "Umetnite SD karticu ili USB uređaj",
     "refreshDevices": "Osvježi uređaje",
-    "loading": "Učitavanje..."
+    "loading": "Učitavanje...",
+    "imageStatusTitle": "Upozorenje o statusu slike",
+    "nightlyBuildMessage": "Nightly izgradnje su automatske razvojne verzije koje mogu sadržavati neispitane značajke i greške. Nisu preporučene za proizvodnju.",
+    "communityBoardMessage": "Ovu ploču održava zajednica. Slike možda neće pokrenuti se ili ispravno raditi. Ograničena podrška je dostupna. Koristite službene izgradnje kada je moguće."
   },
   "device": {
     "system": "Sustav",

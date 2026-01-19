@@ -57,7 +57,10 @@
     "allImages": "所有镜像",
     "insertDevice": "请插入SD卡或U盘",
     "refreshDevices": "刷新设备",
-    "loading": "加载中..."
+    "loading": "加载中...",
+    "imageStatusTitle": "镜像状态警告",
+    "nightlyBuildMessage": "每日构建版本是自动开发版本，可能包含未经测试的功能和错误。不建议在生产环境中使用。",
+    "communityBoardMessage": "此开发板由社区维护。镜像可能无法启动或正常工作。支持有限。请尽可能使用官方构建。"
   },
   "device": {
     "system": "系统",

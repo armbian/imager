@@ -57,7 +57,10 @@
     "allImages": "Alle Images",
     "insertDevice": "SD-Karte oder USB-Stick einstecken",
     "refreshDevices": "Geräte aktualisieren",
-    "loading": "Wird geladen..."
+    "loading": "Wird geladen...",
+    "imageStatusTitle": "Image-Status-Warnung",
+    "nightlyBuildMessage": "Nightly-Builds sind automatische Entwicklungsversionen, die ungetestete Funktionen und Fehler enthalten können. Sie werden nicht für den Produktionsempfohlen.",
+    "communityBoardMessage": "Dieses Board wird von der Community gewartet. Images möglicherweise nicht starten oder korrekt funktionieren. Begrenzter Support ist verfügbar. Verwenden Sie wenn möglich offizielle Builds."
   },
   "device": {
     "system": "System",

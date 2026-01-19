@@ -57,7 +57,10 @@
     "allImages": "Tüm İmajlar",
     "insertDevice": "Bir SD kart veya USB sürücü takın",
     "refreshDevices": "Cihazları Yenile",
-    "loading": "Yükleniyor..."
+    "loading": "Yükleniyor...",
+    "imageStatusTitle": "İmaj Durumu Uyarısı",
+    "nightlyBuildMessage": "Nightly yapımları, test edilmemiş özellikler ve hatalar içerebilen otomatik geliştirme sürümleridir. Üretim kullanımı için önerilmez.",
+    "communityBoardMessage": "Bu kart topluluk tarafından sürdürülüyor. İmajlar önyüklemez veya düzgün çalışmayabilir. Sınırlı destek mevcut. Mümkün olduğunda resmi yapımları kullanın."
   },
   "device": {
     "system": "Sistem",

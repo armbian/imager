@@ -57,7 +57,10 @@
     "allImages": "Toutes les images",
     "insertDevice": "Insérez une carte SD ou une clé USB",
     "refreshDevices": "Actualiser les périphériques",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "imageStatusTitle": "Avertissement de statut d'image",
+    "nightlyBuildMessage": "Les versions Nightly sont des versions de développement automatisées qui peuvent contenir des fonctionnalités non testées et des bugs. Elles ne sont pas recommandées pour une utilisation en production.",
+    "communityBoardMessage": "Cette carte est maintenue par la communauté. Les images peuvent ne pas démarrer ou fonctionner correctement. Support limité disponible. Utilisez les versions officielles lorsque possible."
   },
   "device": {
     "system": "Système",

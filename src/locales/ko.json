@@ -57,7 +57,10 @@
     "allImages": "모든 이미지",
     "insertDevice": "SD 카드 또는 USB 드라이브를 삽입하세요",
     "refreshDevices": "장치 새로고침",
-    "loading": "로드 중..."
+    "loading": "로드 중...",
+    "imageStatusTitle": "이미지 상태 경고",
+    "nightlyBuildMessage": "Nightly 빌드는 테스트되지 않은 기능과 버그가 포함될 수 있는 자동 개발 버전입니다. 프로덕션 사용에는 권장되지 않습니다.",
+    "communityBoardMessage": "이 보드는 커뮤니티에서 유지 관리됩니다. 이미지가 부팅되지 않거나 제대로 작동하지 않을 수 있습니다. 지원이 제한되어 있습니다. 가능하면 공식 빌드를 사용하세요."
   },
   "device": {
     "system": "시스템",

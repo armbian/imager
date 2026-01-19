@@ -57,7 +57,10 @@
     "minimal": "Minimal",
     "allImages": "Alla images",
     "insertDevice": "Sätt i ett SD-kort eller USB-minne",
-    "refreshDevices": "Uppdatera enheter"
+    "refreshDevices": "Uppdatera enheter",
+    "imageStatusTitle": "Varning om avbildningsstatus",
+    "nightlyBuildMessage": "Nightly-versioner är automatiska utvecklingsversioner som kan innehålla otestade funktioner och buggar. De rekommenderas inte för användning i produktion.",
+    "communityBoardMessage": "Detta kort underhålls av gemenskapen. Images kanske inte startar eller fungerar korrekt. Begränsad support finns tillgänglig. Använd officiella versioner när det är möjligt."
   },
   "device": {
     "system": "System",

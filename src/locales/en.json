@@ -57,7 +57,10 @@
     "allImages": "All Images",
     "insertDevice": "Insert an SD card or USB drive",
     "refreshDevices": "Refresh Devices",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "imageStatusTitle": "Image Status Warning",
+    "nightlyBuildMessage": "Nightly builds are automated development versions that may contain untested features and bugs. They are not recommended for production use.",
+    "communityBoardMessage": "This board is maintained by the community. Images may not boot or work correctly. Limited support is available. Use official builds when possible."
   },
   "device": {
     "system": "System",

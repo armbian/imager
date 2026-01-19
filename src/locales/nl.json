@@ -57,7 +57,10 @@
     "allImages": "Alle images",
     "insertDevice": "Plaats een SD-kaart of USB-stick",
     "refreshDevices": "Apparaten vernieuwen",
-    "loading": "Laden..."
+    "loading": "Laden...",
+    "imageStatusTitle": "Image Status Waarschuwing",
+    "nightlyBuildMessage": "Nightly-builds zijn automatische ontwikkelingsversies die ongeteste functies en bugs kunnen bevatten. Ze worden niet aanbevolen voor productiegebruik.",
+    "communityBoardMessage": "Dit board wordt door de community onderhouden. Images mogelijk niet correct opstarten of werken. Beperkte ondersteuning beschikbaar. Gebruik indien mogelijk officiële builds."
   },
   "device": {
     "system": "Systeem",

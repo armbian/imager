@@ -57,7 +57,10 @@
     "allImages": "Wszystkie obrazy",
     "insertDevice": "Włóż kartę SD lub pendrive USB",
     "refreshDevices": "Odśwież urządzenia",
-    "loading": "Ładowanie..."
+    "loading": "Ładowanie...",
+    "imageStatusTitle": "Ostrzeżenie o statusie obrazu",
+    "nightlyBuildMessage": "Wersje Nightly to automatyczne wersje programistyczne, które mogą zawierać nieprzetestowane funkcje i błędy. Nie są zalecane do użytku produkcyjnego.",
+    "communityBoardMessage": "Ta płyta jest utrzymywana przez społeczność. Obrazy może nie udać się uruchomić lub działać poprawnie. Ograniczone wsparcie jest dostępne. Używaj oficjalnych kompilacji, gdy to możliwe."
   },
   "device": {
     "system": "System",

@@ -57,7 +57,10 @@
     "allImages": "すべてのイメージ",
     "insertDevice": "SDカードまたはUSBドライブを挿入してください",
     "refreshDevices": "デバイスを更新",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "imageStatusTitle": "画像ステータス警告",
+    "nightlyBuildMessage": "Nightlyビルドは自動開発バージョンであり、テストされていない機能やバグが含まれている可能性があります。本番環境での使用は推奨されません。",
+    "communityBoardMessage": "このボードはコミュニティによって維持されています。イメージが起動しない、または正しく動作しない可能性があります。サポートは限定的です。可能な場合は公式ビルドを使用してください。"
   },
   "device": {
     "system": "システム",
