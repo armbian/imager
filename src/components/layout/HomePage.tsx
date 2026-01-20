@@ -112,15 +112,17 @@ export function HomePage({
         </div>
       </div>
 
-      <div className="home-custom-section">
-        <button
-          className="home-custom-button"
-          onClick={onChooseCustomImage}
-        >
-          <FolderOpen size={16} />
-          {isCustomImage ? t('home.changeCustomImage') : t('home.useCustomImage')}
-        </button>
-      </div>
+      {!selectedManufacturer && (
+        <div className="home-custom-section">
+          <button
+            className="home-custom-button"
+            onClick={onChooseCustomImage}
+          >
+            <FolderOpen size={16} />
+            {isCustomImage ? t('home.changeCustomImage') : t('home.useCustomImage')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
