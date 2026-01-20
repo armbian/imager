@@ -17,8 +17,8 @@
 .flash-header {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 18px;
+  gap: 20px;
+  padding: 20px 24px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 10px;
@@ -31,7 +31,7 @@
   height: 100px;
   object-fit: contain;
   flex-shrink: 0;
-  transform: scale(2);
+  transform: scale(1.5);
 }
 
 .flash-custom-image-icon {

@@ -42,8 +42,8 @@
   }
 
   .flash-header {
-    gap: 14px;
-    padding: 14px;
+    gap: 16px;
+    padding: 16px 20px;
   }
 
   .flash-board-image {

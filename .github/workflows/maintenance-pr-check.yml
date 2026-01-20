@@ -47,7 +47,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       - name: Cache node_modules
         uses: actions/cache@v4
@@ -91,7 +90,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       - name: Cache node_modules
         uses: actions/cache@v4
@@ -117,6 +115,7 @@ jobs:
         with:
           workspaces: "src-tauri -> target"
           cache-on-failure: true
+          shared-key: "v1-linux-x64"
 
       - name: Check formatting
         working-directory: src-tauri
@@ -211,15 +210,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-${{ runner.arch }}-node-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-${{ runner.arch }}-node-
+            ${{ runner.os }}-node-
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -229,13 +227,13 @@ jobs:
         with:
           workspaces: "src-tauri -> target"
           cache-on-failure: true
-          shared-key: ${{ matrix.platform }}
+          shared-key: "v1-${{ matrix.platform }}"
 
       - name: Cache Tauri CLI
         uses: actions/cache@v4
         with:
           path: ~/.cargo/bin
-          key: cargo-bin-${{ runner.os }}-${{ runner.arch }}-tauri-${{ env.TAURI_CLI_VERSION }}
+          key: tauri-cli-${{ matrix.platform }}-${{ env.TAURI_CLI_VERSION }}
 
       - name: Install dependencies
         run: npm ci
@@ -391,7 +389,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
       - name: Cache node_modules
         uses: actions/cache@v4
