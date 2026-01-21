@@ -11,6 +11,14 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = ["protocol-asset", "macos-private-api"] }
+
+# Security Note: glib 0.18.5 is a transitive dependency via tauri → wry → gtk → glib
+# Vulnerability: GHSA-wrw7-89jp-8q8g (NULL pointer dereference)
+# This application does NOT use glib directly. The fix must come from upstream:
+# - Tracking issue: https://github.com/tauri-apps/tauri/issues/12048
+# - Waiting for: Tauri/wry to update to glib 0.20+ which fixes this vulnerability
+# - Current versions: tauri 2.9.5, wry 0.53.5, glib 0.18.5
+# - Last checked: 2025-01-21
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-updater = "2"
