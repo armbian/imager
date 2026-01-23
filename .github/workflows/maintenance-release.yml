@@ -490,22 +490,6 @@ jobs:
           path: |
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
-
-      # Upload Tauri updater signatures directly (not for Windows code signing)
-      - name: Upload Tauri updater signatures to GitHub Release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ needs.create-release.outputs.release_tag }}
-          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
-          draft: true
-          prerelease: false
-          allowUpdates: true
-          omitBodyDuringUpdate: true
-          omitNameDuringUpdate: true
-          replacesArtifacts: false
-          artifacts: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe.sig
-
     outputs:
       artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
 
@@ -591,22 +575,6 @@ jobs:
           path: |
             src-tauri/target/aarch64-pc-windows-msvc/release/bundle/msi/*.msi
             src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe
-
-      # Upload Tauri updater signatures directly (not for Windows code signing)
-      - name: Upload Tauri updater signatures to GitHub Release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ needs.create-release.outputs.release_tag }}
-          name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
-          draft: true
-          prerelease: false
-          allowUpdates: true
-          omitBodyDuringUpdate: true
-          omitNameDuringUpdate: true
-          replacesArtifacts: false
-          artifacts: |
-            src-tauri/target/aarch64-pc-windows-msvc/release/bundle/nsis/*.exe.sig
-
     outputs:
       artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
 
@@ -685,13 +653,78 @@ jobs:
             signed-arm64/**/*.msi
             signed-arm64/**/*.exe
 
+  regenerate-updater-signatures:
+    name: Regenerate updater signatures after code signing
+    needs:
+      - create-release
+      - sign-windows
+    if: |
+      always() &&
+      needs.sign-windows.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Download signed x64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-x64
+          path: signed-x64
+
+      - name: Download signed ARM64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-arm64
+          path: signed-arm64
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
+
+      - name: Re-sign x64 executable
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          EXE_FILE=$(find signed-x64 -name "*.exe" -type f | head -n 1)
+          if [[ -n "$EXE_FILE" ]]; then
+            cargo tauri signer sign "$EXE_FILE" --installer
+          fi
+
+      - name: Re-sign ARM64 executable
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          EXE_FILE=$(find signed-arm64 -name "*.exe" -type f | head -n 1)
+          if [[ -n "$EXE_FILE" ]]; then
+            cargo tauri signer sign "$EXE_FILE" --installer
+          fi
+
+      - name: Upload updated signatures to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.create-release.outputs.release_tag }}
+          allowUpdates: true
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          replacesArtifacts: false
+          artifacts: |
+            signed-x64/**/*.sig
+            signed-arm64/**/*.sig
+
   generate-update-manifest:
     name: Generate latest.json for updater
     needs:
       - create-release
       - build-linux
       - build-macos
-      - sign-windows
+      - regenerate-updater-signatures
     if: |
       always() &&
       (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch') &&
@@ -806,7 +839,7 @@ jobs:
       - create-release
       - build-linux
       - build-macos
-      - sign-windows
+      - regenerate-updater-signatures
       - generate-update-manifest
     if: |
       always() &&
