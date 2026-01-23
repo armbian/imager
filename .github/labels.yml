@@ -311,6 +311,18 @@
   color: "0366d6"
   description: Dependency updates
 
+- name: javascript
+  color: "f1e05a"
+  description: JavaScript/TypeScript dependencies
+
+- name: rust
+  color: "dea584"
+  description: Rust/Cargo dependencies
+
+- name: github-actions
+  color: "6f42c1"
+  description: GitHub Actions workflows and dependencies
+
 # ===========================================
 # ERRORS
 # ===========================================
