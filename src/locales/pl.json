@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Własny obraz"
   },
+  "armbian": {
+    "title": "Wykryto płytę",
+    "description": "To urządzenie korzysta z Armbian. Czy chcesz automatycznie wybrać tę płytę?",
+    "cancelHint": "Anulowanie wyłączy automatyczne wykrywanie.",
+    "disabledToast": "Automatyczne wykrywanie wyłączone. Włącz ponownie w Ustawieniach."
+  },
   "common": {
     "unknown": "Nieznany",
     "confirm": "Potwierdź",
@@ -114,11 +120,6 @@
     "theme": "Motyw",
     "language": "Język",
     "appInfo": "O programie",
-    "generalTitle": "Ogólne",
-    "showMotd": "Pokaż wskazówki",
-    "showMotdDescription": "Przydatne wskazówki i ogłoszenia",
-    "showUpdaterModal": "Pokazuj powiadomienia o aktualizacjach",
-    "showUpdaterModalDescription": "Wyświetl dostępne aktualizacje aplikacji",
     "chooseTheme": "Wybierz swój motyw",
     "chooseLanguage": "Wybierz swój język",
     "languageAuto": "Automatyczny",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Brak dostępnych logów",
     "copyLogs": "Kopiuj logi",
     "copied": "Skopiowano!",
-    "notificationsCategory": "POWIADOMIENIA",
-    "cacheCategory": "PAMIĘĆ PODRĘCZNA",
-    "enableCache": "Włącz pamięć podręczną obrazów",
-    "enableCacheDescription": "Zachowaj pobrane obrazy dla szybszej ponownej próby w przypadku niepowodzenia zapisu",
-    "maxCacheSize": "Maksymalny rozmiar pamięci podręcznej",
-    "maxCacheSizeDescription": "Automatycznie usuń najstarsze obrazy po przekroczeniu limitu",
-    "cacheSize": "Rozmiar pamięci podręcznej",
-    "noCachedImages": "Brak obrazów w pamięci podręcznej",
-    "clearCache": "Wyczyść pamięć podręczną",
-    "clearCacheConfirm": "Czy na pewno chcesz usunąć wszystkie obrazy z pamięci podręcznej? Tej akcji nie można cofnąć."
+    "notifications": {
+      "title": "POWIADOMIENIA",
+      "showMotd": "Pokaż wskazówki",
+      "showMotdDescription": "Przydatne wskazówki i ogłoszenia",
+      "showUpdaterModal": "Pokazuj powiadomienia o aktualizacjach",
+      "showUpdaterModalDescription": "Wyświetl dostępne aktualizacje aplikacji"
+    },
+    "cache": {
+      "title": "PAMIĘĆ PODRĘCZNA",
+      "enable": "Włącz pamięć podręczną obrazów",
+      "enableDescription": "Zachowaj pobrane obrazy dla szybszej ponownej próby w przypadku niepowodzenia zapisu",
+      "maxSize": "Maksymalny rozmiar pamięci podręcznej",
+      "maxSizeDescription": "Automatycznie usuń najstarsze obrazy po przekroczeniu limitu",
+      "size": "Rozmiar pamięci podręcznej",
+      "noCachedImages": "Brak obrazów w pamięci podręcznej",
+      "clear": "Wyczyść pamięć podręczną",
+      "clearConfirm": "Czy na pewno chcesz usunąć wszystkie obrazy z pamięci podręcznej? Tej akcji nie można cofnąć."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Automatyczne wykrywanie płyty",
+      "description": "Automatycznie identyfikuj płytę tego urządzenia podczas pracy na Armbian",
+      "mode_disabled": "Wyłączony",
+      "mode_modal": "Interaktywny",
+      "mode_auto": "Automatyczny"
+    },
+    "toast": {
+      "motdUpdated": "Ustawienie porad zaktualizowane",
+      "motdError": "Nie udało się zaktualizować ustawienia porad",
+      "updaterUpdated": "Powiadomienia o aktualizacjach zaktualizowane",
+      "updaterError": "Nie udało się zaktualizować ustawienia powiadomień",
+      "cacheToggleUpdated": "Ustawienie pamięci podręcznej zaktualizowane",
+      "cacheToggleError": "Nie udało się zaktualizować ustawienia pamięci podręcznej",
+      "cacheSizeUpdated": "Limit rozmiaru pamięci podręcznej zaktualizowany",
+      "cacheSizeError": "Nie udało się zaktualizować rozmiaru pamięci podręcznej",
+      "cacheClearSuccess": "Pamięć podręczna wyczyszczona",
+      "cacheClearError": "Nie udało się wyczyścić pamięci podręcznej",
+      "detectionUpdated": "Wykrywanie płytki zaktualizowane",
+      "detectionError": "Nie udało się zaktualizować trybu wykrywania"
+    }
   },
   "update": {
     "title": "Dostępna aktualizacja",

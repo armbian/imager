@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
   return invoke('get_boards');
@@ -140,6 +140,10 @@ export async function logInfo(module: string, message: string): Promise<void> {
   return invoke('log_from_frontend', { module, message });
 }
 
+export async function logWarn(module: string, message: string): Promise<void> {
+  return invoke('log_warn_from_frontend', { module, message });
+}
+
 export async function logDebug(module: string, message: string): Promise<void> {
   return invoke('log_debug_from_frontend', { module, message });
 }
@@ -257,4 +261,29 @@ export async function getCacheSize(): Promise<number> {
  */
 export async function clearCache(): Promise<void> {
   return invoke('clear_cache');
+}
+
+// ============================================================================
+// Armbian System Detection
+// ============================================================================
+
+/**
+ * Detect if the app is running on an Armbian system
+ *
+ * Reads /etc/armbian-release (Linux only) to identify the current board.
+ * Returns null if not on Armbian or on non-Linux platforms.
+ *
+ * @returns Promise resolving to ArmbianReleaseInfo if on Armbian, null otherwise
+ *
+ * @example
+ * // Detect board
+ * const info = await getArmbianRelease();
+ * if (info) {
+ *   console.log(`Running on: ${info.board_name} (${info.board})`);
+ * } else {
+ *   console.log('Not running on Armbian');
+ * }
+ */
+export async function getArmbianRelease(): Promise<ArmbianReleaseInfo | null> {
+  return invoke('get_armbian_release');
 }

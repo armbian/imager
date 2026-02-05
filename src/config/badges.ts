@@ -27,10 +27,10 @@ export const DESKTOP_BADGES: Record<string, BadgeConfig> = {
  * Kernel type badges
  */
 export const KERNEL_BADGES: Record<string, BadgeConfig> = {
-  'current': { label: 'Current', color: '#10b981' },
-  'edge': { label: 'Edge', color: '#f59e0b' },
-  'legacy': { label: 'Legacy', color: '#6b7280' },
-  'vendor': { label: 'Vendor', color: '#8b5cf6' },
+  'current': { label: 'Current', color: '#10b981' },  // Green
+  'edge': { label: 'Edge', color: '#ef4444' },        // Red
+  'legacy': { label: 'Legacy', color: '#6b7280' },    // Gray
+  'vendor': { label: 'Vendor', color: '#8b5cf6' },    // Purple
 };
 
 /**
@@ -58,4 +58,32 @@ export function getKernelType(branch: string): string | null {
     if (b.includes(key)) return key;
   }
   return null;
+}
+
+/**
+ * Adjust hex color brightness for gradient effects
+ * @param hex - Hex color (e.g., "#ef4444")
+ * @param percent - Brightness adjustment (-100 to 100, negative darkens, positive lightens)
+ * @returns Adjusted hex color
+ */
+export function adjustBrightness(hex: string, percent: number): string {
+  // Remove hash if present
+  const color = hex.replace('#', '');
+
+  // Parse hex to RGB
+  const num = parseInt(color, 16);
+  const r = (num >> 16) & 0xFF;
+  const g = (num >> 8) & 0xFF;
+  const b = num & 0xFF;
+
+  // Calculate adjustment amount
+  const amt = Math.round(2.55 * percent);
+
+  // Apply adjustment and clamp to 0-255 range
+  const R = Math.max(0, Math.min(255, r + amt));
+  const G = Math.max(0, Math.min(255, g + amt));
+  const B = Math.max(0, Math.min(255, b + amt));
+
+  // Convert back to hex
+  return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 }

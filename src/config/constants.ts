@@ -78,6 +78,7 @@ export const SETTINGS = {
     DEVELOPER_MODE: 'developer_mode',
     CACHE_ENABLED: 'cache_enabled',
     CACHE_MAX_SIZE: 'cache_max_size',
+    ARMBIAN_BOARD_DETECTION: 'armbian_board_detection',
   },
   /** Default values for settings */
   DEFAULTS: {
@@ -87,6 +88,13 @@ export const SETTINGS = {
     SHOW_UPDATER_MODAL: true,
     DEVELOPER_MODE: false,
     CACHE_ENABLED: true,
+    ARMBIAN_BOARD_DETECTION: 'modal',
+  },
+  /** Armbian board detection modes */
+  ARMBIAN_DETECTION_MODES: {
+    DISABLED: 'disabled',
+    MODAL: 'modal',
+    AUTO: 'auto',
   },
 } as const;
 
@@ -125,6 +133,8 @@ export const UI = {
     DEFAULT_WIDTH: 180,
     SEPARATOR_WIDTH: 5,
   },
+  /** Armbian board modal image width in pixels */
+  ARMBIAN_BOARD_IMAGE_WIDTH: 480,
   /** Icon sizes in pixels */
   ICON_SIZE: {
     SEARCH: 18,

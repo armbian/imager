@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Code, FileText } from 'lucide-react';
 import { getDeveloperMode, setDeveloperMode } from '../../hooks/useSettings';
+import { useSettingsGroup } from '../../hooks/useSettingsGroup';
 import { LogsModal } from './LogsModal';
 import { EVENTS } from '../../config';
 
@@ -16,18 +17,18 @@ export function AdvancedSection() {
   const [logsModalOpen, setLogsModalOpen] = useState<boolean>(false);
   const [isToggling, setIsToggling] = useState<boolean>(false);
 
-  // Load developer mode preference on mount
+  // Load developer mode preference on mount using useSettingsGroup
+  const settingsGroup = useSettingsGroup<{
+    developerMode: boolean;
+  }>({
+    developerMode: getDeveloperMode,
+  });
+
   useEffect(() => {
-    const loadDeveloperModePreference = async () => {
-      try {
-        const value = await getDeveloperMode();
-        setDeveloperModeState(value);
-      } catch (error) {
-        console.error('Failed to load developer mode preference:', error);
-      }
-    };
-    loadDeveloperModePreference();
-  }, []);
+    if (settingsGroup.developerMode !== undefined) {
+      setDeveloperModeState(settingsGroup.developerMode);
+    }
+  }, [settingsGroup.developerMode]);
 
   const handleToggleDeveloperMode = async () => {
     // Prevent concurrent toggles

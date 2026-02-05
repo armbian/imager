@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Immagine Personalizzata"
   },
+  "armbian": {
+    "title": "Scheda rilevata",
+    "description": "Questo dispositivo utilizza Armbian. Vuoi preselezionare questa scheda e saltare la selezione manuale?",
+    "cancelHint": "Annullando si disattiva il rilevamento automatico.",
+    "disabledToast": "Rilevamento automatico disattivato. Riattivalo nelle Impostazioni."
+  },
   "common": {
     "unknown": "Sconosciuto",
     "confirm": "Conferma",
@@ -114,11 +120,6 @@
     "theme": "Tema",
     "language": "Lingua",
     "appInfo": "Informazioni",
-    "generalTitle": "Generale",
-    "showMotd": "Mostra suggerimenti",
-    "showMotdDescription": "Visualizza suggerimenti utili e annunci",
-    "showUpdaterModal": "Mostra notifiche aggiornamenti",
-    "showUpdaterModalDescription": "Visualizza aggiornamenti disponibili dell'app",
     "chooseTheme": "Scegli il tema",
     "chooseLanguage": "Scegli la lingua",
     "languageAuto": "Automatico",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Nessun log disponibile",
     "copyLogs": "Copia log",
     "copied": "Copiato!",
-    "notificationsCategory": "NOTIFICHE",
-    "cacheCategory": "CACHE",
-    "enableCache": "Abilita cache immagini",
-    "enableCacheDescription": "Mantieni le immagini scaricate per un nuovo tentativo più veloce in caso di errore di scrittura",
-    "maxCacheSize": "Dimensione massima cache",
-    "maxCacheSizeDescription": "Rimuovi automaticamente le immagini più vecchie quando il limite viene superato",
-    "cacheSize": "Dimensione cache",
-    "noCachedImages": "Nessuna immagine in cache",
-    "clearCache": "Svuota cache",
-    "clearCacheConfirm": "Sei sicuro di voler eliminare tutte le immagini in cache? Questa azione non può essere annullata."
+    "notifications": {
+      "title": "Notifiche",
+      "showMotd": "Mostra suggerimenti",
+      "showMotdDescription": "Visualizza suggerimenti utili e annunci",
+      "showUpdaterModal": "Mostra notifiche aggiornamenti",
+      "showUpdaterModalDescription": "Visualizza aggiornamenti disponibili dell'app"
+    },
+    "cache": {
+      "title": "Cache",
+      "enable": "Abilita cache immagini",
+      "enableDescription": "Mantieni le immagini scaricate per un nuovo tentativo più veloce in caso di errore di scrittura",
+      "maxSize": "Dimensione massima cache",
+      "maxSizeDescription": "Rimuovi automaticamente le immagini più vecchie quando il limite viene superato",
+      "size": "Dimensione cache",
+      "noCachedImages": "Nessuna immagine in cache",
+      "clear": "Svuota cache",
+      "clearConfirm": "Sei sicuro di voler eliminare tutte le immagini in cache? Questa azione non può essere annullata."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Rileva scheda automaticamente",
+      "description": "Identifica automaticamente la scheda di questo dispositivo quando è in esecuzione su Armbian",
+      "mode_disabled": "Disattivato",
+      "mode_modal": "Interattivo",
+      "mode_auto": "Silenzioso"
+    },
+    "toast": {
+      "motdUpdated": "Impostazione suggerimenti aggiornata",
+      "motdError": "Impossibile aggiornare l'impostazione dei suggerimenti",
+      "updaterUpdated": "Notifiche di aggiornamento aggiornate",
+      "updaterError": "Impossibile aggiornare l'impostazione delle notifiche",
+      "cacheToggleUpdated": "Impostazione cache aggiornata",
+      "cacheToggleError": "Impossibile aggiornare l'impostazione della cache",
+      "cacheSizeUpdated": "Limite dimensione cache aggiornato",
+      "cacheSizeError": "Impossibile aggiornare la dimensione della cache",
+      "cacheClearSuccess": "Cache svuotata",
+      "cacheClearError": "Impossibile svuotare la cache",
+      "detectionUpdated": "Rilevamento scheda aggiornato",
+      "detectionError": "Impossibile aggiornare la modalità di rilevamento"
+    }
   },
   "update": {
     "title": "Aggiornamento Disponibile",

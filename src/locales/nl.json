@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Aangepaste image"
   },
+  "armbian": {
+    "title": "Board gedetecteerd",
+    "description": "Dit apparaat draait Armbian. Wilt u dit board automatisch selecteren?",
+    "cancelHint": "Annuleren schakelt automatische detectie uit.",
+    "disabledToast": "Automatische detectie uitgeschakeld. Schakel het opnieuw in bij Instellingen."
+  },
   "common": {
     "unknown": "Onbekend",
     "confirm": "Bevestigen",
@@ -114,11 +120,6 @@
     "theme": "Thema",
     "language": "Taal",
     "appInfo": "Over",
-    "generalTitle": "Algemeen",
-    "showMotd": "Tips weergeven",
-    "showMotdDescription": "Handige tips en aankondigingen",
-    "showUpdaterModal": "Update-meldingen weergeven",
-    "showUpdaterModalDescription": "Beschikbare app-updates weergeven",
     "chooseTheme": "Kies je thema",
     "chooseLanguage": "Kies je taal",
     "languageAuto": "Automatisch",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Geen logs beschikbaar",
     "copyLogs": "Logs kopiëren",
     "copied": "Gekopieerd!",
-    "notificationsCategory": "MELDINGEN",
-    "cacheCategory": "CACHE",
-    "enableCache": "Image-cache inschakelen",
-    "enableCacheDescription": "Gedownloade images bewaren voor snellere herpoging bij mislukte flash",
-    "maxCacheSize": "Maximale cachegrootte",
-    "maxCacheSizeDescription": "Oudste images automatisch verwijderen wanneer limiet wordt overschreden",
-    "cacheSize": "Cachegrootte",
-    "noCachedImages": "Geen gecachte images",
-    "clearCache": "Cache wissen",
-    "clearCacheConfirm": "Weet u zeker dat u alle gecachte images wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt."
+    "notifications": {
+      "title": "MELDINGEN",
+      "showMotd": "Tips weergeven",
+      "showMotdDescription": "Handige tips en aankondigingen",
+      "showUpdaterModal": "Update-meldingen weergeven",
+      "showUpdaterModalDescription": "Beschikbare app-updates weergeven"
+    },
+    "cache": {
+      "title": "CACHE",
+      "enable": "Image-cache inschakelen",
+      "enableDescription": "Gedownloade images bewaren voor snellere herpoging bij mislukte flash",
+      "maxSize": "Maximale cachegrootte",
+      "maxSizeDescription": "Oudste images automatisch verwijderen wanneer limiet wordt overschreden",
+      "size": "Cachegrootte",
+      "noCachedImages": "Geen gecachte images",
+      "clear": "Cache wissen",
+      "clearConfirm": "Weet u zeker dat u alle gecachte images wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Board automatisch detecteren",
+      "description": "Automatisch het board van dit apparaat identificeren bij gebruik van Armbian",
+      "mode_disabled": "Uitgeschakeld",
+      "mode_modal": "Interactief",
+      "mode_auto": "Automatisch"
+    },
+    "toast": {
+      "motdUpdated": "Tips-instelling bijgewerkt",
+      "motdError": "Kan tips-instelling niet bijwerken",
+      "updaterUpdated": "Updatemeldingen bijgewerkt",
+      "updaterError": "Kan meldingsinstelling niet bijwerken",
+      "cacheToggleUpdated": "Cache-instelling bijgewerkt",
+      "cacheToggleError": "Kan cache-instelling niet bijwerken",
+      "cacheSizeUpdated": "Cachelimiet bijgewerkt",
+      "cacheSizeError": "Kan cachegrootte niet bijwerken",
+      "cacheClearSuccess": "Cache gewist",
+      "cacheClearError": "Kan cache niet wissen",
+      "detectionUpdated": "Boarddetectie bijgewerkt",
+      "detectionError": "Kan detectiemodus niet bijwerken"
+    }
   },
   "update": {
     "title": "Update beschikbaar",

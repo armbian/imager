@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Imagem personalizada"
   },
+  "armbian": {
+    "title": "Placa detectada",
+    "description": "Este dispositivo está executando Armbian. Deseja pré-selecionar esta placa e pular a seleção manual?",
+    "cancelHint": "Cancelar desativará a detecção automática.",
+    "disabledToast": "Detecção automática desativada. Reative nas Configurações."
+  },
   "common": {
     "unknown": "Desconhecido",
     "confirm": "Confirmar",
@@ -114,11 +120,6 @@
     "theme": "Tema",
     "language": "Idioma",
     "appInfo": "Sobre",
-    "generalTitle": "Geral",
-    "showMotd": "Mostrar dicas",
-    "showMotdDescription": "Dicas úteis e anúncios",
-    "showUpdaterModal": "Mostrar atualizações",
-    "showUpdaterModalDescription": "Exibir atualizações disponíveis do aplicativo",
     "chooseTheme": "Escolha seu tema",
     "chooseLanguage": "Escolha seu idioma",
     "languageAuto": "Automático",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Nenhum log disponível",
     "copyLogs": "Copiar logs",
     "copied": "Copiado!",
-    "notificationsCategory": "NOTIFICAÇÕES",
-    "cacheCategory": "CACHE",
-    "enableCache": "Ativar cache de imagens",
-    "enableCacheDescription": "Manter as imagens baixadas para uma nova tentativa mais rápida se a gravação falhar",
-    "maxCacheSize": "Tamanho máximo do cache",
-    "maxCacheSizeDescription": "Remover automaticamente as imagens mais antigas quando o limite for excedido",
-    "cacheSize": "Tamanho do cache",
-    "noCachedImages": "Sem imagens em cache",
-    "clearCache": "Limpar cache",
-    "clearCacheConfirm": "Tem certeza de que deseja excluir todas as imagens em cache? Esta acao nao pode ser desfeita."
+    "notifications": {
+      "title": "NOTIFICAÇÕES",
+      "showMotd": "Mostrar dicas",
+      "showMotdDescription": "Dicas úteis e anúncios",
+      "showUpdaterModal": "Mostrar atualizações",
+      "showUpdaterModalDescription": "Exibir atualizações disponíveis do aplicativo"
+    },
+    "cache": {
+      "title": "CACHE",
+      "enable": "Ativar cache de imagens",
+      "enableDescription": "Manter as imagens baixadas para uma nova tentativa mais rápida se a gravação falhar",
+      "maxSize": "Tamanho máximo do cache",
+      "maxSizeDescription": "Remover automaticamente as imagens mais antigas quando o limite for excedido",
+      "size": "Tamanho do cache",
+      "noCachedImages": "Sem imagens em cache",
+      "clear": "Limpar cache",
+      "clearConfirm": "Tem certeza de que deseja excluir todas as imagens em cache? Esta acao nao pode ser desfeita."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Detectar placa automaticamente",
+      "description": "Identificar automaticamente a placa deste dispositivo ao executar no Armbian",
+      "mode_disabled": "Desativado",
+      "mode_modal": "Interativo",
+      "mode_auto": "Silencioso"
+    },
+    "toast": {
+      "motdUpdated": "Configuração de dicas atualizada",
+      "motdError": "Falha ao atualizar configuração de dicas",
+      "updaterUpdated": "Notificações de atualização atualizadas",
+      "updaterError": "Falha ao atualizar configuração de notificações",
+      "cacheToggleUpdated": "Configuração de cache atualizada",
+      "cacheToggleError": "Falha ao atualizar configuração de cache",
+      "cacheSizeUpdated": "Limite de tamanho do cache atualizado",
+      "cacheSizeError": "Falha ao atualizar tamanho do cache",
+      "cacheClearSuccess": "Cache limpo",
+      "cacheClearError": "Falha ao limpar o cache",
+      "detectionUpdated": "Detecção de placa atualizada",
+      "detectionError": "Falha ao atualizar modo de detecção"
+    }
   },
   "update": {
     "title": "Atualização disponível",

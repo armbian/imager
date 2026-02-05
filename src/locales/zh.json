@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "自定义镜像"
   },
+  "armbian": {
+    "title": "检测到开发板",
+    "description": "此设备正在运行 Armbian。是否自动选择此开发板并跳过手动选择？",
+    "cancelHint": "取消将禁用自动检测。",
+    "disabledToast": "主板自动检测已禁用。可在设置中重新启用。"
+  },
   "common": {
     "unknown": "未知",
     "confirm": "确认",
@@ -114,11 +120,6 @@
     "theme": "主题",
     "language": "语言",
     "appInfo": "关于",
-    "generalTitle": "通用",
-    "showMotd": "显示提示",
-    "showMotdDescription": "显示有用的提示和公告",
-    "showUpdaterModal": "显示更新通知",
-    "showUpdaterModalDescription": "显示可用的应用更新",
     "chooseTheme": "选择主题",
     "chooseLanguage": "选择语言",
     "languageAuto": "自动",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "没有可用的日志",
     "copyLogs": "复制日志",
     "copied": "已复制！",
-    "notificationsCategory": "通知",
-    "cacheCategory": "缓存",
-    "enableCache": "启用镜像缓存",
-    "enableCacheDescription": "保留已下载的镜像，以便在烧录失败时快速重试",
-    "maxCacheSize": "最大缓存大小",
-    "maxCacheSizeDescription": "超出限制时自动删除最旧的镜像",
-    "cacheSize": "缓存大小",
-    "noCachedImages": "没有缓存的镜像",
-    "clearCache": "清除缓存",
-    "clearCacheConfirm": "您确定要删除所有缓存的镜像吗？此操作无法撤消。"
+    "notifications": {
+      "title": "通知",
+      "showMotd": "显示提示",
+      "showMotdDescription": "显示有用的提示和公告",
+      "showUpdaterModal": "显示更新通知",
+      "showUpdaterModalDescription": "显示可用的应用更新"
+    },
+    "cache": {
+      "title": "缓存",
+      "enable": "启用镜像缓存",
+      "enableDescription": "保留已下载的镜像，以便在烧录失败时快速重试",
+      "maxSize": "最大缓存大小",
+      "maxSizeDescription": "超出限制时自动删除最旧的镜像",
+      "size": "缓存大小",
+      "noCachedImages": "没有缓存的镜像",
+      "clear": "清除缓存",
+      "clearConfirm": "您确定要删除所有缓存的镜像吗？此操作无法撤消。"
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "自动检测开发板",
+      "description": "在 Armbian 上运行时自动识别此设备的开发板",
+      "mode_disabled": "已禁用",
+      "mode_modal": "交互式",
+      "mode_auto": "自动"
+    },
+    "toast": {
+      "motdUpdated": "提示设置已更新",
+      "motdError": "更新提示设置失败",
+      "updaterUpdated": "更新通知已更新",
+      "updaterError": "更新通知设置失败",
+      "cacheToggleUpdated": "缓存设置已更新",
+      "cacheToggleError": "更新缓存设置失败",
+      "cacheSizeUpdated": "缓存大小限制已更新",
+      "cacheSizeError": "更新缓存大小失败",
+      "cacheClearSuccess": "缓存已清除",
+      "cacheClearError": "清除缓存失败",
+      "detectionUpdated": "板卡检测已更新",
+      "detectionError": "更新检测模式失败"
+    }
   },
   "update": {
     "title": "有可用更新",

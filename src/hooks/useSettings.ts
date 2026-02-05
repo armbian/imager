@@ -282,3 +282,57 @@ export async function setCacheMaxSize(size: number): Promise<void> {
     throw new Error(`Failed to set cache max size: ${error}`);
   }
 }
+
+// ============================================================================
+// Armbian Board Detection Settings
+// ============================================================================
+
+/**
+ * Get the Armbian board detection mode
+ *
+ * Controls how the app behaves when running on an Armbian system:
+ * - "disabled": Don't detect or auto-select
+ * - "modal": Show confirmation modal before auto-selecting
+ * - "auto": Automatically select without confirmation
+ *
+ * @returns Promise resolving to detection mode string
+ * @throws Error if store access fails
+ */
+export async function getArmbianBoardDetection(): Promise<string> {
+  try {
+    const store = await getStore();
+    return (
+      (await store.get<string>(SETTINGS.KEYS.ARMBIAN_BOARD_DETECTION)) ||
+      SETTINGS.DEFAULTS.ARMBIAN_BOARD_DETECTION
+    );
+  } catch (error) {
+    throw new Error(`Failed to get Armbian board detection preference: ${error}`);
+  }
+}
+
+/**
+ * Set the Armbian board detection mode
+ *
+ * Controls how the app behaves when running on an Armbian system:
+ * - "disabled": Don't detect or auto-select
+ * - "modal": Show confirmation modal before auto-selecting
+ * - "auto": Automatically select without confirmation
+ *
+ * @param mode - Detection mode ('disabled', 'modal', or 'auto')
+ * @throws Error if store access fails or mode is invalid
+ */
+export async function setArmbianBoardDetection(mode: string): Promise<void> {
+  if (!['disabled', 'modal', 'auto'].includes(mode)) {
+    throw new Error(
+      `Invalid Armbian board detection mode: ${mode}. Must be 'disabled', 'modal', or 'auto'`
+    );
+  }
+
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.ARMBIAN_BOARD_DETECTION, mode);
+    await store.save();
+  } catch (error) {
+    throw new Error(`Failed to set Armbian board detection preference: ${error}`);
+  }
+}

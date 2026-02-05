@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Download, Crown, Shield, Users, Clock, Tv, Wrench } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
-import { ErrorDisplay, BoardCardSkeleton, SearchBox } from '../shared';
+import { ErrorDisplay, BoardCardSkeleton, SearchBox, BoardBadges } from '../shared';
 import type { BoardInfo, Manufacturer } from '../../types';
 import { getBoards, getBoardImageUrl } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
@@ -162,53 +162,14 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
                 ) : (
                   <div className="skeleton" style={{ width: '80%', height: '14px', marginBottom: '8px' }} />
                 )}
-                <div className="board-grid-badges">
-                  {boardsReady ? (
-                    <>
-                      {board.has_platinum_support && (
-                        <span className="badge-platinum">
-                          <Crown size={10} />
-                          <span>Platinum</span>
-                        </span>
-                      )}
-                      {board.has_standard_support && !board.has_platinum_support && (
-                        <span className="badge-standard">
-                          <Shield size={10} />
-                          <span>Standard</span>
-                        </span>
-                      )}
-                      {board.has_community_support && (
-                        <span className="badge-community">
-                          <Users size={10} />
-                          <span>Community</span>
-                        </span>
-                      )}
-                      {board.has_eos_support && (
-                        <span className="badge-eos">
-                          <Clock size={10} />
-                          <span>EOS</span>
-                        </span>
-                      )}
-                      {board.has_tvb_support && (
-                        <span className="badge-tvb">
-                          <Tv size={10} />
-                          <span>TV Box</span>
-                        </span>
-                      )}
-                      {board.has_wip_support && (
-                        <span className="badge-wip">
-                          <Wrench size={10} />
-                          <span>WIP</span>
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="skeleton" style={{ width: '50px', height: '18px' }} />
-                      <div className="skeleton" style={{ width: '50px', height: '18px' }} />
-                    </>
-                  )}
-                </div>
+                {boardsReady ? (
+                  <BoardBadges board={board} />
+                ) : (
+                  <div className="board-grid-badges">
+                    <div className="skeleton" style={{ width: '50px', height: '18px' }} />
+                    <div className="skeleton" style={{ width: '50px', height: '18px' }} />
+                  </div>
+                )}
               </div>
             </button>
           ))}

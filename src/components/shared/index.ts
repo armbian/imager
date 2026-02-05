@@ -3,6 +3,7 @@
  */
 
 export { BoardCardSkeleton, ListItemSkeleton } from './SkeletonCard';
+export { BoardBadges } from './BoardBadges';
 export { ChangelogModal } from './ChangelogModal';
 export { ConfirmationDialog } from './ConfirmationDialog';
 export { ErrorDisplay } from './ErrorDisplay';

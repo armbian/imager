@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
+import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 
 /**
  * Settings button component
@@ -12,27 +13,17 @@ import { SettingsModal } from './SettingsModal';
 export function SettingsButton() {
   const { t } = useTranslation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
-  const isExitingRef = useState(false);
+
+  const { isExiting, handleClose } = useModalExitAnimation({
+    onClose: () => setIsSettingsOpen(false),
+    duration: 200,
+  });
 
   /**
    * Open settings modal
    */
   const handleOpenSettings = () => {
-    if (isExitingRef[0]) return;
     setIsSettingsOpen(true);
-  };
-
-  /**
-   * Close settings modal with animation
-   */
-  const handleCloseSettings = () => {
-    if (isExiting) return;
-    setIsExiting(true);
-    setTimeout(() => {
-      setIsSettingsOpen(false);
-      setIsExiting(false);
-    }, 200);
   };
 
   return (
@@ -48,7 +39,7 @@ export function SettingsButton() {
 
       <SettingsModal
         isOpen={isSettingsOpen && !isExiting}
-        onClose={handleCloseSettings}
+        onClose={handleClose}
       />
     </>
   );

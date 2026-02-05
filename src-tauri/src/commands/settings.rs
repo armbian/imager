@@ -2,7 +2,7 @@
 //!
 //! Manages user preferences like theme and language using the Tauri Store plugin.
 
-use crate::log_info;
+use crate::{log_info, log_warn};
 use tauri_plugin_store::StoreExt;
 
 const MODULE: &str = "commands::settings";
@@ -37,6 +37,10 @@ fn default_cache_enabled() -> bool {
 
 fn default_cache_max_size() -> u64 {
     crate::cache::DEFAULT_MAX_SIZE
+}
+
+fn default_armbian_board_detection() -> String {
+    "modal".to_string()
 }
 
 /// Get the current theme preference
@@ -428,4 +432,65 @@ pub fn get_cache_size() -> Result<u64, String> {
 #[tauri::command]
 pub fn clear_cache() -> Result<(), String> {
     crate::cache::clear_cache()
+}
+
+// ============================================================================
+// Armbian Board Detection Settings
+// ============================================================================
+
+/// Get the Armbian board detection mode
+///
+/// Returns the detection mode:
+/// - "disabled": Don't detect or auto-select
+/// - "modal": Show confirmation modal before auto-selecting
+/// - "auto": Automatically select without confirmation
+#[tauri::command]
+pub fn get_armbian_board_detection(app: tauri::AppHandle) -> String {
+    match app.store(SETTINGS_STORE) {
+        Ok(store) => match store.get("armbian_board_detection") {
+            Some(value) => value.as_str().unwrap_or("modal").to_string(),
+            None => {
+                log_info!(
+                    MODULE,
+                    "armbian_board_detection not found in store, using default"
+                );
+                default_armbian_board_detection()
+            }
+        },
+        Err(e) => {
+            log_warn!(
+                MODULE,
+                "Error loading store, using default armbian_board_detection: {}",
+                e
+            );
+            default_armbian_board_detection()
+        }
+    }
+}
+
+/// Set the Armbian board detection mode
+///
+/// Valid values:
+/// - "disabled": Don't detect or auto-select
+/// - "modal": Show confirmation modal before auto-selecting
+/// - "auto": Automatically select without confirmation
+#[tauri::command]
+pub fn set_armbian_board_detection(mode: String, app: tauri::AppHandle) -> Result<(), String> {
+    // Validate mode
+    if !matches!(mode.as_str(), "disabled" | "modal" | "auto") {
+        return Err(format!(
+            "Invalid armbian_board_detection mode: {}. Must be 'disabled', 'modal', or 'auto'",
+            mode
+        ));
+    }
+
+    log_info!(MODULE, "Setting armbian_board_detection to: {}", mode);
+
+    match app.store(SETTINGS_STORE) {
+        Ok(store) => {
+            store.set("armbian_board_detection", mode);
+            Ok(())
+        }
+        Err(e) => Err(format!("Failed to access store: {}", e)),
+    }
 }

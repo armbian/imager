@@ -19,6 +19,7 @@ export {
   DESKTOP_ENVIRONMENTS,
   getDesktopEnv,
   getKernelType,
+  adjustBrightness,
   type BadgeConfig,
 } from './badges';
 

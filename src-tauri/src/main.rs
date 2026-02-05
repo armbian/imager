@@ -172,7 +172,9 @@ fn main() {
             commands::system::open_url,
             commands::system::get_system_locale,
             commands::system::log_from_frontend,
+            commands::system::log_warn_from_frontend,
             commands::system::log_debug_from_frontend,
+            commands::system::get_armbian_release,
             commands::update::get_github_release,
             paste::upload::upload_logs,
             commands::settings::get_theme,
@@ -194,6 +196,8 @@ fn main() {
             commands::settings::set_cache_max_size,
             commands::settings::get_cache_size,
             commands::settings::clear_cache,
+            commands::settings::get_armbian_board_detection,
+            commands::settings::set_armbian_board_detection,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]

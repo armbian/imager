@@ -19,6 +19,9 @@ pub struct ArmbianImage {
     /// API field: "branch"
     #[serde(alias = "branch")]
     pub kernel_branch: Option<String>,
+    /// API field: "kernel_version"
+    #[serde(alias = "kernel_version")]
+    pub kernel_version: Option<String>,
     /// API field: "variant"
     #[serde(alias = "variant")]
     pub image_variant: Option<String>,
@@ -65,6 +68,7 @@ pub struct ImageInfo {
     pub armbian_version: String,
     pub distro_release: String,
     pub kernel_branch: String,
+    pub kernel_version: String,
     pub image_variant: String,
     pub preinstalled_application: String,
     pub promoted: bool,

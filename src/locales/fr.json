@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Image personnalisée"
   },
+  "armbian": {
+    "title": "Carte détectée",
+    "description": "Cet appareil exécute Armbian. Souhaitez-vous présélectionner cette carte et ignorer la sélection manuelle ?",
+    "cancelHint": "Annuler désactivera la détection automatique.",
+    "disabledToast": "Détection automatique désactivée. Réactivez-la dans les paramètres."
+  },
   "common": {
     "unknown": "Inconnu",
     "confirm": "Confirmer",
@@ -114,11 +120,6 @@
     "theme": "Thème",
     "language": "Langue",
     "appInfo": "À propos",
-    "generalTitle": "Général",
-    "showMotd": "Afficher les conseils",
-    "showMotdDescription": "Conseils utiles et annonces",
-    "showUpdaterModal": "Afficher les mises à jour",
-    "showUpdaterModalDescription": "Afficher les mises à jour disponibles de l'application",
     "chooseTheme": "Choisissez votre thème",
     "chooseLanguage": "Choisissez votre langue",
     "languageAuto": "Automatique",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Aucun journal disponible",
     "copyLogs": "Copier les journaux",
     "copied": "Copié !",
-    "notificationsCategory": "NOTIFICATIONS",
-    "cacheCategory": "CACHE",
-    "enableCache": "Activer le cache d'images",
-    "enableCacheDescription": "Conserver les images téléchargées pour une nouvelle tentative plus rapide en cas d'échec du flash",
-    "maxCacheSize": "Taille maximale du cache",
-    "maxCacheSizeDescription": "Supprimer automatiquement les images les plus anciennes lorsque la limite est dépassée",
-    "cacheSize": "Taille du cache",
-    "noCachedImages": "Aucune image en cache",
-    "clearCache": "Vider le cache",
-    "clearCacheConfirm": "Êtes-vous sûr de vouloir supprimer toutes les images en cache ? Cette action est irréversible."
+    "notifications": {
+      "title": "Notifications",
+      "showMotd": "Afficher les conseils",
+      "showMotdDescription": "Conseils utiles et annonces",
+      "showUpdaterModal": "Afficher les mises à jour",
+      "showUpdaterModalDescription": "Afficher les mises à jour disponibles de l'application"
+    },
+    "cache": {
+      "title": "Cache",
+      "enable": "Activer le cache d'images",
+      "enableDescription": "Conserver les images téléchargées pour une nouvelle tentative plus rapide en cas d'échec du flash",
+      "maxSize": "Taille maximale du cache",
+      "maxSizeDescription": "Supprimer automatiquement les images les plus anciennes lorsque la limite est dépassée",
+      "size": "Taille du cache",
+      "noCachedImages": "Aucune image en cache",
+      "clear": "Vider le cache",
+      "clearConfirm": "Êtes-vous sûr de vouloir supprimer toutes les images en cache ? Cette action est irréversible."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Détecter la carte automatiquement",
+      "description": "Identifier automatiquement la carte de cet appareil sous Armbian",
+      "mode_disabled": "Désactivé",
+      "mode_modal": "Interactif",
+      "mode_auto": "Silencieux"
+    },
+    "toast": {
+      "motdUpdated": "Paramètre des conseils mis à jour",
+      "motdError": "Échec de la mise à jour du paramètre des conseils",
+      "updaterUpdated": "Notifications de mise à jour mises à jour",
+      "updaterError": "Échec de la mise à jour du paramètre de notification",
+      "cacheToggleUpdated": "Paramètre du cache mis à jour",
+      "cacheToggleError": "Échec de la mise à jour du paramètre du cache",
+      "cacheSizeUpdated": "Limite de taille du cache mise à jour",
+      "cacheSizeError": "Échec de la mise à jour de la taille du cache",
+      "cacheClearSuccess": "Cache vidé",
+      "cacheClearError": "Échec du vidage du cache",
+      "detectionUpdated": "Détection de carte mise à jour",
+      "detectionError": "Échec de la mise à jour du mode de détection"
+    }
   },
   "update": {
     "title": "Mise à jour disponible",

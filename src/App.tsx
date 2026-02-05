@@ -1,15 +1,26 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header, HomePage } from './components/layout';
-import { ManufacturerModal, BoardModal, ImageModal, DeviceModal } from './components/modals';
+import { ManufacturerModal, BoardModal, ImageModal, DeviceModal, ArmbianBoardModal } from './components/modals';
 import { FlashProgress } from './components/flash';
 import { SettingsButton } from './components/settings';
-import { selectCustomImage, detectBoardFromFilename, logInfo } from './hooks/useTauri';
+import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getBoardImageUrl } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
-import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep, Manufacturer } from './types';
+import { ToastProvider, useToasts } from './hooks/useToasts';
+import { getArmbianBoardDetection } from './hooks/useSettings';
+import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep, Manufacturer, ArmbianReleaseInfo } from './types';
 import './styles/index.css';
 
 function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
+  );
+}
+
+/** Main application content — must be inside ToastProvider to use useToasts() */
+function AppContent() {
   const { t } = useTranslation();
   const [isFlashing, setIsFlashing] = useState(false);
   const [activeModal, setActiveModal] = useState<ModalType>('none');
@@ -18,12 +29,134 @@ function App() {
   const [selectedImage, setSelectedImage] = useState<ImageInfo | null>(null);
   const [selectedDevice, setSelectedDevice] = useState<BlockDevice | null>(null);
 
+  // Toast notifications
+  const { showError } = useToasts();
+
+  // Armbian board detection state
+  const [armbianInfo, setArmbianInfo] = useState<ArmbianReleaseInfo | null>(null);
+  const [detectedBoard, setDetectedBoard] = useState<BoardInfo | null>(null); // Cache matched board
+  const [armbianBoardImageUrl, setArmbianBoardImageUrl] = useState<string | null>(null); // Preloaded board image
+  const [showArmbianModal, setShowArmbianModal] = useState(false);
+  const armbianCheckRef = useRef(false); // Prevent double execution in Strict Mode
+
   // Monitor selected device - clear if disconnected (only when not flashing)
   useDeviceMonitor(
     selectedDevice,
     useCallback(() => setSelectedDevice(null), []),
     !isFlashing
   );
+
+  /**
+   * Auto-select board based on Armbian detection
+   * Sets manufacturer and board without user interaction
+   */
+  const autoSelectBoard = useCallback(async (board: BoardInfo) => {
+    try {
+      // Create manufacturer from board vendor
+      const manufacturer: Manufacturer = {
+        id: board.vendor || 'other',
+        name: board.vendor_name || 'Other',
+        color: 'slate',
+        boardCount: 1,
+      };
+
+      setSelectedManufacturer(manufacturer);
+      setSelectedBoard(board);
+
+      // Reset image and device selections (user still needs to select these)
+      setSelectedImage(null);
+      setSelectedDevice(null);
+
+      logInfo('app', `Auto-selected: ${manufacturer.name} → ${board.name} (${board.slug})`);
+    } catch (err) {
+      logWarn('app', `Failed to auto-select board: ${err}`);
+    }
+  }, []);
+
+  /**
+   * Check for Armbian system on app startup
+   * Detects if running on Armbian and either shows modal or auto-selects based on settings
+   */
+  useEffect(() => {
+    const checkArmbianSystem = async () => {
+      try {
+        // Check platform BEFORE setting ref - Armbian detection is Linux-only
+        const systemInfo = await getSystemInfo();
+        if (systemInfo.platform !== 'linux') {
+          logInfo('app', `Skipping Armbian detection on ${systemInfo.platform}`);
+          return;
+        }
+
+        // Prevent double execution in React Strict Mode (only for Linux)
+        if (armbianCheckRef.current) return;
+        armbianCheckRef.current = true;
+
+        const info = await getArmbianRelease();
+        if (!info) {
+          logInfo('app', 'Not running on Armbian system');
+          return;
+        }
+
+        setArmbianInfo(info);
+
+        // Get detection mode from settings
+        const detectionMode = await getArmbianBoardDetection();
+
+        // Skip if disabled
+        if (detectionMode === 'disabled') {
+          return;
+        }
+
+        // Fetch boards to find matching board
+        const boards = await getBoards();
+        const matchedBoard = boards.find((b) => b.slug === info.board);
+
+        if (!matchedBoard) {
+          logWarn('app', `Board ${info.board} not found in API, skipping auto-selection`);
+          return;
+        }
+
+        logInfo('app', `Found matching board in API: ${matchedBoard.name}`);
+
+        // Cache the matched board for use in modal
+        setDetectedBoard(matchedBoard);
+
+        // Preload board image before showing modal
+        try {
+          const baseUrl = await getBoardImageUrl(matchedBoard.slug);
+          if (baseUrl) {
+            const imgUrl = baseUrl.replace('/272/', '/480/');
+            // Preload image
+            const img = new Image();
+            img.onload = () => {
+              setArmbianBoardImageUrl(imgUrl);
+              logInfo('app', `Board image preloaded: ${imgUrl}`);
+            };
+            img.onerror = () => {
+              logWarn('app', `Failed to preload board image: ${imgUrl}`);
+              setArmbianBoardImageUrl(null);
+            };
+            img.src = imgUrl;
+          }
+        } catch (err) {
+          logWarn('app', `Failed to get board image URL: ${err}`);
+        }
+
+        if (detectionMode === 'modal') {
+          // Show confirmation modal
+          setShowArmbianModal(true);
+        } else if (detectionMode === 'auto') {
+          // Auto-select without confirmation
+          await autoSelectBoard(matchedBoard);
+        }
+      } catch (err) {
+        logWarn('app', `Failed to check for Armbian system: ${err}`);
+      }
+    };
+
+    checkArmbianSystem();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Reset selections from a given step onwards.
@@ -73,11 +206,11 @@ function App() {
         try {
           detectedBoard = await detectBoardFromFilename(result.name);
           if (detectedBoard) {
-            logInfo('App', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
+            logInfo('app', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
           }
         } catch (err) {
           // Ignore detection errors, fall back to generic
-          console.warn('Failed to detect board from filename:', err);
+          logWarn('app', `Failed to detect board from filename: ${err}`);
         }
 
         // Create a custom ImageInfo object
@@ -85,6 +218,7 @@ function App() {
           armbian_version: 'Custom',
           distro_release: result.name,
           kernel_branch: '',
+          kernel_version: '',
           image_variant: 'custom',
           preinstalled_application: '',
           promoted: false,
@@ -142,6 +276,36 @@ function App() {
     resetSelectionsFrom(step);
     setActiveModal(step);
   }
+
+  /**
+   * Handle Armbian modal confirm - auto-select the detected board
+   * Uses cached board to avoid redundant API fetch
+   */
+  const handleArmbianConfirm = useCallback(async () => {
+    if (!detectedBoard) {
+      logWarn('app', 'No detected board available for auto-selection');
+      setShowArmbianModal(false);
+      return;
+    }
+
+    await autoSelectBoard(detectedBoard);
+    setShowArmbianModal(false);
+  }, [detectedBoard, autoSelectBoard]);
+
+  /**
+   * Handle Armbian modal cancel - dismiss and proceed with manual selection
+   */
+  const handleArmbianCancel = useCallback(() => {
+    logInfo('app', 'User cancelled Armbian board auto-selection');
+    setShowArmbianModal(false);
+  }, []);
+
+  /**
+   * Handle detection disabled from Armbian modal cancel - show informative toast
+   */
+  const handleDetectionDisabled = useCallback(() => {
+    showError(t('armbian.disabledToast'));
+  }, [showError, t]);
 
   return (
     <div className="app">
@@ -207,6 +371,19 @@ function App() {
         onClose={() => setActiveModal('none')}
         onSelect={handleDeviceSelect}
       />
+
+      {/* Armbian board detection modal */}
+      {armbianInfo && (
+        <ArmbianBoardModal
+          isOpen={showArmbianModal}
+          onClose={handleArmbianCancel}
+          onConfirm={handleArmbianConfirm}
+          onDetectionDisabled={handleDetectionDisabled}
+          armbianInfo={armbianInfo}
+          boardInfo={detectedBoard}
+          boardImageUrl={armbianBoardImageUrl}
+        />
+      )}
 
       {!isFlashing && <SettingsButton />}
     </div>

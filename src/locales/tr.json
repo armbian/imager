@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Özel İmaj"
   },
+  "armbian": {
+    "title": "Kart algılandı",
+    "description": "Bu cihaz Armbian kullanıyor. Bu kartı otomatik olarak seçmek ister misiniz?",
+    "cancelHint": "İptal otomatik algılamayı devre dışı bırakır.",
+    "disabledToast": "Otomatik algılama devre dışı. Ayarlar'dan yeniden etkinleştirin."
+  },
   "common": {
     "unknown": "Bilinmeyen",
     "confirm": "Onayla",
@@ -114,11 +120,6 @@
     "theme": "Tema",
     "language": "Dil",
     "appInfo": "Hakkında",
-    "generalTitle": "Genel",
-    "showMotd": "İpuçları göster",
-    "showMotdDescription": "Yararlı ipuçları ve duyurular",
-    "showUpdaterModal": "Güncelleme bildirimlerini göster",
-    "showUpdaterModalDescription": "Mevcut uygulama güncellemelerini görüntüle",
     "chooseTheme": "Tema seçin",
     "chooseLanguage": "Dil seçin",
     "languageAuto": "Otomatik",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Kullanılabilir günlük yok",
     "copyLogs": "Günlükleri kopyala",
     "copied": "Kopyalandı!",
-    "notificationsCategory": "BİLDİRİMLER",
-    "cacheCategory": "ÖNBELLEK",
-    "enableCache": "İmaj önbelleğini etkinleştir",
-    "enableCacheDescription": "Yazma başarısız olursa daha hızlı yeniden deneme için indirilen imajları sakla",
-    "maxCacheSize": "Maksimum önbellek boyutu",
-    "maxCacheSizeDescription": "Limit aşıldığında en eski imajları otomatik olarak sil",
-    "cacheSize": "Önbellek boyutu",
-    "noCachedImages": "Önbelleğe alınmış imaj yok",
-    "clearCache": "Önbelleği temizle",
-    "clearCacheConfirm": "Önbelleğe alınmış tüm imajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+    "notifications": {
+      "title": "Bildirimler",
+      "showMotd": "İpuçları göster",
+      "showMotdDescription": "Yararlı ipuçları ve duyurular",
+      "showUpdaterModal": "Güncelleme bildirimlerini göster",
+      "showUpdaterModalDescription": "Mevcut uygulama güncellemelerini görüntüle"
+    },
+    "cache": {
+      "title": "Önbellek",
+      "enable": "İmaj önbelleğini etkinleştir",
+      "enableDescription": "Yazma başarısız olursa daha hızlı yeniden deneme için indirilen imajları sakla",
+      "maxSize": "Maksimum önbellek boyutu",
+      "maxSizeDescription": "Limit aşıldığında en eski imajları otomatik olarak sil",
+      "size": "Önbellek boyutu",
+      "noCachedImages": "Önbelleğe alınmış imaj yok",
+      "clear": "Önbelleği temizle",
+      "clearConfirm": "Önbelleğe alınmış tüm imajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Kartı otomatik algıla",
+      "description": "Armbian üzerinde çalışırken bu cihazın kartını otomatik olarak tanımla",
+      "mode_disabled": "Devre dışı",
+      "mode_modal": "Etkileşimli",
+      "mode_auto": "Otomatik"
+    },
+    "toast": {
+      "motdUpdated": "İpucu ayarı güncellendi",
+      "motdError": "İpucu ayarı güncellenemedi",
+      "updaterUpdated": "Güncelleme bildirimleri güncellendi",
+      "updaterError": "Bildirim ayarı güncellenemedi",
+      "cacheToggleUpdated": "Önbellek ayarı güncellendi",
+      "cacheToggleError": "Önbellek ayarı güncellenemedi",
+      "cacheSizeUpdated": "Önbellek boyut sınırı güncellendi",
+      "cacheSizeError": "Önbellek boyutu güncellenemedi",
+      "cacheClearSuccess": "Önbellek temizlendi",
+      "cacheClearError": "Önbellek temizlenemedi",
+      "detectionUpdated": "Kart algılama güncellendi",
+      "detectionError": "Algılama modu güncellenemedi"
+    }
   },
   "update": {
     "title": "Güncelleme mevcut",

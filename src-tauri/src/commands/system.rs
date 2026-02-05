@@ -2,7 +2,8 @@
 //!
 //! Platform-specific system operations like opening URLs and locale detection.
 
-use crate::{log_debug, log_info};
+use crate::{log_debug, log_info, log_warn};
+use serde::{Deserialize, Serialize};
 use sys_locale::get_locale;
 
 const MODULE: &str = "commands::system";
@@ -11,6 +12,12 @@ const MODULE: &str = "commands::system";
 #[tauri::command]
 pub fn log_from_frontend(module: String, message: String) {
     log_info!(&format!("frontend::{}", module), "{}", message);
+}
+
+/// Log a warning message from the frontend (WARN level)
+#[tauri::command]
+pub fn log_warn_from_frontend(module: String, message: String) {
+    log_warn!(&format!("frontend::{}", module), "{}", message);
 }
 
 /// Log a debug message from the frontend (DEBUG level - only shown in developer mode)
@@ -189,4 +196,96 @@ fn open_url_windows(url: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to open URL: {}", e))?;
 
     Ok(())
+}
+
+// ============================================================================
+// Armbian System Detection
+// ============================================================================
+
+/// Armbian system information from /etc/armbian-release
+///
+/// Contains essential information about the currently running Armbian system.
+/// This file is present on all Armbian installations and provides
+/// board identification information.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ArmbianReleaseInfo {
+    pub board: String,
+    pub board_name: String,
+}
+
+/// Read and parse /etc/armbian-release file
+///
+/// This function is Linux-specific and only available on Armbian systems.
+/// Returns None if:
+/// - Not running on Linux
+/// - /etc/armbian-release doesn't exist
+/// - File cannot be read or parsed
+///
+/// Returns ArmbianReleaseInfo if running on an Armbian system.
+#[tauri::command]
+pub fn get_armbian_release() -> Option<ArmbianReleaseInfo> {
+    #[cfg(target_os = "linux")]
+    {
+        use std::fs;
+
+        let path = "/etc/armbian-release";
+
+        // Check if file exists
+        if !std::path::Path::new(path).exists() {
+            log_info!(MODULE, "{} not found - not running on Armbian", path);
+            return None;
+        }
+
+        // Read file content
+        let content = match fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(e) => {
+                log_warn!(MODULE, "Failed to read {}: {}", path, e);
+                return None;
+            }
+        };
+
+        // Parse key=value pairs
+        let mut board = String::new();
+        let mut board_name = String::new();
+
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+
+            if let Some((key, value)) = line.split_once('=') {
+                let key = key.trim();
+                let value = value.trim().trim_matches('"').trim_matches('\'');
+
+                match key {
+                    "BOARD" => board = value.to_string(),
+                    "BOARD_NAME" => board_name = value.to_string(),
+                    _ => {}
+                }
+            }
+        }
+
+        // Validate that we have the minimum required fields
+        if board.is_empty() {
+            log_warn!(MODULE, "Invalid {}: missing BOARD field", path);
+            return None;
+        }
+
+        log_info!(
+            MODULE,
+            "Detected Armbian system: {} ({})",
+            board_name,
+            board
+        );
+
+        Some(ArmbianReleaseInfo { board, board_name })
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        log_info!(MODULE, "Armbian detection is Linux-only");
+        None
+    }
 }

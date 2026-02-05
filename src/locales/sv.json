@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Egen image"
   },
+  "armbian": {
+    "title": "Kort upptäckt",
+    "description": "Denna enhet kör Armbian. Vill du automatiskt välja detta kort?",
+    "cancelHint": "Avbryt inaktiverar automatisk identifiering.",
+    "disabledToast": "Automatisk identifiering inaktiverad. Återaktivera i Inställningar."
+  },
   "common": {
     "unknown": "Okänd",
     "confirm": "Bekräfta",
@@ -114,11 +120,6 @@
     "theme": "Tema",
     "language": "Språk",
     "appInfo": "Om",
-    "generalTitle": "Allmänt",
-    "showMotd": "Visa tips",
-    "showMotdDescription": "Användbara tips och meddelanden",
-    "showUpdaterModal": "Visa uppdateringsmeddelanden",
-    "showUpdaterModalDescription": "Visa tillgängliga appuppdateringar",
     "chooseTheme": "Välj ditt tema",
     "chooseLanguage": "Välj ditt språk",
     "languageAuto": "Automatisk",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Inga loggar tillgängliga",
     "copyLogs": "Kopiera loggar",
     "copied": "Kopierad!",
-    "notificationsCategory": "AVISERINGAR",
-    "cacheCategory": "CACHE",
-    "enableCache": "Aktivera image-cache",
-    "enableCacheDescription": "Behåll nedladdade images för snabbare nytt försök om flashning misslyckas",
-    "maxCacheSize": "Maximal cachestorlek",
-    "maxCacheSizeDescription": "Ta automatiskt bort äldsta images när gränsen överskrids",
-    "cacheSize": "Cachestorlek",
-    "noCachedImages": "Inga cachade images",
-    "clearCache": "Rensa cache",
-    "clearCacheConfirm": "Är du säker på att du vill ta bort alla cachade images? Denna åtgärd kan inte ångras."
+    "notifications": {
+      "title": "Aviseringar",
+      "showMotd": "Visa tips",
+      "showMotdDescription": "Användbara tips och meddelanden",
+      "showUpdaterModal": "Visa uppdateringsmeddelanden",
+      "showUpdaterModalDescription": "Visa tillgängliga appuppdateringar"
+    },
+    "cache": {
+      "title": "Cache",
+      "enable": "Aktivera image-cache",
+      "enableDescription": "Behåll nedladdade images för snabbare nytt försök om flashning misslyckas",
+      "maxSize": "Maximal cachestorlek",
+      "maxSizeDescription": "Ta automatiskt bort äldsta images när gränsen överskrids",
+      "size": "Cachestorlek",
+      "noCachedImages": "Inga cachade images",
+      "clear": "Rensa cache",
+      "clearConfirm": "Är du säker på att du vill ta bort alla cachade images? Denna åtgärd kan inte ångras."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Identifiera kort automatiskt",
+      "description": "Identifiera automatiskt denna enhets kort vid körning på Armbian",
+      "mode_disabled": "Inaktiverad",
+      "mode_modal": "Interaktiv",
+      "mode_auto": "Automatisk"
+    },
+    "toast": {
+      "motdUpdated": "Tipsinställning uppdaterad",
+      "motdError": "Kunde inte uppdatera tipsinställning",
+      "updaterUpdated": "Uppdateringsaviseringar uppdaterade",
+      "updaterError": "Kunde inte uppdatera aviseringsinställning",
+      "cacheToggleUpdated": "Cacheinställning uppdaterad",
+      "cacheToggleError": "Kunde inte uppdatera cacheinställning",
+      "cacheSizeUpdated": "Cachestorleksgräns uppdaterad",
+      "cacheSizeError": "Kunde inte uppdatera cachestorlek",
+      "cacheClearSuccess": "Cache rensad",
+      "cacheClearError": "Kunde inte rensa cache",
+      "detectionUpdated": "Kortdetektering uppdaterad",
+      "detectionError": "Kunde inte uppdatera detekteringsläge"
+    }
   },
   "update": {
     "title": "Uppdatering tillgänglig",

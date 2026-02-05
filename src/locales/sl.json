@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Slika po meri"
   },
+  "armbian": {
+    "title": "Plošča zaznana",
+    "description": "Ta naprava uporablja Armbian. Ali želite samodejno izbrati to ploščo?",
+    "cancelHint": "Preklic bo onemogočil samodejno zaznavanje.",
+    "disabledToast": "Samodejno zaznavanje izklopljeno. Ponovno vklopite v nastavitvah."
+  },
   "common": {
     "unknown": "Neznano",
     "confirm": "Potrdi",
@@ -114,11 +120,6 @@
     "theme": "Tema",
     "language": "Jezik",
     "appInfo": "O aplikaciji",
-    "generalTitle": "Splošno",
-    "showMotd": "Pokaži nasvete",
-    "showMotdDescription": "Uporabne nasvete in obvestila",
-    "showUpdaterModal": "Pokaži obvestila o posodobitvah",
-    "showUpdaterModalDescription": "Prikaz dostopnih posodobitev aplikacije",
     "chooseTheme": "Izberite temo",
     "chooseLanguage": "Izberite jezik",
     "languageAuto": "Samodejno",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Ni dostopnih dnevnikov",
     "copyLogs": "Kopiraj dnevnike",
     "copied": "Kopirano!",
-    "notificationsCategory": "OBVESTILA",
-    "cacheCategory": "PREDPOMNILNIK",
-    "enableCache": "Omogoči predpomnilnik slik",
-    "enableCacheDescription": "Ohrani prenesene slike za hitrejši ponovni poskus ob neuspelem zapisovanju",
-    "maxCacheSize": "Največja velikost predpomnilnika",
-    "maxCacheSizeDescription": "Samodejno odstrani najstarejše slike, ko je omejitev presežena",
-    "cacheSize": "Velikost predpomnilnika",
-    "noCachedImages": "Ni predpomnjenih slik",
-    "clearCache": "Počisti predpomnilnik",
-    "clearCacheConfirm": "Ali ste prepričani, da želite izbrisati vse predpomnjene slike? Tega dejanja ni mogoče razveljaviti."
+    "notifications": {
+      "title": "Obvestila",
+      "showMotd": "Pokaži nasvete",
+      "showMotdDescription": "Uporabne nasvete in obvestila",
+      "showUpdaterModal": "Pokaži obvestila o posodobitvah",
+      "showUpdaterModalDescription": "Prikaz dostopnih posodobitev aplikacije"
+    },
+    "cache": {
+      "title": "Predpomnilnik",
+      "enable": "Omogoči predpomnilnik slik",
+      "enableDescription": "Ohrani prenesene slike za hitrejši ponovni poskus ob neuspelem zapisovanju",
+      "maxSize": "Največja velikost predpomnilnika",
+      "maxSizeDescription": "Samodejno odstrani najstarejše slike, ko je omejitev presežena",
+      "size": "Velikost predpomnilnika",
+      "noCachedImages": "Ni predpomnjenih slik",
+      "clear": "Počisti predpomnilnik",
+      "clearConfirm": "Ali ste prepričani, da želite izbrisati vse predpomnjene slike? Tega dejanja ni mogoče razveljaviti."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Samodejna zaznava plošče",
+      "description": "Samodejno prepoznaj ploščo te naprave, ko deluje na Armbianu",
+      "mode_disabled": "Onemogočeno",
+      "mode_modal": "Interaktivno",
+      "mode_auto": "Samodejno"
+    },
+    "toast": {
+      "motdUpdated": "Nastavitev nasvetov posodobljena",
+      "motdError": "Nastavitve nasvetov ni bilo mogoče posodobiti",
+      "updaterUpdated": "Obvestila o posodobitvah posodobljena",
+      "updaterError": "Nastavitve obvestil ni bilo mogoče posodobiti",
+      "cacheToggleUpdated": "Nastavitev predpomnilnika posodobljena",
+      "cacheToggleError": "Nastavitve predpomnilnika ni bilo mogoče posodobiti",
+      "cacheSizeUpdated": "Omejitev velikosti predpomnilnika posodobljena",
+      "cacheSizeError": "Velikosti predpomnilnika ni bilo mogoče posodobiti",
+      "cacheClearSuccess": "Predpomnilnik izpraznjen",
+      "cacheClearError": "Predpomnilnika ni bilo mogoče izprazniti",
+      "detectionUpdated": "Zaznavanje plošče posodobljeno",
+      "detectionError": "Načina zaznavanja ni bilo mogoče posodobiti"
+    }
   },
   "update": {
     "title": "Na voljo posodobitev",

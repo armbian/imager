@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "사용자 정의 이미지"
   },
+  "armbian": {
+    "title": "보드 감지됨",
+    "description": "이 기기는 Armbian을 실행 중입니다. 이 보드를 자동으로 선택하시겠습니까?",
+    "cancelHint": "취소하면 자동 감지가 비활성화됩니다.",
+    "disabledToast": "보드 자동 감지가 비활성화되었습니다. 설정에서 다시 활성화하세요."
+  },
   "common": {
     "unknown": "알 수 없음",
     "confirm": "확인",
@@ -114,11 +120,6 @@
     "theme": "테마",
     "language": "언어",
     "appInfo": "정보",
-    "generalTitle": "일반",
-    "showMotd": "팁 표시",
-    "showMotdDescription": "유용한 팁과 공지사항 표시",
-    "showUpdaterModal": "업데이트 알림 표시",
-    "showUpdaterModalDescription": "사용 가능한 앱 업데이트 표시",
     "chooseTheme": "테마 선택",
     "chooseLanguage": "언어 선택",
     "languageAuto": "자동",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "사용 가능한 로그가 없음",
     "copyLogs": "로그 복사",
     "copied": "복사됨!",
-    "notificationsCategory": "알림",
-    "cacheCategory": "캐시",
-    "enableCache": "이미지 캐시 사용",
-    "enableCacheDescription": "플래시 실패 시 빠른 재시도를 위해 다운로드한 이미지 유지",
-    "maxCacheSize": "최대 캐시 크기",
-    "maxCacheSizeDescription": "제한 초과 시 가장 오래된 이미지 자동 삭제",
-    "cacheSize": "캐시 크기",
-    "noCachedImages": "캐시된 이미지 없음",
-    "clearCache": "캐시 지우기",
-    "clearCacheConfirm": "캐시된 모든 이미지를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
+    "notifications": {
+      "title": "알림",
+      "showMotd": "팁 표시",
+      "showMotdDescription": "유용한 팁과 공지사항 표시",
+      "showUpdaterModal": "업데이트 알림 표시",
+      "showUpdaterModalDescription": "사용 가능한 앱 업데이트 표시"
+    },
+    "cache": {
+      "title": "캐시",
+      "enable": "이미지 캐시 사용",
+      "enableDescription": "플래시 실패 시 빠른 재시도를 위해 다운로드한 이미지 유지",
+      "maxSize": "최대 캐시 크기",
+      "maxSizeDescription": "제한 초과 시 가장 오래된 이미지 자동 삭제",
+      "size": "캐시 크기",
+      "noCachedImages": "캐시된 이미지 없음",
+      "clear": "캐시 지우기",
+      "clearConfirm": "캐시된 모든 이미지를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "보드 자동 감지",
+      "description": "Armbian에서 실행 중일 때 이 장치의 보드를 자동으로 식별합니다",
+      "mode_disabled": "사용 안 함",
+      "mode_modal": "대화형",
+      "mode_auto": "자동"
+    },
+    "toast": {
+      "motdUpdated": "팁 설정이 업데이트되었습니다",
+      "motdError": "팁 설정 업데이트에 실패했습니다",
+      "updaterUpdated": "업데이트 알림이 업데이트되었습니다",
+      "updaterError": "알림 설정 업데이트에 실패했습니다",
+      "cacheToggleUpdated": "캐시 설정이 업데이트되었습니다",
+      "cacheToggleError": "캐시 설정 업데이트에 실패했습니다",
+      "cacheSizeUpdated": "캐시 크기 제한이 업데이트되었습니다",
+      "cacheSizeError": "캐시 크기 업데이트에 실패했습니다",
+      "cacheClearSuccess": "캐시가 삭제되었습니다",
+      "cacheClearError": "캐시 삭제에 실패했습니다",
+      "detectionUpdated": "보드 감지가 업데이트되었습니다",
+      "detectionError": "감지 모드 업데이트에 실패했습니다"
+    }
   },
   "update": {
     "title": "업데이트 가능",

@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Benutzerdefiniertes Image"
   },
+  "armbian": {
+    "title": "Board erkannt",
+    "description": "Dieses Gerät verwendet Armbian. Soll dieses Board automatisch ausgewählt werden?",
+    "cancelHint": "Abbrechen deaktiviert die automatische Board-Erkennung.",
+    "disabledToast": "Board-Erkennung deaktiviert. In den Einstellungen wieder aktivieren."
+  },
   "common": {
     "unknown": "Unbekannt",
     "confirm": "Bestätigen",
@@ -114,11 +120,6 @@
     "theme": "Design",
     "language": "Sprache",
     "appInfo": "Über",
-    "generalTitle": "Allgemein",
-    "showMotd": "Tipps anzeigen",
-    "showMotdDescription": "Hilfreiche Tipps und Ankündigungen zeigen",
-    "showUpdaterModal": "Update-Benachrichtigungen anzeigen",
-    "showUpdaterModalDescription": "Verfügbare App-Updates anzeigen",
     "chooseTheme": "Wählen Sie Ihr Design",
     "chooseLanguage": "Wählen Sie Ihre Sprache",
     "languageAuto": "Automatisch",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Keine Protokolle verfügbar",
     "copyLogs": "Protokolle kopieren",
     "copied": "Kopiert!",
-    "notificationsCategory": "BENACHRICHTIGUNGEN",
-    "cacheCategory": "CACHE",
-    "enableCache": "Image-Cache aktivieren",
-    "enableCacheDescription": "Heruntergeladene Images für schnellere Wiederholung bei fehlgeschlagenem Flash behalten",
-    "maxCacheSize": "Maximale Cache-Größe",
-    "maxCacheSizeDescription": "Älteste Images automatisch entfernen, wenn Limit überschritten wird",
-    "cacheSize": "Cache-Größe",
-    "noCachedImages": "Keine zwischengespeicherten Images",
-    "clearCache": "Cache leeren",
-    "clearCacheConfirm": "Sind Sie sicher, dass Sie alle zwischengespeicherten Images löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "showMotd": "Tipps anzeigen",
+      "showMotdDescription": "Hilfreiche Tipps und Ankündigungen zeigen",
+      "showUpdaterModal": "Update-Benachrichtigungen anzeigen",
+      "showUpdaterModalDescription": "Verfügbare App-Updates anzeigen"
+    },
+    "cache": {
+      "title": "Cache",
+      "enable": "Image-Cache aktivieren",
+      "enableDescription": "Heruntergeladene Images für schnellere Wiederholung bei fehlgeschlagenem Flash behalten",
+      "maxSize": "Maximale Cache-Größe",
+      "maxSizeDescription": "Älteste Images automatisch entfernen, wenn Limit überschritten wird",
+      "size": "Cache-Größe",
+      "noCachedImages": "Keine zwischengespeicherten Images",
+      "clear": "Cache leeren",
+      "clearConfirm": "Sind Sie sicher, dass Sie alle zwischengespeicherten Images löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Board automatisch erkennen",
+      "description": "Dieses Gerät automatisch identifizieren, wenn es unter Armbian läuft",
+      "mode_disabled": "Deaktiviert",
+      "mode_modal": "Interaktiv",
+      "mode_auto": "Automatisch"
+    },
+    "toast": {
+      "motdUpdated": "Tipps-Einstellung aktualisiert",
+      "motdError": "Tipps-Einstellung konnte nicht aktualisiert werden",
+      "updaterUpdated": "Update-Benachrichtigungen aktualisiert",
+      "updaterError": "Benachrichtigungseinstellung konnte nicht aktualisiert werden",
+      "cacheToggleUpdated": "Cache-Einstellung aktualisiert",
+      "cacheToggleError": "Cache-Einstellung konnte nicht aktualisiert werden",
+      "cacheSizeUpdated": "Cache-Größenlimit aktualisiert",
+      "cacheSizeError": "Cache-Größe konnte nicht aktualisiert werden",
+      "cacheClearSuccess": "Cache geleert",
+      "cacheClearError": "Cache konnte nicht geleert werden",
+      "detectionUpdated": "Board-Erkennung aktualisiert",
+      "detectionError": "Erkennungsmodus konnte nicht aktualisiert werden"
+    }
   },
   "update": {
     "title": "Update verfügbar",

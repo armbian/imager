@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Lightbulb, Download, HardDrive, Database, Trash2 } from 'lucide-react';
+import { Lightbulb, Download, HardDrive, Database, Cpu, Trash2 } from 'lucide-react';
 import {
   getShowMotd,
   setShowMotd,
@@ -10,9 +10,13 @@ import {
   setCacheEnabled,
   getCacheMaxSize,
   setCacheMaxSize,
+  getArmbianBoardDetection,
+  setArmbianBoardDetection,
 } from '../../hooks/useSettings';
 import { getCacheSize, clearCache } from '../../hooks/useTauri';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
+import { useToasts } from '../../hooks/useToasts';
+import { useSettingsGroup } from '../../hooks/useSettingsGroup';
 import { CACHE, EVENTS } from '../../config';
 
 /**
@@ -32,18 +36,44 @@ function formatBytes(bytes: number): string {
 /**
  * General settings section for sidebar layout
  *
- * Contains notification preferences and cache management.
+ * Contains notification preferences, cache management, and Armbian detection settings.
  */
 export function GeneralSection() {
   const { t } = useTranslation();
+  const { showSuccess, showError } = useToasts();
 
-  // Notification states
-  const [showMotd, setShowMotdState] = useState<boolean>(true);
-  const [showUpdaterModal, setShowUpdaterModalState] = useState<boolean>(true);
+  // Load all persistent settings on mount using useSettingsGroup hook
+  const settingsGroup = useSettingsGroup<{
+    showMotd: boolean;
+    showUpdaterModal: boolean;
+    cacheEnabled: boolean;
+    cacheMaxSize: number;
+    armbianDetection: string;
+  }>({
+    showMotd: getShowMotd,
+    showUpdaterModal: getShowUpdaterModal,
+    cacheEnabled: getCacheEnabled,
+    cacheMaxSize: getCacheMaxSize,
+    armbianDetection: getArmbianBoardDetection,
+  });
 
-  // Cache states
-  const [cacheEnabled, setCacheEnabledState] = useState<boolean>(true);
-  const [cacheMaxSize, setCacheMaxSizeState] = useState<number>(CACHE.DEFAULT_SIZE);
+  // Local state for mutable values (to allow UI updates before persistence)
+  const [showMotd, setShowMotdState] = useState<boolean>(settingsGroup.showMotd ?? true);
+  const [showUpdaterModal, setShowUpdaterModalState] = useState<boolean>(settingsGroup.showUpdaterModal ?? true);
+  const [cacheEnabled, setCacheEnabledState] = useState<boolean>(settingsGroup.cacheEnabled ?? true);
+  const [cacheMaxSize, setCacheMaxSizeState] = useState<number>(settingsGroup.cacheMaxSize ?? CACHE.DEFAULT_SIZE);
+  const [armbianDetection, setArmbianDetection] = useState<string>(settingsGroup.armbianDetection ?? 'disabled');
+
+  // Sync with loaded values
+  useEffect(() => {
+    if (settingsGroup.showMotd !== undefined) setShowMotdState(settingsGroup.showMotd);
+    if (settingsGroup.showUpdaterModal !== undefined) setShowUpdaterModalState(settingsGroup.showUpdaterModal);
+    if (settingsGroup.cacheEnabled !== undefined) setCacheEnabledState(settingsGroup.cacheEnabled);
+    if (settingsGroup.cacheMaxSize !== undefined) setCacheMaxSizeState(settingsGroup.cacheMaxSize);
+    if (settingsGroup.armbianDetection !== undefined) setArmbianDetection(settingsGroup.armbianDetection);
+  }, [settingsGroup]);
+
+  // Local state for non-persistent values
   const [currentCacheSize, setCurrentCacheSize] = useState<number>(0);
   const [isClearing, setIsClearing] = useState<boolean>(false);
   const [isLoadingCacheSize, setIsLoadingCacheSize] = useState<boolean>(true);
@@ -64,47 +94,8 @@ export function GeneralSection() {
     }
   }, []);
 
-  // Load MOTD preference on mount
+  // Load cache size on mount (separate from useSettingsGroup since it's not a setting)
   useEffect(() => {
-    const loadMotdPreference = async () => {
-      try {
-        const value = await getShowMotd();
-        setShowMotdState(value);
-      } catch (error) {
-        console.error('Failed to load MOTD preference:', error);
-      }
-    };
-    loadMotdPreference();
-  }, []);
-
-  // Load updater modal preference on mount
-  useEffect(() => {
-    const loadUpdaterModalPreference = async () => {
-      try {
-        const value = await getShowUpdaterModal();
-        setShowUpdaterModalState(value);
-      } catch (error) {
-        console.error('Failed to load updater modal preference:', error);
-      }
-    };
-    loadUpdaterModalPreference();
-  }, []);
-
-  // Load cache preferences on mount
-  useEffect(() => {
-    const loadCachePreferences = async () => {
-      try {
-        const [enabled, maxSize] = await Promise.all([
-          getCacheEnabled(),
-          getCacheMaxSize(),
-        ]);
-        setCacheEnabledState(enabled);
-        setCacheMaxSizeState(maxSize);
-      } catch (error) {
-        console.error('Failed to load cache preferences:', error);
-      }
-    };
-    loadCachePreferences();
     loadCacheSize();
   }, [loadCacheSize]);
 
@@ -117,8 +108,10 @@ export function GeneralSection() {
       await setShowMotd(newValue);
       setShowMotdState(newValue);
       window.dispatchEvent(new Event(EVENTS.MOTD_CHANGED));
+      showSuccess(t('settings.toast.motdUpdated'));
     } catch (error) {
       console.error('Failed to set MOTD preference:', error);
+      showError(t('settings.toast.motdError'));
     }
   };
 
@@ -131,8 +124,10 @@ export function GeneralSection() {
       await setShowUpdaterModal(newValue);
       setShowUpdaterModalState(newValue);
       window.dispatchEvent(new Event(EVENTS.SETTINGS_CHANGED));
+      showSuccess(t('settings.toast.updaterUpdated'));
     } catch (error) {
       console.error('Failed to set updater modal preference:', error);
+      showError(t('settings.toast.updaterError'));
     }
   };
 
@@ -145,8 +140,10 @@ export function GeneralSection() {
       await setCacheEnabled(newValue);
       setCacheEnabledState(newValue);
       window.dispatchEvent(new Event(EVENTS.SETTINGS_CHANGED));
+      showSuccess(t('settings.toast.cacheToggleUpdated'));
     } catch (error) {
       console.error('Failed to set cache enabled preference:', error);
+      showError(t('settings.toast.cacheToggleError'));
     }
   };
 
@@ -162,8 +159,10 @@ export function GeneralSection() {
       setCacheMaxSizeState(newSize);
       // Reload cache size in case eviction happened
       loadCacheSize();
+      showSuccess(t('settings.toast.cacheSizeUpdated'));
     } catch (error) {
       console.error('Failed to set cache max size:', error);
+      showError(t('settings.toast.cacheSizeError'));
     }
   };
 
@@ -183,19 +182,42 @@ export function GeneralSection() {
       setIsClearing(true);
       await clearCache();
       setCurrentCacheSize(0);
+      showSuccess(t('settings.toast.cacheClearSuccess'));
     } catch {
-      // Error already logged by clearCache
+      showError(t('settings.toast.cacheClearError'));
     } finally {
       setIsClearing(false);
     }
   };
 
+  /**
+   * Handle Armbian board detection mode change
+   * Reverts to previous value on save failure
+   */
+  const handleArmbianDetectionChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const previousMode = armbianDetection; // Store previous value for revert
+    const newMode = e.target.value;
+
+    try {
+      await setArmbianBoardDetection(newMode);
+      setArmbianDetection(newMode);
+      window.dispatchEvent(new Event(EVENTS.SETTINGS_CHANGED));
+      showSuccess(t('settings.toast.detectionUpdated'));
+    } catch (error) {
+      console.error('Failed to set Armbian detection preference:', error);
+      // Revert to previous value on error
+      setArmbianDetection(previousMode);
+      showError(t('settings.toast.detectionError'));
+    }
+  };
+
   return (
-    <div className="settings-section">
+    <>
+      <div className="settings-section">
       {/* NOTIFICATIONS Section */}
       <div className="settings-category">
         <h4 className="settings-category-title">
-          {t('settings.notificationsCategory')}
+          {t('settings.notifications.title')}
         </h4>
         <div className="settings-list">
           {/* Show tips toggle */}
@@ -206,10 +228,10 @@ export function GeneralSection() {
               </div>
               <div className="settings-item-content">
                 <div className="settings-item-label">
-                  {t('settings.showMotd')}
+                  {t('settings.notifications.showMotd')}
                 </div>
                 <div className="settings-item-description">
-                  {t('settings.showMotdDescription')}
+                  {t('settings.notifications.showMotdDescription')}
                 </div>
               </div>
             </div>
@@ -218,7 +240,7 @@ export function GeneralSection() {
                 type="checkbox"
                 checked={showMotd}
                 onChange={handleToggleMotd}
-                aria-label={t('settings.showMotd')}
+                aria-label={t('settings.notifications.showMotd')}
               />
               <span className="toggle-slider"></span>
             </label>
@@ -232,10 +254,10 @@ export function GeneralSection() {
               </div>
               <div className="settings-item-content">
                 <div className="settings-item-label">
-                  {t('settings.showUpdaterModal')}
+                  {t('settings.notifications.showUpdaterModal')}
                 </div>
                 <div className="settings-item-description">
-                  {t('settings.showUpdaterModalDescription')}
+                  {t('settings.notifications.showUpdaterModalDescription')}
                 </div>
               </div>
             </div>
@@ -244,7 +266,7 @@ export function GeneralSection() {
                 type="checkbox"
                 checked={showUpdaterModal}
                 onChange={handleToggleUpdaterModal}
-                aria-label={t('settings.showUpdaterModal')}
+                aria-label={t('settings.notifications.showUpdaterModal')}
               />
               <span className="toggle-slider"></span>
             </label>
@@ -255,7 +277,7 @@ export function GeneralSection() {
       {/* CACHE Section */}
       <div className="settings-category">
         <h4 className="settings-category-title">
-          {t('settings.cacheCategory')}
+          {t('settings.cache.title')}
         </h4>
         <div className="settings-list">
           {/* Enable image cache toggle */}
@@ -266,10 +288,10 @@ export function GeneralSection() {
               </div>
               <div className="settings-item-content">
                 <div className="settings-item-label">
-                  {t('settings.enableCache')}
+                  {t('settings.cache.enable')}
                 </div>
                 <div className="settings-item-description">
-                  {t('settings.enableCacheDescription')}
+                  {t('settings.cache.enableDescription')}
                 </div>
               </div>
             </div>
@@ -278,7 +300,7 @@ export function GeneralSection() {
                 type="checkbox"
                 checked={cacheEnabled}
                 onChange={handleToggleCacheEnabled}
-                aria-label={t('settings.enableCache')}
+                aria-label={t('settings.cache.enable')}
               />
               <span className="toggle-slider"></span>
             </label>
@@ -292,10 +314,10 @@ export function GeneralSection() {
               </div>
               <div className="settings-item-content">
                 <div className="settings-item-label">
-                  {t('settings.maxCacheSize')}
+                  {t('settings.cache.maxSize')}
                 </div>
                 <div className="settings-item-description">
-                  {t('settings.maxCacheSizeDescription')}
+                  {t('settings.cache.maxSizeDescription')}
                 </div>
               </div>
             </div>
@@ -304,7 +326,7 @@ export function GeneralSection() {
               value={cacheMaxSize}
               onChange={handleCacheMaxSizeChange}
               disabled={!cacheEnabled}
-              aria-label={t('settings.maxCacheSize')}
+              aria-label={t('settings.cache.maxSize')}
             >
               {CACHE.SIZE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -322,13 +344,13 @@ export function GeneralSection() {
               </div>
               <div className="settings-item-content">
                 <div className="settings-item-label">
-                  {t('settings.cacheSize')}
+                  {t('settings.cache.size')}
                 </div>
                 <div className="settings-item-description">
                   {isLoadingCacheSize
                     ? t('modal.loading')
                     : currentCacheSize === 0
-                      ? t('settings.noCachedImages')
+                      ? t('settings.cache.noCachedImages')
                       : formatBytes(currentCacheSize)}
                 </div>
               </div>
@@ -337,10 +359,41 @@ export function GeneralSection() {
               className="btn btn-secondary btn-sm"
               onClick={handleClearCacheClick}
               disabled={isClearing || currentCacheSize === 0}
-              aria-label={t('settings.clearCache')}
+              aria-label={t('settings.cache.clear')}
             >
-              {isClearing ? t('modal.loading') : t('settings.clearCache')}
+              {isClearing ? t('modal.loading') : t('settings.cache.clear')}
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ARMBIAN DETECTION Section */}
+      <div className="settings-category">
+        <h4 className="settings-category-title">{t('settings.armbian.title')}</h4>
+        <div className="settings-list">
+          {/* Armbian board detection mode */}
+          <div className="settings-item">
+            <div className="settings-item-left">
+              <div className="settings-item-icon">
+                <Cpu />
+              </div>
+              <div className="settings-item-content">
+                <div className="settings-item-label">{t('settings.armbian.label')}</div>
+                <div className="settings-item-description">
+                  {t('settings.armbian.description')}
+                </div>
+              </div>
+            </div>
+            <select
+              className="settings-select"
+              value={armbianDetection}
+              onChange={handleArmbianDetectionChange}
+              aria-label={t('settings.armbian.label')}
+            >
+              <option value="disabled">{t('settings.armbian.mode_disabled')}</option>
+              <option value="modal">{t('settings.armbian.mode_modal')}</option>
+              <option value="auto">{t('settings.armbian.mode_auto')}</option>
+            </select>
           </div>
         </div>
       </div>
@@ -348,13 +401,14 @@ export function GeneralSection() {
       {/* Clear cache confirmation dialog */}
       <ConfirmationDialog
         isOpen={showClearConfirm}
-        title={t('settings.clearCache')}
-        message={t('settings.clearCacheConfirm')}
+        title={t('settings.cache.clear')}
+        message={t('settings.cache.clearConfirm')}
         confirmText={t('common.confirm')}
         isDanger={true}
         onCancel={() => setShowClearConfirm(false)}
         onConfirm={handleClearCacheConfirm}
       />
-    </div>
+      </div>
+    </>
   );
 }

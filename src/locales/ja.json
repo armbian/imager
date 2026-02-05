@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "カスタムイメージ"
   },
+  "armbian": {
+    "title": "ボードを検出",
+    "description": "このデバイスはArmbianを使用しています。このボードを自動選択しますか？",
+    "cancelHint": "キャンセルすると自動検出が無効になります。",
+    "disabledToast": "ボード自動検出が無効になりました。設定で再度有効にできます。"
+  },
   "common": {
     "unknown": "不明",
     "confirm": "確認",
@@ -114,11 +120,6 @@
     "theme": "テーマ",
     "language": "言語",
     "appInfo": "について",
-    "generalTitle": "一般",
-    "showMotd": "ヒントを表示",
-    "showMotdDescription": "役立つヒントとお知らせを表示",
-    "showUpdaterModal": "更新通知を表示",
-    "showUpdaterModalDescription": "利用可能なアプリの更新を表示",
     "chooseTheme": "テーマを選択",
     "chooseLanguage": "言語を選択",
     "languageAuto": "自動",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "利用可能なログはありません",
     "copyLogs": "ログをコピー",
     "copied": "コピーしました！",
-    "notificationsCategory": "通知",
-    "cacheCategory": "キャッシュ",
-    "enableCache": "イメージキャッシュを有効にする",
-    "enableCacheDescription": "書き込みに失敗した場合に備えて、ダウンロードしたイメージを保持する",
-    "maxCacheSize": "最大キャッシュサイズ",
-    "maxCacheSizeDescription": "制限を超えた場合、古いイメージを自動的に削除",
-    "cacheSize": "キャッシュサイズ",
-    "noCachedImages": "キャッシュされたイメージはありません",
-    "clearCache": "キャッシュをクリア",
-    "clearCacheConfirm": "キャッシュされたすべてのイメージを削除しますか？この操作は元に戻せません。"
+    "notifications": {
+      "title": "通知",
+      "showMotd": "ヒントを表示",
+      "showMotdDescription": "役立つヒントとお知らせを表示",
+      "showUpdaterModal": "更新通知を表示",
+      "showUpdaterModalDescription": "利用可能なアプリの更新を表示"
+    },
+    "cache": {
+      "title": "キャッシュ",
+      "enable": "イメージキャッシュを有効にする",
+      "enableDescription": "書き込みに失敗した場合に備えて、ダウンロードしたイメージを保持する",
+      "maxSize": "最大キャッシュサイズ",
+      "maxSizeDescription": "制限を超えた場合、古いイメージを自動的に削除",
+      "size": "キャッシュサイズ",
+      "noCachedImages": "キャッシュされたイメージはありません",
+      "clear": "キャッシュをクリア",
+      "clearConfirm": "キャッシュされたすべてのイメージを削除しますか？この操作は元に戻せません。"
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "ボードを自動検出",
+      "description": "Armbian上で実行時にこのデバイスのボードを自動的に識別します",
+      "mode_disabled": "無効",
+      "mode_modal": "対話型",
+      "mode_auto": "自動"
+    },
+    "toast": {
+      "motdUpdated": "ヒント設定を更新しました",
+      "motdError": "ヒント設定の更新に失敗しました",
+      "updaterUpdated": "更新通知を更新しました",
+      "updaterError": "通知設定の更新に失敗しました",
+      "cacheToggleUpdated": "キャッシュ設定を更新しました",
+      "cacheToggleError": "キャッシュ設定の更新に失敗しました",
+      "cacheSizeUpdated": "キャッシュサイズ制限を更新しました",
+      "cacheSizeError": "キャッシュサイズの更新に失敗しました",
+      "cacheClearSuccess": "キャッシュを消去しました",
+      "cacheClearError": "キャッシュの消去に失敗しました",
+      "detectionUpdated": "ボード検出を更新しました",
+      "detectionError": "検出モードの更新に失敗しました"
+    }
   },
   "update": {
     "title": "アップデートが利用可能",

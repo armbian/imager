@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Prilagođena slika"
   },
+  "armbian": {
+    "title": "Ploča otkrivena",
+    "description": "Ovaj uređaj koristi Armbian. Želite li automatski odabrati ovu ploču i preskočiti ručni odabir?",
+    "cancelHint": "Odustajanje isključuje automatsko otkrivanje.",
+    "disabledToast": "Automatsko otkrivanje isključeno. Ponovno uključite u postavkama."
+  },
   "common": {
     "unknown": "Nepoznato",
     "confirm": "Potvrda",
@@ -114,11 +120,6 @@
     "theme": "Tema",
     "language": "Jezik",
     "appInfo": "O aplikaciji",
-    "generalTitle": "Općenito",
-    "showMotd": "Prikaži savjete",
-    "showMotdDescription": "Korisne savjete i oglasi",
-    "showUpdaterModal": "Prikaži obavijesti o ažuriranju",
-    "showUpdaterModalDescription": "Prikaži dostupna ažuriranja aplikacije",
     "chooseTheme": "Odaberi svoju temu",
     "chooseLanguage": "Odaberi svoj jezik",
     "languageAuto": "Automatski",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "Nema dostupnih zapisa",
     "copyLogs": "Kopiraj zapise",
     "copied": "Kopirano!",
-    "notificationsCategory": "OBAVIJESTI",
-    "cacheCategory": "PREDMEMORIJA",
-    "enableCache": "Omogući predmemoriju slika",
-    "enableCacheDescription": "Zadrži preuzete slike za brži ponovni pokušaj ako snimanje ne uspije",
-    "maxCacheSize": "Maksimalna veličina predmemorije",
-    "maxCacheSizeDescription": "Automatski ukloni najstarije slike kada se prekorači ograničenje",
-    "cacheSize": "Veličina predmemorije",
-    "noCachedImages": "Nema slika u predmemoriji",
-    "clearCache": "Očisti predmemoriju",
-    "clearCacheConfirm": "Jeste li sigurni da želite izbrisati sve slike iz predmemorije? Ova radnja se ne može poništiti."
+    "notifications": {
+      "title": "Obavijesti",
+      "showMotd": "Prikaži savjete",
+      "showMotdDescription": "Korisne savjete i oglasi",
+      "showUpdaterModal": "Prikaži obavijesti o ažuriranju",
+      "showUpdaterModalDescription": "Prikaži dostupna ažuriranja aplikacije"
+    },
+    "cache": {
+      "title": "Predmemorija",
+      "enable": "Omogući predmemoriju slika",
+      "enableDescription": "Zadrži preuzete slike za brži ponovni pokušaj ako snimanje ne uspije",
+      "maxSize": "Maksimalna veličina predmemorije",
+      "maxSizeDescription": "Automatski ukloni najstarije slike kada se prekorači ograničenje",
+      "size": "Veličina predmemorije",
+      "noCachedImages": "Nema slika u predmemoriji",
+      "clear": "Očisti predmemoriju",
+      "clearConfirm": "Jeste li sigurni da želite izbrisati sve slike iz predmemorije? Ova radnja se ne može poništiti."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Automatsko otkrivanje ploče",
+      "description": "Automatski identificiraj ploču ovog uređaja kada radi na Armbianu",
+      "mode_disabled": "Onemogućeno",
+      "mode_modal": "Interaktivno",
+      "mode_auto": "Tiho"
+    },
+    "toast": {
+      "motdUpdated": "Postavka savjeta ažurirana",
+      "motdError": "Nije uspjelo ažuriranje postavke savjeta",
+      "updaterUpdated": "Obavijesti o ažuriranju ažurirane",
+      "updaterError": "Nije uspjelo ažuriranje postavke obavijesti",
+      "cacheToggleUpdated": "Postavka predmemorije ažurirana",
+      "cacheToggleError": "Nije uspjelo ažuriranje postavke predmemorije",
+      "cacheSizeUpdated": "Ograničenje veličine predmemorije ažurirano",
+      "cacheSizeError": "Nije uspjelo ažuriranje veličine predmemorije",
+      "cacheClearSuccess": "Predmemorija očišćena",
+      "cacheClearError": "Nije uspjelo čišćenje predmemorije",
+      "detectionUpdated": "Detekcija ploče ažurirana",
+      "detectionError": "Nije uspjelo ažuriranje načina detekcije"
+    }
   },
   "update": {
     "title": "Dostupno ažuriranje",

@@ -103,6 +103,12 @@
   "custom": {
     "customImage": "Custom Image"
   },
+  "armbian": {
+    "title": "Board Detected",
+    "description": "This device is running Armbian. Would you like to pre-select this board and skip manual selection?",
+    "cancelHint": "Cancelling will disable board auto-detection.",
+    "disabledToast": "Board auto-detection disabled. Re-enable it in Settings."
+  },
   "common": {
     "unknown": "Unknown",
     "confirm": "Confirm",
@@ -114,11 +120,6 @@
     "theme": "Theme",
     "language": "Language",
     "appInfo": "About",
-    "generalTitle": "General",
-    "showMotd": "Show tips",
-    "showMotdDescription": "Display helpful tips and announcements",
-    "showUpdaterModal": "Show update notifications",
-    "showUpdaterModalDescription": "Display available app updates",
     "chooseTheme": "Choose your theme",
     "chooseLanguage": "Choose your language",
     "languageAuto": "Automatic",
@@ -143,16 +144,46 @@
     "noLogsAvailable": "No logs available",
     "copyLogs": "Copy logs",
     "copied": "Copied!",
-    "notificationsCategory": "NOTIFICATIONS",
-    "cacheCategory": "CACHE",
-    "enableCache": "Enable image cache",
-    "enableCacheDescription": "Keep downloaded images for faster retry if flashing fails",
-    "maxCacheSize": "Maximum cache size",
-    "maxCacheSizeDescription": "Automatically remove oldest images when limit is exceeded",
-    "cacheSize": "Cache size",
-    "noCachedImages": "No cached images",
-    "clearCache": "Clear cache",
-    "clearCacheConfirm": "Are you sure you want to delete all cached images? This cannot be undone."
+    "notifications": {
+      "title": "Notifications",
+      "showMotd": "Show tips",
+      "showMotdDescription": "Display helpful tips and announcements",
+      "showUpdaterModal": "Show update notifications",
+      "showUpdaterModalDescription": "Display available app updates"
+    },
+    "cache": {
+      "title": "Cache",
+      "enable": "Enable image cache",
+      "enableDescription": "Keep downloaded images for faster retry if flashing fails",
+      "maxSize": "Maximum cache size",
+      "maxSizeDescription": "Automatically remove oldest images when limit is exceeded",
+      "size": "Cache size",
+      "noCachedImages": "No cached images",
+      "clear": "Clear cache",
+      "clearConfirm": "Are you sure you want to delete all cached images? This cannot be undone."
+    },
+    "armbian": {
+      "title": "Armbian",
+      "label": "Auto-detect board",
+      "description": "Automatically identify this device's board when running on Armbian",
+      "mode_disabled": "Disabled",
+      "mode_modal": "Interactive",
+      "mode_auto": "Silent"
+    },
+    "toast": {
+      "motdUpdated": "Tips setting updated",
+      "motdError": "Failed to update tips setting",
+      "updaterUpdated": "Update notifications updated",
+      "updaterError": "Failed to update notification setting",
+      "cacheToggleUpdated": "Cache setting updated",
+      "cacheToggleError": "Failed to update cache setting",
+      "cacheSizeUpdated": "Cache size limit updated",
+      "cacheSizeError": "Failed to update cache size",
+      "cacheClearSuccess": "Cache cleared",
+      "cacheClearError": "Failed to clear cache",
+      "detectionUpdated": "Board detection updated",
+      "detectionError": "Failed to update detection mode"
+    }
   },
   "update": {
     "title": "Update Available",

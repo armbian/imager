@@ -15,6 +15,7 @@ import {
   KERNEL_BADGES,
   DESKTOP_ENVIRONMENTS,
   UI,
+  adjustBrightness,
 } from '../../config';
 import { formatFileSize, DEFAULT_COLOR } from '../../utils';
 
@@ -218,18 +219,19 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
             </div>
           )}
           <div className="modal-list">
-          {!showSkeleton && filteredImages.map((image, index) => {
+          {!showSkeleton && filteredImages.map((image) => {
             const desktopEnv = getDesktopEnv(image.image_variant);
             const kernelType = getKernelType(image.kernel_branch);
             const osInfo = getOsInfo(image.distro_release);
             const appInfo = getAppInfo(image.preinstalled_application);
+            const badgeConfig = kernelType ? KERNEL_BADGES[kernelType] : null;
 
             // Use app logo if available, otherwise use OS logo
             const displayInfo = appInfo || osInfo;
 
             return (
               <button
-                key={index}
+                key={`${image.armbian_version}-${image.distro_release}-${image.kernel_branch}`}
                 className={`list-item ${image.promoted ? 'promoted' : ''}`}
                 onClick={() => handleImageClick(image)}
               >
@@ -245,38 +247,78 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
                 <div className="list-item-content" style={{ flex: 1 }}>
                   <div className="list-item-title">
                     Armbian {image.armbian_version} {image.distro_release}
-                    {image.preinstalled_application && (
-                      <span className="badge" style={{ marginLeft: 8, background: appInfo?.badgeColor || 'var(--accent)', color: 'white' }}>
-                        {image.preinstalled_application}
-                      </span>
-                    )}
                   </div>
-                  <div className="list-item-badges" style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                    {image.promoted && (
-                      <span className="badge badge-recommended">
-                        <Star size={11} />
-                        {t('modal.promoted')}
-                      </span>
-                    )}
-                    {desktopEnv && DESKTOP_BADGES[desktopEnv] ? (
-                      <span className="badge badge-desktop">
-                        <Monitor size={11} />
-                        {DESKTOP_BADGES[desktopEnv].label}
-                      </span>
+
+                  {/* Side panel with main info */}
+                  <div className="image-info-side-panel">
+                    {/* Preinstalled app badge - replaces desktop when present */}
+                    {image.preinstalled_application ? (
+                      <div
+                        className="side-info-badge"
+                        style={{
+                          background: appInfo?.badgeColor || 'var(--accent)',
+                          boxShadow: `0 2px 6px ${appInfo?.badgeColor || 'rgba(249, 115, 22, 0.4)'}66`,
+                          border: 'none',
+                          color: 'white',
+                        }}
+                      >
+                        <AppWindow size={11} />
+                        <span>{image.preinstalled_application}</span>
+                      </div>
                     ) : (
-                      <span className="badge badge-cli">
-                        <Terminal size={11} />
-                        CLI
-                      </span>
+                      // Show desktop or CLI only if NO preinstalled app
+                      <>
+                        {desktopEnv && DESKTOP_BADGES[desktopEnv] ? (
+                          <div
+                            className="side-info-badge"
+                            style={{
+                              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                              boxShadow: '0 2px 6px rgba(59, 130, 246, 0.4)',
+                              border: 'none',
+                              color: 'white',
+                            }}
+                          >
+                            <Monitor size={11} />
+                            <span>{DESKTOP_BADGES[desktopEnv].label}</span>
+                          </div>
+                        ) : (
+                          <div
+                            className="side-info-badge"
+                            style={{
+                              background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                              boxShadow: '0 2px 6px rgba(100, 116, 139, 0.3)',
+                              border: 'none',
+                              color: 'white',
+                            }}
+                          >
+                            <Terminal size={11} />
+                            <span>CLI</span>
+                          </div>
+                        )}
+                      </>
                     )}
-                    {kernelType && KERNEL_BADGES[kernelType] && (
-                      <span className="badge badge-kernel">
+
+                    {/* Kernel info - SECOND */}
+                    {badgeConfig && (
+                      <div
+                        className="side-info-badge badge-kernel"
+                        style={{
+                          background: `linear-gradient(135deg, ${badgeConfig.color} 0%, ${adjustBrightness(badgeConfig.color, -20)} 100%)`,
+                          boxShadow: `0 2px 6px ${badgeConfig.color}66`,
+                          border: 'none',
+                          color: 'white',
+                        }}
+                      >
                         <Zap size={11} />
-                        {KERNEL_BADGES[kernelType].label}
-                      </span>
+                        <span>{badgeConfig.label}</span>
+                        {image.kernel_version && (
+                          <span style={{ opacity: 0.9, fontSize: '11px', marginLeft: 2 }}> {image.kernel_version}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
+
                 <span className="badge badge-size">
                   <Download size={11} />
                   {formatFileSize(image.file_size, t('common.unknown'))}

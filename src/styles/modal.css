@@ -309,6 +309,106 @@
 }
 
 /* ========================================
+   COMPACT MODAL (e.g. Armbian Board Detection)
+   ======================================== */
+.modal.modal-compact {
+  max-width: min(92vw, 640px);
+}
+
+/* Armbian board detection modal body */
+.armbian-board-modal {
+  text-align: center;
+  padding: 32px 40px 28px;
+}
+
+/* Hero area with subtle accent gradient background */
+.armbian-board-hero {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 8px;
+  margin: -32px -40px 24px;
+  background: linear-gradient(180deg, rgba(242, 101, 34, 0.06) 0%, transparent 100%);
+}
+
+/* Board image container */
+.armbian-board-modal .armbian-board-image {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.armbian-board-modal .armbian-board-image img {
+  width: 272px;
+  height: auto;
+  border-radius: 12px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+  transform: scale(1.4);
+  transform-origin: center;
+}
+
+.armbian-board-modal .armbian-board-image img:hover {
+  transform: scale(1.45);
+}
+
+/* Fallback placeholder when no image is available */
+.armbian-board-modal .board-image-placeholder {
+  width: 272px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+  color: var(--text-muted);
+}
+
+/* Board name heading */
+.armbian-board-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+  letter-spacing: -0.2px;
+}
+
+/* Spacing for badges inside Armbian modal */
+.armbian-board-modal .board-grid-badges {
+  margin-bottom: 12px;
+}
+
+/* Description text */
+.armbian-board-modal .armbian-board-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 24px;
+  line-height: 1.5;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Action buttons row */
+.armbian-board-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.armbian-board-actions .btn {
+  min-width: 140px;
+}
+
+.armbian-board-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* ========================================
    CONFIRM MODAL
    ======================================== */
 .confirm-modal {

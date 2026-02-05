@@ -1,5 +1,6 @@
-import { type ReactNode, useEffect, useCallback, useState, useRef } from 'react';
+import { type ReactNode, useEffect, useCallback } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
+import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,19 +13,10 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, searchBar, showBack, onBack }: ModalProps) {
-  const [isExiting, setIsExiting] = useState(false);
-  const isExitingRef = useRef(false);
-
-  const handleClose = useCallback(() => {
-    if (isExitingRef.current) return;
-    isExitingRef.current = true;
-    setIsExiting(true);
-    setTimeout(() => {
-      setIsExiting(false);
-      isExitingRef.current = false;
-      onClose();
-    }, 200); // Match the CSS exit animation duration
-  }, [onClose]);
+  const { isExiting, handleClose } = useModalExitAnimation({
+    onClose,
+    duration: 200,
+  });
 
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {

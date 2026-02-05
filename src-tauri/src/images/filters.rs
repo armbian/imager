@@ -304,6 +304,7 @@ pub fn filter_images_for_board(
             armbian_version: img.armbian_version.clone().unwrap_or_default(),
             distro_release: img.distro_release.clone().unwrap_or_default(),
             kernel_branch: img.kernel_branch.clone().unwrap_or_default(),
+            kernel_version: img.kernel_version.clone().unwrap_or_default(),
             image_variant: img.image_variant.clone().unwrap_or_default(),
             preinstalled_application: img.preinstalled_application.clone().unwrap_or_default(),
             promoted: img.promoted.as_deref() == Some("true"),
