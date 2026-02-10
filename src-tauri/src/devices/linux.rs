@@ -2,12 +2,30 @@
 //!
 //! Uses lsblk to enumerate block devices.
 
+use std::fs;
 use std::process::Command;
 
 use crate::log_error;
 use crate::utils::format_size;
 
 use super::types::BlockDevice;
+
+/// Checks if a device is read-only by reading /sys/block/{device}/ro
+/// Returns true if the device is read-only (write-protected)
+fn is_device_read_only(device_name: &str) -> bool {
+    // Extract base device name (e.g., "sda" from "/dev/sda" or "mmcblk0" from "/dev/mmcblk0")
+    let base_name = device_name
+        .trim_start_matches("/dev/")
+        .split('p')
+        .next()
+        .unwrap_or(device_name);
+
+    let ro_path = format!("/sys/block/{}/ro", base_name);
+
+    fs::read_to_string(&ro_path)
+        .map(|s| s.trim() == "1")
+        .unwrap_or(false)
+}
 
 /// Get list of block devices on Linux
 pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
@@ -107,6 +125,9 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             other => Some(other.to_string()),
         };
 
+        // Check read-only status via sysfs
+        let is_read_only = is_device_read_only(dev_name);
+
         devices.push(BlockDevice {
             path: path.to_string(),
             name: dev_name.to_string(),
@@ -116,6 +137,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             is_removable,
             is_system,
             bus_type,
+            is_read_only,
         });
     }
 

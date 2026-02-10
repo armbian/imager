@@ -126,6 +126,7 @@ fn get_disk_info(disk_path: &str) -> Result<BlockDevice, String> {
     let mut is_removable = true;
     let mut is_internal = false;
     let mut protocol = String::new();
+    let mut is_read_only = false;
 
     for line in info.lines() {
         let line = line.trim();
@@ -151,6 +152,9 @@ fn get_disk_info(disk_path: &str) -> Result<BlockDevice, String> {
                 .nth(1)
                 .map(|s| s.trim().to_string())
                 .unwrap_or_default();
+        } else if line.starts_with("Media Read-Only:") {
+            // Check if "Media Read-Only: Yes" - indicates write-protect lock is active
+            is_read_only = line.contains("Yes");
         }
     }
 
@@ -192,5 +196,6 @@ fn get_disk_info(disk_path: &str) -> Result<BlockDevice, String> {
         is_removable,
         is_system: is_internal && !is_removable,
         bus_type,
+        is_read_only,
     })
 }

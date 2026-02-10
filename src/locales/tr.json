@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Yenile",
     "showSystemDevices": "Sistem sürücülerini göster",
-    "hideSystemDevices": "Sistem sürücülerini gizle"
+    "hideSystemDevices": "Sistem sürücülerini gizle",
+    "locked": "Kilitli"
   },
   "header": {
     "stepManufacturer": "Üretici",

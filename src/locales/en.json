@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Refresh",
     "showSystemDevices": "Show system drives",
-    "hideSystemDevices": "Hide system drives"
+    "hideSystemDevices": "Hide system drives",
+    "locked": "Locked"
   },
   "header": {
     "stepManufacturer": "Manufacturer",

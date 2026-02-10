@@ -39,6 +39,8 @@ export interface BlockDevice {
   is_removable: boolean;
   is_system: boolean;
   bus_type?: string;
+  /** Whether the device is read-only (e.g., SD card with write-protect lock) */
+  is_read_only?: boolean;
 }
 
 export interface DownloadProgress {

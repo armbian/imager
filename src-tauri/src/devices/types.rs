@@ -23,4 +23,6 @@ pub struct BlockDevice {
     pub is_system: bool,
     /// Bus type (e.g., "USB", "SD", "SATA", "NVMe", "MMC")
     pub bus_type: Option<String>,
+    /// Whether the device is read-only (e.g., SD card with write-protect lock)
+    pub is_read_only: bool,
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { HardDrive, RefreshCw, AlertTriangle, Shield, MemoryStick, Usb } from 'lucide-react';
+import { HardDrive, RefreshCw, AlertTriangle, Shield, MemoryStick, Usb, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { ErrorDisplay, ConfirmationDialog, ListItemSkeleton } from '../shared';
@@ -55,11 +55,12 @@ function devicesChanged(prev: BlockDevice[] | null, next: BlockDevice[]): boolea
   return next.some(d => !prevPaths.has(d.path));
 }
 
-/** Sort devices: removable first, then by size */
+/** Sort devices: system first, then by size (largest first) */
 function sortDevices(devices: BlockDevice[]): BlockDevice[] {
   return [...devices].sort((a, b) => {
-    if (a.is_system !== b.is_system) return a.is_system ? 1 : -1;
-    if (a.is_removable !== b.is_removable) return a.is_removable ? -1 : 1;
+    // System devices first
+    if (a.is_system !== b.is_system) return a.is_system ? -1 : 1;
+    // Then by size (largest first)
     return b.size - a.size;
   });
 }
@@ -93,12 +94,10 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
     return devices && devices.length > 0;
   }, [devices]);
 
-  // Filter devices based on showSystemDevices toggle
+  // Filter and sort devices based on showSystemDevices toggle
   const filteredDevices = useMemo(() => {
-    if (showSystemDevices) {
-      return devices;
-    }
-    return devices.filter(d => !d.is_system);
+    const filtered = showSystemDevices ? devices : devices.filter(d => !d.is_system);
+    return sortDevices(filtered);
   }, [devices, showSystemDevices]);
 
   // Show skeleton with minimum delay
@@ -153,13 +152,13 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   }, [isOpen, showConfirm, pollDevices]);
 
   function handleDeviceClick(device: BlockDevice) {
-    if (device.is_system) return;
+    if (device.is_system || device.is_read_only) return;
     setSelectedDevice(device);
     setShowConfirm(true);
   }
 
   function handleConfirm() {
-    if (selectedDevice && !selectedDevice.is_system) {
+    if (selectedDevice && !selectedDevice.is_system && !selectedDevice.is_read_only) {
       onSelect(selectedDevice);
       setShowConfirm(false);
     }
@@ -213,13 +212,15 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
               {!showSkeleton && filteredDevices.map((device) => {
                 const deviceType = getDeviceType(device);
                 const badge = getDeviceBadge(deviceType, t);
+                const isDisabled = device.is_system || device.is_read_only;
+
                 return (
                   <button
                     key={device.path}
-                    className={`list-item ${device.is_removable ? 'removable' : ''} ${device.is_system ? 'system' : ''}`}
+                    className={`list-item ${device.is_removable ? 'removable' : ''} ${device.is_system ? 'system' : ''} ${device.is_read_only ? 'locked' : ''}`}
                     onClick={() => handleDeviceClick(device)}
-                    disabled={device.is_system}
-                    style={{ opacity: device.is_system ? 0.5 : 1 }}
+                    disabled={isDisabled}
+                    style={isDisabled ? { filter: 'opacity(0.5)', cursor: 'not-allowed' } : undefined}
                   >
                     <div className="list-item-icon" style={{
                       backgroundColor: getDeviceColors(deviceType).background,
@@ -236,10 +237,16 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
                           </span>
                         )}
                       </div>
-                      <div className="list-item-subtitle">
-                        {device.name} • {device.size_formatted}
-                      </div>
+                      <div className="list-item-subtitle">{device.name} • {device.size_formatted}</div>
                     </div>
+                    {device.is_read_only && (
+                      <div className="list-item-right">
+                        <span className="locked-badge">
+                          <Lock size={11} />
+                          {t('device.locked')}
+                        </span>
+                      </div>
+                    )}
                   </button>
                 );
               })}

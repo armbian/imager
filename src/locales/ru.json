@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Обновить",
     "showSystemDevices": "Показать системные диски",
-    "hideSystemDevices": "Скрыть системные диски"
+    "hideSystemDevices": "Скрыть системные диски",
+    "locked": "Заблокировано"
   },
   "header": {
     "stepManufacturer": "Производитель",

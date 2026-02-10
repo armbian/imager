@@ -20,6 +20,15 @@ use windows_sys::Win32::{
 
 const IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS: u32 = 0x00560000;
 const IOCTL_STORAGE_QUERY_PROPERTY: u32 = 0x002D1400;
+/// IOCTL to get media types with characteristics including write protection status
+/// More reliable than IOCTL_DISK_IS_WRITABLE for SD cards with physical lock switch
+const IOCTL_STORAGE_GET_MEDIA_TYPES_EX: u32 = 0x002D0030;
+
+// ===== Write Protection Constants =====
+
+/// Flag indicating media is write-protected (physical lock switch engaged)
+/// Used in DeviceMediaInfo.media_characteristics
+const MEDIA_WRITE_PROTECTED: u32 = 0x00000100;
 
 // ===== Storage Property Constants =====
 
@@ -72,6 +81,34 @@ struct VolumeDiskExtent {
 struct VolumeDiskExtents {
     number_of_extents: u32,
     extents: [VolumeDiskExtent; 1],
+}
+
+/// GET_MEDIA_TYPES structure header returned by IOCTL_STORAGE_GET_MEDIA_TYPES_EX
+/// See: https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ni-winioctl-ioctl_storage_get_media_types_ex
+#[repr(C)]
+#[derive(Debug, Clone)]
+struct GetMediaTypes {
+    /// Device type (FILE_DEVICE_*)
+    device_type: u32,
+    /// Number of DEVICE_MEDIA_INFO structures that follow
+    media_info_count: u32,
+    // Followed by array of DEVICE_MEDIA_INFO
+}
+
+/// DEVICE_MEDIA_INFO for removable media
+/// Contains media characteristics including write protection status
+/// See: https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-device_media_info
+#[repr(C)]
+#[derive(Debug, Clone)]
+struct DeviceMediaInfo {
+    cylinders: i64,
+    media_type: u32,
+    tracks_per_cylinder: u32,
+    sectors_per_track: u32,
+    bytes_per_sector: u32,
+    number_media_sides: u32,
+    /// Bitmask of media characteristics - check MEDIA_WRITE_PROTECTED (0x100)
+    media_characteristics: u32,
 }
 
 // ===== External Win32 API =====
@@ -159,6 +196,64 @@ fn extract_ascii_string(buffer: &[u8], offset: usize) -> String {
     } else {
         "Physical Drive".to_string()
     }
+}
+
+/// Checks if a disk is write-protected using IOCTL_STORAGE_GET_MEDIA_TYPES_EX
+///
+/// This method checks the MEDIA_WRITE_PROTECTED flag in MediaCharacteristics,
+/// which reliably detects the physical write protection lock switch on SD cards.
+///
+/// Note: IOCTL_DISK_IS_WRITABLE only checks driver capability, not physical lock state.
+///
+/// Returns true if the disk is write-protected (lock switch engaged)
+#[cfg(target_os = "windows")]
+fn is_disk_read_only(handle: HANDLE) -> bool {
+    // Buffer size for GET_MEDIA_TYPES response (header + array of DEVICE_MEDIA_INFO)
+    let mut buffer = [0u8; 2048];
+    let mut bytes_returned: u32 = 0;
+
+    let result = unsafe {
+        DeviceIoControl(
+            handle,
+            IOCTL_STORAGE_GET_MEDIA_TYPES_EX,
+            std::ptr::null(),
+            0,
+            buffer.as_mut_ptr() as *mut c_void,
+            buffer.len() as u32,
+            &mut bytes_returned,
+            std::ptr::null_mut(),
+        )
+    };
+
+    // Size of GetMediaTypes header (device_type + media_info_count)
+    const HEADER_SIZE: u32 = 8;
+    // Size of DeviceMediaInfo structure
+    const MEDIA_INFO_SIZE: u32 = 32;
+
+    // IOCTL failed or insufficient data returned - assume writable
+    if result == 0 || bytes_returned < HEADER_SIZE {
+        return false;
+    }
+
+    // Parse GET_MEDIA_TYPES header
+    let header = unsafe { &*(buffer.as_ptr() as *const GetMediaTypes) };
+
+    // No media info available - assume writable
+    if header.media_info_count == 0 {
+        return false;
+    }
+
+    // Check if we have enough data for at least one DEVICE_MEDIA_INFO
+    if bytes_returned < HEADER_SIZE + MEDIA_INFO_SIZE {
+        return false;
+    }
+
+    // Parse first DEVICE_MEDIA_INFO (immediately after header)
+    let media_info =
+        unsafe { &*(buffer.as_ptr().add(HEADER_SIZE as usize) as *const DeviceMediaInfo) };
+
+    // Check MEDIA_WRITE_PROTECTED flag (0x100) in media_characteristics
+    (media_info.media_characteristics & MEDIA_WRITE_PROTECTED) != 0
 }
 
 /// Queries device properties via IOCTL_STORAGE_QUERY_PROPERTY
@@ -356,6 +451,9 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             let geometry = unsafe { &*(geometry_bytes.as_ptr() as *const DiskGeometryEx) };
             let size = geometry.disk_size;
 
+            // Check if disk is read-only before closing handle
+            let is_read_only = is_disk_read_only(handle);
+
             unsafe { CloseHandle(handle) };
 
             if size == 0 {
@@ -383,6 +481,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
                 is_removable,
                 is_system,
                 bus_type,
+                is_read_only,
             });
         }
 

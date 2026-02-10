@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "更新",
     "showSystemDevices": "システムドライブを表示",
-    "hideSystemDevices": "システムドライブを非表示"
+    "hideSystemDevices": "システムドライブを非表示",
+    "locked": "ロック中"
   },
   "header": {
     "stepManufacturer": "メーカー",

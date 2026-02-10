@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Uppdatera",
     "showSystemDevices": "Visa systemenheter",
-    "hideSystemDevices": "Dölj systemenheter"
+    "hideSystemDevices": "Dölj systemenheter",
+    "locked": "Låst"
   },
   "header": {
     "stepManufacturer": "Tillverkare",

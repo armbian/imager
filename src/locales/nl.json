@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Vernieuwen",
     "showSystemDevices": "Systeemstations weergeven",
-    "hideSystemDevices": "Systeemstations verbergen"
+    "hideSystemDevices": "Systeemstations verbergen",
+    "locked": "Vergrendeld"
   },
   "header": {
     "stepManufacturer": "Fabrikant",

@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Osveži",
     "showSystemDevices": "Prikaži sistemske pogone",
-    "hideSystemDevices": "Skrij sistemske pogone"
+    "hideSystemDevices": "Skrij sistemske pogone",
+    "locked": "Zaklenjeno"
   },
   "header": {
     "stepManufacturer": "Proizvajalec",

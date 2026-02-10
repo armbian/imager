@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Actualizar",
     "showSystemDevices": "Mostrar unidades del sistema",
-    "hideSystemDevices": "Ocultar unidades del sistema"
+    "hideSystemDevices": "Ocultar unidades del sistema",
+    "locked": "Bloqueado"
   },
   "header": {
     "stepManufacturer": "Fabricante",

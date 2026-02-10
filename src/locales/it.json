@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Aggiorna",
     "showSystemDevices": "Mostra dischi di sistema",
-    "hideSystemDevices": "Nascondi dischi di sistema"
+    "hideSystemDevices": "Nascondi dischi di sistema",
+    "locked": "Bloccato"
   },
   "header": {
     "stepManufacturer": "Produttore",

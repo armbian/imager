@@ -71,7 +71,8 @@
     "nvme": "NVMe",
     "refresh": "Aktualisieren",
     "showSystemDevices": "Systemlaufwerke anzeigen",
-    "hideSystemDevices": "Systemlaufwerke ausblenden"
+    "hideSystemDevices": "Systemlaufwerke ausblenden",
+    "locked": "Gesperrt"
   },
   "header": {
     "stepManufacturer": "Hersteller",
