@@ -44,7 +44,7 @@ pub fn decompress_with_rust_xz(
     );
 
     // XzReaderMt requires Seek + Read, so we pass the file directly
-    let decoder = XzReaderMt::new(input_file, false, threads as u32)
+    let decoder = XzReaderMt::new(input_file, true, threads as u32)
         .map_err(|e| format!("Failed to create XZ decoder: {}", e))?;
 
     decompress_with_reader_mt(decoder, output_path, state, "xz")
