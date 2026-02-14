@@ -198,6 +198,7 @@
     "retry": "Poskusi znova",
     "readyMessage": "Posodobitev je prenesena. Znova zaženite aplikacijo za dokončanje namestitve.",
     "errorMessage": "Posodobitve ni bilo mogoče prenesti. Poskusite pozneje.",
+    "errorNotInApplications": "Premaknite aplikacijo v mapo Programi in poskusite znova.",
     "changelogTitle": "Kaj je novega",
     "viewChangelog": "Kaj je novega",
     "loadingChangelog": "Nalaganje changelog...",

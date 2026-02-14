@@ -3,7 +3,7 @@ import { Download, RefreshCw, CheckCircle, AlertCircle, X, FileText } from 'luci
 import { useTranslation } from 'react-i18next';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { logInfo } from '../../hooks/useTauri';
+import { logInfo, isAppInApplications } from '../../hooks/useTauri';
 import { formatFileSize, getErrorMessage } from '../../utils';
 import { ChangelogModal } from './ChangelogModal';
 import { getShowUpdaterModal } from '../../hooks/useSettings';
@@ -87,7 +87,8 @@ export function UpdateModal() {
             }));
             break;
           case 'Finished':
-            setState('ready');
+            // Download complete - don't set 'ready' here since install may still fail.
+            // State is set to 'ready' after downloadAndInstall() promise resolves.
             break;
         }
       });
@@ -95,7 +96,16 @@ export function UpdateModal() {
       setState('ready');
     } catch (err) {
       console.error('Failed to download update:', err);
-      setError(getErrorMessage(err, 'Download failed'));
+      try {
+        const inApps = await isAppInApplications();
+        if (!inApps) {
+          setError(t('update.errorNotInApplications'));
+        } else {
+          setError(getErrorMessage(err, 'Download failed'));
+        }
+      } catch {
+        setError(getErrorMessage(err, 'Download failed'));
+      }
       setState('error');
     }
   };

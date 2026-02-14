@@ -167,6 +167,15 @@ export async function getGithubRelease(version: string): Promise<GitHubRelease> 
 }
 
 /**
+ * Checks if the app is running from /Applications directory (macOS only)
+ * Used to show a specific error message when updates fail outside /Applications.
+ * @returns true if in /Applications or on non-macOS, false otherwise
+ */
+export async function isAppInApplications(): Promise<boolean> {
+  return invoke('is_app_in_applications');
+}
+
+/**
  * Get the current theme preference
  */
 export async function getTheme(): Promise<string> {

@@ -198,6 +198,7 @@
     "retry": "Tentar novamente",
     "readyMessage": "A atualização foi transferida. Reinicie a aplicação para concluir a instalação.",
     "errorMessage": "Não foi possível transferir a atualização. Por favor, tente novamente mais tarde.",
+    "errorNotInApplications": "Mova o aplicativo para a pasta Aplicações e tente novamente.",
     "changelogTitle": "Novidades",
     "viewChangelog": "Novidades",
     "loadingChangelog": "A carregar changelog...",

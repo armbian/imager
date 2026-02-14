@@ -198,6 +198,7 @@
     "retry": "Reintentar",
     "readyMessage": "La actualización se ha descargado. Reinicie la aplicación para completar la instalación.",
     "errorMessage": "No se pudo descargar la actualización. Por favor, inténtelo más tarde.",
+    "errorNotInApplications": "Mueva la aplicación a la carpeta Aplicaciones e inténtelo de nuevo.",
     "changelogTitle": "Novedades",
     "viewChangelog": "Novedades",
     "loadingChangelog": "Cargando changelog...",

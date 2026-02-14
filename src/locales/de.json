@@ -198,6 +198,7 @@
     "retry": "Erneut versuchen",
     "readyMessage": "Das Update wurde heruntergeladen. Starten Sie die Anwendung neu, um die Installation abzuschließen.",
     "errorMessage": "Das Update konnte nicht heruntergeladen werden. Bitte versuchen Sie es später erneut.",
+    "errorNotInApplications": "Bitte verschieben Sie die App in den Ordner 'Programme' und versuchen Sie es erneut.",
     "changelogTitle": "Was ist neu",
     "viewChangelog": "Was ist neu",
     "loadingChangelog": "Lade Changelog...",

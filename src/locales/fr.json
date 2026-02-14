@@ -198,6 +198,7 @@
     "retry": "Réessayer",
     "readyMessage": "La mise à jour a été téléchargée. Redémarrez l'application pour terminer l'installation.",
     "errorMessage": "Impossible de télécharger la mise à jour. Veuillez réessayer plus tard.",
+    "errorNotInApplications": "Veuillez déplacer l'application dans le dossier Applications et réessayer.",
     "changelogTitle": "Quoi de neuf",
     "viewChangelog": "Quoi de neuf",
     "loadingChangelog": "Chargement du changelog...",

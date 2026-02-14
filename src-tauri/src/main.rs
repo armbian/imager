@@ -176,6 +176,7 @@ fn main() {
             commands::system::log_debug_from_frontend,
             commands::system::get_armbian_release,
             commands::update::get_github_release,
+            commands::update::is_app_in_applications,
             paste::upload::upload_logs,
             commands::settings::get_theme,
             commands::settings::set_theme,

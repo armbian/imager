@@ -198,6 +198,7 @@
     "retry": "Pokušaj ponovno",
     "readyMessage": "Ažuriranje je preuzeto. Ponovno pokrenite aplikaciju za dovršetak instalacije.",
     "errorMessage": "Preuzimanje ažuriranja nije uspjelo. Pokušajte kasnije.",
+    "errorNotInApplications": "Premjestite aplikaciju u mapu Aplikacije i pokušajte ponovno.",
     "changelogTitle": "Što je novo",
     "viewChangelog": "Što je novo",
     "loadingChangelog": "Učitavanje changeloga...",

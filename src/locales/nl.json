@@ -198,6 +198,7 @@
     "retry": "Opnieuw proberen",
     "readyMessage": "De update is gedownload. Start de applicatie opnieuw om de installatie te voltooien.",
     "errorMessage": "Kan de update niet downloaden. Probeer het later opnieuw.",
+    "errorNotInApplications": "Verplaats de app naar de map Programma's en probeer opnieuw.",
     "changelogTitle": "Wat is er nieuw",
     "viewChangelog": "Wat is er nieuw",
     "loadingChangelog": "Changelog laden...",

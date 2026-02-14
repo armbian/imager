@@ -198,6 +198,7 @@
     "retry": "Riprova",
     "readyMessage": "L'aggiornamento è stato scaricato. Riavvia l'applicazione per completare l'installazione.",
     "errorMessage": "Impossibile scaricare l'aggiornamento. Riprova più tardi.",
+    "errorNotInApplications": "Sposta l'app nella cartella Applicazioni e riprova.",
     "changelogTitle": "Novità",
     "viewChangelog": "Novità",
     "loadingChangelog": "Caricamento changelog...",

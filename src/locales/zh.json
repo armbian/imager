@@ -198,6 +198,7 @@
     "retry": "重试",
     "readyMessage": "更新已下载完成。请重启应用程序以完成安装。",
     "errorMessage": "无法下载更新。请稍后再试。",
+    "errorNotInApplications": "请将应用程序移动到「应用程序」文件夹并重试。",
     "changelogTitle": "新功能",
     "viewChangelog": "新功能",
     "loadingChangelog": "正在加载更新日志...",

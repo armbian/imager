@@ -198,6 +198,7 @@
     "retry": "再試行",
     "readyMessage": "アップデートがダウンロードされました。インストールを完了するにはアプリケーションを再起動してください。",
     "errorMessage": "アップデートのダウンロードに失敗しました。後でもう一度お試しください。",
+    "errorNotInApplications": "アプリケーションフォルダーに移動してからもう一度お試しください。",
     "changelogTitle": "新機能",
     "viewChangelog": "新機能",
     "loadingChangelog": "変更履歴を読み込んでいます...",

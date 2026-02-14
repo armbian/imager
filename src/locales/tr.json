@@ -198,6 +198,7 @@
     "retry": "Tekrar dene",
     "readyMessage": "Güncelleme indirildi. Kurulumu tamamlamak için uygulamayı yeniden başlatın.",
     "errorMessage": "Güncelleme indirilemedi. Lütfen daha sonra tekrar deneyin.",
+    "errorNotInApplications": "Uygulamayı Uygulamalar klasörüne taşıyın ve tekrar deneyin.",
     "changelogTitle": "Yenilikler",
     "viewChangelog": "Yenilikler",
     "loadingChangelog": "Değişiklik günlüğü yükleniyor...",

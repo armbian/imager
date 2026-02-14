@@ -61,3 +61,27 @@ pub async fn get_github_release(version: String) -> Result<GitHubRelease, String
 
     Ok(release)
 }
+
+/// Checks if the application is running from the /Applications directory (macOS only)
+///
+/// On macOS, auto-updates may fail if the app is not in /Applications.
+/// This command allows the frontend to show a specific error message when that happens.
+///
+/// # Returns
+/// * `Ok(true)` - App is in /Applications (or running on non-macOS)
+/// * `Ok(false)` - App is NOT in /Applications (macOS only)
+#[command]
+pub async fn is_app_in_applications() -> Result<bool, String> {
+    #[cfg(target_os = "macos")]
+    {
+        let exe_path =
+            std::env::current_exe().map_err(|e| format!("Failed to get executable path: {}", e))?;
+        let canonical = std::fs::canonicalize(&exe_path).unwrap_or(exe_path);
+        let path_str = canonical.to_str().unwrap_or("");
+        Ok(path_str.starts_with("/Applications/"))
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        Ok(true)
+    }
+}

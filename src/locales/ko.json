@@ -198,6 +198,7 @@
     "retry": "다시 시도",
     "readyMessage": "업데이트가 다운로드되었습니다. 설치를 완료하려면 애플리케이션을 재시작하세요.",
     "errorMessage": "업데이트를 다운로드하지 못했습니다. 나중에 다시 시도해 주세요.",
+    "errorNotInApplications": "앱을 응용 프로그램 폴더로 이동한 후 다시 시도하십시오.",
     "changelogTitle": "새로운 기능",
     "viewChangelog": "새로운 기능",
     "loadingChangelog": "변경 로그 불러오는 중...",

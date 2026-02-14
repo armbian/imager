@@ -198,6 +198,7 @@
     "retry": "Försök igen",
     "readyMessage": "Uppdateringen har laddats ner. Starta om programmet för att slutföra installationen.",
     "errorMessage": "Det gick inte att ladda ner uppdateringen. Försök igen senare.",
+    "errorNotInApplications": "Flytta appen till mappen Program och försök igen.",
     "changelogTitle": "Vad är nytt",
     "viewChangelog": "Vad är nytt",
     "loadingChangelog": "Laddar ändringslogg...",

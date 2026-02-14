@@ -198,6 +198,7 @@
     "retry": "Retry",
     "readyMessage": "The update has been downloaded. Restart the application to complete the installation.",
     "errorMessage": "Failed to download the update. Please try again later.",
+    "errorNotInApplications": "Please move the app to the Applications folder and try again.",
     "changelogTitle": "What's New",
     "viewChangelog": "What's New",
     "loadingChangelog": "Loading changelog...",

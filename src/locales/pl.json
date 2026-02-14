@@ -198,6 +198,7 @@
     "retry": "Spróbuj ponownie",
     "readyMessage": "Aktualizacja została pobrana. Uruchom ponownie aplikację, aby zakończyć instalację.",
     "errorMessage": "Nie udało się pobrać aktualizacji. Spróbuj ponownie później.",
+    "errorNotInApplications": "Przenieś aplikację do folderu Aplikacje i spróbuj ponownie.",
     "changelogTitle": "Co nowego",
     "viewChangelog": "Co nowego",
     "loadingChangelog": "Ładowanie changelog...",
