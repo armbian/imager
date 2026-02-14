@@ -180,7 +180,7 @@ jobs:
             arch: x64
             os: macos-15
           - target: aarch64-apple-darwin
-            arch: arm64
+            arch: aarch64
             os: macos-latest
     runs-on: ${{ matrix.os }}
     env:

@@ -234,7 +234,7 @@ jobs:
             arch: x64
             os: macos-15
           - target: aarch64-apple-darwin
-            arch: arm64
+            arch: aarch64
             os: macos-latest
 
     runs-on: ${{ matrix.os }}
@@ -793,9 +793,9 @@ jobs:
           fi
 
           # macOS ARM64
-          MAC_ARM_SIG=$(get_sig "Armbian.Imager.app-arm64.tar.gz" || echo "")
+          MAC_ARM_SIG=$(get_sig "Armbian.Imager.app-aarch64.tar.gz" || echo "")
           if [[ -n "$MAC_ARM_SIG" ]]; then
-            PLATFORMS["darwin-aarch64"]="{\"signature\": \"${MAC_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager.app-arm64.tar.gz\"}"
+            PLATFORMS["darwin-aarch64"]="{\"signature\": \"${MAC_ARM_SIG}\", \"url\": \"${BASE_URL}/Armbian.Imager.app-aarch64.tar.gz\"}"
           fi
 
           # Linux x64
