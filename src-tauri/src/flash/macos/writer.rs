@@ -3,7 +3,7 @@
 //! Handles opening devices with authorization and writing data.
 
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{BufReader, Read, Write};
 use std::os::unix::io::{AsRawFd, FromRawFd};
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
@@ -18,6 +18,9 @@ use super::authorization::{free_authorization, SAVED_AUTH};
 use super::bindings::AuthorizationRef;
 
 const MODULE: &str = "flash::macos::writer";
+
+/// Sector size for raw device I/O alignment on macOS (/dev/rdisk)
+const SECTOR_SIZE: usize = 512;
 
 /// Wrapper to make auth_ref Send safe
 pub struct SendableAuthRef(pub AuthorizationRef);
@@ -350,7 +353,23 @@ async fn do_flash_work(
             break;
         }
 
-        if let Err(e) = device.write_all(&buffer[..bytes_read]) {
+        // Raw device (/dev/rdisk) requires sector-aligned writes.
+        // The last chunk may need zero-padding to the next sector boundary.
+        let bytes_to_write = if bytes_read % SECTOR_SIZE != 0 {
+            let padded = bytes_read.div_ceil(SECTOR_SIZE) * SECTOR_SIZE;
+            buffer[bytes_read..padded].fill(0);
+            log_debug!(
+                MODULE,
+                "Padding final write from {} to {} bytes (sector alignment)",
+                bytes_read,
+                padded
+            );
+            padded
+        } else {
+            bytes_read
+        };
+
+        if let Err(e) = device.write_all(&buffer[..bytes_to_write]) {
             log_error!(
                 MODULE,
                 "Write error at byte {}/{}: {}",
@@ -364,6 +383,7 @@ async fn do_flash_work(
             ));
         }
 
+        // Track actual image bytes written, not padded bytes
         written += bytes_read as u64;
         state.written_bytes.store(written, Ordering::SeqCst);
 
@@ -392,7 +412,9 @@ async fn do_flash_work(
     Ok(())
 }
 
-/// Verify written data by reading back and comparing
+/// Verify written data by reading back and comparing.
+/// Wraps device in BufReader so all reads from the raw device (/dev/rdisk) are
+/// CHUNK_SIZE-aligned, even when verify_data requests a smaller final read.
 fn verify_written_data(
     image_path: &PathBuf,
     device: &mut File,
@@ -404,6 +426,8 @@ fn verify_written_data(
         libc::lseek(device_fd, 0, libc::SEEK_SET);
     }
 
-    // Use shared verification logic
-    crate::flash::verify::verify_data(image_path, device, state)
+    // BufReader ensures all underlying reads from the raw device are large and
+    // sector-aligned, preventing EINVAL on the final partial-sector read.
+    let mut buf_reader = BufReader::with_capacity(config::flash::CHUNK_SIZE, &*device);
+    crate::flash::verify::verify_data(image_path, &mut buf_reader, state)
 }

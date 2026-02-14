@@ -12,6 +12,7 @@ use std::sync::Arc;
 use bzip2::read::BzDecoder;
 use flate2::read::GzDecoder;
 use lzma_rust2::XzReaderMt;
+use xz2::read::XzDecoder;
 use zstd::stream::read::Decoder as ZstdDecoder;
 
 use crate::config;
@@ -27,27 +28,42 @@ pub fn needs_decompression(path: &Path) -> bool {
     matches!(ext.to_lowercase().as_str(), "xz" | "gz" | "bz2" | "zst")
 }
 
-/// Decompress using Rust lzma-rust2 library (multi-threaded)
+/// Decompress XZ files. Uses multi-threaded lzma-rust2 for single-stream files,
+/// falls back to xz2 (liblzma) for multi-stream files (e.g., Khadas OOWOW).
 pub fn decompress_with_rust_xz(
     input_path: &Path,
     output_path: &Path,
     state: &Arc<DownloadState>,
 ) -> Result<(), String> {
+    // Try multi-threaded decoder first (faster, but doesn't support multi-stream XZ)
+    let threads = get_recommended_threads();
     let input_file =
         File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
-    let threads = get_recommended_threads();
 
-    log_info!(
-        MODULE,
-        "Using Rust lzma-rust2 with {} threads for XZ decompression",
-        threads
-    );
-
-    // XzReaderMt requires Seek + Read, so we pass the file directly
-    let decoder = XzReaderMt::new(input_file, false, threads as u32)
-        .map_err(|e| format!("Failed to create XZ decoder: {}", e))?;
-
-    decompress_with_reader_mt(decoder, output_path, state, "xz")
+    match XzReaderMt::new(input_file, true, threads as u32) {
+        Ok(decoder) => {
+            log_info!(
+                MODULE,
+                "Using multi-threaded XZ decoder with {} threads",
+                threads
+            );
+            decompress_with_reader_mt(decoder, output_path, state, "xz")
+        }
+        Err(mt_err) => {
+            // Fallback to xz2 (liblzma) which handles multi-stream XZ natively
+            log_info!(
+                MODULE,
+                "Multi-threaded decoder failed ({}), using liblzma multi-stream decoder",
+                mt_err
+            );
+            let input_file =
+                File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+            let buf_reader =
+                BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
+            let decoder = XzDecoder::new_multi_decoder(buf_reader);
+            decompress_with_reader_mt(decoder, output_path, state, "xz")
+        }
+    }
 }
 
 /// Decompress gzip files using flate2 (single-threaded - TODO: add pigz system tool support)
