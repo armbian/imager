@@ -75,4 +75,4 @@ panic = "abort"
 codegen-units = 1
 lto = true
 opt-level = "s"
-strip = true
+strip = "none"
