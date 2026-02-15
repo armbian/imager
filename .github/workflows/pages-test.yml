@@ -1,0 +1,44 @@
+name: Deploy test branch to GitHub Pages
+
+on:
+  push:
+    branches: [ test ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: test
+
+      - name: Fetch Latest Release
+        id: fetch_release
+        run: |
+          # Fetch the release JSON from the Armbian repo
+          curl -s https://api.github.com/repos/armbian/imager/releases/latest > latest.json
+
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
