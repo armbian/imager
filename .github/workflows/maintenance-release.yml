@@ -583,8 +583,7 @@ jobs:
     name: Sign Windows artifacts with SignPath
     needs: [create-release, build-windows-x64, build-windows-arm64]
     if: |
-      always() &&
-      (needs.build-windows-x64.result == 'success' || needs.build-windows-arm64.result == 'success')
+      needs.build-windows-x64.result == 'success' && needs.build-windows-arm64.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -593,7 +592,6 @@ jobs:
     steps:
       # Sign Windows x64 artifacts
       - name: Sign Windows x64 artifacts
-        if: needs.build-windows-x64.result == 'success'
         id: sign-x64
         uses: signpath/github-action-submit-signing-request@v2
         with:
@@ -607,7 +605,6 @@ jobs:
 
       # Sign Windows ARM64 artifacts
       - name: Sign Windows ARM64 artifacts
-        if: needs.build-windows-arm64.result == 'success'
         id: sign-arm64
         uses: signpath/github-action-submit-signing-request@v2
         with:
@@ -621,7 +618,6 @@ jobs:
 
       # Upload signed x64 artifacts to GitHub Release
       - name: Upload signed x64 artifacts to GitHub Release
-        if: needs.build-windows-x64.result == 'success'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ needs.create-release.outputs.release_tag }}
@@ -638,7 +634,6 @@ jobs:
 
       # Upload signed ARM64 artifacts to GitHub Release
       - name: Upload signed ARM64 artifacts to GitHub Release
-        if: needs.build-windows-arm64.result == 'success'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ needs.create-release.outputs.release_tag }}
@@ -655,7 +650,6 @@ jobs:
 
       # Upload signed artifacts for signature regeneration job
       - name: Upload signed x64 artifacts
-        if: needs.build-windows-x64.result == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: signed-x64
@@ -663,7 +657,6 @@ jobs:
           retention-days: 1
 
       - name: Upload signed ARM64 artifacts
-        if: needs.build-windows-arm64.result == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: signed-arm64
@@ -675,9 +668,7 @@ jobs:
     needs:
       - create-release
       - sign-windows
-    if: |
-      always() &&
-      needs.sign-windows.result == 'success'
+    if: needs.sign-windows.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
