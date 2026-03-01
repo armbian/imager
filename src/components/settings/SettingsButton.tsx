@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings } from 'lucide-react';
 import { SettingsModal } from './SettingsModal';
 import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
+import { EVENTS } from '../../config';
 
 /**
  * Settings button component
@@ -13,6 +14,13 @@ import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 export function SettingsButton() {
   const { t } = useTranslation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Close settings when a cached image is selected for reuse
+  useEffect(() => {
+    const handler = () => setIsSettingsOpen(false);
+    window.addEventListener(EVENTS.CACHE_IMAGE_REUSE, handler);
+    return () => window.removeEventListener(EVENTS.CACHE_IMAGE_REUSE, handler);
+  }, []);
 
   const { isExiting, handleClose } = useModalExitAnimation({
     onClose: () => setIsSettingsOpen(false),

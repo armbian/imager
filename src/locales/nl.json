@@ -161,7 +161,22 @@
       "size": "Cachegrootte",
       "noCachedImages": "Geen gecachte images",
       "clear": "Cache wissen",
-      "clearConfirm": "Weet u zeker dat u alle gecachte images wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt."
+      "clearConfirm": "Weet u zeker dat u alle gecachte images wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "manage": "Gecachte images beheren",
+      "manageDescription": "Gecachte images bekijken, verwijderen of hergebruiken",
+      "managerTitle": "Gecachte images",
+      "unknownBoard": "Onbekend board",
+      "imageCount_one": "{{count}} image",
+      "imageCount_other": "{{count}} images",
+      "useImage": "Gebruiken",
+      "deleteImage": "Verwijderen",
+      "deleteConfirmSingle": "Dit gecachte image verwijderen?",
+      "deleteSuccess": "Image verwijderd",
+      "deleteError": "Kan image niet verwijderen",
+      "justNow": "zojuist",
+      "minutesAgo": "{{count}}m geleden",
+      "hoursAgo": "{{count}}u geleden",
+      "daysAgo": "{{count}}d geleden"
     },
     "armbian": {
       "title": "Armbian",

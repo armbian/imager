@@ -435,6 +435,28 @@ pub fn clear_cache() -> Result<(), String> {
 }
 
 // ============================================================================
+// Cache Manager
+// ============================================================================
+
+/// List all cached images with metadata
+///
+/// Returns information about each cached file including filename, size,
+/// last used timestamp, and board association parsed from filename.
+#[tauri::command]
+pub fn list_cached_images() -> Result<Vec<crate::cache::CachedImageInfo>, String> {
+    crate::cache::list_cached_images()
+}
+
+/// Delete a single cached image by filename
+///
+/// Validates the filename is within the cache directory, deletes the file,
+/// and returns the updated total cache size in bytes.
+#[tauri::command]
+pub fn delete_cached_image(filename: String) -> Result<u64, String> {
+    crate::cache::delete_cached_image(&filename)
+}
+
+// ============================================================================
 // Armbian Board Detection Settings
 // ============================================================================
 

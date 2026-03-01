@@ -161,7 +161,22 @@
       "size": "Dimensione cache",
       "noCachedImages": "Nessuna immagine in cache",
       "clear": "Svuota cache",
-      "clearConfirm": "Sei sicuro di voler eliminare tutte le immagini in cache? Questa azione non può essere annullata."
+      "clearConfirm": "Sei sicuro di voler eliminare tutte le immagini in cache? Questa azione non può essere annullata.",
+      "manage": "Gestisci immagini in cache",
+      "manageDescription": "Visualizza, elimina o riutilizza le immagini in cache",
+      "managerTitle": "Immagini in cache",
+      "unknownBoard": "Scheda sconosciuta",
+      "imageCount_one": "{{count}} immagine",
+      "imageCount_other": "{{count}} immagini",
+      "useImage": "Usa",
+      "deleteImage": "Elimina",
+      "deleteConfirmSingle": "Eliminare questa immagine dalla cache?",
+      "deleteSuccess": "Immagine eliminata",
+      "deleteError": "Impossibile eliminare l'immagine",
+      "justNow": "adesso",
+      "minutesAgo": "{{count}}m fa",
+      "hoursAgo": "{{count}}h fa",
+      "daysAgo": "{{count}}g fa"
     },
     "armbian": {
       "title": "Armbian",

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Lightbulb, Download, HardDrive, Database, Cpu, Trash2 } from 'lucide-react';
+import { Lightbulb, Download, HardDrive, Database, Cpu, Trash2, FolderOpen, ChevronRight } from 'lucide-react';
 import {
   getShowMotd,
   setShowMotd,
@@ -15,23 +15,11 @@ import {
 } from '../../hooks/useSettings';
 import { getCacheSize, clearCache } from '../../hooks/useTauri';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
+import { CacheManagerModal } from './CacheManagerModal';
 import { useToasts } from '../../hooks/useToasts';
 import { useSettingsGroup } from '../../hooks/useSettingsGroup';
 import { CACHE, EVENTS } from '../../config';
-
-/**
- * Format bytes to human-readable string
- *
- * @param bytes - Size in bytes
- * @returns Formatted string (e.g., "2.3 GB")
- */
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
+import { formatBytes } from '../../utils';
 
 /**
  * General settings section for sidebar layout
@@ -78,6 +66,7 @@ export function GeneralSection() {
   const [isClearing, setIsClearing] = useState<boolean>(false);
   const [isLoadingCacheSize, setIsLoadingCacheSize] = useState<boolean>(true);
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
+  const [cacheManagerOpen, setCacheManagerOpen] = useState<boolean>(false);
 
   /**
    * Load current cache size from backend
@@ -364,6 +353,37 @@ export function GeneralSection() {
               {isClearing ? t('modal.loading') : t('settings.cache.clear')}
             </button>
           </div>
+
+          {/* Manage cached images */}
+          <div
+            className="settings-item settings-item-clickable"
+            onClick={() => setCacheManagerOpen(true)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setCacheManagerOpen(true);
+              }
+            }}
+          >
+            <div className="settings-item-left">
+              <div className="settings-item-icon">
+                <FolderOpen />
+              </div>
+              <div className="settings-item-content">
+                <div className="settings-item-label">
+                  {t('settings.cache.manage')}
+                </div>
+                <div className="settings-item-description">
+                  {t('settings.cache.manageDescription')}
+                </div>
+              </div>
+            </div>
+            <div className="settings-item-arrow">
+              <ChevronRight size={20} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -407,6 +427,16 @@ export function GeneralSection() {
         isDanger={true}
         onCancel={() => setShowClearConfirm(false)}
         onConfirm={handleClearCacheConfirm}
+      />
+
+      {/* Cache Manager modal */}
+      <CacheManagerModal
+        isOpen={cacheManagerOpen}
+        onClose={() => {
+          setCacheManagerOpen(false);
+          // Refresh cache size after potential deletions
+          loadCacheSize();
+        }}
       />
       </div>
     </>

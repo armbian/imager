@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo, CachedImageInfo } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
   return invoke('get_boards');
@@ -270,6 +270,33 @@ export async function getCacheSize(): Promise<number> {
  */
 export async function clearCache(): Promise<void> {
   return invoke('clear_cache');
+}
+
+/**
+ * List all cached images with metadata
+ *
+ * Returns information about each cached file including filename, size,
+ * last used timestamp, and board association parsed from filename.
+ *
+ * @returns Promise resolving to array of cached image metadata
+ * @throws Error if cache directory cannot be read
+ */
+export async function listCachedImages(): Promise<CachedImageInfo[]> {
+  return invoke('list_cached_images');
+}
+
+/**
+ * Delete a single cached image by filename
+ *
+ * Validates the filename is within the cache directory, deletes the file,
+ * and returns the updated total cache size in bytes.
+ *
+ * @param filename - Name of the cached file to delete
+ * @returns Promise resolving to the new total cache size in bytes
+ * @throws Error if file not found or deletion fails
+ */
+export async function deleteCachedImage(filename: string): Promise<number> {
+  return invoke('delete_cached_image', { filename });
 }
 
 // ============================================================================

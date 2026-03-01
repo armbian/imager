@@ -161,7 +161,22 @@
       "size": "Tamanho da cache",
       "noCachedImages": "Sem imagens em cache",
       "clear": "Limpar cache",
-      "clearConfirm": "Tem a certeza de que pretende eliminar todas as imagens em cache? Esta ação é irreversível."
+      "clearConfirm": "Tem a certeza de que pretende eliminar todas as imagens em cache? Esta ação é irreversível.",
+      "manage": "Gerir imagens em cache",
+      "manageDescription": "Ver, eliminar ou reutilizar imagens em cache",
+      "managerTitle": "Imagens em cache",
+      "unknownBoard": "Placa desconhecida",
+      "imageCount_one": "{{count}} imagem",
+      "imageCount_other": "{{count}} imagens",
+      "useImage": "Usar",
+      "deleteImage": "Eliminar",
+      "deleteConfirmSingle": "Eliminar esta imagem em cache?",
+      "deleteSuccess": "Imagem eliminada",
+      "deleteError": "Falha ao eliminar a imagem",
+      "justNow": "agora mesmo",
+      "minutesAgo": "há {{count}}m",
+      "hoursAgo": "há {{count}}h",
+      "daysAgo": "há {{count}}d"
     },
     "armbian": {
       "title": "Armbian",

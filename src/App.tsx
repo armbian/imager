@@ -4,10 +4,11 @@ import { Header, HomePage } from './components/layout';
 import { ManufacturerModal, BoardModal, ImageModal, DeviceModal, ArmbianBoardModal } from './components/modals';
 import { FlashProgress } from './components/flash';
 import { SettingsButton } from './components/settings';
-import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getBoardImageUrl } from './hooks/useTauri';
+import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getBoardImageUrl, checkNeedsDecompression, decompressCustomImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import { ToastProvider, useToasts } from './hooks/useToasts';
 import { getArmbianBoardDetection } from './hooks/useSettings';
+import { EVENTS } from './config';
 import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep, Manufacturer, ArmbianReleaseInfo } from './types';
 import './styles/index.css';
 
@@ -157,6 +158,90 @@ function AppContent() {
     checkArmbianSystem();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Handle cached image reuse from Cache Manager
+   * Creates a custom ImageInfo and selects the board + image for flashing
+   */
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const { path, filename, size, boardSlug, boardName } = (e as CustomEvent).detail;
+
+      logInfo('app', `Reusing cached image: ${filename}`);
+
+      // Try to detect board from filename
+      let matchedBoard: BoardInfo | null = null;
+      try {
+        matchedBoard = await detectBoardFromFilename(filename);
+        if (matchedBoard) {
+          logInfo('app', `Detected board from cached filename: ${matchedBoard.name}`);
+        }
+      } catch {
+        // Ignore detection errors
+      }
+
+      // Check if image needs decompression
+      let imagePath = path;
+      try {
+        const needsDecompress = await checkNeedsDecompression(path);
+        if (needsDecompress) {
+          logInfo('app', `Cached image needs decompression: ${filename}`);
+          imagePath = await decompressCustomImage(path);
+        }
+      } catch (err) {
+        logWarn('app', `Failed to check/decompress cached image: ${err}`);
+        // Continue with original path
+      }
+
+      // Create ImageInfo for the cached image (same pattern as handleCustomImage)
+      const cachedImage: ImageInfo = {
+        armbian_version: 'Cached',
+        distro_release: filename,
+        kernel_branch: '',
+        kernel_version: '',
+        image_variant: 'cached',
+        preinstalled_application: '',
+        promoted: false,
+        file_url: '',
+        file_url_sha: null,
+        file_size: size,
+        download_repository: 'cache',
+        is_custom: true,
+        custom_path: imagePath,
+      };
+
+      // Reset downstream selections (board, image, device)
+      resetSelectionsFrom('board');
+
+      const displayBoard = matchedBoard || {
+        slug: boardSlug || 'cached',
+        name: boardName || t('custom.customImage'),
+        vendor: 'cached',
+        vendor_name: 'Cached',
+        vendor_logo: null,
+        image_count: 1,
+        has_standard_support: false,
+        has_community_support: false,
+        has_platinum_support: false,
+        has_eos_support: false,
+        has_tvb_support: false,
+        has_wip_support: false,
+      };
+
+      // Set a synthetic manufacturer for display consistency
+      setSelectedManufacturer({
+        id: displayBoard.vendor,
+        name: displayBoard.vendor_name,
+        color: '#6b7280',
+        boardCount: 1,
+      });
+      setSelectedBoard(displayBoard);
+      setSelectedImage(cachedImage);
+    };
+
+    window.addEventListener(EVENTS.CACHE_IMAGE_REUSE, handler);
+    return () => window.removeEventListener(EVENTS.CACHE_IMAGE_REUSE, handler);
+  }, [t]);
 
   /**
    * Reset selections from a given step onwards.

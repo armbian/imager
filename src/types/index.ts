@@ -96,6 +96,21 @@ export interface CustomImageInfo {
 }
 
 /**
+ * Cached image metadata from the backend cache directory
+ */
+export interface CachedImageInfo {
+  filename: string;
+  path: string;
+  size: number;
+  /** Unix timestamp (seconds) of last use */
+  last_used: number;
+  /** Board slug extracted from filename */
+  board_slug: string | null;
+  /** Human-readable board name derived from slug */
+  board_name: string | null;
+}
+
+/**
  * Armbian system information from /etc/armbian-release
  *
  * Contains essential information about the currently running Armbian system.

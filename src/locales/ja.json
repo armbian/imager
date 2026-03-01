@@ -161,7 +161,22 @@
       "size": "キャッシュサイズ",
       "noCachedImages": "キャッシュされたイメージはありません",
       "clear": "キャッシュをクリア",
-      "clearConfirm": "キャッシュされたすべてのイメージを削除しますか？この操作は元に戻せません。"
+      "clearConfirm": "キャッシュされたすべてのイメージを削除しますか？この操作は元に戻せません。",
+      "manage": "キャッシュ画像を管理",
+      "manageDescription": "キャッシュされたイメージの表示、削除、再利用",
+      "managerTitle": "キャッシュされたイメージ",
+      "unknownBoard": "不明なボード",
+      "imageCount_one": "{{count}} イメージ",
+      "imageCount_other": "{{count}} イメージ",
+      "useImage": "使用",
+      "deleteImage": "削除",
+      "deleteConfirmSingle": "このキャッシュされたイメージを削除しますか？",
+      "deleteSuccess": "イメージを削除しました",
+      "deleteError": "イメージの削除に失敗しました",
+      "justNow": "たった今",
+      "minutesAgo": "{{count}}分前",
+      "hoursAgo": "{{count}}時間前",
+      "daysAgo": "{{count}}日前"
     },
     "armbian": {
       "title": "Armbian",

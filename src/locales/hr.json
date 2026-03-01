@@ -161,7 +161,22 @@
       "size": "Veličina predmemorije",
       "noCachedImages": "Nema slika u predmemoriji",
       "clear": "Očisti predmemoriju",
-      "clearConfirm": "Jeste li sigurni da želite izbrisati sve slike iz predmemorije? Ova radnja se ne može poništiti."
+      "clearConfirm": "Jeste li sigurni da želite izbrisati sve slike iz predmemorije? Ova radnja se ne može poništiti.",
+      "manage": "Upravljanje predmemoriranim slikama",
+      "manageDescription": "Pregledajte, izbrišite ili ponovno koristite predmemorirane slike",
+      "managerTitle": "Predmemorirane slike",
+      "unknownBoard": "Nepoznata ploča",
+      "imageCount_one": "{{count}} slika",
+      "imageCount_other": "{{count}} slika",
+      "useImage": "Koristi",
+      "deleteImage": "Obriši",
+      "deleteConfirmSingle": "Obrisati ovu predmemoriranu sliku?",
+      "deleteSuccess": "Slika obrisana",
+      "deleteError": "Nije moguće obrisati sliku",
+      "justNow": "upravo sada",
+      "minutesAgo": "prije {{count}}m",
+      "hoursAgo": "prije {{count}}h",
+      "daysAgo": "prije {{count}}d"
     },
     "armbian": {
       "title": "Armbian",

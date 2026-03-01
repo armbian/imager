@@ -34,6 +34,20 @@ export function formatFileSize(
 }
 
 /**
+ * Format bytes to human-readable string
+ *
+ * @param bytes - Size in bytes
+ * @returns Formatted string (e.g., "2.3 GB", "512 MB")
+ */
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+/**
  * Preload an image and return whether it loaded successfully
  * @param url - Image URL to preload
  * @returns Promise that resolves to true if loaded, false if failed

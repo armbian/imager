@@ -161,7 +161,22 @@
       "size": "Taille du cache",
       "noCachedImages": "Aucune image en cache",
       "clear": "Vider le cache",
-      "clearConfirm": "Êtes-vous sûr de vouloir supprimer toutes les images en cache ? Cette action est irréversible."
+      "clearConfirm": "Êtes-vous sûr de vouloir supprimer toutes les images en cache ? Cette action est irréversible.",
+      "manage": "Gérer les images en cache",
+      "manageDescription": "Afficher, supprimer ou réutiliser les images en cache",
+      "managerTitle": "Images en cache",
+      "unknownBoard": "Carte inconnue",
+      "imageCount_one": "{{count}} image",
+      "imageCount_other": "{{count}} images",
+      "useImage": "Utiliser",
+      "deleteImage": "Supprimer",
+      "deleteConfirmSingle": "Supprimer cette image en cache ?",
+      "deleteSuccess": "Image supprimée",
+      "deleteError": "Échec de la suppression de l'image",
+      "justNow": "à l'instant",
+      "minutesAgo": "il y a {{count}}m",
+      "hoursAgo": "il y a {{count}}h",
+      "daysAgo": "il y a {{count}}j"
     },
     "armbian": {
       "title": "Armbian",

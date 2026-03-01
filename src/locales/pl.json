@@ -161,7 +161,22 @@
       "size": "Rozmiar pamięci podręcznej",
       "noCachedImages": "Brak obrazów w pamięci podręcznej",
       "clear": "Wyczyść pamięć podręczną",
-      "clearConfirm": "Czy na pewno chcesz usunąć wszystkie obrazy z pamięci podręcznej? Tej akcji nie można cofnąć."
+      "clearConfirm": "Czy na pewno chcesz usunąć wszystkie obrazy z pamięci podręcznej? Tej akcji nie można cofnąć.",
+      "manage": "Zarządzaj obrazami w pamięci podręcznej",
+      "manageDescription": "Przeglądaj, usuwaj lub ponownie używaj obrazów z pamięci podręcznej",
+      "managerTitle": "Obrazy w pamięci podręcznej",
+      "unknownBoard": "Nieznana płytka",
+      "imageCount_one": "{{count}} obraz",
+      "imageCount_other": "{{count}} obrazów",
+      "useImage": "Użyj",
+      "deleteImage": "Usuń",
+      "deleteConfirmSingle": "Usunąć ten obraz z pamięci podręcznej?",
+      "deleteSuccess": "Obraz usunięty",
+      "deleteError": "Nie udało się usunąć obrazu",
+      "justNow": "przed chwilą",
+      "minutesAgo": "{{count}}m temu",
+      "hoursAgo": "{{count}}h temu",
+      "daysAgo": "{{count}}d temu"
     },
     "armbian": {
       "title": "Armbian",

@@ -1422,3 +1422,222 @@
   color: var(--armbian-orange);
   font-weight: 500;
 }
+
+/* ============================================================================
+   Cache Manager Modal
+   Reuses list-item / os-icon / side-info-badge from components.css at their
+   original sizes. Only overrides: top-aligned rows + compact pill buttons.
+   ============================================================================ */
+
+.modal-content.cache-manager-modal {
+  max-width: 800px;
+  width: 94vw;
+  max-height: 82vh;
+}
+
+.cache-manager-modal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* --- Board group accordion --- */
+
+.cache-board-group {
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.cache-group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.cache-group-header:hover {
+  background: var(--bg-hover);
+}
+
+.cache-group-chevron {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.cache-group-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.cache-group-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.cache-group-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cache-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cache-group-title > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inline support badges in board group headers */
+.cache-inline-badges.board-grid-badges {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-height: auto;
+  flex-shrink: 0;
+}
+
+.cache-group-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* --- Expanded image list --- */
+
+.cache-group-content {
+  border-top: 1px solid var(--border-light);
+}
+
+/* Cache rows: nested under board group, compact vertical spacing */
+.cache-list-item {
+  cursor: default;
+  padding-left: 28px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* Space between badges and meta line */
+.cache-list-item .list-item-meta {
+  margin-top: 4px;
+}
+
+/* --- Action buttons (compact pills) --- */
+
+.cache-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+
+.cache-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cache-btn-use {
+  background: rgba(242, 101, 34, 0.1);
+  border-color: rgba(242, 101, 34, 0.3);
+  color: var(--accent);
+}
+
+.cache-btn-use:hover {
+  background: rgba(242, 101, 34, 0.2);
+  border-color: var(--accent);
+}
+
+.cache-btn-delete {
+  background: rgba(220, 38, 38, 0.06);
+  border-color: rgba(220, 38, 38, 0.2);
+  color: #dc2626;
+  padding: 0 10px;
+}
+
+.cache-btn-delete:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.15);
+  border-color: #dc2626;
+}
+
+.cache-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Empty / loading states --- */
+
+.cache-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.cache-empty-state svg {
+  opacity: 0.4;
+}
+
+.cache-empty-state p {
+  font-size: 14px;
+  margin: 0;
+}
+
+.cache-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 640px) {
+  .modal-content.cache-manager-modal {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 95vh;
+  }
+
+  .cache-list-item {
+    padding-left: 16px;
+  }
+
+  .cache-item-actions {
+    flex-direction: column;
+  }
+}

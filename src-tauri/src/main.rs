@@ -197,6 +197,8 @@ fn main() {
             commands::settings::set_cache_max_size,
             commands::settings::get_cache_size,
             commands::settings::clear_cache,
+            commands::settings::list_cached_images,
+            commands::settings::delete_cached_image,
             commands::settings::get_armbian_board_detection,
             commands::settings::set_armbian_board_detection,
         ])

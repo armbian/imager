@@ -161,7 +161,22 @@
       "size": "Velikost predpomnilnika",
       "noCachedImages": "Ni predpomnjenih slik",
       "clear": "Počisti predpomnilnik",
-      "clearConfirm": "Ali ste prepričani, da želite izbrisati vse predpomnjene slike? Tega dejanja ni mogoče razveljaviti."
+      "clearConfirm": "Ali ste prepričani, da želite izbrisati vse predpomnjene slike? Tega dejanja ni mogoče razveljaviti.",
+      "manage": "Upravljanje predpomnjenih slik",
+      "manageDescription": "Ogled, brisanje ali ponovna uporaba predpomnjenih slik",
+      "managerTitle": "Predpomnjene slike",
+      "unknownBoard": "Neznana plošča",
+      "imageCount_one": "{{count}} slika",
+      "imageCount_other": "{{count}} slik",
+      "useImage": "Uporabi",
+      "deleteImage": "Izbriši",
+      "deleteConfirmSingle": "Izbrisati to predpomnjeno sliko?",
+      "deleteSuccess": "Slika izbrisana",
+      "deleteError": "Slike ni bilo mogoče izbrisati",
+      "justNow": "pravkar",
+      "minutesAgo": "pred {{count}}m",
+      "hoursAgo": "pred {{count}}h",
+      "daysAgo": "pred {{count}}d"
     },
     "armbian": {
       "title": "Armbian",

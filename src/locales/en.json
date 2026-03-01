@@ -161,7 +161,22 @@
       "size": "Cache size",
       "noCachedImages": "No cached images",
       "clear": "Clear cache",
-      "clearConfirm": "Are you sure you want to delete all cached images? This cannot be undone."
+      "clearConfirm": "Are you sure you want to delete all cached images? This cannot be undone.",
+      "manage": "Manage cached images",
+      "manageDescription": "View, delete, or reuse cached images",
+      "managerTitle": "Cached Images",
+      "unknownBoard": "Unknown Board",
+      "imageCount_one": "{{count}} image",
+      "imageCount_other": "{{count}} images",
+      "useImage": "Use",
+      "deleteImage": "Delete",
+      "deleteConfirmSingle": "Delete this cached image?",
+      "deleteSuccess": "Image deleted",
+      "deleteError": "Failed to delete image",
+      "justNow": "just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
     },
     "armbian": {
       "title": "Armbian",

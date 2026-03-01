@@ -161,7 +161,22 @@
       "size": "Cache-Größe",
       "noCachedImages": "Keine zwischengespeicherten Images",
       "clear": "Cache leeren",
-      "clearConfirm": "Sind Sie sicher, dass Sie alle zwischengespeicherten Images löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+      "clearConfirm": "Sind Sie sicher, dass Sie alle zwischengespeicherten Images löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "manage": "Zwischengespeicherte Images verwalten",
+      "manageDescription": "Zwischengespeicherte Images anzeigen, löschen oder wiederverwenden",
+      "managerTitle": "Zwischengespeicherte Images",
+      "unknownBoard": "Unbekanntes Board",
+      "imageCount_one": "{{count}} Image",
+      "imageCount_other": "{{count}} Images",
+      "useImage": "Verwenden",
+      "deleteImage": "Löschen",
+      "deleteConfirmSingle": "Dieses zwischengespeicherte Image löschen?",
+      "deleteSuccess": "Image gelöscht",
+      "deleteError": "Image konnte nicht gelöscht werden",
+      "justNow": "gerade eben",
+      "minutesAgo": "vor {{count}}m",
+      "hoursAgo": "vor {{count}}h",
+      "daysAgo": "vor {{count}}d"
     },
     "armbian": {
       "title": "Armbian",

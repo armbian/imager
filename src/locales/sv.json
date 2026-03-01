@@ -161,7 +161,22 @@
       "size": "Cachestorlek",
       "noCachedImages": "Inga cachade images",
       "clear": "Rensa cache",
-      "clearConfirm": "Är du säker på att du vill ta bort alla cachade images? Denna åtgärd kan inte ångras."
+      "clearConfirm": "Är du säker på att du vill ta bort alla cachade images? Denna åtgärd kan inte ångras.",
+      "manage": "Hantera cachade images",
+      "manageDescription": "Visa, ta bort eller återanvänd cachade images",
+      "managerTitle": "Cachade images",
+      "unknownBoard": "Okänt kort",
+      "imageCount_one": "{{count}} image",
+      "imageCount_other": "{{count}} images",
+      "useImage": "Använd",
+      "deleteImage": "Ta bort",
+      "deleteConfirmSingle": "Ta bort denna cachade image?",
+      "deleteSuccess": "Image borttagen",
+      "deleteError": "Kunde inte ta bort image",
+      "justNow": "just nu",
+      "minutesAgo": "{{count}}m sedan",
+      "hoursAgo": "{{count}}h sedan",
+      "daysAgo": "{{count}}d sedan"
     },
     "armbian": {
       "title": "Armbian",

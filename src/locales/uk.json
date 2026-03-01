@@ -161,7 +161,22 @@
       "size": "Розмір кешу",
       "noCachedImages": "Немає кешованих образів",
       "clear": "Очистити кеш",
-      "clearConfirm": "Ви впевнені, що хочете видалити всі кешовані образи? Цю дію неможливо скасувати."
+      "clearConfirm": "Ви впевнені, що хочете видалити всі кешовані образи? Цю дію неможливо скасувати.",
+      "manage": "Керування кешованими образами",
+      "manageDescription": "Перегляд, видалення або повторне використання кешованих образів",
+      "managerTitle": "Кешовані образи",
+      "unknownBoard": "Невідома плата",
+      "imageCount_one": "{{count}} образ",
+      "imageCount_other": "{{count}} образів",
+      "useImage": "Використати",
+      "deleteImage": "Видалити",
+      "deleteConfirmSingle": "Видалити цей кешований образ?",
+      "deleteSuccess": "Образ видалено",
+      "deleteError": "Не вдалося видалити образ",
+      "justNow": "щойно",
+      "minutesAgo": "{{count}}хв тому",
+      "hoursAgo": "{{count}}год тому",
+      "daysAgo": "{{count}}д тому"
     },
     "armbian": {
       "title": "Armbian",

@@ -161,7 +161,22 @@
       "size": "缓存大小",
       "noCachedImages": "没有缓存的镜像",
       "clear": "清除缓存",
-      "clearConfirm": "您确定要删除所有缓存的镜像吗？此操作无法撤消。"
+      "clearConfirm": "您确定要删除所有缓存的镜像吗？此操作无法撤消。",
+      "manage": "管理缓存镜像",
+      "manageDescription": "查看、删除或重新使用缓存的镜像",
+      "managerTitle": "缓存的镜像",
+      "unknownBoard": "未知开发板",
+      "imageCount_one": "{{count}} 个镜像",
+      "imageCount_other": "{{count}} 个镜像",
+      "useImage": "使用",
+      "deleteImage": "删除",
+      "deleteConfirmSingle": "删除此缓存镜像？",
+      "deleteSuccess": "镜像已删除",
+      "deleteError": "删除镜像失败",
+      "justNow": "刚刚",
+      "minutesAgo": "{{count}}分钟前",
+      "hoursAgo": "{{count}}小时前",
+      "daysAgo": "{{count}}天前"
     },
     "armbian": {
       "title": "Armbian",

@@ -161,7 +161,22 @@
       "size": "Önbellek boyutu",
       "noCachedImages": "Önbelleğe alınmış imaj yok",
       "clear": "Önbelleği temizle",
-      "clearConfirm": "Önbelleğe alınmış tüm imajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+      "clearConfirm": "Önbelleğe alınmış tüm imajları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "manage": "Önbellek imajlarını yönet",
+      "manageDescription": "Önbelleğe alınmış imajları görüntüle, sil veya yeniden kullan",
+      "managerTitle": "Önbelleğe alınmış imajlar",
+      "unknownBoard": "Bilinmeyen kart",
+      "imageCount_one": "{{count}} imaj",
+      "imageCount_other": "{{count}} imaj",
+      "useImage": "Kullan",
+      "deleteImage": "Sil",
+      "deleteConfirmSingle": "Bu önbellek imajını silmek istiyor musunuz?",
+      "deleteSuccess": "İmaj silindi",
+      "deleteError": "İmaj silinemedi",
+      "justNow": "az önce",
+      "minutesAgo": "{{count}}dk önce",
+      "hoursAgo": "{{count}}sa önce",
+      "daysAgo": "{{count}}g önce"
     },
     "armbian": {
       "title": "Armbian",

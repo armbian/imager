@@ -57,6 +57,8 @@ export const EVENTS = {
   MOTD_CHANGED: 'armbian-motd-changed',
   /** Fired when general settings change */
   SETTINGS_CHANGED: 'armbian-settings-changed',
+  /** Fired when user selects a cached image for reuse */
+  CACHE_IMAGE_REUSE: 'armbian-cache-image-reuse',
 } as const;
 
 /** Storage key prefixes for sessionStorage/localStorage */
