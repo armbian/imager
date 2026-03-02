@@ -76,6 +76,14 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
   const { t } = useTranslation();
   const [filterType, setFilterType] = useState<ImageFilterType>('all');
   const [showSkeleton, setShowSkeleton] = useState(false);
+
+  // Reset filter to "All Images" when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset filter on modal close
+      setFilterType('all');
+    }
+  }, [isOpen]);
   // State for unstable image warning
   const [pendingImage, setPendingImage] = useState<ImageInfo | null>(null);
   const [showUnstableWarning, setShowUnstableWarning] = useState(false);
@@ -231,7 +239,7 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
 
             return (
               <button
-                key={`${image.armbian_version}-${image.distro_release}-${image.kernel_branch}`}
+                key={image.file_url}
                 className={`list-item ${image.promoted ? 'promoted' : ''}`}
                 onClick={() => handleImageClick(image)}
               >
