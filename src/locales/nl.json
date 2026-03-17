@@ -142,6 +142,8 @@
     "developerModeDescription": "Gedetailleerde logging en debug-info inschakelen",
     "viewLogs": "Logs bekijken",
     "viewLogsDescription": "Toon applicatielogs voor foutopsporing",
+    "skipVerify": "Verificatie overslaan",
+    "skipVerifyDescription": "Verificatie van geschreven gegevens na het flashen overslaan (sneller maar minder veilig)",
     "noLogsAvailable": "Geen logs beschikbaar",
     "copyLogs": "Logs kopiëren",
     "copied": "Gekopieerd!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Cache gewist",
       "cacheClearError": "Kan cache niet wissen",
       "detectionUpdated": "Boarddetectie bijgewerkt",
-      "detectionError": "Kan detectiemodus niet bijwerken"
+      "detectionError": "Kan detectiemodus niet bijwerken",
+      "skipVerifyUpdated": "Verificatie-instelling bijgewerkt",
+      "skipVerifyError": "Kan verificatie-instelling niet bijwerken"
     }
   },
   "update": {

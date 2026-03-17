@@ -142,6 +142,8 @@
     "developerModeDescription": "상세 로깅 및 디버그 정보 사용",
     "viewLogs": "로그 보기",
     "viewLogsDescription": "디버깅을 위한 애플리케이션 로그 표시",
+    "skipVerify": "검증 건너뛰기",
+    "skipVerifyDescription": "플래싱 후 기록된 데이터 검증 건너뛰기 (더 빠르지만 덜 안전함)",
     "noLogsAvailable": "사용 가능한 로그가 없음",
     "copyLogs": "로그 복사",
     "copied": "복사됨!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "캐시가 삭제되었습니다",
       "cacheClearError": "캐시 삭제에 실패했습니다",
       "detectionUpdated": "보드 감지가 업데이트되었습니다",
-      "detectionError": "감지 모드 업데이트에 실패했습니다"
+      "detectionError": "감지 모드 업데이트에 실패했습니다",
+      "skipVerifyUpdated": "검증 설정이 업데이트되었습니다",
+      "skipVerifyError": "검증 설정 업데이트에 실패했습니다"
     }
   },
   "update": {

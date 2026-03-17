@@ -142,6 +142,8 @@
     "developerModeDescription": "Ativar registo detalhado e informações de depuração",
     "viewLogs": "Ver registos",
     "viewLogsDescription": "Mostrar registos da aplicação para depuração",
+    "skipVerify": "Ignorar verificação",
+    "skipVerifyDescription": "Ignorar a verificação dos dados escritos após o flashing (mais rápido, mas menos seguro)",
     "noLogsAvailable": "Nenhum registo disponível",
     "copyLogs": "Copiar registos",
     "copied": "Copiado!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Cache limpo",
       "cacheClearError": "Falha ao limpar o cache",
       "detectionUpdated": "Deteção de placa atualizada",
-      "detectionError": "Falha ao atualizar modo de deteção"
+      "detectionError": "Falha ao atualizar modo de deteção",
+      "skipVerifyUpdated": "Configuração de verificação atualizada",
+      "skipVerifyError": "Falha ao atualizar a configuração de verificação"
     }
   },
   "update": {

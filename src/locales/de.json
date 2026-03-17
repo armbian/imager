@@ -142,6 +142,8 @@
     "developerModeDescription": "Ausführliche Protokollierung und Debug-Infos aktivieren",
     "viewLogs": "Protokolle anzeigen",
     "viewLogsDescription": "Anwendungsprotokolle zur Fehlerbehebung anzeigen",
+    "skipVerify": "Überprüfung überspringen",
+    "skipVerifyDescription": "Überprüfung der geschriebenen Daten nach dem Flashen überspringen (schneller, aber weniger sicher)",
     "noLogsAvailable": "Keine Protokolle verfügbar",
     "copyLogs": "Protokolle kopieren",
     "copied": "Kopiert!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Cache geleert",
       "cacheClearError": "Cache konnte nicht geleert werden",
       "detectionUpdated": "Board-Erkennung aktualisiert",
-      "detectionError": "Erkennungsmodus konnte nicht aktualisiert werden"
+      "detectionError": "Erkennungsmodus konnte nicht aktualisiert werden",
+      "skipVerifyUpdated": "Überprüfungseinstellung aktualisiert",
+      "skipVerifyError": "Fehler beim Aktualisieren der Überprüfungseinstellung"
     }
   },
   "update": {

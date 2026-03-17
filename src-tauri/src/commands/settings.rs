@@ -31,6 +31,10 @@ fn default_developer_mode() -> bool {
     false
 }
 
+fn default_skip_verify() -> bool {
+    false
+}
+
 fn default_cache_enabled() -> bool {
     true
 }
@@ -310,6 +314,46 @@ pub fn get_logs() -> Result<String, String> {
                 .map_err(|e| format!("Failed to read log file: {}", e))
         }
         None => Ok("No log file available".to_string()),
+    }
+}
+
+/// Get the skip verification preference
+///
+/// Returns whether post-flash verification should be skipped (default: false).
+#[tauri::command]
+pub fn get_skip_verify(app: tauri::AppHandle) -> bool {
+    match app.store(SETTINGS_STORE) {
+        Ok(store) => match store.get("skip_verify") {
+            Some(value) => value.as_bool().unwrap_or_else(default_skip_verify),
+            None => {
+                log_info!(MODULE, "skip_verify not found in store, using default");
+                default_skip_verify()
+            }
+        },
+        Err(e) => {
+            log_info!(
+                MODULE,
+                "Error loading store, using default skip_verify: {}",
+                e
+            );
+            default_skip_verify()
+        }
+    }
+}
+
+/// Set the skip verification preference
+///
+/// When enabled, the post-flash verification step is skipped for faster flashing.
+#[tauri::command]
+pub fn set_skip_verify(skip: bool, app: tauri::AppHandle) -> Result<(), String> {
+    log_info!(MODULE, "Setting skip_verify to: {}", skip);
+
+    match app.store(SETTINGS_STORE) {
+        Ok(store) => {
+            store.set("skip_verify", skip);
+            Ok(())
+        }
+        Err(e) => Err(format!("Failed to access store: {}", e)),
     }
 }
 

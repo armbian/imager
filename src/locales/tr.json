@@ -142,6 +142,8 @@
     "developerModeDescription": "Detaylı günlük kaydı ve hata ayıklama bilgilerini etkinleştir",
     "viewLogs": "Günlükleri Görüntüle",
     "viewLogsDescription": "Hata ayıklama için uygulama günlüklerini göster",
+    "skipVerify": "Doğrulamayı atla",
+    "skipVerifyDescription": "Yazma sonrası veri doğrulamayı atla (daha hızlı ama daha az güvenli)",
     "noLogsAvailable": "Kullanılabilir günlük yok",
     "copyLogs": "Günlükleri kopyala",
     "copied": "Kopyalandı!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Önbellek temizlendi",
       "cacheClearError": "Önbellek temizlenemedi",
       "detectionUpdated": "Kart algılama güncellendi",
-      "detectionError": "Algılama modu güncellenemedi"
+      "detectionError": "Algılama modu güncellenemedi",
+      "skipVerifyUpdated": "Doğrulama ayarı güncellendi",
+      "skipVerifyError": "Doğrulama ayarı güncellenemedi"
     }
   },
   "update": {

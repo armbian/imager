@@ -142,6 +142,8 @@
     "developerModeDescription": "Abilita logging dettagliato e messaggi debug",
     "viewLogs": "Visualizza Log",
     "viewLogsDescription": "Mostra i log dell'applicazione per il debug",
+    "skipVerify": "Salta la verifica",
+    "skipVerifyDescription": "Salta la verifica dei dati scritti dopo il flashing (più veloce ma meno sicuro)",
     "noLogsAvailable": "Nessun log disponibile",
     "copyLogs": "Copia log",
     "copied": "Copiato!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Cache svuotata",
       "cacheClearError": "Impossibile svuotare la cache",
       "detectionUpdated": "Rilevamento scheda aggiornato",
-      "detectionError": "Impossibile aggiornare la modalità di rilevamento"
+      "detectionError": "Impossibile aggiornare la modalità di rilevamento",
+      "skipVerifyUpdated": "Impostazione di verifica aggiornata",
+      "skipVerifyError": "Impossibile aggiornare l'impostazione di verifica"
     }
   },
   "update": {

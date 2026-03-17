@@ -142,6 +142,8 @@
     "developerModeDescription": "Activer la journalisation détaillée et les infos de débogage",
     "viewLogs": "Voir les journaux",
     "viewLogsDescription": "Afficher les journaux de l'application pour le débogage",
+    "skipVerify": "Ignorer la vérification",
+    "skipVerifyDescription": "Ignorer la vérification des données écrites après le flashage (plus rapide mais moins sûr)",
     "noLogsAvailable": "Aucun journal disponible",
     "copyLogs": "Copier les journaux",
     "copied": "Copié !",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Cache vidé",
       "cacheClearError": "Échec du vidage du cache",
       "detectionUpdated": "Détection de carte mise à jour",
-      "detectionError": "Échec de la mise à jour du mode de détection"
+      "detectionError": "Échec de la mise à jour du mode de détection",
+      "skipVerifyUpdated": "Paramètre de vérification mis à jour",
+      "skipVerifyError": "Échec de la mise à jour du paramètre de vérification"
     }
   },
   "update": {

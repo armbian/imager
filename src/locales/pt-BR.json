@@ -142,6 +142,8 @@
     "developerModeDescription": "Ativar registro detalhado e informações de depuração",
     "viewLogs": "Ver logs",
     "viewLogsDescription": "Mostrar logs da aplicação para depuração",
+    "skipVerify": "Pular verificação",
+    "skipVerifyDescription": "Pular a verificação dos dados gravados após a gravação (mais rápido, porém menos seguro)",
     "noLogsAvailable": "Nenhum log disponível",
     "copyLogs": "Copiar logs",
     "copied": "Copiado!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Cache limpo",
       "cacheClearError": "Falha ao limpar o cache",
       "detectionUpdated": "Detecção de placa atualizada",
-      "detectionError": "Falha ao atualizar modo de detecção"
+      "detectionError": "Falha ao atualizar modo de detecção",
+      "skipVerifyUpdated": "Configuração de verificação atualizada",
+      "skipVerifyError": "Falha ao atualizar a configuração de verificação"
     }
   },
   "update": {

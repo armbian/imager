@@ -142,6 +142,8 @@
     "developerModeDescription": "詳細なログ記録とデバッグ情報を有効にする",
     "viewLogs": "ログを表示",
     "viewLogsDescription": "デバッグのためにアプリケーションログを表示",
+    "skipVerify": "検証をスキップ",
+    "skipVerifyDescription": "書き込み後のデータ検証をスキップする（高速ですが安全性が低下します）",
     "noLogsAvailable": "利用可能なログはありません",
     "copyLogs": "ログをコピー",
     "copied": "コピーしました！",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "キャッシュを消去しました",
       "cacheClearError": "キャッシュの消去に失敗しました",
       "detectionUpdated": "ボード検出を更新しました",
-      "detectionError": "検出モードの更新に失敗しました"
+      "detectionError": "検出モードの更新に失敗しました",
+      "skipVerifyUpdated": "検証設定が更新されました",
+      "skipVerifyError": "検証設定の更新に失敗しました"
     }
   },
   "update": {

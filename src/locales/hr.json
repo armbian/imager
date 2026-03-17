@@ -142,6 +142,8 @@
     "developerModeDescription": "Omogućite detaljno prijavljivanje i informacije o otklanjanju pogrešaka",
     "viewLogs": "Prikaži zapise",
     "viewLogsDescription": "Prikaži zapise aplikacije za otklanjanje pogrešaka",
+    "skipVerify": "Preskoči provjeru",
+    "skipVerifyDescription": "Preskoči provjeru zapisanih podataka nakon flashanja (brže, ali manje sigurno)",
     "noLogsAvailable": "Nema dostupnih zapisa",
     "copyLogs": "Kopiraj zapise",
     "copied": "Kopirano!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Predmemorija očišćena",
       "cacheClearError": "Nije uspjelo čišćenje predmemorije",
       "detectionUpdated": "Detekcija ploče ažurirana",
-      "detectionError": "Nije uspjelo ažuriranje načina detekcije"
+      "detectionError": "Nije uspjelo ažuriranje načina detekcije",
+      "skipVerifyUpdated": "Postavka provjere ažurirana",
+      "skipVerifyError": "Ažuriranje postavke provjere nije uspjelo"
     }
   },
   "update": {

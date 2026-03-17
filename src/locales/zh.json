@@ -142,6 +142,8 @@
     "developerModeDescription": "启用详细日志记录和调试信息",
     "viewLogs": "查看日志",
     "viewLogsDescription": "显示应用程序日志以进行调试",
+    "skipVerify": "跳过验证",
+    "skipVerifyDescription": "跳过烧录后的数据验证（更快但安全性较低）",
     "noLogsAvailable": "没有可用的日志",
     "copyLogs": "复制日志",
     "copied": "已复制！",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "缓存已清除",
       "cacheClearError": "清除缓存失败",
       "detectionUpdated": "板卡检测已更新",
-      "detectionError": "更新检测模式失败"
+      "detectionError": "更新检测模式失败",
+      "skipVerifyUpdated": "验证设置已更新",
+      "skipVerifyError": "更新验证设置失败"
     }
   },
   "update": {

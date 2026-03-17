@@ -142,6 +142,8 @@
     "developerModeDescription": "Włącz szczegółowe rejestrowanie i informacje debugowania",
     "viewLogs": "Wyświetl logi",
     "viewLogsDescription": "Pokaż logi aplikacji do debugowania",
+    "skipVerify": "Pomiń weryfikację",
+    "skipVerifyDescription": "Pomiń weryfikację zapisanych danych po flashowaniu (szybciej, ale mniej bezpiecznie)",
     "noLogsAvailable": "Brak dostępnych logów",
     "copyLogs": "Kopiuj logi",
     "copied": "Skopiowano!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Pamięć podręczna wyczyszczona",
       "cacheClearError": "Nie udało się wyczyścić pamięci podręcznej",
       "detectionUpdated": "Wykrywanie płytki zaktualizowane",
-      "detectionError": "Nie udało się zaktualizować trybu wykrywania"
+      "detectionError": "Nie udało się zaktualizować trybu wykrywania",
+      "skipVerifyUpdated": "Ustawienie weryfikacji zaktualizowane",
+      "skipVerifyError": "Nie udało się zaktualizować ustawienia weryfikacji"
     }
   },
   "update": {

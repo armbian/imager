@@ -201,6 +201,40 @@ export async function setDeveloperMode(enabled: boolean): Promise<void> {
   }
 }
 
+/**
+ * Get the skip verification preference
+ *
+ * @returns Promise resolving to true if verification should be skipped, false otherwise
+ * @throws Error if store access fails
+ */
+export async function getSkipVerify(): Promise<boolean> {
+  try {
+    const store = await getStore();
+    const value = await store.get<boolean>(SETTINGS.KEYS.SKIP_VERIFY);
+    return value ?? SETTINGS.DEFAULTS.SKIP_VERIFY;
+  } catch (error) {
+    throw new Error(`Failed to get skip verify preference: ${error}`);
+  }
+}
+
+/**
+ * Set the skip verification preference
+ *
+ * When enabled, the post-flash verification step is skipped for faster flashing.
+ *
+ * @param skip - true to skip verification, false to verify after flashing
+ * @throws Error if store access or save fails
+ */
+export async function setSkipVerify(skip: boolean): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.SKIP_VERIFY, skip);
+    await store.save();
+  } catch (error) {
+    throw new Error(`Failed to set skip verify preference: ${error}`);
+  }
+}
+
 // ============================================================================
 // Cache Settings
 // ============================================================================

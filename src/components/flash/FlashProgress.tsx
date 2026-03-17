@@ -26,6 +26,7 @@ import { ErrorDisplay, MarqueeText, ConfirmationDialog } from '../shared';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
 import { POLLING, CACHE, STORAGE_KEYS } from '../../config';
 import { isDeviceConnected } from '../../utils/deviceUtils';
+import { getSkipVerify } from '../../hooks/useSettings';
 
 interface FlashProgressProps {
   board: BoardInfo;
@@ -55,6 +56,7 @@ export function FlashProgress({
   const maxProgressRef = useRef<number>(0);
   const hasStartedRef = useRef<boolean>(false);
   const deviceDisconnectedRef = useRef<boolean>(false);
+  const skipVerifyRef = useRef<boolean>(false);
 
   // Generate a storage key based on the image URL for persisting failure count
   // This ensures the count survives component unmount/remount
@@ -189,6 +191,13 @@ export function FlashProgress({
     setError(null);
 
     try {
+      // Load skip verify setting once at the start of the flash flow
+      try {
+        skipVerifyRef.current = await getSkipVerify();
+      } catch {
+        skipVerifyRef.current = false;
+      }
+
       // On Linux, if not root, this will trigger pkexec and restart the app
       // The app will restart elevated and the user will need to re-select options
       const authorized = await requestWriteAuthorization(device.path);
@@ -357,7 +366,7 @@ export function FlashProgress({
     }, POLLING.FLASH_PROGRESS);
 
     try {
-      await flashImage(path, device.path, true);
+      await flashImage(path, device.path, !skipVerifyRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
       setStage('complete');
       setProgress(100);

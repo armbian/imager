@@ -142,6 +142,8 @@
     "developerModeDescription": "Aktivera detaljerad loggning och felsökningsinfo",
     "viewLogs": "Visa loggar",
     "viewLogsDescription": "Visa applikationsloggar för felsökning",
+    "skipVerify": "Hoppa över verifiering",
+    "skipVerifyDescription": "Hoppa över verifiering av skriven data efter flashning (snabbare men mindre säkert)",
     "noLogsAvailable": "Inga loggar tillgängliga",
     "copyLogs": "Kopiera loggar",
     "copied": "Kopierad!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Cache rensad",
       "cacheClearError": "Kunde inte rensa cache",
       "detectionUpdated": "Kortdetektering uppdaterad",
-      "detectionError": "Kunde inte uppdatera detekteringsläge"
+      "detectionError": "Kunde inte uppdatera detekteringsläge",
+      "skipVerifyUpdated": "Verifieringsinställning uppdaterad",
+      "skipVerifyError": "Kunde inte uppdatera verifieringsinställning"
     }
   },
   "update": {

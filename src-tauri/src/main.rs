@@ -188,6 +188,8 @@ fn main() {
             commands::settings::set_show_updater_modal,
             commands::settings::get_developer_mode,
             commands::settings::set_developer_mode,
+            commands::settings::get_skip_verify,
+            commands::settings::set_skip_verify,
             commands::settings::get_logs,
             commands::settings::get_system_info,
             commands::settings::get_tauri_version,

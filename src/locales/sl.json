@@ -142,6 +142,8 @@
     "developerModeDescription": "Omogoči podrobno beleženje in informacije za razhroščevanje",
     "viewLogs": "Prikaži dnevnike",
     "viewLogsDescription": "Prikaži dnevnike aplikacije za razhroščevanje",
+    "skipVerify": "Preskoči preverjanje",
+    "skipVerifyDescription": "Preskoči preverjanje zapisanih podatkov po zapisovanju (hitreje, a manj varno)",
     "noLogsAvailable": "Ni dostopnih dnevnikov",
     "copyLogs": "Kopiraj dnevnike",
     "copied": "Kopirano!",
@@ -198,7 +200,9 @@
       "cacheClearSuccess": "Predpomnilnik izpraznjen",
       "cacheClearError": "Predpomnilnika ni bilo mogoče izprazniti",
       "detectionUpdated": "Zaznavanje plošče posodobljeno",
-      "detectionError": "Načina zaznavanja ni bilo mogoče posodobiti"
+      "detectionError": "Načina zaznavanja ni bilo mogoče posodobiti",
+      "skipVerifyUpdated": "Nastavitev preverjanja posodobljena",
+      "skipVerifyError": "Posodobitev nastavitve preverjanja ni uspela"
     }
   },
   "update": {
