@@ -114,9 +114,8 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
         }
         setBoardImageUrls(urls);
 
-        // Auto-expand all groups
-        const allSlugs = new Set(images.map((img) => img.board_slug ?? '__unknown__'));
-        setExpandedGroups(allSlugs);
+        // Reset collapsed state for fresh view
+        setExpandedGroups(new Set());
       } catch (err) {
         logWarn('cache-manager', `Failed to load cache data: ${err}`);
       } finally {
