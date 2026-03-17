@@ -1432,16 +1432,10 @@
 .modal-content.cache-manager-modal {
   max-width: 800px;
   width: 94vw;
-  max-height: 82vh;
 }
 
-.cache-manager-modal .modal-body {
-  flex: 1;
-  overflow-y: auto;
+.cache-manager-modal > .modal-body {
   padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 /* --- Board group accordion --- */
@@ -1451,6 +1445,11 @@
   border-radius: 12px;
   overflow: hidden;
   background: var(--bg-card);
+  margin-bottom: 10px;
+}
+
+.cache-board-group:last-child {
+  margin-bottom: 0;
 }
 
 .cache-group-header {
@@ -1630,7 +1629,6 @@
   .modal-content.cache-manager-modal {
     width: 100vw;
     max-width: 100vw;
-    max-height: 95vh;
   }
 
   .cache-list-item {
