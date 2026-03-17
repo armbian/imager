@@ -61,6 +61,77 @@ export function preloadImage(url: string): Promise<boolean> {
   });
 }
 
+/** Parsed metadata from an Armbian image filename */
+export interface ArmbianFilenameInfo {
+  /** Board slug (lowercase, e.g. "nanopi-m5") */
+  boardSlug: string;
+  /** Version string (e.g. "25.02.0" or "26.2.0-trunk.493") */
+  version: string | null;
+  /** Distribution (e.g. "bookworm", "trixie") */
+  distro: string | null;
+  /** Branch (e.g. "current", "edge") */
+  branch: string | null;
+  /** Kernel version (e.g. "6.12.8") */
+  kernel: string | null;
+  /** Desktop environment or "minimal" */
+  desktop: string | null;
+}
+
+/**
+ * Parse an Armbian image filename into structured metadata
+ *
+ * Handles multiple naming conventions:
+ * - Standard: `Armbian_{version}_{board}_{distro}_{branch}_{kernel}[_{desktop}].img[.ext]`
+ * - Labeled: `Armbian_{label}_{version}_{board}_{distro}_{branch}_{kernel}[_{desktop}].img[.ext]`
+ * - Prefixed: `Armbian-unofficial_{version}_{board}_...` (parts[0] starts with "armbian")
+ *
+ * If parts[1] does not start with a digit, it is treated as a label
+ * and all subsequent field indices are shifted by 1.
+ *
+ * @param filename - The image filename (with or without path)
+ * @returns Parsed info or null if not a valid Armbian filename
+ */
+export function parseArmbianFilename(filename: string): ArmbianFilenameInfo | null {
+  // Strip path if present
+  const basename = filename.split('/').pop()?.split('\\').pop() ?? filename;
+
+  // Strip compression extensions, then .img
+  let name = basename;
+  for (const ext of ['.xz', '.gz', '.zst', '.bz2']) {
+    if (name.endsWith(ext)) {
+      name = name.slice(0, -ext.length);
+      break;
+    }
+  }
+  if (name.endsWith('.img')) {
+    name = name.slice(0, -4);
+  }
+
+  const parts = name.split('_');
+
+  // Must start with "armbian" (possibly hyphenated, e.g. "Armbian-unofficial")
+  if (parts.length < 4 || !parts[0].toLowerCase().startsWith('armbian')) {
+    return null;
+  }
+
+  // If parts[1] doesn't start with a digit, it's a label (e.g. "community")
+  const offset = parts[1] && !/^\d/.test(parts[1]) ? 1 : 0;
+
+  // Need at least board index (2+offset) to exist
+  if (parts.length < 3 + offset) {
+    return null;
+  }
+
+  return {
+    boardSlug: parts[2 + offset].toLowerCase(),
+    version: parts[1 + offset] || null,
+    distro: parts[3 + offset] || null,
+    branch: parts[4 + offset] || null,
+    kernel: parts[5 + offset] || null,
+    desktop: parts.length > 6 + offset ? parts.slice(6 + offset).join('_') : null,
+  };
+}
+
 /**
  * Extract error message from unknown error type
  * @param error - Unknown error (Error, string, or other)

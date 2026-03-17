@@ -16,7 +16,7 @@ use filetime::FileTime;
 use once_cell::sync::Lazy;
 
 use crate::config;
-use crate::utils::get_cache_dir;
+use crate::utils::{get_cache_dir, parse_armbian_filename};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "cache";
@@ -303,34 +303,6 @@ pub struct CachedImageInfo {
     pub board_name: Option<String>,
 }
 
-/// Extract board slug from an Armbian image filename
-///
-/// Armbian filenames follow the convention:
-/// `Armbian_{version}_{board}_{distro}_{branch}_{kernel}[_{desktop}].img[.xz|.gz|.zst]`
-///
-/// Example: `Armbian_25.02.0_Nanopi-m5_bookworm_current_6.12.8_gnome.img.xz`
-/// Returns: `Some("nanopi-m5")`
-fn extract_board_slug(filename: &str) -> Option<String> {
-    // Strip compression extensions, then .img
-    let name = filename
-        .strip_suffix(".xz")
-        .or_else(|| filename.strip_suffix(".gz"))
-        .or_else(|| filename.strip_suffix(".zst"))
-        .or_else(|| filename.strip_suffix(".bz2"))
-        .unwrap_or(filename);
-
-    let name = name.strip_suffix(".img").unwrap_or(name);
-
-    // Split by underscore: Armbian_version_board_distro_branch_kernel[_desktop]
-    let parts: Vec<&str> = name.split('_').collect();
-    if parts.len() >= 4 && parts[0].eq_ignore_ascii_case("Armbian") {
-        // Board slug is at index 2, convert to lowercase
-        Some(parts[2].to_lowercase())
-    } else {
-        None
-    }
-}
-
 /// Convert a board slug to a human-readable name
 ///
 /// Replaces hyphens with spaces and capitalizes words.
@@ -398,7 +370,8 @@ pub fn list_cached_images() -> Result<Vec<CachedImageInfo>, String> {
             .unwrap_or_default()
             .as_secs();
 
-        let board_slug = extract_board_slug(&filename);
+        let parsed = parse_armbian_filename(&filename);
+        let board_slug = parsed.map(|info| info.board_slug);
         let board_name = board_slug.as_deref().map(slug_to_display_name);
 
         images.push(CachedImageInfo {

@@ -9,7 +9,7 @@ use tauri::State;
 use crate::config;
 use crate::decompress::{decompress_local_file, needs_decompression};
 use crate::images::{extract_images, fetch_all_images, get_unique_boards, BoardInfo};
-use crate::utils::{get_cache_dir, normalize_slug};
+use crate::utils::{get_cache_dir, normalize_slug, parse_armbian_filename};
 use crate::{log_error, log_info};
 
 use super::state::AppState;
@@ -195,38 +195,27 @@ pub async fn detect_board_from_filename(
         .and_then(|n| n.to_str())
         .ok_or("Invalid filename")?;
 
-    // 2. Remove extension(s) - handle .img.xz, .img.gz, .img.zst, .img.bz2, .img
-    let stem = filename_only
-        .strip_suffix(".xz")
-        .or_else(|| filename_only.strip_suffix(".gz"))
-        .or_else(|| filename_only.strip_suffix(".zst"))
-        .or_else(|| filename_only.strip_suffix(".bz2"))
-        .or_else(|| filename_only.strip_suffix(".img"))
-        .unwrap_or(filename_only);
+    // 2. Parse Armbian filename using shared utility
+    let parsed = match parse_armbian_filename(filename_only) {
+        Some(info) => info,
+        None => {
+            log_info!(
+                "custom_image",
+                "Not an Armbian image or invalid format: {}",
+                filename_only
+            );
+            return Ok(None);
+        }
+    };
 
-    // 3. Parse Armbian naming pattern: Armbian_VERSION_BOARD_DISTRO_VENDOR_KERNEL_FLAVOR
-    let parts: Vec<&str> = stem.split('_').collect();
-
-    // 4. Validate Armbian format (at least 4 parts, starts with "Armbian")
-    if parts.len() < 4 || !parts[0].eq_ignore_ascii_case("Armbian") {
-        log_info!(
-            "custom_image",
-            "Not an Armbian image or invalid format: {}",
-            filename_only
-        );
-        return Ok(None);
-    }
-
-    // 5. Extract board name (index 2)
-    let board_name = parts[2];
     log_info!(
         "custom_image",
-        "Extracted board name from filename: {}",
-        board_name
+        "Extracted board slug from filename: {}",
+        parsed.board_slug
     );
 
-    // 6. Normalize board name to slug format
-    let normalized_slug = normalize_slug(board_name);
+    // 3. Normalize board slug for matching against API data
+    let normalized_slug = normalize_slug(&parsed.board_slug);
     log_info!("custom_image", "Normalized board slug: {}", normalized_slug);
 
     // 7. Ensure board data is loaded (auto-load if not cached)
