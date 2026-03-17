@@ -14,7 +14,7 @@ import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
 import { BoardBadges } from '../shared/BoardBadges';
 import { useToasts } from '../../hooks/useToasts';
-import { formatBytes, preloadImage } from '../../utils';
+import { formatBytes, preloadImage, parseArmbianFilename } from '../../utils';
 import { EVENTS } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getDesktopEnv, getKernelType, DESKTOP_BADGES, KERNEL_BADGES, adjustBrightness } from '../../config/badges';
@@ -35,52 +35,11 @@ interface BoardGroup {
   totalSize: number;
 }
 
-/** Parsed metadata from an Armbian filename */
-interface ParsedImageInfo {
-  version: string | null;
-  distro: string | null;
-  branch: string | null;
-  kernel: string | null;
-  desktop: string | null;
-}
-
 /** Default background for unknown OS icons */
 const DEFAULT_COLOR = 'var(--bg-secondary)';
 
 /** Fallback board image (Armbian logo) */
 const FALLBACK_IMAGE = '/armbian-logo_nofound.png';
-
-/**
- * Parse an Armbian image filename into structured metadata
- *
- * Convention: Armbian_{version}_{board}_{distro}_{branch}_{kernel}[_{desktop}].img[.xz|.gz|.zst|.bz2]
- */
-function parseArmbianFilename(filename: string): ParsedImageInfo {
-  let name = filename;
-  for (const ext of ['.xz', '.gz', '.zst', '.bz2']) {
-    if (name.endsWith(ext)) {
-      name = name.slice(0, -ext.length);
-      break;
-    }
-  }
-  if (name.endsWith('.img')) {
-    name = name.slice(0, -4);
-  }
-
-  const parts = name.split('_');
-
-  if (parts.length < 6 || !parts[0].toLowerCase().startsWith('armbian')) {
-    return { version: null, distro: null, branch: null, kernel: null, desktop: null };
-  }
-
-  return {
-    version: parts[1] || null,
-    distro: parts[3] || null,
-    branch: parts[4] || null,
-    kernel: parts[5] || null,
-    desktop: parts.length > 6 ? parts.slice(6).join('_') : null,
-  };
-}
 
 /**
  * Format a relative time string from a Unix timestamp
@@ -328,9 +287,9 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                         <div className="modal-list">
                           {group.images.map((image, index) => {
                             const parsed = parseArmbianFilename(image.filename);
-                            const osInfo = parsed.distro ? getOsInfo(parsed.distro) : null;
-                            const desktopEnv = parsed.desktop ? getDesktopEnv(parsed.desktop) : null;
-                            const kernelType = parsed.branch ? getKernelType(parsed.branch) : null;
+                            const osInfo = parsed?.distro ? getOsInfo(parsed.distro) : null;
+                            const desktopEnv = parsed?.desktop ? getDesktopEnv(parsed.desktop) : null;
+                            const kernelType = parsed?.branch ? getKernelType(parsed.branch) : null;
                             const badgeConfig = kernelType ? KERNEL_BADGES[kernelType] : null;
 
                             return (
@@ -351,7 +310,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                                 {/* Content — same structure as ImageModal */}
                                 <div className="list-item-content">
                                   <div className="list-item-title">
-                                    {parsed.version
+                                    {parsed?.version
                                       ? `Armbian ${parsed.version}`
                                       : image.filename}
                                   </div>
@@ -396,7 +355,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                                       >
                                         <Zap size={11} />
                                         <span>{badgeConfig.label}</span>
-                                        {parsed.kernel && (
+                                        {parsed?.kernel && (
                                           <span style={{ opacity: 0.8, marginLeft: 1 }}>{parsed.kernel}</span>
                                         )}
                                       </div>
