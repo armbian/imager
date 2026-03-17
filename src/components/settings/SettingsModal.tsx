@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Settings, Terminal } from 'lucide-react';
+import { X, Settings, Terminal, HardDrive } from 'lucide-react';
 import { AppearanceSection } from './AppearanceSection';
-import { LanguageSection } from './LanguageSection';
-import { GeneralSection } from './GeneralSection';
+import { PreferencesSection } from './PreferencesSection';
+import { StorageSection } from './StorageSection';
+import { DeveloperSection } from './DeveloperSection';
 import { AboutSection } from './AboutSection';
-import { AdvancedSection } from './AdvancedSection';
 
-type SettingsView = 'general' | 'appearance' | 'language' | 'advanced' | 'about';
+type SettingsView = 'appearance' | 'preferences' | 'storage' | 'developer' | 'about';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -18,11 +18,11 @@ interface SettingsModalProps {
  * Settings modal with sidebar navigation
  *
  * Features a left sidebar with category options and a right content area.
- * Matches the classic settings UI pattern shown in the reference image.
+ * Tabs: Appearance, Preferences, Storage, Developer, About.
  */
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState<SettingsView>('general');
+  const [activeSection, setActiveSection] = useState<SettingsView>('appearance');
 
   if (!isOpen) return null;
 
@@ -42,14 +42,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* Sidebar */}
           <div className="settings-sidebar">
             <button
-              className={`settings-sidebar-item ${activeSection === 'general' ? 'active' : ''}`}
-              onClick={() => setActiveSection('general')}
-            >
-              <Settings size={20} />
-              <span>{t('settings.general')}</span>
-            </button>
-
-            <button
               className={`settings-sidebar-item ${activeSection === 'appearance' ? 'active' : ''}`}
               onClick={() => setActiveSection('appearance')}
             >
@@ -57,26 +49,31 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              <span>{t('settings.theme')}</span>
+              <span>{t('settings.appearance')}</span>
             </button>
 
             <button
-              className={`settings-sidebar-item ${activeSection === 'language' ? 'active' : ''}`}
-              onClick={() => setActiveSection('language')}
+              className={`settings-sidebar-item ${activeSection === 'preferences' ? 'active' : ''}`}
+              onClick={() => setActiveSection('preferences')}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" strokeWidth="2"/>
-              </svg>
-              <span>{t('settings.language')}</span>
+              <Settings size={20} />
+              <span>{t('settings.preferences')}</span>
             </button>
 
             <button
-              className={`settings-sidebar-item ${activeSection === 'advanced' ? 'active' : ''}`}
-              onClick={() => setActiveSection('advanced')}
+              className={`settings-sidebar-item ${activeSection === 'storage' ? 'active' : ''}`}
+              onClick={() => setActiveSection('storage')}
+            >
+              <HardDrive size={20} />
+              <span>{t('settings.storage')}</span>
+            </button>
+
+            <button
+              className={`settings-sidebar-item ${activeSection === 'developer' ? 'active' : ''}`}
+              onClick={() => setActiveSection('developer')}
             >
               <Terminal size={20} />
-              <span>{t('settings.advancedCategory')}</span>
+              <span>{t('settings.developer')}</span>
             </button>
 
             <button
@@ -93,10 +90,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
           {/* Content Area */}
           <div className="settings-content">
-            {activeSection === 'general' && <GeneralSection />}
             {activeSection === 'appearance' && <AppearanceSection />}
-            {activeSection === 'language' && <LanguageSection />}
-            {activeSection === 'advanced' && <AdvancedSection />}
+            {activeSection === 'preferences' && <PreferencesSection />}
+            {activeSection === 'storage' && <StorageSection />}
+            {activeSection === 'developer' && <DeveloperSection />}
             {activeSection === 'about' && <AboutSection />}
           </div>
         </div>
