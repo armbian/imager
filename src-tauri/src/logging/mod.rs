@@ -340,8 +340,8 @@ pub fn init() {
         info("logger", &format!("Log file: {}", path.display()));
     }
 
-    // Clean up old logs (keep last 10)
-    match cleanup_old_logs(10) {
+    // Clean up old logs, retaining the most recent ones
+    match cleanup_old_logs(config::log_files::MAX_LOG_FILES) {
         Ok(deleted) if deleted > 0 => {
             info("logger", &format!("Cleaned up {} old log files", deleted));
         }

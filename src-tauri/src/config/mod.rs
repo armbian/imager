@@ -59,6 +59,12 @@ pub mod flash {
     pub const UNMOUNT_DELAY_MS: u64 = 500;
 }
 
+/// Log file management settings
+pub mod log_files {
+    /// Maximum number of log files to retain (oldest are deleted)
+    pub const MAX_LOG_FILES: usize = 10;
+}
+
 /// Progress logging intervals
 pub mod logging {
     /// SHA256 calculation buffer size
