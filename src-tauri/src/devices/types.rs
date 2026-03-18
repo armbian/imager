@@ -61,6 +61,7 @@ pub fn normalize_bus_type(transport: &str) -> Option<String> {
 ///
 /// Checks for common SD card identifiers (SDXC, SDHC, SD Card)
 /// that may appear in device model names across platforms.
+#[allow(dead_code)]
 pub fn detect_sd_from_name(name: &str) -> Option<String> {
     let lower = name.to_lowercase();
     if lower.contains("sdxc") || lower.contains("sdhc") || lower.contains("sd card") {
