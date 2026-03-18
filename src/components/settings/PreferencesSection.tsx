@@ -11,6 +11,7 @@ import {
   getArmbianBoardDetection,
   setArmbianBoardDetection,
 } from '../../hooks/useSettings';
+import { getSystemInfo, getArmbianRelease } from '../../hooks/useTauri';
 import { useToasts } from '../../hooks/useToasts';
 import { useSettingsGroup } from '../../hooks/useSettingsGroup';
 import { EVENTS } from '../../config';
@@ -24,17 +25,24 @@ export function PreferencesSection() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToasts();
 
-  // Load all persistent settings on mount
+  // Load all persistent settings and Armbian detection on mount
   const settingsGroup = useSettingsGroup<{
     showMotd: boolean;
     showUpdaterModal: boolean;
     skipVerify: boolean;
     armbianDetection: string;
+    isArmbian: boolean;
   }>({
     showMotd: getShowMotd,
     showUpdaterModal: getShowUpdaterModal,
     skipVerify: getSkipVerify,
     armbianDetection: getArmbianBoardDetection,
+    isArmbian: async () => {
+      const info = await getSystemInfo();
+      if (info.platform !== 'linux') return false;
+      const release = await getArmbianRelease();
+      return release !== null;
+    },
   });
 
   // Track whether initial load is complete to avoid switch animation on mount
@@ -237,8 +245,9 @@ export function PreferencesSection() {
             </div>
             <select
               className="settings-select"
-              value={armbianDetection}
+              value={settingsGroup.isArmbian ? armbianDetection : 'disabled'}
               onChange={handleArmbianDetectionChange}
+              disabled={!settingsGroup.isArmbian}
               aria-label={t('settings.armbian.label')}
             >
               <option value="disabled">{t('settings.armbian.mode_disabled')}</option>
