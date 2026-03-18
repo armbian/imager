@@ -263,11 +263,11 @@
 .modal-warning-banner {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #fef3c7;
-  border-left: 3px solid #f59e0b;
-  color: #92400e;
+  gap: var(--space-sm);
+  padding: 10px var(--space-lg);
+  background: var(--color-warning-bg);
+  border-left: 3px solid var(--color-warning);
+  color: var(--color-warning-text);
   font-size: 12px;
 }
 
@@ -979,12 +979,7 @@
   color: var(--text-primary);
 }
 
-.no-results {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
+/* .no-results is defined in base.css */
 
 /* About section */
 .about-section {

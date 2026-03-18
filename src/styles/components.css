@@ -35,12 +35,12 @@
 }
 
 .btn-danger {
-  background: #ef4444;
+  background: var(--color-error);
   color: white;
 }
 
 .btn-danger:hover {
-  background: #dc2626;
+  background: var(--color-error-dark);
 }
 
 .btn:disabled {
@@ -320,7 +320,7 @@
   position: absolute;
   top: 6px;
   right: 6px;
-  background: #ef4444;
+  background: var(--color-error);
   color: white;
   font-size: 10px;
   font-weight: 700;
@@ -488,13 +488,13 @@
 .locked-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-error-bg);
+  color: var(--color-error);
   font-size: 10px;
   font-weight: 700;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
@@ -775,8 +775,8 @@ button.list-item:disabled:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 12px 16px;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
   background: rgba(239, 68, 68, 0.08);
   border-bottom: 1px solid rgba(239, 68, 68, 0.15);
 }
@@ -888,13 +888,13 @@ button.list-item:disabled:hover {
 .device-warning {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: #fef3c7;
-  border-left: 3px solid #f59e0b;
-  border-radius: 6px;
-  color: #92400e;
-  margin-bottom: 16px;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-warning-bg);
+  border-left: 3px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  color: var(--color-warning-text);
+  margin-bottom: var(--space-lg);
   font-size: 13px;
 }
 
