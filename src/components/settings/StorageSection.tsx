@@ -34,13 +34,16 @@ export function StorageSection() {
   });
 
   // Local state for mutable values
-  const [cacheEnabled, setCacheEnabledState] = useState<boolean>(settingsGroup.cacheEnabled ?? true);
-  const [cacheMaxSize, setCacheMaxSizeState] = useState<number>(settingsGroup.cacheMaxSize ?? CACHE.DEFAULT_SIZE);
+  const [cacheEnabled, setCacheEnabledState] = useState<boolean>(true);
+  const [cacheMaxSize, setCacheMaxSizeState] = useState<number>(CACHE.DEFAULT_SIZE);
+  const [initialized, setInitialized] = useState(false);
 
-  // Sync with loaded values
+  // Sync with loaded values once
   useEffect(() => {
+    if (Object.keys(settingsGroup).length === 0) return;
     if (settingsGroup.cacheEnabled !== undefined) setCacheEnabledState(settingsGroup.cacheEnabled);
     if (settingsGroup.cacheMaxSize !== undefined) setCacheMaxSizeState(settingsGroup.cacheMaxSize);
+    setInitialized(true);
   }, [settingsGroup]);
 
   // Local state for non-persistent values
@@ -117,6 +120,8 @@ export function StorageSection() {
       setIsClearing(false);
     }
   };
+
+  if (!initialized) return null;
 
   return (
     <>

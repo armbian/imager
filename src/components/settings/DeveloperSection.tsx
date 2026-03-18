@@ -16,6 +16,7 @@ export function DeveloperSection() {
   const [developerMode, setDeveloperModeState] = useState<boolean>(false);
   const [logsModalOpen, setLogsModalOpen] = useState<boolean>(false);
   const [isToggling, setIsToggling] = useState<boolean>(false);
+  const [initialized, setInitialized] = useState(false);
 
   // Load preferences on mount
   const settingsGroup = useSettingsGroup<{
@@ -27,6 +28,7 @@ export function DeveloperSection() {
   useEffect(() => {
     if (settingsGroup.developerMode !== undefined) {
       setDeveloperModeState(settingsGroup.developerMode);
+      setInitialized(true);
     }
   }, [settingsGroup.developerMode]);
 
@@ -50,6 +52,8 @@ export function DeveloperSection() {
       setIsToggling(false);
     }
   };
+
+  if (!initialized) return null;
 
   return (
     <div className="settings-section">

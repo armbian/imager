@@ -16,6 +16,7 @@ export function AppearanceSection() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [currentLanguage, setCurrentLanguage] = useState<string>(getCurrentLanguage());
+  const [initialized, setInitialized] = useState(false);
   const languageListRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -26,12 +27,13 @@ export function AppearanceSection() {
       try {
         const store = await load('settings.json', { autoSave: true, defaults: {} });
         const savedLanguage = await store.get<string>('language');
-        const autoMode = !savedLanguage;
-        if (autoMode) {
+        if (!savedLanguage) {
           setCurrentLanguage('auto');
         }
       } catch (error) {
         console.error('Failed to check language mode:', error);
+      } finally {
+        setInitialized(true);
       }
     };
     checkAutoLanguage();
@@ -57,6 +59,8 @@ export function AppearanceSection() {
       console.error('Failed to change language:', error);
     }
   };
+
+  if (!initialized) return null;
 
   return (
     <div className="settings-section">

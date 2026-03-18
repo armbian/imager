@@ -37,20 +37,26 @@ export function PreferencesSection() {
     armbianDetection: getArmbianBoardDetection,
   });
 
-  // Local state for mutable values
-  const [showMotd, setShowMotdState] = useState<boolean>(settingsGroup.showMotd ?? true);
-  const [showUpdaterModal, setShowUpdaterModalState] = useState<boolean>(settingsGroup.showUpdaterModal ?? true);
-  const [skipVerify, setSkipVerifyState] = useState<boolean>(settingsGroup.skipVerify ?? false);
-  const [armbianDetection, setArmbianDetection] = useState<string>(settingsGroup.armbianDetection ?? 'disabled');
-  const [isToggling, setIsToggling] = useState<boolean>(false);
+  // Track whether initial load is complete to avoid switch animation on mount
+  const loaded = Object.keys(settingsGroup).length > 0;
 
-  // Sync with loaded values
+  // Local state for mutable values — initialized from loaded settings
+  const [showMotd, setShowMotdState] = useState<boolean>(true);
+  const [showUpdaterModal, setShowUpdaterModalState] = useState<boolean>(true);
+  const [skipVerify, setSkipVerifyState] = useState<boolean>(false);
+  const [armbianDetection, setArmbianDetection] = useState<string>('disabled');
+  const [isToggling, setIsToggling] = useState<boolean>(false);
+  const [initialized, setInitialized] = useState(false);
+
+  // Sync with loaded values once, then mark initialized
   useEffect(() => {
+    if (!loaded) return;
     if (settingsGroup.showMotd !== undefined) setShowMotdState(settingsGroup.showMotd);
     if (settingsGroup.showUpdaterModal !== undefined) setShowUpdaterModalState(settingsGroup.showUpdaterModal);
     if (settingsGroup.skipVerify !== undefined) setSkipVerifyState(settingsGroup.skipVerify);
     if (settingsGroup.armbianDetection !== undefined) setArmbianDetection(settingsGroup.armbianDetection);
-  }, [settingsGroup]);
+    setInitialized(true);
+  }, [loaded, settingsGroup]);
 
   /** Toggle MOTD visibility */
   const handleToggleMotd = async () => {
@@ -92,9 +98,11 @@ export function PreferencesSection() {
     try {
       await setSkipVerify(newValue);
       window.dispatchEvent(new Event(EVENTS.SETTINGS_CHANGED));
+      showSuccess(t('settings.toast.skipVerifyUpdated'));
     } catch (error) {
       console.error('Failed to set skip verify preference:', error);
       setSkipVerifyState(previousValue);
+      showError(t('settings.toast.skipVerifyError'));
     } finally {
       setIsToggling(false);
     }
@@ -116,6 +124,9 @@ export function PreferencesSection() {
       showError(t('settings.toast.detectionError'));
     }
   };
+
+  // Don't render until settings are loaded to prevent switch animation
+  if (!initialized) return null;
 
   return (
     <div className="settings-section">
