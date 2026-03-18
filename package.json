@@ -31,10 +31,10 @@
   "dependencies": {
     "@tauri-apps/api": "^2.9.1",
     "@tauri-apps/plugin-fs": "^2.4.4",
-    "@tauri-apps/plugin-process": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-shell": "^2.3.3",
     "@tauri-apps/plugin-store": "^2.4.1",
-    "@tauri-apps/plugin-updater": "^2",
+    "@tauri-apps/plugin-updater": "^2.9.0",
     "@types/qrcode": "^1.5.6",
     "ansi-to-html": "^0.7.0",
     "i18next": "^25.7.2",
