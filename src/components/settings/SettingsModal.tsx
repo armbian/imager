@@ -27,8 +27,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay modal-entering" onClick={onClose}>
+      <div className="settings-modal settings-modal-entering" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="settings-modal-header">
           <h2>{t('settings.title')}</h2>

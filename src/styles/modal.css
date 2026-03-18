@@ -523,6 +523,16 @@
   overflow: hidden;
 }
 
+/* Settings modal enter animation */
+.settings-modal.settings-modal-entering {
+  animation: settingsModalFadeIn 0.25s ease-out;
+}
+
+@keyframes settingsModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .settings-modal-header {
   display: flex;
   align-items: center;
@@ -601,6 +611,22 @@
   overflow-y: auto;
   padding: 24px;
   background: var(--bg-modal);
+}
+
+/* Animate tab content on switch */
+.settings-content > * {
+  animation: settingsTabFadeIn 0.2s ease-out;
+}
+
+@keyframes settingsTabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Settings content sections */
