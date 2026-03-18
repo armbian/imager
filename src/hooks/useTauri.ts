@@ -176,34 +176,6 @@ export async function isAppInApplications(): Promise<boolean> {
 }
 
 /**
- * Get the current theme preference
- */
-export async function getTheme(): Promise<string> {
-  return invoke('get_theme');
-}
-
-/**
- * Set the theme preference
- */
-export async function setTheme(theme: string): Promise<void> {
-  return invoke('set_theme', { theme });
-}
-
-/**
- * Get the current language preference
- */
-export async function getLanguage(): Promise<string> {
-  return invoke('get_language');
-}
-
-/**
- * Set the language preference
- */
-export async function setLanguage(language: string): Promise<void> {
-  return invoke('set_language', { language });
-}
-
-/**
  * Get the real system platform and architecture
  */
 export async function getSystemInfo(): Promise<{ platform: string; arch: string }> {
