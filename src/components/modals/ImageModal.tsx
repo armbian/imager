@@ -6,6 +6,7 @@ import { ErrorDisplay, ListItemSkeleton, ConfirmationDialog } from '../shared';
 import type { BoardInfo, ImageInfo, ImageFilterType } from '../../types';
 import { getImagesForBoard } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
+import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import {
   getOsInfo,
   getAppInfo,
@@ -75,7 +76,6 @@ const FILTER_BUTTONS: Array<{
 export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps) {
   const { t } = useTranslation();
   const [filterType, setFilterType] = useState<ImageFilterType>('all');
-  const [showSkeleton, setShowSkeleton] = useState(false);
 
   // Reset filter to "All Images" when modal closes
   useEffect(() => {
@@ -97,29 +97,11 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
 
   // Derive images ready state
   const imagesReady = useMemo(() => {
-    return allImages && allImages.length > 0;
+    return !!(allImages && allImages.length > 0);
   }, [allImages]);
 
   // Show skeleton with minimum delay
-  useEffect(() => {
-    let skeletonTimeout: NodeJS.Timeout;
-
-    if (loading) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Show skeleton during loading
-      setShowSkeleton(true);
-    } else if (imagesReady) {
-      // Keep skeleton visible for at least 300ms
-      skeletonTimeout = setTimeout(() => {
-        setShowSkeleton(false);
-      }, 300);
-    }
-
-    return () => {
-      if (skeletonTimeout) {
-        clearTimeout(skeletonTimeout);
-      }
-    };
-  }, [loading, imagesReady]);
+  const { showSkeleton } = useSkeletonLoading(loading, imagesReady);
 
   // Reset warning state when modal is closed
   useEffect(() => {

@@ -6,6 +6,7 @@ import { ErrorDisplay, ConfirmationDialog, ListItemSkeleton } from '../shared';
 import type { BlockDevice } from '../../types';
 import { getBlockDevices } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
+import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { POLLING, UI, type DeviceType } from '../../config';
 import { getDeviceColors } from '../../config/deviceColors';
 import { getDeviceType } from '../../utils/deviceUtils';
@@ -75,7 +76,6 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   const { t } = useTranslation();
   const [selectedDevice, setSelectedDevice] = useState<BlockDevice | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showSkeleton, setShowSkeleton] = useState(false);
   const [showSystemDevices, setShowSystemDevices] = useState(false);
 
   // Track previous devices for change detection
@@ -89,10 +89,10 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
     [isOpen]
   );
 
-  // Derive devices ready state
+  // Derive devices ready state (also ready when no devices found after loading)
   const devicesReady = useMemo(() => {
-    return devices && devices.length > 0;
-  }, [devices]);
+    return (devices && devices.length > 0) || !loading;
+  }, [devices, loading]);
 
   // Filter and sort devices based on showSystemDevices toggle
   const filteredDevices = useMemo(() => {
@@ -101,31 +101,14 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   }, [devices, showSystemDevices]);
 
   // Show skeleton with minimum delay
-  useEffect(() => {
-    let skeletonTimeout: NodeJS.Timeout;
-
-    if (loading) {
-      setShowSkeleton(true);
-    } else if (devicesReady || (!loading && devices.length === 0)) {
-      // Keep skeleton visible for at least 300ms
-      skeletonTimeout = setTimeout(() => {
-        setShowSkeleton(false);
-      }, 300);
-    }
-
-    return () => {
-      if (skeletonTimeout) {
-        clearTimeout(skeletonTimeout);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- devicesReady already tracks devices changes; adding devices.length causes re-renders during polling
-  }, [loading, devicesReady]);
+  const { showSkeleton } = useSkeletonLoading(loading, devicesReady);
 
   // Update devices only when they actually change
   useEffect(() => {
     if (!rawDevices) return;
     if (devicesChanged(prevDevicesRef.current, rawDevices)) {
       prevDevicesRef.current = rawDevices;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync external device data into local state for change detection
       setDevices(sortDevices(rawDevices));
     }
   }, [rawDevices]);

@@ -7,6 +7,7 @@ import type { BoardInfo, Manufacturer } from '../../types';
 import { getBoards, getBoardImageUrl } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
 import { useVendorLogos } from '../../hooks/useVendorLogos';
+import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { compareBoardsBySupport, preloadImage } from '../../utils';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
 
@@ -21,7 +22,6 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [boardImages, setBoardImages] = useState<Record<string, string | null>>({});
-  const [showSkeleton, setShowSkeleton] = useState(false);
   const loadedSlugsRef = useRef<Set<string>>(new Set());
 
   // Use hook for async data fetching
@@ -36,29 +36,11 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
 
   // Derive boards ready state from data availability
   const boardsReady = useMemo(() => {
-    return boards && boards.length > 0 && vendorLogosChecked;
+    return !!(boards && boards.length > 0 && vendorLogosChecked);
   }, [boards, vendorLogosChecked]);
 
   // Show skeleton with minimum delay
-  useEffect(() => {
-    let skeletonTimeout: NodeJS.Timeout;
-
-    if (loading) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Show skeleton during loading
-      setShowSkeleton(true);
-    } else if (boardsReady) {
-      // Keep skeleton visible for at least 300ms
-      skeletonTimeout = setTimeout(() => {
-        setShowSkeleton(false);
-      }, 300);
-    }
-
-    return () => {
-      if (skeletonTimeout) {
-        clearTimeout(skeletonTimeout);
-      }
-    };
-  }, [loading, boardsReady]);
+  const { showSkeleton } = useSkeletonLoading(loading, boardsReady);
 
   // Reset images when manufacturer changes
   useEffect(() => {

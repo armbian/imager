@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { ErrorDisplay, ListItemSkeleton, SearchBox } from '../shared';
@@ -6,6 +6,7 @@ import type { BoardInfo, Manufacturer } from '../../types';
 import { getBoards } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
 import { useManufacturerList, type ManufacturerData } from '../../hooks/useVendorLogos';
+import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { DEFAULT_COLOR } from '../../utils';
 import { UI, VENDOR } from '../../config';
 
@@ -40,7 +41,6 @@ interface ManufacturerModalProps {
 export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerModalProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
-  const [showSkeleton, setShowSkeleton] = useState(false);
 
   // Use hook for async data fetching
   const { data: boards, loading, error, reload } = useAsyncDataWhen<BoardInfo[]>(
@@ -54,29 +54,11 @@ export function ManufacturerModal({ isOpen, onClose, onSelect }: ManufacturerMod
 
   // Derive ready state
   const manufacturersReady = useMemo(() => {
-    return manufacturers && manufacturers.length > 0 && logosLoaded;
+    return !!(manufacturers && manufacturers.length > 0 && logosLoaded);
   }, [manufacturers, logosLoaded]);
 
   // Show skeleton with minimum delay
-  useEffect(() => {
-    let skeletonTimeout: NodeJS.Timeout;
-
-    if (loading) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Show skeleton during loading
-      setShowSkeleton(true);
-    } else if (manufacturersReady) {
-      // Keep skeleton visible for at least 300ms
-      skeletonTimeout = setTimeout(() => {
-        setShowSkeleton(false);
-      }, 300);
-    }
-
-    return () => {
-      if (skeletonTimeout) {
-        clearTimeout(skeletonTimeout);
-      }
-    };
-  }, [loading, manufacturersReady]);
+  const { showSkeleton } = useSkeletonLoading(loading, manufacturersReady);
 
   const searchBarContent = (
     <SearchBox
