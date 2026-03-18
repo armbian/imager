@@ -9,11 +9,11 @@ import { EVENTS } from '../../config';
  * Settings button component
  *
  * Displays a settings icon in the bottom-right corner that opens the settings modal.
- * Replaces the old AppVersion component.
  */
 export function SettingsButton() {
   const { t } = useTranslation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [openCount, setOpenCount] = useState(0);
 
   // Close settings when a cached image is selected for reuse
   useEffect(() => {
@@ -27,10 +27,9 @@ export function SettingsButton() {
     duration: 200,
   });
 
-  /**
-   * Open settings modal
-   */
+  /** Open settings modal */
   const handleOpenSettings = () => {
+    setOpenCount((c) => c + 1);
     setIsSettingsOpen(true);
   };
 
@@ -46,6 +45,7 @@ export function SettingsButton() {
       </button>
 
       <SettingsModal
+        key={openCount}
         isOpen={isSettingsOpen && !isExiting}
         onClose={handleClose}
       />
