@@ -14,7 +14,7 @@ use tokio::sync::Mutex;
 
 use crate::config;
 use crate::decompress::decompress_with_rust_xz;
-use crate::utils::{bytes_to_mb, ProgressTracker};
+use crate::utils::{bytes_to_mb, validate_cache_path, ProgressTracker};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "download";
@@ -84,6 +84,12 @@ async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, St
         .send()
         .await
         .map_err(|e| format!("[SHA_UNAVAILABLE] Failed to fetch SHA: {}", e))?;
+
+    // Log the final URL after redirect (shows which mirror serves the SHA)
+    let final_sha_url = response.url().to_string();
+    if final_sha_url != sha_url {
+        log_debug!(MODULE, "SHA redirected to mirror: {}", final_sha_url);
+    }
 
     if !response.status().is_success() {
         return Err(format!(
@@ -244,6 +250,12 @@ pub async fn download_image(
         format!("Failed to start download: {}", e)
     })?;
 
+    // Log the final URL after redirect (shows which mirror is being used)
+    let final_url = response.url().to_string();
+    if final_url != url {
+        log_debug!(MODULE, "Redirected to mirror: {}", final_url);
+    }
+
     if !response.status().is_success() {
         log_error!(MODULE, "Download failed with status: {}", response.status());
         return Err(format!(
@@ -286,10 +298,19 @@ pub async fn download_image(
             return Err("Download cancelled".to_string());
         }
 
-        let chunk = chunk.map_err(|e| format!("Download error: {}", e))?;
-        temp_file
-            .write_all(&chunk)
-            .map_err(|e| format!("Failed to write chunk: {}", e))?;
+        let chunk = match chunk {
+            Ok(c) => c,
+            Err(e) => {
+                drop(temp_file);
+                let _ = std::fs::remove_file(&temp_path);
+                return Err(format!("Download error: {}", e));
+            }
+        };
+        if let Err(e) = temp_file.write_all(&chunk) {
+            drop(temp_file);
+            let _ = std::fs::remove_file(&temp_path);
+            return Err(format!("Failed to write chunk: {}", e));
+        }
 
         downloaded += chunk.len() as u64;
         state.downloaded_bytes.store(downloaded, Ordering::SeqCst);
@@ -347,15 +368,21 @@ pub async fn download_image(
         );
 
         // Use Rust lzma-rust2 library (multi-threaded) on all platforms
-        decompress_with_rust_xz(&temp_path, &output_path, &state)?;
+        if let Err(e) = decompress_with_rust_xz(&temp_path, &output_path, &state) {
+            let _ = std::fs::remove_file(&temp_path);
+            let _ = std::fs::remove_file(&output_path);
+            return Err(e);
+        }
         log_info!(MODULE, "Decompression complete");
 
-        // Clean up temp file
+        // Clean up compressed temp file
         let _ = std::fs::remove_file(&temp_path);
     } else {
         // No decompression needed, just rename
-        std::fs::rename(&temp_path, &output_path)
-            .map_err(|e| format!("Failed to move file: {}", e))?;
+        if let Err(e) = std::fs::rename(&temp_path, &output_path) {
+            let _ = std::fs::remove_file(&temp_path);
+            return Err(format!("Failed to move file: {}", e));
+        }
     }
 
     log_info!(MODULE, "Image ready: {}", output_path.display());
@@ -377,18 +404,14 @@ pub async fn continue_without_sha(
         .ok_or("No pending download to continue")?;
 
     // Defense in depth: verify temp_path is within cache directory
-    if let Ok(canonical_temp) = temp_path.canonicalize() {
-        if let Ok(canonical_cache) = output_dir.canonicalize() {
-            if !canonical_temp.starts_with(&canonical_cache) {
-                log_error!(
-                    MODULE,
-                    "Security: temp_path {} is outside cache directory {}",
-                    canonical_temp.display(),
-                    canonical_cache.display()
-                );
-                return Err("Invalid temp file location".to_string());
-            }
-        }
+    if let Err(e) = validate_cache_path(&temp_path) {
+        log_error!(
+            MODULE,
+            "Security: temp_path {} is outside cache directory: {}",
+            temp_path.display(),
+            e
+        );
+        return Err("Invalid temp file location".to_string());
     }
 
     log_info!(
@@ -419,7 +442,11 @@ pub async fn continue_without_sha(
             "Starting decompression with Rust lzma-rust2 (multi-threaded)..."
         );
 
-        decompress_with_rust_xz(&temp_path, &output_path, &state)?;
+        if let Err(e) = decompress_with_rust_xz(&temp_path, &output_path, &state) {
+            let _ = std::fs::remove_file(&temp_path);
+            let _ = std::fs::remove_file(&output_path);
+            return Err(e);
+        }
 
         state.is_decompressing.store(false, Ordering::SeqCst);
         log_info!(MODULE, "Decompression complete");
@@ -428,8 +455,10 @@ pub async fn continue_without_sha(
         let _ = std::fs::remove_file(&temp_path);
     } else {
         // No decompression needed, just rename
-        std::fs::rename(&temp_path, &output_path)
-            .map_err(|e| format!("Failed to move file: {}", e))?;
+        if let Err(e) = std::fs::rename(&temp_path, &output_path) {
+            let _ = std::fs::remove_file(&temp_path);
+            return Err(format!("Failed to move file: {}", e));
+        }
     }
 
     log_info!(MODULE, "Image ready: {}", output_path.display());

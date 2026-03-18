@@ -16,7 +16,7 @@ use filetime::FileTime;
 use once_cell::sync::Lazy;
 
 use crate::config;
-use crate::utils::{get_cache_dir, parse_armbian_filename};
+use crate::utils::{get_cache_dir, parse_armbian_filename, validate_cache_path};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "cache";
@@ -436,22 +436,15 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
         return Err(format!("Not a file: {}", filename));
     }
 
-    // Additional safety: canonicalize and verify parent
-    let canonical = file_path
-        .canonicalize()
-        .map_err(|e| format!("Failed to resolve path: {}", e))?;
-    let canonical_cache = cache_dir
-        .canonicalize()
-        .map_err(|e| format!("Failed to resolve cache dir: {}", e))?;
-
-    if !canonical.starts_with(&canonical_cache) {
+    // Additional safety: canonicalize and verify within cache directory
+    if let Err(e) = validate_cache_path(&file_path) {
         log_error!(
             MODULE,
-            "Attempted to delete file outside cache: {} (resolved: {})",
+            "Attempted to delete file outside cache: {}: {}",
             filename,
-            canonical.display()
+            e
         );
-        return Err("Cannot delete files outside cache directory".to_string());
+        return Err(e);
     }
 
     // Delete the file
