@@ -334,6 +334,13 @@ function AppContent() {
           has_wip_support: false,
         };
 
+        // Set manufacturer for display consistency (same pattern as cached image reuse)
+        setSelectedManufacturer({
+          id: displayBoard.vendor,
+          name: displayBoard.vendor_name,
+          color: '#6b7280',
+          boardCount: 1,
+        });
         setSelectedBoard(displayBoard);
         setSelectedImage(customImage);
       }
