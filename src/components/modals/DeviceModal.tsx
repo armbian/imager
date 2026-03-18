@@ -47,12 +47,12 @@ function getDeviceBadge(type: DeviceType, t: (key: string) => string): string | 
   }
 }
 
-/** Check if device lists are different (by comparing paths) */
+/** Check if device lists are different (by comparing paths and sizes) */
 function devicesChanged(prev: BlockDevice[] | null, next: BlockDevice[]): boolean {
   if (!prev) return true;
   if (prev.length !== next.length) return true;
-  const prevPaths = new Set(prev.map(d => d.path));
-  return next.some(d => !prevPaths.has(d.path));
+  const prevKeys = new Set(prev.map(d => `${d.path}:${d.size}`));
+  return next.some(d => !prevKeys.has(`${d.path}:${d.size}`));
 }
 
 /** Sort devices: system first, then by size (largest first) */

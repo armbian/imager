@@ -8,7 +8,7 @@ use std::process::Command;
 use crate::log_error;
 use crate::utils::format_size;
 
-use super::types::BlockDevice;
+use super::types::{normalize_bus_type, BlockDevice};
 
 /// Checks if a device is read-only by reading /sys/block/{device}/ro
 /// Returns true if the device is read-only (write-protected)
@@ -104,26 +104,17 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             _ => false,
         };
 
-        // Get transport type from TRAN field (already in JSON)
+        // Get transport type from TRAN field, with fallback to device path
         let tran = dev["tran"].as_str().unwrap_or("");
-        let bus_type = match tran.to_uppercase().as_str() {
-            "USB" => Some("USB".to_string()),
-            "MMC" => Some("SD".to_string()),
-            "SATA" => Some("SATA".to_string()),
-            "NVME" => Some("NVMe".to_string()),
-            "SAS" => Some("SAS".to_string()),
-            "" => {
-                // Fallback for devices without TRAN (mmcblk, nvme)
-                if path.contains("mmcblk") {
-                    Some("SD".to_string())
-                } else if path.contains("nvme") {
-                    Some("NVMe".to_string())
-                } else {
-                    None
-                }
+        let bus_type = normalize_bus_type(tran).or_else(|| {
+            if path.contains("mmcblk") {
+                Some("SD".to_string())
+            } else if path.contains("nvme") {
+                Some("NVMe".to_string())
+            } else {
+                None
             }
-            other => Some(other.to_string()),
-        };
+        });
 
         // Check read-only status via sysfs
         let is_read_only = is_device_read_only(dev_name);

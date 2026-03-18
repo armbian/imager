@@ -6,7 +6,7 @@ use std::mem;
 use crate::log_error;
 use crate::utils::format_size;
 
-use super::types::BlockDevice;
+use super::types::{normalize_bus_type, BlockDevice};
 
 #[cfg(target_os = "windows")]
 use windows_sys::Win32::{
@@ -299,7 +299,7 @@ fn query_device_properties(disk_number: i32) -> Result<(String, bool, Option<Str
     }
 
     let bus_type_enum = buffer[BUS_TYPE_OFFSET];
-    let bus_type = bus_type_to_string(bus_type_enum).map(|s| s.to_string());
+    let bus_type = bus_type_to_string(bus_type_enum).and_then(normalize_bus_type);
 
     let product_id_offset = u32::from_le_bytes(
         buffer[PRODUCT_ID_OFFSET..PRODUCT_ID_OFFSET + 4]
