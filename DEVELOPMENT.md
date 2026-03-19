@@ -233,7 +233,7 @@ armbian-imager/
 │   │   │   ├── operations.rs        # download_image, flash_image, delete, cleanup
 │   │   │   ├── progress.rs          # get_download/flash_progress, cancel_operation
 │   │   │   ├── custom_image.rs      # select, decompress, detect board from filename
-│   │   │   ├── scraping.rs          # get_board_image_url
+│   │   │   ├── scraping.rs          # get_cached_board_image, get_cached_vendor_logo
 │   │   │   ├── settings.rs          # 25+ get/set commands (theme, cache, etc.)
 │   │   │   ├── system.rs            # open_url, locale, frontend logging, armbian detect
 │   │   │   ├── update.rs            # get_github_release, is_app_in_applications
