@@ -21,10 +21,6 @@ export async function getImagesForBoard(
   });
 }
 
-export async function getBoardImageUrl(boardSlug: string): Promise<string | null> {
-  return invoke('get_board_image_url', { boardSlug });
-}
-
 export async function getBlockDevices(): Promise<BlockDevice[]> {
   return invoke('get_block_devices');
 }
@@ -269,6 +265,44 @@ export async function listCachedImages(): Promise<CachedImageInfo[]> {
  */
 export async function deleteCachedImage(filename: string): Promise<number> {
   return invoke('delete_cached_image', { filename });
+}
+
+// ============================================================================
+// Connectivity
+// ============================================================================
+
+/**
+ * Check if the app can reach the Armbian API
+ *
+ * Performs a HEAD request with a 5-second timeout.
+ * Returns true if online, false if offline.
+ */
+export async function checkConnectivity(): Promise<boolean> {
+  return invoke('check_connectivity');
+}
+
+// ============================================================================
+// Picture Cache
+// ============================================================================
+
+/**
+ * Get a board image from local cache, downloading if needed
+ *
+ * Returns a data URI (data:image/png;base64,...) for the cached image, or null
+ * if the image is unavailable (offline + not cached).
+ */
+export async function getCachedBoardImage(boardSlug: string): Promise<string | null> {
+  return invoke('get_cached_board_image', { boardSlug });
+}
+
+/**
+ * Get a vendor logo from local cache, downloading if needed
+ *
+ * Returns a data URI (data:image/png;base64,...) for the cached logo, or null
+ * if the logo is unavailable (offline + not cached).
+ */
+export async function getCachedVendorLogo(vendorId: string, logoUrl: string): Promise<string | null> {
+  return invoke('get_cached_vendor_logo', { vendorId, logoUrl });
 }
 
 // ============================================================================

@@ -10,6 +10,8 @@ export const POLLING = {
   DOWNLOAD_PROGRESS: 250,
   /** Flash progress update interval */
   FLASH_PROGRESS: 250,
+  /** Connectivity check interval */
+  CONNECTIVITY_CHECK: 30000,
 } as const;
 
 /** Device type identifiers */
