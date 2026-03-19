@@ -8,6 +8,15 @@ use sys_locale::get_locale;
 
 const MODULE: &str = "commands::system";
 
+/// Shared HTTP client for connectivity checks (5s timeout)
+static CONNECTIVITY_CLIENT: once_cell::sync::Lazy<reqwest::Client> =
+    once_cell::sync::Lazy::new(|| {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(5))
+            .build()
+            .expect("Failed to build connectivity HTTP client")
+    });
+
 /// Log a message from the frontend (INFO level)
 #[tauri::command]
 pub fn log_from_frontend(module: String, message: String) {
@@ -196,6 +205,34 @@ fn open_url_windows(url: &str) -> Result<(), String> {
         .map_err(|e| format!("Failed to open URL: {}", e))?;
 
     Ok(())
+}
+
+/// Check if the application can reach the Armbian API
+///
+/// Performs a HEAD request to the images API with a 5-second timeout.
+/// Returns true if reachable, false if offline or any error occurs.
+#[tauri::command]
+pub async fn check_connectivity() -> bool {
+    match CONNECTIVITY_CLIENT
+        .head(crate::config::urls::ALL_IMAGES)
+        .send()
+        .await
+    {
+        Ok(response) => {
+            let online = response.status().is_success() || response.status().is_redirection();
+            log_debug!(
+                MODULE,
+                "Connectivity check: {} (status: {})",
+                if online { "online" } else { "offline" },
+                response.status()
+            );
+            online
+        }
+        Err(e) => {
+            log_debug!(MODULE, "Connectivity check: offline ({})", e);
+            false
+        }
+    }
 }
 
 // ============================================================================
