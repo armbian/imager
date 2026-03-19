@@ -6,3 +6,4 @@ export { StorageSection } from './StorageSection';
 export { DeveloperSection } from './DeveloperSection';
 export { AboutSection } from './AboutSection';
 export { LogsModal } from './LogsModal';
+export { CacheManagerModal } from './CacheManagerModal';
