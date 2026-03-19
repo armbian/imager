@@ -110,6 +110,53 @@
   transform: scale(1.1);
 }
 
+/* Compact offline badge shown in header steps area */
+.header-offline-badge {
+  color: #f59e0b;
+  gap: 6px;
+}
+
+.header-offline-badge .header-step-label {
+  color: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .header-offline-badge {
+    color: #fbbf24;
+  }
+  .header-offline-badge .header-step-label {
+    color: #fbbf24;
+  }
+}
+
+/* ========================================
+   OFFLINE BANNER
+   ======================================== */
+.offline-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.offline-banner svg {
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .offline-banner {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+    border-bottom-color: rgba(245, 158, 11, 0.15);
+  }
+}
+
 /* ========================================
    MAIN CONTENT
    ======================================== */
@@ -237,6 +284,12 @@
 .home-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Read-only selected buttons retain full opacity (used for detected board info) */
+.home-button.selected:disabled {
+  opacity: 1;
+  cursor: default;
 }
 
 .home-button.selected {
@@ -446,6 +499,70 @@
 .back-button:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+/* ========================================
+   OFFLINE LAYOUT
+   ======================================== */
+.home-offline-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.home-offline-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Entrance animations for offline buttons */
+.home-offline-actions .home-button-group:nth-child(1) .home-button {
+  animation: buttonEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 0ms;
+  opacity: 0;
+}
+
+.home-offline-actions .home-button-group:nth-child(2) .home-button {
+  animation: buttonEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 100ms;
+  opacity: 0;
+}
+
+.home-offline-hint {
+  font-size: 13px;
+  font-weight: 500;
+  color: #b45309;
+  text-align: center;
+  padding: 8px 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 8px;
+  animation: buttonEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 200ms;
+  opacity: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .home-offline-hint {
+    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.15);
+  }
+}
+
+/* Respect user motion preferences for offline layout */
+@media (prefers-reduced-motion: reduce) {
+  .home-offline-actions .home-button,
+  .home-offline-hint {
+    animation: none !important;
+    opacity: 1 !important;
+  }
 }
 
 /* ========================================
