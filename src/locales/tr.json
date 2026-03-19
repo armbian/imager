@@ -10,10 +10,15 @@
     "chooseStorage": "DEPOLAMA SEÇ",
     "useCustomImage": "Özel imaj kullan",
     "changeCustomImage": "Özel imajı değiştir",
+    "changeCachedImage": "Önbellek görüntüsünü değiştir",
     "imageCount_one": "{{count}} imaj",
     "imageCount_other": "{{count}} imaj",
     "boardCount_one": "{{count}} kart",
-    "boardCount_other": "{{count}} kart"
+    "boardCount_other": "{{count}} kart",
+    "offlineBanner": "İnternet bağlantısı yok. Özel görüntüler ve önbelleğe alınmış indirmeler hâlâ kullanılabilir.",
+    "connectionRestored": "Bağlantı yeniden kuruldu",
+    "offlineHint": "Yerel dosyalardan veya önceden indirilmiş görüntülerden yazın.",
+    "cachedImages": "ÖNBELLEKTEKİ GÖRÜNTÜLER"
   },
   "flash": {
     "downloading": "İmaj indiriliyor...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Bilinmeyen",
     "confirm": "Onayla",
-    "cancel": "İptal"
+    "cancel": "İptal",
+    "offline": "Çevrimdışı"
   },
   "settings": {
     "title": "Ayarlar",

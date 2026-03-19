@@ -10,10 +10,15 @@
     "chooseStorage": "SPEICHER WÄHLEN",
     "useCustomImage": "Eigenes Image verwenden",
     "changeCustomImage": "Eigenes Image ändern",
+    "changeCachedImage": "Zwischengespeichertes Image ändern",
     "imageCount_one": "{{count}} Image",
     "imageCount_other": "{{count}} Images",
     "boardCount_one": "{{count}} Board",
-    "boardCount_other": "{{count}} Boards"
+    "boardCount_other": "{{count}} Boards",
+    "offlineBanner": "Keine Internetverbindung. Benutzerdefinierte Images und zwischengespeicherte Downloads sind weiterhin verfügbar.",
+    "connectionRestored": "Verbindung wiederhergestellt",
+    "offlineHint": "Von lokalen Dateien oder zuvor heruntergeladenen Images flashen.",
+    "cachedImages": "ZWISCHENGESPEICHERTE IMAGES"
   },
   "flash": {
     "downloading": "Image wird heruntergeladen...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Unbekannt",
     "confirm": "Bestätigen",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "offline": "Offline"
   },
   "settings": {
     "title": "Einstellungen",

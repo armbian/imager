@@ -10,10 +10,15 @@
     "chooseStorage": "ODABERI POHRANU",
     "useCustomImage": "Koristi prilagođenu sliku",
     "changeCustomImage": "Promijeni prilagođenu sliku",
+    "changeCachedImage": "Promijeni predmemoriranu sliku",
     "imageCount_one": "{{count}} slika",
     "imageCount_other": "{{count}} slika",
     "boardCount_one": "{{count}} ploča",
-    "boardCount_other": "{{count}} ploča"
+    "boardCount_other": "{{count}} ploča",
+    "offlineBanner": "Nema internetske veze. Prilagođene slike i preuzimanja iz predmemorije su i dalje dostupni.",
+    "connectionRestored": "Veza uspostavljena",
+    "offlineHint": "Flashanje iz lokalnih datoteka ili prethodno preuzetih slika.",
+    "cachedImages": "PREDMEMORIRANE SLIKE"
   },
   "flash": {
     "downloading": "Preuzimanje slike...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Nepoznato",
     "confirm": "Potvrda",
-    "cancel": "Odustani"
+    "cancel": "Odustani",
+    "offline": "Izvan mreže"
   },
   "settings": {
     "title": "Postavke",

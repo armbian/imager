@@ -10,10 +10,15 @@
     "chooseStorage": "IZBERI SHRAMBO",
     "useCustomImage": "Uporabi sliko po meri",
     "changeCustomImage": "Spremeni sliko po meri",
+    "changeCachedImage": "Spremeni predpomnjeno sliko",
     "imageCount_one": "{{count}} slika",
     "imageCount_other": "{{count}} slik",
     "boardCount_one": "{{count}} plošča",
-    "boardCount_other": "{{count}} plošč"
+    "boardCount_other": "{{count}} plošč",
+    "offlineBanner": "Ni internetne povezave. Slike po meri in predpomnjeni prenosi so še vedno na voljo.",
+    "connectionRestored": "Povezava vzpostavljena",
+    "offlineHint": "Zapisovanje iz lokalnih datotek ali predhodno prenesenih slik.",
+    "cachedImages": "PREDPOMNJENE SLIKE"
   },
   "flash": {
     "downloading": "Prenašanje slike...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Neznano",
     "confirm": "Potrdi",
-    "cancel": "Prekliči"
+    "cancel": "Prekliči",
+    "offline": "Brez povezave"
   },
   "settings": {
     "title": "Nastavitve",

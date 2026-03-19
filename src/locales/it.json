@@ -10,10 +10,15 @@
     "chooseStorage": "SCEGLI STORAGE",
     "useCustomImage": "Usa Immagine Personalizzata",
     "changeCustomImage": "Cambia Immagine Personalizzata",
+    "changeCachedImage": "Cambia immagine memorizzata",
     "imageCount_one": "{{count}} immagine",
     "imageCount_other": "{{count}} immagini",
     "boardCount_one": "{{count}} scheda",
-    "boardCount_other": "{{count}} schede"
+    "boardCount_other": "{{count}} schede",
+    "offlineBanner": "Nessuna connessione internet. Le immagini personalizzate e i download memorizzati sono ancora disponibili.",
+    "connectionRestored": "Connessione ripristinata",
+    "offlineHint": "Scrivi da file locali o immagini scaricate in precedenza.",
+    "cachedImages": "IMMAGINI MEMORIZZATE"
   },
   "flash": {
     "downloading": "Download immagine in corso...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Sconosciuto",
     "confirm": "Conferma",
-    "cancel": "Annulla"
+    "cancel": "Annulla",
+    "offline": "Non in linea"
   },
   "settings": {
     "title": "Impostazioni",

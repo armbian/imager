@@ -10,10 +10,15 @@
     "chooseStorage": "选择存储",
     "useCustomImage": "使用自定义镜像",
     "changeCustomImage": "更换自定义镜像",
+    "changeCachedImage": "更改缓存镜像",
     "imageCount_one": "{{count}} 镜像",
     "imageCount_other": "{{count}} 镜像",
     "boardCount_one": "{{count}} 开发板",
-    "boardCount_other": "{{count}} 开发板"
+    "boardCount_other": "{{count}} 开发板",
+    "offlineBanner": "无互联网连接。自定义镜像和已缓存的下载仍然可用。",
+    "connectionRestored": "连接已恢复",
+    "offlineHint": "从本地文件或之前下载的镜像进行烧录。",
+    "cachedImages": "已缓存的镜像"
   },
   "flash": {
     "downloading": "正在下载镜像...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "未知",
     "confirm": "确认",
-    "cancel": "取消"
+    "cancel": "取消",
+    "offline": "离线"
   },
   "settings": {
     "title": "设置",

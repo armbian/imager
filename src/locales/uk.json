@@ -10,10 +10,15 @@
     "chooseStorage": "ОБРАТИ СХОВИЩЕ",
     "useCustomImage": "Використати власний образ",
     "changeCustomImage": "Змінити власний образ",
+    "changeCachedImage": "Змінити кешований образ",
     "imageCount_one": "{{count}} образ",
     "imageCount_other": "{{count}} образів",
     "boardCount_one": "{{count}} плата",
-    "boardCount_other": "{{count}} плат"
+    "boardCount_other": "{{count}} плат",
+    "offlineBanner": "Немає з'єднання з інтернетом. Користувацькі образи та кешовані завантаження все ще доступні.",
+    "connectionRestored": "З'єднання відновлено",
+    "offlineHint": "Запис з локальних файлів або раніше завантажених образів.",
+    "cachedImages": "КЕШОВАНІ ОБРАЗИ"
   },
   "flash": {
     "downloading": "Завантаження образу...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Невідомо",
     "confirm": "Підтвердити",
-    "cancel": "Скасувати"
+    "cancel": "Скасувати",
+    "offline": "Офлайн"
   },
   "settings": {
     "title": "Налаштування",

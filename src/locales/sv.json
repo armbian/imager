@@ -10,10 +10,15 @@
     "chooseStorage": "VÄLJ LAGRING",
     "useCustomImage": "Använd egen image",
     "changeCustomImage": "Ändra egen image",
+    "changeCachedImage": "Ändra cachad avbildning",
     "imageCount_one": "{{count}} image",
     "imageCount_other": "{{count}} images",
     "boardCount_one": "{{count}} kort",
-    "boardCount_other": "{{count}} kort"
+    "boardCount_other": "{{count}} kort",
+    "offlineBanner": "Ingen internetanslutning. Anpassade avbildningar och cachade nedladdningar är fortfarande tillgängliga.",
+    "connectionRestored": "Anslutningen återställd",
+    "offlineHint": "Skriv från lokala filer eller tidigare nedladdade avbildningar.",
+    "cachedImages": "CACHADE AVBILDNINGAR"
   },
   "flash": {
     "downloading": "Laddar ner image...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Okänd",
     "confirm": "Bekräfta",
-    "cancel": "Avbryt"
+    "cancel": "Avbryt",
+    "offline": "Offline"
   },
   "settings": {
     "title": "Inställningar",

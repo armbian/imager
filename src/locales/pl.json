@@ -10,10 +10,15 @@
     "chooseStorage": "WYBIERZ PAMIĘĆ",
     "useCustomImage": "Użyj własnego obrazu",
     "changeCustomImage": "Zmień własny obraz",
+    "changeCachedImage": "Zmień obraz z pamięci",
     "imageCount_one": "{{count}} obraz",
     "imageCount_other": "{{count}} obrazów",
     "boardCount_one": "{{count}} płytka",
-    "boardCount_other": "{{count}} płytek"
+    "boardCount_other": "{{count}} płytek",
+    "offlineBanner": "Brak połączenia z internetem. Niestandardowe obrazy i pobrane pliki z pamięci podręcznej są nadal dostępne.",
+    "connectionRestored": "Połączenie przywrócone",
+    "offlineHint": "Flashuj z plików lokalnych lub wcześniej pobranych obrazów.",
+    "cachedImages": "OBRAZY Z PAMIĘCI"
   },
   "flash": {
     "downloading": "Pobieranie obrazu...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Nieznany",
     "confirm": "Potwierdź",
-    "cancel": "Anuluj"
+    "cancel": "Anuluj",
+    "offline": "Offline"
   },
   "settings": {
     "title": "Ustawienia",

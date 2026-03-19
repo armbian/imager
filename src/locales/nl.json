@@ -10,10 +10,15 @@
     "chooseStorage": "KIES OPSLAG",
     "useCustomImage": "Aangepaste image gebruiken",
     "changeCustomImage": "Aangepaste image wijzigen",
+    "changeCachedImage": "Gecacht image wijzigen",
     "imageCount_one": "{{count}} image",
     "imageCount_other": "{{count}} images",
     "boardCount_one": "{{count}} board",
-    "boardCount_other": "{{count}} boards"
+    "boardCount_other": "{{count}} boards",
+    "offlineBanner": "Geen internetverbinding. Aangepaste images en gecachte downloads zijn nog steeds beschikbaar.",
+    "connectionRestored": "Verbinding hersteld",
+    "offlineHint": "Flash van lokale bestanden of eerder gedownloade images.",
+    "cachedImages": "GECACHTE IMAGES"
   },
   "flash": {
     "downloading": "Image downloaden...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Onbekend",
     "confirm": "Bevestigen",
-    "cancel": "Annuleren"
+    "cancel": "Annuleren",
+    "offline": "Offline"
   },
   "settings": {
     "title": "Instellingen",

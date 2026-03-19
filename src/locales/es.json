@@ -10,10 +10,15 @@
     "chooseStorage": "ELEGIR ALMACENAMIENTO",
     "useCustomImage": "Usar imagen personalizada",
     "changeCustomImage": "Cambiar imagen personalizada",
+    "changeCachedImage": "Cambiar imagen en caché",
     "imageCount_one": "{{count}} imagen",
     "imageCount_other": "{{count}} imágenes",
     "boardCount_one": "{{count}} placa",
-    "boardCount_other": "{{count}} placas"
+    "boardCount_other": "{{count}} placas",
+    "offlineBanner": "Sin conexión a internet. Las imágenes personalizadas y las descargas en caché siguen disponibles.",
+    "connectionRestored": "Conexión restablecida",
+    "offlineHint": "Flashear desde archivos locales o imágenes descargadas previamente.",
+    "cachedImages": "IMÁGENES EN CACHÉ"
   },
   "flash": {
     "downloading": "Descargando imagen...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Desconocido",
     "confirm": "Confirmar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "offline": "Sin conexión"
   },
   "settings": {
     "title": "Configuración",

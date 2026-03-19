@@ -10,10 +10,15 @@
     "chooseStorage": "ВЫБРАТЬ ХРАНИЛИЩЕ",
     "useCustomImage": "Использовать свой образ",
     "changeCustomImage": "Изменить свой образ",
+    "changeCachedImage": "Изменить кэшированный образ",
     "imageCount_one": "{{count}} образ",
     "imageCount_other": "{{count}} образов",
     "boardCount_one": "{{count}} плата",
-    "boardCount_other": "{{count}} плат"
+    "boardCount_other": "{{count}} плат",
+    "offlineBanner": "Нет подключения к интернету. Пользовательские образы и кэшированные загрузки по-прежнему доступны.",
+    "connectionRestored": "Подключение восстановлено",
+    "offlineHint": "Запись из локальных файлов или ранее загруженных образов.",
+    "cachedImages": "КЭШИРОВАННЫЕ ОБРАЗЫ"
   },
   "flash": {
     "downloading": "Загрузка образа...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Неизвестно",
     "confirm": "Подтвердить",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "offline": "Не в сети"
   },
   "settings": {
     "title": "Настройки",

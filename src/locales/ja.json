@@ -10,10 +10,15 @@
     "chooseStorage": "ストレージを選択",
     "useCustomImage": "カスタムイメージを使用",
     "changeCustomImage": "カスタムイメージを変更",
+    "changeCachedImage": "キャッシュ済みイメージを変更",
     "imageCount_one": "{{count}} イメージ",
     "imageCount_other": "{{count}} イメージ",
     "boardCount_one": "{{count}} ボード",
-    "boardCount_other": "{{count}} ボード"
+    "boardCount_other": "{{count}} ボード",
+    "offlineBanner": "インターネット接続がありません。カスタムイメージとキャッシュ済みダウンロードは引き続き利用できます。",
+    "connectionRestored": "接続が復元されました",
+    "offlineHint": "ローカルファイルまたは以前ダウンロードしたイメージから書き込みます。",
+    "cachedImages": "キャッシュ済みイメージ"
   },
   "flash": {
     "downloading": "イメージをダウンロード中...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "不明",
     "confirm": "確認",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "offline": "オフライン"
   },
   "settings": {
     "title": "設定",

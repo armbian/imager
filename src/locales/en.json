@@ -10,10 +10,15 @@
     "chooseStorage": "CHOOSE STORAGE",
     "useCustomImage": "Use Custom Image",
     "changeCustomImage": "Change Custom Image",
+    "changeCachedImage": "Change Cached Image",
     "imageCount_one": "{{count}} image",
     "imageCount_other": "{{count}} images",
     "boardCount_one": "{{count}} board",
-    "boardCount_other": "{{count}} boards"
+    "boardCount_other": "{{count}} boards",
+    "offlineBanner": "No internet connection. Custom images and cached downloads are still available.",
+    "connectionRestored": "Connection restored",
+    "offlineHint": "Flash from local files or previously downloaded images.",
+    "cachedImages": "CACHED IMAGES"
   },
   "flash": {
     "downloading": "Downloading image...",
@@ -113,7 +118,8 @@
   "common": {
     "unknown": "Unknown",
     "confirm": "Confirm",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "offline": "Offline"
   },
   "settings": {
     "title": "Settings",
