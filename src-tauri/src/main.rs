@@ -16,6 +16,7 @@ mod flash;
 mod images;
 mod logging;
 mod paste;
+mod picture_cache;
 mod utils;
 
 use commands::AppState;
@@ -153,7 +154,8 @@ fn main() {
             commands::board_queries::get_boards,
             commands::board_queries::get_images_for_board,
             commands::board_queries::get_block_devices,
-            commands::scraping::get_board_image_url,
+            commands::scraping::get_cached_board_image,
+            commands::scraping::get_cached_vendor_logo,
             commands::operations::request_write_authorization,
             commands::operations::download_image,
             commands::operations::flash_image,
@@ -175,6 +177,7 @@ fn main() {
             commands::system::log_warn_from_frontend,
             commands::system::log_debug_from_frontend,
             commands::system::get_armbian_release,
+            commands::system::check_connectivity,
             commands::update::get_github_release,
             commands::update::is_app_in_applications,
             paste::upload::upload_logs,
@@ -238,6 +241,14 @@ fn main() {
 
             // Manage download cache based on settings
             manage_download_cache(app);
+
+            // Spawn background asset cache tasks:
+            // 1. Refresh stale cached assets (conditional requests for >24h old entries)
+            // 2. Pre-populate cache with all board images and vendor logos
+            tauri::async_runtime::spawn(async {
+                picture_cache::refresh_stale_assets().await;
+                picture_cache::prepopulate_assets().await;
+            });
 
             Ok(())
         })
