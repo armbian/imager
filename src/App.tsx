@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Header, HomePage } from './components/layout';
 import { ManufacturerModal, BoardModal, ImageModal, DeviceModal, ArmbianBoardModal } from './components/modals';
 import { FlashProgress } from './components/flash';
-import { SettingsButton } from './components/settings';
-import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getBoardImageUrl, checkNeedsDecompression, decompressCustomImage } from './hooks/useTauri';
+import { SettingsButton, CacheManagerModal } from './components/settings';
+import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getCachedBoardImage, checkNeedsDecompression, decompressCustomImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
+import { useConnectivity } from './hooks/useConnectivity';
 import { ToastProvider, useToasts } from './hooks/useToasts';
 import { getArmbianBoardDetection } from './hooks/useSettings';
 import { EVENTS } from './config';
@@ -31,13 +32,18 @@ function AppContent() {
   const [selectedDevice, setSelectedDevice] = useState<BlockDevice | null>(null);
 
   // Toast notifications
-  const { showError } = useToasts();
+  const { showSuccess, showError } = useToasts();
+
+  // Connectivity monitoring
+  const { isOnline } = useConnectivity();
+  const prevOnlineRef = useRef<boolean | null>(null);
 
   // Armbian board detection state
   const [armbianInfo, setArmbianInfo] = useState<ArmbianReleaseInfo | null>(null);
   const [detectedBoard, setDetectedBoard] = useState<BoardInfo | null>(null); // Cache matched board
   const [armbianBoardImageUrl, setArmbianBoardImageUrl] = useState<string | null>(null); // Preloaded board image
   const [showArmbianModal, setShowArmbianModal] = useState(false);
+  const [showCacheManager, setShowCacheManager] = useState(false); // Standalone cache manager for offline mode
   const armbianCheckRef = useRef(false); // Prevent double execution in Strict Mode
 
   // Monitor selected device - clear if disconnected (only when not flashing)
@@ -46,6 +52,22 @@ function AppContent() {
     useCallback(() => setSelectedDevice(null), []),
     !isFlashing
   );
+
+  // Handle connectivity transitions
+  useEffect(() => {
+    // Show toast when connection is restored (not on initial mount)
+    if (prevOnlineRef.current === false && isOnline) {
+      showSuccess(t('home.connectionRestored'));
+    }
+
+    // Reset non-local selections when going offline — API images can't be downloaded
+    if (prevOnlineRef.current === true && !isOnline && selectedImage && !selectedImage.is_custom) {
+      resetSelectionsFrom('manufacturer');
+    }
+
+    prevOnlineRef.current = isOnline;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, showSuccess, t]);
 
   /**
    * Auto-select board based on Armbian detection
@@ -81,15 +103,26 @@ function AppContent() {
   useEffect(() => {
     const checkArmbianSystem = async () => {
       try {
-        // Check platform BEFORE setting ref - Armbian detection is Linux-only
+        // Prevent re-execution (except when coming back online after being offline)
+        if (armbianCheckRef.current) return;
+
+        // Armbian detection is Linux-only
         const systemInfo = await getSystemInfo();
         if (systemInfo.platform !== 'linux') {
+          // Set ref to prevent re-checking on non-Linux platforms
+          armbianCheckRef.current = true;
           logInfo('app', `Skipping Armbian detection on ${systemInfo.platform}`);
           return;
         }
 
-        // Prevent double execution in React Strict Mode (only for Linux)
-        if (armbianCheckRef.current) return;
+        // Skip if offline — board matching requires API data
+        if (!isOnline) {
+          logInfo('app', 'Skipping Armbian board detection: offline');
+          // Don't set ref - allow retry when online
+          return;
+        }
+
+        // Mark as executed to prevent re-runs
         armbianCheckRef.current = true;
 
         const info = await getArmbianRelease();
@@ -122,25 +155,15 @@ function AppContent() {
         // Cache the matched board for use in modal
         setDetectedBoard(matchedBoard);
 
-        // Preload board image before showing modal
+        // Load board image from local cache (downloads if online and not cached)
         try {
-          const baseUrl = await getBoardImageUrl(matchedBoard.slug);
-          if (baseUrl) {
-            const imgUrl = baseUrl.replace('/272/', '/480/');
-            // Preload image
-            const img = new Image();
-            img.onload = () => {
-              setArmbianBoardImageUrl(imgUrl);
-              logInfo('app', `Board image preloaded: ${imgUrl}`);
-            };
-            img.onerror = () => {
-              logWarn('app', `Failed to preload board image: ${imgUrl}`);
-              setArmbianBoardImageUrl(null);
-            };
-            img.src = imgUrl;
+          const cachedDataUri = await getCachedBoardImage(matchedBoard.slug);
+          setArmbianBoardImageUrl(cachedDataUri);
+          if (cachedDataUri) {
+            logInfo('app', 'Board image loaded from cache');
           }
         } catch (err) {
-          logWarn('app', `Failed to get board image URL: ${err}`);
+          logWarn('app', `Failed to get board image: ${err}`);
         }
 
         if (detectionMode === 'modal') {
@@ -157,7 +180,7 @@ function AppContent() {
 
     checkArmbianSystem();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isOnline]);
 
   /**
    * Handle cached image reuse from Cache Manager
@@ -213,11 +236,15 @@ function AppContent() {
       // Reset downstream selections (board, image, device)
       resetSelectionsFrom('board');
 
+      // Use API-matched board, or build a fallback from cache metadata.
+      // When offline, the API match fails but the cache manager still provides
+      // boardSlug/boardName parsed from the filename — use those for display.
+      const hasCacheMetadata = boardSlug && boardSlug !== 'cached';
       const displayBoard = matchedBoard || {
         slug: boardSlug || 'cached',
         name: boardName || t('custom.customImage'),
-        vendor: 'cached',
-        vendor_name: 'Cached',
+        vendor: hasCacheMetadata ? 'detected' : 'cached',
+        vendor_name: hasCacheMetadata ? (boardName || 'Unknown') : 'Cached',
         vendor_logo: null,
         image_count: 1,
         has_standard_support: false,
@@ -228,7 +255,6 @@ function AppContent() {
         has_wip_support: false,
       };
 
-      // Set a synthetic manufacturer for display consistency
       setSelectedManufacturer({
         id: displayBoard.vendor,
         name: displayBoard.vendor_name,
@@ -409,6 +435,7 @@ function AppContent() {
         onReset={handleReset}
         onNavigateToStep={handleNavigateToStep}
         isFlashing={isFlashing}
+        isOnline={isOnline}
       />
 
       <main className="main-content">
@@ -423,6 +450,8 @@ function AppContent() {
             onChooseImage={() => setActiveModal('image')}
             onChooseDevice={() => setActiveModal('device')}
             onChooseCustomImage={handleCustomImage}
+            onOpenCacheManager={() => setShowCacheManager(true)}
+            isOnline={isOnline}
           />
         ) : (
           selectedBoard && selectedImage && selectedDevice && (
@@ -476,6 +505,12 @@ function AppContent() {
           boardImageUrl={armbianBoardImageUrl}
         />
       )}
+
+      {/* Standalone cache manager for offline mode */}
+      <CacheManagerModal
+        isOpen={showCacheManager}
+        onClose={() => setShowCacheManager(false)}
+      />
 
       {!isFlashing && <SettingsButton />}
     </div>

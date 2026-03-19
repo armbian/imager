@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { BoardInfo } from '../types';
 import { preloadImage } from '../utils';
+import { getCachedVendorLogo } from './useTauri';
 import { VENDOR } from '../config';
 
 interface VendorLogoState {
   failedLogos: Set<string>;
+  /** Maps vendor ID to cached data URI (base64-encoded) */
+  cachedUrls: Map<string, string>;
   isLoaded: boolean;
 }
 
@@ -15,17 +18,18 @@ interface VendorLogoState {
 export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
   const [state, setState] = useState<VendorLogoState>({
     failedLogos: new Set(),
+    cachedUrls: new Map(),
     isLoaded: false,
   });
 
   // Reset state when inactive
   useEffect(() => {
     if (!isActive) {
-      setState({ failedLogos: new Set(), isLoaded: false });
+      setState({ failedLogos: new Set(), cachedUrls: new Map(), isLoaded: false });
     }
   }, [isActive]);
 
-  // Preload logos and track failures
+  // Preload logos via local cache, falling back to remote
   useEffect(() => {
     if (!isActive || !boards?.length || state.isLoaded) return;
 
@@ -37,21 +41,33 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
     }
 
     if (vendorLogos.size === 0) {
-      setState({ failedLogos: new Set(), isLoaded: true });
+      setState({ failedLogos: new Set(), cachedUrls: new Map(), isLoaded: true });
       return;
     }
 
     let loaded = 0;
     const failed = new Set<string>();
+    const cached = new Map<string, string>();
 
     vendorLogos.forEach((logoUrl, vendorId) => {
-      preloadImage(logoUrl).then((success) => {
-        if (!success) {
-          failed.add(vendorId);
+      // Try cache first, fall back to remote preload
+      getCachedVendorLogo(vendorId, logoUrl).then((dataUri) => {
+        if (dataUri) {
+          cached.set(vendorId, dataUri);
+        } else {
+          // No cached path — try remote preload as fallback
+          return preloadImage(logoUrl).then((success) => {
+            if (!success) {
+              failed.add(vendorId);
+            }
+          });
         }
+      }).catch(() => {
+        failed.add(vendorId);
+      }).finally(() => {
         loaded++;
         if (loaded >= vendorLogos.size) {
-          setState({ failedLogos: failed, isLoaded: true });
+          setState({ failedLogos: failed, cachedUrls: cached, isLoaded: true });
         }
       });
     });
@@ -72,6 +88,7 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
 
   return {
     failedLogos: state.failedLogos,
+    cachedUrls: state.cachedUrls,
     isLoaded: state.isLoaded,
     getEffectiveVendor,
     hasValidLogo,
@@ -96,7 +113,7 @@ export function useManufacturerList(
   isActive: boolean,
   searchFilter: string = ''
 ) {
-  const { failedLogos, isLoaded, getEffectiveVendor, hasValidLogo } = useVendorLogos(boards, isActive);
+  const { failedLogos, cachedUrls, isLoaded, getEffectiveVendor, hasValidLogo } = useVendorLogos(boards, isActive);
 
   const manufacturers = useMemo(() => {
     if (!boards || !isLoaded) return [];
@@ -115,7 +132,10 @@ export function useManufacturerList(
       const validLogo = hasValidLogo(board);
       const vendorId = validLogo ? (board.vendor || VENDOR.FALLBACK_ID) : VENDOR.FALLBACK_ID;
       const vendorName = validLogo ? (board.vendor_name || 'Other') : 'Other';
-      const vendorLogo = validLogo ? board.vendor_logo : null;
+      // Prefer cached local URL over remote URL
+      const vendorLogo = validLogo
+        ? (cachedUrls.get(board.vendor) || board.vendor_logo)
+        : null;
 
       if (!vendorMap[vendorId]) {
         vendorMap[vendorId] = {
@@ -207,7 +227,7 @@ export function useManufacturerList(
       });
 
     return result;
-  }, [boards, isLoaded, searchFilter, hasValidLogo]);
+  }, [boards, isLoaded, searchFilter, hasValidLogo, cachedUrls]);
 
   return {
     manufacturers,

@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { ErrorDisplay, BoardCardSkeleton, SearchBox, BoardBadges } from '../shared';
 import type { BoardInfo, Manufacturer } from '../../types';
-import { getBoards, getBoardImageUrl } from '../../hooks/useTauri';
+import { getBoards, getCachedBoardImage } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
 import { useVendorLogos } from '../../hooks/useVendorLogos';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
-import { compareBoardsBySupport, preloadImage } from '../../utils';
+import { compareBoardsBySupport } from '../../utils';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
 
 interface BoardModalProps {
@@ -24,17 +24,15 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
   const [boardImages, setBoardImages] = useState<Record<string, string | null>>({});
   const loadedSlugsRef = useRef<Set<string>>(new Set());
 
-  // Use hook for async data fetching
   const { data: boards, loading, error, reload } = useAsyncDataWhen<BoardInfo[]>(
     isOpen,
     () => getBoards(),
     [isOpen]
   );
 
-  // Use shared hook for vendor logo validation
   const { isLoaded: vendorLogosChecked, getEffectiveVendor } = useVendorLogos(boards, isOpen);
 
-  // Derive boards ready state from data availability
+  // Board list is ready only when both API data and vendor logos have loaded
   const boardsReady = useMemo(() => {
     return !!(boards && boards.length > 0 && vendorLogosChecked);
   }, [boards, vendorLogosChecked]);
@@ -64,17 +62,15 @@ export function BoardModal({ isOpen, onClose, onSelect, manufacturer }: BoardMod
       await Promise.all(manufacturerBoards.map(async (board) => {
         if (loadedSlugsRef.current.has(board.slug)) return;
 
-        const url = await getBoardImageUrl(board.slug);
-        if (!url) {
-          loadedSlugsRef.current.add(board.slug);
-          setBoardImages((prev) => ({ ...prev, [board.slug]: null }));
-          return;
-        }
-
-        // Pre-load in browser
-        const loaded = await preloadImage(url);
+        // Use cache-first approach: get from local cache as data URI
+        const dataUri = await getCachedBoardImage(board.slug);
         loadedSlugsRef.current.add(board.slug);
-        setBoardImages((prev) => ({ ...prev, [board.slug]: loaded ? url : null }));
+
+        if (dataUri) {
+          setBoardImages((prev) => ({ ...prev, [board.slug]: dataUri }));
+        } else {
+          setBoardImages((prev) => ({ ...prev, [board.slug]: null }));
+        }
       }));
     };
 

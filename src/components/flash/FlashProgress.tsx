@@ -3,7 +3,7 @@ import { HardDrive, Disc, FileImage } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { BoardInfo, ImageInfo, BlockDevice } from '../../types';
 import { getImageLogo, getOsName } from '../../assets/os-logos';
-import { getBoardImageUrl } from '../../hooks/useTauri';
+import { getCachedBoardImage } from '../../hooks/useTauri';
 import { useFlashOperation } from '../../hooks/useFlashOperation';
 import { FlashStageIcon, getStageKey } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
@@ -42,11 +42,11 @@ export function FlashProgress({
     handleShaWarningCancel,
   } = useFlashOperation({ image, device, onBack });
 
-  // Load board image for header display
+  // Load board image from local cache (base64 data URI)
   useEffect(() => {
-    getBoardImageUrl(board.slug)
+    getCachedBoardImage(board.slug)
       .then(setBoardImageUrl)
-      .catch(() => { /* Ignore */ });
+      .catch(() => { /* Ignore — fallback image will be used */ });
   }, [board.slug]);
 
   function getImageDisplayText(): string {
