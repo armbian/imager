@@ -9,12 +9,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, ChevronRight, HardDrive, Trash2, Package, Monitor, Terminal, Zap, RotateCcw } from 'lucide-react';
-import { listCachedImages, deleteCachedImage, getBoards, getBoardImageUrl, logWarn } from '../../hooks/useTauri';
+import { listCachedImages, deleteCachedImage, getBoards, getCachedBoardImage, logWarn } from '../../hooks/useTauri';
 import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
 import { BoardBadges } from '../shared/BoardBadges';
 import { useToasts } from '../../hooks/useToasts';
-import { formatBytes, preloadImage, parseArmbianFilename } from '../../utils';
+import { formatBytes, parseArmbianFilename } from '../../utils';
 import { EVENTS } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getDesktopEnv, getKernelType, DESKTOP_BADGES, KERNEL_BADGES, adjustBrightness } from '../../config/badges';
@@ -85,26 +85,29 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
 
     const loadData = async () => {
       try {
-        const [images, boards] = await Promise.all([
-          listCachedImages(),
-          getBoards(),
-        ]);
+        // Load cached images first (always local, works offline)
+        const images = await listCachedImages();
         setCachedImages(images);
-        setAllBoards(boards);
 
-        // Preload board images in parallel
+        // Board data is optional — used for badges and full names.
+        // When offline, we gracefully degrade to filename-based metadata.
+        try {
+          const boards = await getBoards();
+          setAllBoards(boards);
+        } catch {
+          setAllBoards([]);
+        }
+
+        // Load cached board images (base64 data URIs) in parallel
         const slugs = new Set(
           images.map((img) => img.board_slug).filter(Boolean) as string[]
         );
         const results = await Promise.all(
           Array.from(slugs).map(async (slug) => {
             try {
-              const url = await getBoardImageUrl(slug);
-              if (url) {
-                await preloadImage(url);
-                return { slug, url };
-              }
-            } catch { /* fallback */ }
+              const dataUri = await getCachedBoardImage(slug);
+              if (dataUri) return { slug, url: dataUri };
+            } catch { /* fallback to default image */ }
             return null;
           })
         );
