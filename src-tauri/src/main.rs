@@ -17,6 +17,7 @@ mod images;
 mod logging;
 mod paste;
 mod picture_cache;
+mod qdl;
 mod utils;
 
 use commands::AppState;
@@ -166,11 +167,14 @@ fn main() {
             commands::progress::cancel_operation,
             commands::progress::get_download_progress,
             commands::progress::get_flash_progress,
+            commands::qdl_operations::get_qdl_devices,
+            commands::qdl_operations::flash_qdl_image,
             commands::custom_image::select_custom_image,
             commands::custom_image::check_needs_decompression,
             commands::custom_image::decompress_custom_image,
             commands::custom_image::delete_decompressed_custom_image,
             commands::custom_image::detect_board_from_filename,
+            commands::custom_image::check_is_qdl_image,
             commands::system::open_url,
             commands::system::get_system_locale,
             commands::system::log_from_frontend,

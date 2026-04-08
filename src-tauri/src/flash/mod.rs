@@ -19,6 +19,42 @@ use std::process::Command;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use tokio::sync::Mutex;
 
+/// QDL-specific progress state
+///
+/// Grouped separately from block-device flash fields for clarity.
+/// Uses `std::sync::Mutex` (not tokio) because `qdl_flash` runs in `spawn_blocking`.
+pub struct QdlProgress {
+    /// Whether the current operation is a QDL (Qualcomm EDL) flash
+    pub is_active: AtomicBool,
+    /// Current stage (e.g., "sahara", "firehose", "partition:boot.img")
+    pub stage: std::sync::Mutex<String>,
+    /// Total number of partitions to program
+    pub partitions_total: AtomicU64,
+    /// Number of partitions programmed so far
+    pub partitions_written: AtomicU64,
+}
+
+impl QdlProgress {
+    pub fn new() -> Self {
+        Self {
+            is_active: AtomicBool::new(false),
+            stage: std::sync::Mutex::new(String::new()),
+            partitions_total: AtomicU64::new(0),
+            partitions_written: AtomicU64::new(0),
+        }
+    }
+
+    pub fn reset(&self) {
+        self.is_active.store(false, Ordering::SeqCst);
+        {
+            let mut s = self.stage.lock().unwrap_or_else(|p| p.into_inner());
+            *s = String::new();
+        }
+        self.partitions_total.store(0, Ordering::SeqCst);
+        self.partitions_written.store(0, Ordering::SeqCst);
+    }
+}
+
 /// Flash progress state shared between frontend and backend
 pub struct FlashState {
     pub total_bytes: AtomicU64,
@@ -27,6 +63,8 @@ pub struct FlashState {
     pub is_verifying: AtomicBool,
     pub is_cancelled: AtomicBool,
     pub error: Mutex<Option<String>>,
+    /// QDL (Qualcomm EDL) specific progress tracking
+    pub qdl: QdlProgress,
 }
 
 impl FlashState {
@@ -38,6 +76,7 @@ impl FlashState {
             is_verifying: AtomicBool::new(false),
             is_cancelled: AtomicBool::new(false),
             error: Mutex::new(None),
+            qdl: QdlProgress::new(),
         }
     }
 
@@ -47,6 +86,7 @@ impl FlashState {
         self.verified_bytes.store(0, Ordering::SeqCst);
         self.is_verifying.store(false, Ordering::SeqCst);
         self.is_cancelled.store(false, Ordering::SeqCst);
+        self.qdl.reset();
     }
 }
 
