@@ -40,8 +40,12 @@
     "dataWarning": "Alle data op het geselecteerde apparaat wordt gewist",
     "successHint": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen en in je {{boardName}} plaatsen.",
     "successHintCustom": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen.",
+    "successHintQdl": "Flash voltooid! Het apparaat is klaar om op te starten.",
     "noShaTitle": "Integriteitscontrole niet beschikbaar",
-    "noShaMessage": "De SHA-checksum voor deze afbeelding is niet beschikbaar. Het flashen gaat verder zonder integriteitsverificatie."
+    "noShaMessage": "De SHA-checksum voor deze afbeelding is niet beschikbaar. Het flashen gaat verder zonder integriteitsverificatie.",
+    "extracting": "Archief uitpakken...",
+    "qdlSahara": "Firmware-loader uploaden...",
+    "qdlFirehose": "Partities schrijven..."
   },
   "modal": {
     "selectManufacturer": "Selecteer fabrikant",
@@ -77,7 +81,9 @@
     "refresh": "Vernieuwen",
     "showSystemDevices": "Systeemstations weergeven",
     "hideSystemDevices": "Systeemstations verbergen",
-    "locked": "Vergrendeld"
+    "locked": "Vergrendeld",
+    "qdlNotFound": "Geen EDL-apparaat gevonden. Zet je board in EDL-modus en sluit het aan via USB.",
+    "qdlInstructions": "Plaats de jumper op de JCTL-pinnen en sluit de USB-C-kabel aan."
   },
   "header": {
     "stepManufacturer": "Fabrikant",
@@ -104,7 +110,9 @@
     "authCancelled": "Autorisatie geannuleerd door gebruiker",
     "decompressionFailed": "Uitpakken mislukt",
     "uploadFailed": "Upload mislukt",
-    "deviceDisconnected": "Apparaat is losgekoppeld"
+    "deviceDisconnected": "Apparaat is losgekoppeld",
+    "qdlDisconnected": "Apparaat losgekoppeld tijdens het flashen. Sluit opnieuw aan in EDL-modus en probeer het opnieuw.",
+    "qdlCancelled": "Flash geannuleerd."
   },
   "custom": {
     "customImage": "Aangepaste image"

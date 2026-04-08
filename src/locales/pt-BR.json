@@ -40,8 +40,12 @@
     "dataWarning": "Todos os dados no dispositivo selecionado serão apagados",
     "successHint": "Seu cartão SD está pronto! Você pode remover o dispositivo com segurança e inseri-lo no seu {{boardName}}.",
     "successHintCustom": "Seu cartão SD está pronto! Você pode remover o dispositivo com segurança.",
+    "successHintQdl": "Flash concluído! O dispositivo está pronto para iniciar.",
     "noShaTitle": "Verificação de integridade não disponível",
-    "noShaMessage": "O checksum SHA para esta imagem não está disponível. A gravação continuará sem verificação de integridade."
+    "noShaMessage": "O checksum SHA para esta imagem não está disponível. A gravação continuará sem verificação de integridade.",
+    "extracting": "Extraindo arquivo...",
+    "qdlSahara": "Carregando firmware...",
+    "qdlFirehose": "Gravando partições..."
   },
   "modal": {
     "selectManufacturer": "Selecionar fabricante",
@@ -77,7 +81,9 @@
     "refresh": "Atualizar",
     "showSystemDevices": "Mostrar unidades do sistema",
     "hideSystemDevices": "Ocultar unidades do sistema",
-    "locked": "Bloqueado"
+    "locked": "Bloqueado",
+    "qdlNotFound": "Nenhum dispositivo EDL encontrado. Coloque sua placa em modo EDL e conecte via USB.",
+    "qdlInstructions": "Coloque o jumper nos pinos JCTL e conecte o cabo USB-C."
   },
   "header": {
     "stepManufacturer": "Fabricante",
@@ -104,7 +110,9 @@
     "authCancelled": "Autorização cancelada pelo usuário",
     "decompressionFailed": "Falha na descompactação",
     "uploadFailed": "Falha no envio",
-    "deviceDisconnected": "Dispositivo foi desconectado"
+    "deviceDisconnected": "Dispositivo foi desconectado",
+    "qdlDisconnected": "Dispositivo desconectado durante a gravação. Reconecte em modo EDL e tente novamente.",
+    "qdlCancelled": "Gravação cancelada."
   },
   "custom": {
     "customImage": "Imagem personalizada"

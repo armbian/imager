@@ -40,8 +40,12 @@
     "dataWarning": "選択したデバイスのすべてのデータが消去されます",
     "successHint": "SDカードの準備ができました！デバイスを安全に取り外して{{boardName}}に挿入できます。",
     "successHintCustom": "SDカードの準備ができました！デバイスを安全に取り外せます。",
+    "successHintQdl": "フラッシュ完了！デバイスは起動準備ができました。",
     "noShaTitle": "整合性チェック利用不可",
-    "noShaMessage": "このイメージのSHAチェックサムは利用できません。整合性検証なしで書き込みを続行します。"
+    "noShaMessage": "このイメージのSHAチェックサムは利用できません。整合性検証なしで書き込みを続行します。",
+    "extracting": "アーカイブを展開中...",
+    "qdlSahara": "ファームウェアローダーをアップロード中...",
+    "qdlFirehose": "パーティションを書き込み中..."
   },
   "modal": {
     "selectManufacturer": "メーカーを選択",
@@ -77,7 +81,9 @@
     "refresh": "更新",
     "showSystemDevices": "システムドライブを表示",
     "hideSystemDevices": "システムドライブを非表示",
-    "locked": "ロック中"
+    "locked": "ロック中",
+    "qdlNotFound": "EDLデバイスが見つかりません。ボードをEDLモードにしてUSBで接続してください。",
+    "qdlInstructions": "JCTLピンにジャンパーを設置し、USB-Cケーブルを接続してください。"
   },
   "header": {
     "stepManufacturer": "メーカー",
@@ -104,7 +110,9 @@
     "authCancelled": "ユーザーにより認証がキャンセルされました",
     "decompressionFailed": "解凍失敗",
     "uploadFailed": "アップロード失敗",
-    "deviceDisconnected": "デバイスが切断されました"
+    "deviceDisconnected": "デバイスが切断されました",
+    "qdlDisconnected": "フラッシュ中にデバイスが切断されました。EDLモードで再接続してやり直してください。",
+    "qdlCancelled": "フラッシュがキャンセルされました。"
   },
   "custom": {
     "customImage": "カスタムイメージ"

@@ -40,8 +40,12 @@
     "dataWarning": "Tutti i dati sul dispositivo selezionato saranno cancellati",
     "successHint": "La tua scheda SD è pronta! Puoi rimuovere il dispositivo in sicurezza e inserirlo nella tua {{boardName}}.",
     "successHintCustom": "La tua scheda SD è pronta! Puoi rimuovere il dispositivo in sicurezza.",
+    "successHintQdl": "Scrittura completata! La scheda è pronta per l'avvio.",
     "noShaTitle": "Verifica integrità non disponibile",
-    "noShaMessage": "Il checksum SHA per questa immagine non è disponibile. La scrittura procederà senza verifica di integrità."
+    "noShaMessage": "Il checksum SHA per questa immagine non è disponibile. La scrittura procederà senza verifica di integrità.",
+    "extracting": "Estrazione dell'archivio...",
+    "qdlSahara": "Caricamento del firmware...",
+    "qdlFirehose": "Scrittura delle partizioni..."
   },
   "modal": {
     "selectManufacturer": "Seleziona Produttore",
@@ -77,7 +81,9 @@
     "refresh": "Aggiorna",
     "showSystemDevices": "Mostra dischi di sistema",
     "hideSystemDevices": "Nascondi dischi di sistema",
-    "locked": "Bloccato"
+    "locked": "Bloccato",
+    "qdlNotFound": "Nessun dispositivo EDL trovato. Impostare la scheda in modalità EDL e collegarla via USB.",
+    "qdlInstructions": "Posizionare il jumper sui pin JCTL e collegare il cavo USB-C."
   },
   "header": {
     "stepManufacturer": "Produttore",
@@ -104,7 +110,9 @@
     "authCancelled": "Autorizzazione annullata dall'utente",
     "decompressionFailed": "Decompressione fallita",
     "uploadFailed": "Caricamento fallito",
-    "deviceDisconnected": "Dispositivo disconnesso"
+    "deviceDisconnected": "Dispositivo disconnesso",
+    "qdlDisconnected": "Dispositivo disconnesso durante la scrittura. Ricollegare in modalità EDL e riprovare.",
+    "qdlCancelled": "Scrittura annullata."
   },
   "custom": {
     "customImage": "Immagine Personalizzata"

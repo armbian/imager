@@ -40,8 +40,12 @@
     "dataWarning": "Seçili cihazdaki tüm veriler silinecek",
     "successHint": "SD kartınız hazır! Cihazı güvenle çıkarabilir ve {{boardName}} cihazınıza takabilirsiniz.",
     "successHintCustom": "SD kartınız hazır! Cihazı güvenle çıkarabilirsiniz.",
+    "successHintQdl": "Flash tamamlandı! Cihaz önyüklemeye hazır.",
     "noShaTitle": "Bütünlük kontrolü kullanılamıyor",
-    "noShaMessage": "Bu imaj için SHA sağlama toplamı mevcut değil. Yazma bütünlük doğrulaması olmadan devam edecek."
+    "noShaMessage": "Bu imaj için SHA sağlama toplamı mevcut değil. Yazma bütünlük doğrulaması olmadan devam edecek.",
+    "extracting": "Arşiv çıkarılıyor...",
+    "qdlSahara": "Donanım yazılımı yükleyicisi yükleniyor...",
+    "qdlFirehose": "Bölümler yazılıyor..."
   },
   "modal": {
     "selectManufacturer": "Üretici Seç",
@@ -77,7 +81,9 @@
     "refresh": "Yenile",
     "showSystemDevices": "Sistem sürücülerini göster",
     "hideSystemDevices": "Sistem sürücülerini gizle",
-    "locked": "Kilitli"
+    "locked": "Kilitli",
+    "qdlNotFound": "EDL cihazı bulunamadı. Kartınızı EDL moduna alın ve USB ile bağlayın.",
+    "qdlInstructions": "JCTL pinlerine jumper yerleştirin, ardından USB-C kablosunu bağlayın."
   },
   "header": {
     "stepManufacturer": "Üretici",
@@ -104,7 +110,9 @@
     "authCancelled": "Yetkilendirme kullanıcı tarafından iptal edildi",
     "decompressionFailed": "Açma başarısız",
     "uploadFailed": "Yükleme başarısız",
-    "deviceDisconnected": "Cihaz bağlantısı kesildi"
+    "deviceDisconnected": "Cihaz bağlantısı kesildi",
+    "qdlDisconnected": "Flash sırasında cihaz bağlantısı kesildi. EDL modunda yeniden bağlayın ve tekrar deneyin.",
+    "qdlCancelled": "Flash iptal edildi."
   },
   "custom": {
     "customImage": "Özel İmaj"

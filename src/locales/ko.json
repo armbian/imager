@@ -40,8 +40,12 @@
     "dataWarning": "선택한 장치의 모든 데이터가 삭제됩니다",
     "successHint": "SD 카드가 준비되었습니다! 장치를 안전하게 제거하고 {{boardName}}에 삽입할 수 있습니다.",
     "successHintCustom": "SD 카드가 준비되었습니다! 장치를 안전하게 제거할 수 있습니다.",
+    "successHintQdl": "플래시 완료! 장치가 부팅할 준비가 되었습니다.",
     "noShaTitle": "무결성 검사 불가",
-    "noShaMessage": "이 이미지의 SHA 체크섬을 사용할 수 없습니다. 무결성 확인 없이 플래시가 계속됩니다."
+    "noShaMessage": "이 이미지의 SHA 체크섬을 사용할 수 없습니다. 무결성 확인 없이 플래시가 계속됩니다.",
+    "extracting": "아카이브 추출 중...",
+    "qdlSahara": "펌웨어 로더 업로드 중...",
+    "qdlFirehose": "파티션 기록 중..."
   },
   "modal": {
     "selectManufacturer": "제조사 선택",
@@ -77,7 +81,9 @@
     "refresh": "새로고침",
     "showSystemDevices": "시스템 드라이브 표시",
     "hideSystemDevices": "시스템 드라이브 숨기기",
-    "locked": "잠김"
+    "locked": "잠김",
+    "qdlNotFound": "EDL 장치를 찾을 수 없습니다. 보드를 EDL 모드로 전환하고 USB로 연결하세요.",
+    "qdlInstructions": "JCTL 핀에 점퍼를 놓고 USB-C 케이블을 연결하세요."
   },
   "header": {
     "stepManufacturer": "제조사",
@@ -104,7 +110,9 @@
     "authCancelled": "사용자가 인증을 취소했습니다",
     "decompressionFailed": "압축 해제 실패",
     "uploadFailed": "업로드 실패",
-    "deviceDisconnected": "장치 연결이 해제되었습니다"
+    "deviceDisconnected": "장치 연결이 해제되었습니다",
+    "qdlDisconnected": "플래시 중 장치가 연결 해제되었습니다. EDL 모드로 다시 연결하고 재시도하세요.",
+    "qdlCancelled": "플래시가 취소되었습니다."
   },
   "custom": {
     "customImage": "사용자 정의 이미지"

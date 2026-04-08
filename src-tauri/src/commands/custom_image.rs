@@ -187,27 +187,51 @@ pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), 
 #[tauri::command]
 pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
     let path = PathBuf::from(&image_path);
+    let filename = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("")
+        .to_lowercase();
 
-    log_info!(
-        "custom_image",
-        "Checking if image has QDL structure: {}",
-        image_path
-    );
+    // For plain .tar files, full content inspection is fast
+    if filename.ends_with(".tar") {
+        log_info!(
+            "custom_image",
+            "Checking plain TAR for QDL structure: {}",
+            image_path
+        );
+        let reader = match open_tar_reader(&path) {
+            Ok(r) => r,
+            Err(_) => return Ok(false),
+        };
+        let has_qdl = check_tar_for_qdl(reader);
+        log_info!("custom_image", "Archive has QDL structure: {}", has_qdl);
+        return Ok(has_qdl);
+    }
 
-    // Try to open as TAR (plain or compressed) and inspect contents.
-    // If it's not a valid archive, it's not QDL — return false without error.
-    let reader = match open_tar_reader(&path) {
-        Ok(r) => r,
-        Err(_) => return Ok(false),
-    };
-    let has_qdl_structure = check_tar_for_qdl(reader);
+    // For compressed TAR archives (.tar.xz, .tar.gz, etc.), full decompression
+    // is too slow. Instead, verify it's actually a valid TAR by decompressing
+    // only the first entry header (~512 bytes). In the Armbian ecosystem, a
+    // compressed .tar is always a QDL flash archive (block-device images use
+    // .img.xz). The actual QDL file structure is validated after full extraction
+    // in the flash pipeline (extract.rs::validate_required_files).
+    if filename.contains(".tar.") {
+        log_info!(
+            "custom_image",
+            "Checking compressed TAR validity: {}",
+            image_path
+        );
+        let reader = match open_tar_reader(&path) {
+            Ok(r) => r,
+            Err(_) => return Ok(false),
+        };
+        let has_qdl = quick_check_qdl_structure(reader);
+        log_info!("custom_image", "QDL structure detected: {}", has_qdl);
+        return Ok(has_qdl);
+    }
 
-    log_info!(
-        "custom_image",
-        "Archive has QDL structure: {}",
-        has_qdl_structure
-    );
-    Ok(has_qdl_structure)
+    // Not a TAR archive
+    Ok(false)
 }
 
 /// Scan a TAR archive reader for QDL-required files
@@ -241,6 +265,55 @@ fn check_tar_for_qdl<R: std::io::Read>(reader: R) -> bool {
             if has_rawprogram && has_firehose {
                 return true;
             }
+        }
+    }
+
+    false
+}
+
+/// Quick check for QDL structure in a compressed TAR by reading only the first
+/// few entry headers. Looks for a "flash/" directory or paths containing "/flash/"
+/// which indicate QDL archive layout. Only decompresses headers of the first
+/// entries (before the large rootfs blob), so it's fast (~1 second max).
+///
+/// The full QDL file validation (rawprogram0.xml, prog_firehose_ddr.elf)
+/// happens after extraction in the flash pipeline.
+fn quick_check_qdl_structure<R: std::io::Read>(reader: R) -> bool {
+    let mut archive = tar::Archive::new(reader);
+    let entries = match archive.entries() {
+        Ok(e) => e,
+        Err(_) => return false,
+    };
+
+    // Check the first entries — in QDL archives, directory entries and small
+    // files come before the large rootfs. We stop after finding a "flash/"
+    // directory or after hitting a large file entry (to avoid decompressing it).
+    const MAX_SMALL_ENTRIES: usize = 10;
+    const LARGE_FILE_THRESHOLD: u64 = 100 * 1024 * 1024; // 100MB
+
+    for (idx, entry) in entries.enumerate() {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => return false,
+        };
+
+        // Check entry path for QDL indicators (header only, no data decompression)
+        if let Ok(path) = entry.path() {
+            let path_str = path.to_string_lossy();
+            // Direct match: flash/ directory or files inside it
+            if path_str.ends_with("flash/") || path_str.contains("/flash/") {
+                return true;
+            }
+            // Armbian QDL archives contain partition images with these names
+            if path_str.contains("disk-sdcard.img") {
+                return true;
+            }
+        }
+
+        // Stop before the iterator advances past large file data (which would
+        // require decompressing it). We've already read this entry's header.
+        if entry.size() > LARGE_FILE_THRESHOLD || idx >= MAX_SMALL_ENTRIES {
+            break;
         }
     }
 

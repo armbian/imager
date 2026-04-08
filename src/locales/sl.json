@@ -40,8 +40,12 @@
     "dataWarning": "Vsi podatki na izbrani napravi bodo izbrisani",
     "successHint": "Vaša SD kartica je pripravljena! Napravo lahko varno odstranite in jo vstavite v {{boardName}}.",
     "successHintCustom": "Vaša SD kartica je pripravljena! Napravo lahko varno odstranite.",
+    "successHintQdl": "Zapisovanje končano! Naprava je pripravljena za zagon.",
     "noShaTitle": "Preverjanje celovitosti ni na voljo",
-    "noShaMessage": "Kontrolna vsota SHA za to sliko ni na voljo. Zapisovanje bo nadaljevalo brez preverjanja celovitosti."
+    "noShaMessage": "Kontrolna vsota SHA za to sliko ni na voljo. Zapisovanje bo nadaljevalo brez preverjanja celovitosti.",
+    "extracting": "Razpakiranje arhiva...",
+    "qdlSahara": "Nalaganje gonilnika strojne programske opreme...",
+    "qdlFirehose": "Zapisovanje particij..."
   },
   "modal": {
     "selectManufacturer": "Izberi proizvajalca",
@@ -77,7 +81,9 @@
     "refresh": "Osveži",
     "showSystemDevices": "Prikaži sistemske pogone",
     "hideSystemDevices": "Skrij sistemske pogone",
-    "locked": "Zaklenjeno"
+    "locked": "Zaklenjeno",
+    "qdlNotFound": "Naprava EDL ni bila najdena. Vključite ploščo v način EDL in jo povežite prek USB.",
+    "qdlInstructions": "Namestite mostiček na pine JCTL, nato priključite kabel USB-C."
   },
   "header": {
     "stepManufacturer": "Proizvajalec",
@@ -104,7 +110,9 @@
     "authCancelled": "Uporabnik je preklical avtorizacijo",
     "decompressionFailed": "Razširjanje ni uspelo",
     "uploadFailed": "Nalaganje ni uspelo",
-    "deviceDisconnected": "Naprava je bila odklopljena"
+    "deviceDisconnected": "Naprava je bila odklopljena",
+    "qdlDisconnected": "Naprava odklopljena med zapisovanjem. Ponovno povežite v načinu EDL in poskusite znova.",
+    "qdlCancelled": "Zapisovanje preklicano."
   },
   "custom": {
     "customImage": "Slika po meri"

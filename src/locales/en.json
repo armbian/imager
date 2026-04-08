@@ -40,8 +40,12 @@
     "dataWarning": "All data on selected device will be erased",
     "successHint": "Your SD card is ready! You can safely remove the device and insert it into your {{boardName}}.",
     "successHintCustom": "Your SD card is ready! You can safely remove the device.",
+    "successHintQdl": "Flash complete! The device is ready to boot.",
     "noShaTitle": "Integrity Check Unavailable",
-    "noShaMessage": "The SHA checksum for this image is not available. Flashing will proceed without integrity verification."
+    "noShaMessage": "The SHA checksum for this image is not available. Flashing will proceed without integrity verification.",
+    "extracting": "Extracting archive...",
+    "qdlSahara": "Uploading firmware loader...",
+    "qdlFirehose": "Writing partitions..."
   },
   "modal": {
     "selectManufacturer": "Select Manufacturer",
@@ -77,7 +81,9 @@
     "refresh": "Refresh",
     "showSystemDevices": "Show system drives",
     "hideSystemDevices": "Hide system drives",
-    "locked": "Locked"
+    "locked": "Locked",
+    "qdlNotFound": "No EDL device found. Put your board in EDL mode and connect via USB.",
+    "qdlInstructions": "Place jumper on JCTL pins, then connect USB-C cable."
   },
   "header": {
     "stepManufacturer": "Manufacturer",
@@ -104,7 +110,9 @@
     "authCancelled": "Authorization cancelled by user",
     "decompressionFailed": "Decompression failed",
     "uploadFailed": "Upload failed",
-    "deviceDisconnected": "Device was disconnected"
+    "deviceDisconnected": "Device was disconnected",
+    "qdlDisconnected": "Device disconnected during flash. Reconnect in EDL mode and retry.",
+    "qdlCancelled": "Flash cancelled."
   },
   "custom": {
     "customImage": "Custom Image"

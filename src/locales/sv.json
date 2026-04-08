@@ -40,8 +40,12 @@
     "dataWarning": "All data på vald enhet kommer att raderas",
     "successHint": "Ditt SD-kort är klart! Du kan säkert ta bort enheten och sätta in den i din {{boardName}}.",
     "successHintCustom": "Ditt SD-kort är klart! Du kan säkert ta bort enheten.",
+    "successHintQdl": "Flash slutförd! Enheten är redo att starta.",
     "noShaTitle": "Integritetskontroll ej tillgänglig",
-    "noShaMessage": "SHA-kontrollsumman för denna image är inte tillgänglig. Flashningen fortsätter utan integritetsverifiering."
+    "noShaMessage": "SHA-kontrollsumman för denna image är inte tillgänglig. Flashningen fortsätter utan integritetsverifiering.",
+    "extracting": "Extraherar arkiv...",
+    "qdlSahara": "Laddar upp firmware...",
+    "qdlFirehose": "Skriver partitioner..."
   },
   "modal": {
     "selectManufacturer": "Välj tillverkare",
@@ -77,7 +81,9 @@
     "refresh": "Uppdatera",
     "showSystemDevices": "Visa systemenheter",
     "hideSystemDevices": "Dölj systemenheter",
-    "locked": "Låst"
+    "locked": "Låst",
+    "qdlNotFound": "Ingen EDL-enhet hittades. Sätt ditt kort i EDL-läge och anslut via USB.",
+    "qdlInstructions": "Placera bygeln på JCTL-pinnarna och anslut USB-C-kabeln."
   },
   "header": {
     "stepManufacturer": "Tillverkare",
@@ -104,7 +110,9 @@
     "authCancelled": "Behörighet avbröts av användaren",
     "decompressionFailed": "Uppackning misslyckades",
     "uploadFailed": "Uppladdning misslyckades",
-    "deviceDisconnected": "Enheten kopplades bort"
+    "deviceDisconnected": "Enheten kopplades bort",
+    "qdlDisconnected": "Enheten kopplades bort under flashningen. Anslut igen i EDL-läge och försök igen.",
+    "qdlCancelled": "Flash avbruten."
   },
   "custom": {
     "customImage": "Egen image"
