@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { HardDrive, RefreshCw, AlertTriangle, Shield, MemoryStick, Usb, Lock } from 'lucide-react';
+import { HardDrive, RefreshCw, AlertTriangle, Shield, MemoryStick, Usb, Lock, Cpu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { ErrorDisplay, ConfirmationDialog, ListItemSkeleton } from '../shared';
-import type { BlockDevice } from '../../types';
-import { getBlockDevices } from '../../hooks/useTauri';
+import type { BlockDevice, QdlDevice } from '../../types';
+import { getBlockDevices, getQdlDevices } from '../../hooks/useTauri';
 import { useAsyncDataWhen } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { POLLING, UI, type DeviceType } from '../../config';
@@ -66,13 +66,30 @@ function sortDevices(devices: BlockDevice[]): BlockDevice[] {
   });
 }
 
+/** Convert a QDL device to a BlockDevice for compatibility with the selection flow */
+function qdlToBlockDevice(qdl: QdlDevice): BlockDevice {
+  return {
+    path: `qdl://${qdl.bus_id}/${qdl.device_address}`,
+    name: `Bus ${qdl.bus_id} Addr ${qdl.device_address}`,
+    size: 0,
+    size_formatted: '',
+    model: 'Qualcomm Emergency Download',
+    is_removable: true,
+    is_system: false,
+    bus_type: 'USB',
+    is_read_only: false,
+  };
+}
+
 interface DeviceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (device: BlockDevice) => void;
+  /** Flash method for the selected image ("block" or "qdl") */
+  flashMethod?: string;
 }
 
-export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
+export function DeviceModal({ isOpen, onClose, onSelect, flashMethod }: DeviceModalProps) {
   const { t } = useTranslation();
   const [selectedDevice, setSelectedDevice] = useState<BlockDevice | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -82,11 +99,19 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   const prevDevicesRef = useRef<BlockDevice[] | null>(null);
   const [devices, setDevices] = useState<BlockDevice[]>([]);
 
-  // Initial load when modal opens
+  const isQdlMode = flashMethod === 'qdl';
+
+  // Initial load when modal opens - use QDL or block device detection
   const { data: rawDevices, loading, error, reload } = useAsyncDataWhen<BlockDevice[]>(
     isOpen,
-    () => getBlockDevices(),
-    [isOpen]
+    async () => {
+      if (isQdlMode) {
+        const qdlDevices = await getQdlDevices();
+        return qdlDevices.map(qdlToBlockDevice);
+      }
+      return getBlockDevices();
+    },
+    [isOpen, isQdlMode]
   );
 
   // Derive devices ready state (also ready when no devices found after loading)
@@ -116,7 +141,13 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
   // Poll for device changes while modal is open
   const pollDevices = useCallback(async () => {
     try {
-      const newDevices = await getBlockDevices();
+      let newDevices: BlockDevice[];
+      if (isQdlMode) {
+        const qdlDevices = await getQdlDevices();
+        newDevices = qdlDevices.map(qdlToBlockDevice);
+      } else {
+        newDevices = await getBlockDevices();
+      }
       if (devicesChanged(prevDevicesRef.current, newDevices)) {
         prevDevicesRef.current = newDevices;
         setDevices(sortDevices(newDevices));
@@ -124,7 +155,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
     } catch {
       // Silently ignore polling errors
     }
-  }, []);
+  }, [isQdlMode]);
 
   // Auto-refresh devices while modal is open (detect new USB/SD insertions)
   useEffect(() => {
@@ -164,13 +195,13 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
             </div>
           </div>
 
-          <button
+          {!isQdlMode && <button
             onClick={() => setShowSystemDevices(!showSystemDevices)}
             className={`system-devices-badge ${showSystemDevices ? 'active' : ''}`}
           >
             <Shield size={13} />
             <span>{showSystemDevices ? t('device.hideSystemDevices') : t('device.showSystemDevices')}</span>
-          </button>
+          </button>}
         </div>
 
         {error ? (
@@ -180,10 +211,10 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
             {showSkeleton && <ListItemSkeleton count={UI.SKELETON.DEVICE_MODAL} />}
             {filteredDevices.length === 0 && !showSkeleton && (
               <div className="no-results">
-                <Usb size={40} />
-                <p>{t('modal.noDevices')}</p>
+                {isQdlMode ? <Cpu size={40} /> : <Usb size={40} />}
+                <p>{isQdlMode ? t('device.qdlNotFound') : t('modal.noDevices')}</p>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  {t('modal.insertDevice')}
+                  {isQdlMode ? t('device.qdlInstructions') : t('modal.insertDevice')}
                 </p>
                 <button className="btn btn-secondary" onClick={reload} disabled={loading} style={{ marginTop: 16 }}>
                   <RefreshCw size={14} className={loading ? 'spin' : ''} />
@@ -220,7 +251,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
                           </span>
                         )}
                       </div>
-                      <div className="list-item-subtitle">{device.name} • {device.size_formatted}</div>
+                      <div className="list-item-subtitle">{device.name}{device.size_formatted ? ` • ${device.size_formatted}` : ''}</div>
                     </div>
                     {device.is_read_only && (
                       <div className="list-item-right">
@@ -259,7 +290,7 @@ export function DeviceModal({ isOpen, onClose, onSelect }: DeviceModalProps) {
         {selectedDevice && (
           <div className="confirm-device">
             <strong>{selectedDevice.model || selectedDevice.name}</strong>
-            <span>{selectedDevice.name} ({selectedDevice.size_formatted})</span>
+            <span>{selectedDevice.name}{selectedDevice.size_formatted ? ` (${selectedDevice.size_formatted})` : ''}</span>
           </div>
         )}
       </ConfirmationDialog>

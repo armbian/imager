@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo, CachedImageInfo } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo, CachedImageInfo, QdlDevice } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
   return invoke('get_boards');
@@ -328,4 +328,32 @@ export async function getCachedVendorLogo(vendorId: string, logoUrl: string): Pr
  */
 export async function getArmbianRelease(): Promise<ArmbianReleaseInfo | null> {
   return invoke('get_armbian_release');
+}
+
+// === QDL (Qualcomm EDL) operations ===
+
+/**
+ * Detect Qualcomm EDL devices connected via USB
+ * @returns Array of QDL devices in Emergency Download mode
+ */
+export async function getQdlDevices(): Promise<QdlDevice[]> {
+  return invoke('get_qdl_devices');
+}
+
+/**
+ * Flash a QDL image (TAR archive) to a device in EDL mode
+ * @param tarPath Path to the downloaded TAR archive
+ * @param serial Optional USB serial number to target a specific device
+ */
+export async function flashQdlImage(tarPath: string, serial?: string): Promise<void> {
+  return invoke('flash_qdl_image', { tarPath, serial });
+}
+
+/**
+ * Check if a custom image TAR file is a QDL (Qualcomm EDL) flash archive
+ * @param imagePath Path to the TAR file
+ * @returns true if the TAR contains rawprogram0.xml and prog_firehose_ddr.elf
+ */
+export async function checkIsQdlImage(imagePath: string): Promise<boolean> {
+  return invoke('check_is_qdl_image', { imagePath });
 }

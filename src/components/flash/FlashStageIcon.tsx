@@ -7,6 +7,9 @@ import {
   Archive,
   Shield,
   ShieldCheck,
+  Cpu,
+  Layers,
+  FolderOpen,
 } from 'lucide-react';
 import { UI } from '../../config';
 
@@ -15,6 +18,9 @@ export type FlashStage =
   | 'downloading'
   | 'verifying_sha'
   | 'decompressing'
+  | 'extracting'
+  | 'qdl_sahara'
+  | 'qdl_firehose'
   | 'flashing'
   | 'verifying'
   | 'complete'
@@ -35,6 +41,12 @@ export function FlashStageIcon({ stage, size = UI.ICON_SIZE.FLASH_STAGE }: Flash
       return <ShieldCheck size={size} className="stage-icon verifying-sha" />;
     case 'decompressing':
       return <Archive size={size} className="stage-icon decompressing" />;
+    case 'extracting':
+      return <FolderOpen size={size} className="stage-icon decompressing" />;
+    case 'qdl_sahara':
+      return <Cpu size={size} className="stage-icon flashing" />;
+    case 'qdl_firehose':
+      return <Layers size={size} className="stage-icon flashing" />;
     case 'flashing':
       return <HardDrive size={size} className="stage-icon flashing" />;
     case 'verifying':
@@ -57,6 +69,12 @@ export function getStageKey(stage: FlashStage): string {
       return 'flash.verifyingSha';
     case 'decompressing':
       return 'flash.decompressing';
+    case 'extracting':
+      return 'flash.extracting';
+    case 'qdl_sahara':
+      return 'flash.qdlSahara';
+    case 'qdl_firehose':
+      return 'flash.qdlFirehose';
     case 'flashing':
       return 'flash.writing';
     case 'verifying':
