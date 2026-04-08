@@ -112,7 +112,9 @@
     "uploadFailed": "업로드 실패",
     "deviceDisconnected": "장치 연결이 해제되었습니다",
     "qdlDisconnected": "플래시 중 장치가 연결 해제되었습니다. EDL 모드로 다시 연결하고 재시도하세요.",
-    "qdlCancelled": "플래시가 취소되었습니다."
+    "qdlCancelled": "플래시가 취소되었습니다.",
+    "qdlPermissionDenied": "USB 접근이 거부되었습니다. Linux에서는 udev 규칙을 설치하고 qcserial 모듈을 차단하세요.",
+    "qdlConnectionFailed": "EDL 장치에 연결할 수 없습니다. EDL 모드에서 USB로 연결되어 있는지 확인하세요."
   },
   "custom": {
     "customImage": "사용자 정의 이미지"

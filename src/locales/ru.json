@@ -112,7 +112,9 @@
     "uploadFailed": "Ошибка загрузки",
     "deviceDisconnected": "Устройство было отключено",
     "qdlDisconnected": "Устройство отключено во время прошивки. Подключите заново в режиме EDL и повторите.",
-    "qdlCancelled": "Прошивка отменена."
+    "qdlCancelled": "Прошивка отменена.",
+    "qdlPermissionDenied": "Доступ к USB запрещён. В Linux установите правила udev и заблокируйте модуль qcserial.",
+    "qdlConnectionFailed": "Не удалось подключиться к устройству EDL. Убедитесь, что оно в режиме EDL и подключено по USB."
   },
   "custom": {
     "customImage": "Свой образ"

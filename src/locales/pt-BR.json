@@ -112,7 +112,9 @@
     "uploadFailed": "Falha no envio",
     "deviceDisconnected": "Dispositivo foi desconectado",
     "qdlDisconnected": "Dispositivo desconectado durante a gravação. Reconecte em modo EDL e tente novamente.",
-    "qdlCancelled": "Gravação cancelada."
+    "qdlCancelled": "Gravação cancelada.",
+    "qdlPermissionDenied": "Acesso USB negado. No Linux, instale as regras udev e bloqueie o módulo qcserial.",
+    "qdlConnectionFailed": "Falha ao conectar ao dispositivo EDL. Verifique se está em modo EDL e conectado via USB."
   },
   "custom": {
     "customImage": "Imagem personalizada"

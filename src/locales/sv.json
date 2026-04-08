@@ -112,7 +112,9 @@
     "uploadFailed": "Uppladdning misslyckades",
     "deviceDisconnected": "Enheten kopplades bort",
     "qdlDisconnected": "Enheten kopplades bort under flashningen. Anslut igen i EDL-läge och försök igen.",
-    "qdlCancelled": "Flash avbruten."
+    "qdlCancelled": "Flash avbruten.",
+    "qdlPermissionDenied": "USB-åtkomst nekad. På Linux, installera udev-regler och blockera qcserial-modulen.",
+    "qdlConnectionFailed": "Kunde inte ansluta till EDL-enheten. Kontrollera att enheten är i EDL-läge och ansluten via USB."
   },
   "custom": {
     "customImage": "Egen image"

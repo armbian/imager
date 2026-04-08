@@ -14,6 +14,8 @@ export function isShaUnavailableError(error: string): boolean {
 export function translateQdlError(error: string, t: (key: string) => string): string {
   if (error.includes('[QDL_DISCONNECTED]')) return t('error.qdlDisconnected');
   if (error.includes('[QDL_CANCELLED]')) return t('error.qdlCancelled');
+  if (error.includes('[QDL_PERMISSION_DENIED]')) return t('error.qdlPermissionDenied');
+  if (error.includes('[QDL_CONNECTION_FAILED]')) return t('error.qdlConnectionFailed');
   if (error.includes('[QDL_ERROR]')) return error.replace('[QDL_ERROR] ', '');
   return error;
 }

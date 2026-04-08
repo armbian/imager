@@ -112,7 +112,9 @@
     "uploadFailed": "Slanje neuspješno",
     "deviceDisconnected": "Uređaj je isključen",
     "qdlDisconnected": "Uređaj odspojен tijekom flashanja. Ponovno spojite u EDL način i pokušajte ponovno.",
-    "qdlCancelled": "Flashanje otkazano."
+    "qdlCancelled": "Flashanje otkazano.",
+    "qdlPermissionDenied": "USB pristup odbijen. Na Linuxu, instalirajte udev pravila i blokirajte qcserial modul.",
+    "qdlConnectionFailed": "Povezivanje s EDL uređajem nije uspjelo. Provjerite je li uređaj u EDL načinu i spojen putem USB-a."
   },
   "custom": {
     "customImage": "Prilagođena slika"

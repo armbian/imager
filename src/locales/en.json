@@ -112,7 +112,9 @@
     "uploadFailed": "Upload failed",
     "deviceDisconnected": "Device was disconnected",
     "qdlDisconnected": "Device disconnected during flash. Reconnect in EDL mode and retry.",
-    "qdlCancelled": "Flash cancelled."
+    "qdlCancelled": "Flash cancelled.",
+    "qdlPermissionDenied": "USB access denied. On Linux, install udev rules: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
+    "qdlConnectionFailed": "Failed to connect to EDL device. Ensure the device is in EDL mode and connected via USB."
   },
   "custom": {
     "customImage": "Custom Image"

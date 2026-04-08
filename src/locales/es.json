@@ -112,7 +112,9 @@
     "uploadFailed": "Error al subir",
     "deviceDisconnected": "El dispositivo fue desconectado",
     "qdlDisconnected": "Dispositivo desconectado durante la escritura. Reconectar en modo EDL y reintentar.",
-    "qdlCancelled": "Escritura cancelada."
+    "qdlCancelled": "Escritura cancelada.",
+    "qdlPermissionDenied": "Acceso USB denegado. En Linux, instalar reglas udev y bloquear el módulo qcserial.",
+    "qdlConnectionFailed": "No se pudo conectar al dispositivo EDL. Asegúrate de que esté en modo EDL y conectado por USB."
   },
   "custom": {
     "customImage": "Imagen personalizada"

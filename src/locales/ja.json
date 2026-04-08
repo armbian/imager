@@ -112,7 +112,9 @@
     "uploadFailed": "アップロード失敗",
     "deviceDisconnected": "デバイスが切断されました",
     "qdlDisconnected": "フラッシュ中にデバイスが切断されました。EDLモードで再接続してやり直してください。",
-    "qdlCancelled": "フラッシュがキャンセルされました。"
+    "qdlCancelled": "フラッシュがキャンセルされました。",
+    "qdlPermissionDenied": "USBアクセスが拒否されました。Linuxではudevルールをインストールし、qcserialモジュールをブラックリストに追加してください。",
+    "qdlConnectionFailed": "EDLデバイスへの接続に失敗しました。EDLモードでUSB接続されていることを確認してください。"
   },
   "custom": {
     "customImage": "カスタムイメージ"

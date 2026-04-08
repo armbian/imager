@@ -112,7 +112,9 @@
     "uploadFailed": "Échec du téléversement",
     "deviceDisconnected": "L'appareil a été déconnecté",
     "qdlDisconnected": "Appareil déconnecté pendant le flash. Reconnectez en mode EDL et réessayez.",
-    "qdlCancelled": "Flash annulé."
+    "qdlCancelled": "Flash annulé.",
+    "qdlPermissionDenied": "Accès USB refusé. Sous Linux, installez les règles udev et bloquez le module qcserial.",
+    "qdlConnectionFailed": "Connexion au périphérique EDL échouée. Vérifiez qu'il est en mode EDL et connecté par USB."
   },
   "custom": {
     "customImage": "Image personnalisée"

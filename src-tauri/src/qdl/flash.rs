@@ -47,10 +47,15 @@ pub fn qdl_flash(
     log_info!("qdl::flash", "Connecting to EDL device...");
 
     let rw_channel = setup_target_device(QdlBackend::Usb, serial, None).map_err(|e| {
-        format!(
-            "Failed to connect to EDL device: {}. Ensure the device is in EDL mode.",
-            e
-        )
+        let msg = e.to_string();
+        if msg.contains("errno 13")
+            || msg.contains("Permission denied")
+            || msg.contains("Access denied")
+        {
+            "[QDL_PERMISSION_DENIED]".to_string()
+        } else {
+            format!("[QDL_CONNECTION_FAILED] {}", msg)
+        }
     })?;
 
     let mut device = QdlDevice {

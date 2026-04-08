@@ -112,7 +112,9 @@
     "uploadFailed": "Yükleme başarısız",
     "deviceDisconnected": "Cihaz bağlantısı kesildi",
     "qdlDisconnected": "Flash sırasında cihaz bağlantısı kesildi. EDL modunda yeniden bağlayın ve tekrar deneyin.",
-    "qdlCancelled": "Flash iptal edildi."
+    "qdlCancelled": "Flash iptal edildi.",
+    "qdlPermissionDenied": "USB erişimi reddedildi. Linux'ta udev kurallarını yükleyin ve qcserial modülünü engelleyin.",
+    "qdlConnectionFailed": "EDL cihazına bağlanılamadı. Cihazın EDL modunda olduğundan ve USB ile bağlı olduğundan emin olun."
   },
   "custom": {
     "customImage": "Özel İmaj"

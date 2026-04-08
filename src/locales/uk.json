@@ -112,7 +112,9 @@
     "uploadFailed": "Помилка завантаження",
     "deviceDisconnected": "Пристрій було від'єднано",
     "qdlDisconnected": "Пристрій від'єднано під час прошивки. Підключіть знову в режимі EDL та повторіть.",
-    "qdlCancelled": "Прошивку скасовано."
+    "qdlCancelled": "Прошивку скасовано.",
+    "qdlPermissionDenied": "Доступ до USB заборонено. В Linux встановіть правила udev та заблокуйте модуль qcserial.",
+    "qdlConnectionFailed": "Не вдалося підключитися до пристрою EDL. Переконайтеся, що він у режимі EDL та підключений через USB."
   },
   "custom": {
     "customImage": "Власний образ"

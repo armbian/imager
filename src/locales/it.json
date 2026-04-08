@@ -112,7 +112,9 @@
     "uploadFailed": "Caricamento fallito",
     "deviceDisconnected": "Dispositivo disconnesso",
     "qdlDisconnected": "Dispositivo disconnesso durante la scrittura. Ricollegare in modalità EDL e riprovare.",
-    "qdlCancelled": "Scrittura annullata."
+    "qdlCancelled": "Scrittura annullata.",
+    "qdlPermissionDenied": "Accesso USB negato. Su Linux, installare le regole udev e bloccare il modulo qcserial.",
+    "qdlConnectionFailed": "Connessione al dispositivo EDL fallita. Verificare che sia in modalità EDL e collegato via USB."
   },
   "custom": {
     "customImage": "Immagine Personalizzata"

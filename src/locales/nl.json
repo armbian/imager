@@ -112,7 +112,9 @@
     "uploadFailed": "Upload mislukt",
     "deviceDisconnected": "Apparaat is losgekoppeld",
     "qdlDisconnected": "Apparaat losgekoppeld tijdens het flashen. Sluit opnieuw aan in EDL-modus en probeer het opnieuw.",
-    "qdlCancelled": "Flash geannuleerd."
+    "qdlCancelled": "Flash geannuleerd.",
+    "qdlPermissionDenied": "USB-toegang geweigerd. Installeer op Linux udev-regels en blokkeer de qcserial-module.",
+    "qdlConnectionFailed": "Verbinding met EDL-apparaat mislukt. Controleer of het apparaat in EDL-modus staat en via USB is aangesloten."
   },
   "custom": {
     "customImage": "Aangepaste image"

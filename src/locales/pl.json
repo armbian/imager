@@ -112,7 +112,9 @@
     "uploadFailed": "Przesyłanie nie powiodło się",
     "deviceDisconnected": "Urządzenie zostało odłączone",
     "qdlDisconnected": "Urządzenie odłączone podczas flashowania. Podłącz ponownie w trybie EDL i spróbuj ponownie.",
-    "qdlCancelled": "Flashowanie anulowane."
+    "qdlCancelled": "Flashowanie anulowane.",
+    "qdlPermissionDenied": "Odmowa dostępu USB. Na Linuxie zainstaluj reguły udev i zablokuj moduł qcserial.",
+    "qdlConnectionFailed": "Nie udało się połączyć z urządzeniem EDL. Upewnij się, że jest w trybie EDL i podłączone przez USB."
   },
   "custom": {
     "customImage": "Własny obraz"

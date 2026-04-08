@@ -112,7 +112,9 @@
     "uploadFailed": "Nalaganje ni uspelo",
     "deviceDisconnected": "Naprava je bila odklopljena",
     "qdlDisconnected": "Naprava odklopljena med zapisovanjem. Ponovno povežite v načinu EDL in poskusite znova.",
-    "qdlCancelled": "Zapisovanje preklicano."
+    "qdlCancelled": "Zapisovanje preklicano.",
+    "qdlPermissionDenied": "Dostop USB zavrnjen. V Linuxu namestite pravila udev in blokirajte modul qcserial.",
+    "qdlConnectionFailed": "Povezava z napravo EDL ni uspela. Preverite, ali je naprava v načinu EDL in povezana prek USB."
   },
   "custom": {
     "customImage": "Slika po meri"

@@ -112,7 +112,9 @@
     "uploadFailed": "Hochladen fehlgeschlagen",
     "deviceDisconnected": "Gerät wurde getrennt",
     "qdlDisconnected": "Gerät während des Flashens getrennt. Im EDL-Modus erneut verbinden und wiederholen.",
-    "qdlCancelled": "Flash abgebrochen."
+    "qdlCancelled": "Flash abgebrochen.",
+    "qdlPermissionDenied": "USB-Zugriff verweigert. Unter Linux udev-Regeln installieren und das Modul qcserial blacklisten.",
+    "qdlConnectionFailed": "Verbindung zum EDL-Gerät fehlgeschlagen. Stellen Sie sicher, dass das Gerät im EDL-Modus und per USB verbunden ist."
   },
   "custom": {
     "customImage": "Benutzerdefiniertes Image"

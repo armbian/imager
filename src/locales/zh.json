@@ -112,7 +112,9 @@
     "uploadFailed": "上传失败",
     "deviceDisconnected": "设备已断开连接",
     "qdlDisconnected": "刷写过程中设备断开连接。请在 EDL 模式下重新连接并重试。",
-    "qdlCancelled": "刷写已取消。"
+    "qdlCancelled": "刷写已取消。",
+    "qdlPermissionDenied": "USB 访问被拒绝。在 Linux 上，请安装 udev 规则并屏蔽 qcserial 模块。",
+    "qdlConnectionFailed": "无法连接到 EDL 设备。请确保设备处于 EDL 模式并通过 USB 连接。"
   },
   "custom": {
     "customImage": "自定义镜像"

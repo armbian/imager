@@ -112,7 +112,9 @@
     "uploadFailed": "Falha no envio",
     "deviceDisconnected": "O dispositivo foi desligado",
     "qdlDisconnected": "Dispositivo desligado durante o flash. Volte a ligar em modo EDL e tente novamente.",
-    "qdlCancelled": "Flash cancelado."
+    "qdlCancelled": "Flash cancelado.",
+    "qdlPermissionDenied": "Acesso USB negado. No Linux, instale as regras udev e bloqueie o módulo qcserial.",
+    "qdlConnectionFailed": "Falha ao ligar ao dispositivo EDL. Verifique se está em modo EDL e ligado por USB."
   },
   "custom": {
     "customImage": "Imagem personalizada"
