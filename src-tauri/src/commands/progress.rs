@@ -27,6 +27,14 @@ pub struct FlashProgress {
     pub is_verifying: bool,
     pub progress_percent: f64,
     pub error: Option<String>,
+    /// Whether the current operation is a QDL (Qualcomm EDL) flash
+    pub is_qdl_mode: bool,
+    /// Current QDL stage (e.g., "sahara", "firehose", "partition:boot.img")
+    pub qdl_stage: Option<String>,
+    /// Total number of partitions to program in QDL mode
+    pub partitions_total: u64,
+    /// Number of partitions programmed so far in QDL mode
+    pub partitions_written: u64,
 }
 
 /// Get current download progress
@@ -87,6 +95,27 @@ pub async fn get_flash_progress(state: State<'_, AppState>) -> Result<FlashProgr
 
     let error = fs.error.lock().await.clone();
 
+    let is_qdl_mode = fs.qdl.is_active.load(std::sync::atomic::Ordering::SeqCst);
+    let qdl_stage = if is_qdl_mode {
+        Some(
+            fs.qdl
+                .stage
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .clone(),
+        )
+    } else {
+        None
+    };
+    let partitions_total = fs
+        .qdl
+        .partitions_total
+        .load(std::sync::atomic::Ordering::SeqCst);
+    let partitions_written = fs
+        .qdl
+        .partitions_written
+        .load(std::sync::atomic::Ordering::SeqCst);
+
     Ok(FlashProgress {
         total_bytes: total,
         written_bytes: written,
@@ -94,6 +123,10 @@ pub async fn get_flash_progress(state: State<'_, AppState>) -> Result<FlashProgr
         is_verifying,
         progress_percent: progress,
         error,
+        is_qdl_mode,
+        qdl_stage,
+        partitions_total,
+        partitions_written,
     })
 }
 

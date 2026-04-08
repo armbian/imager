@@ -29,14 +29,49 @@ fn capitalize_vendor(vendor: &str) -> String {
 }
 
 /// Check if file extension is a valid image file
-/// Valid extensions: img.xz, oowow.img.xz, kebab.img.xz, etc.
+/// Valid extensions: img.xz, oowow.img.xz, kebab.img.xz, tar, tar.xz, etc.
 /// Invalid extensions: .asc, .torrent, .sha
 fn is_valid_image_extension(ext: &str) -> bool {
     let ext_lower = ext.to_lowercase();
-    ext_lower.contains("img")
-        && !ext_lower.contains("asc")
-        && !ext_lower.contains("torrent")
-        && !ext_lower.contains("sha")
+    if ext_lower.contains("asc") || ext_lower.contains("torrent") || ext_lower.contains("sha") {
+        return false;
+    }
+    // Accept standard image files and TAR archives (for QDL boards)
+    ext_lower.contains("img") || ext_lower.contains("tar")
+}
+
+/// Known board slugs that require QDL (Qualcomm EDL) flashing
+const QDL_BOARD_SLUGS: &[&str] = &["arduino-uno-q"];
+
+/// Determine the flash method for an image based on API field, extension, or board slug
+fn determine_flash_method(img: &ArmbianImage) -> String {
+    // 1. Use explicit flash_method from API if present
+    if let Some(ref method) = img.flash_method {
+        if !method.is_empty() {
+            return method.clone();
+        }
+    }
+
+    // 2. Infer from file extension: .tar without .img → QDL
+    if let Some(ref ext) = img.file_extension {
+        let ext_lower = ext.to_lowercase();
+        if ext_lower.contains("tar") && !ext_lower.contains("img") {
+            return "qdl".to_string();
+        }
+    }
+
+    // 3. Infer from board slug: known QDL boards
+    if let Some(ref slug) = img.board_slug {
+        let normalized = crate::utils::normalize_slug(slug);
+        if QDL_BOARD_SLUGS
+            .iter()
+            .any(|&s| normalized == normalize_slug(s))
+        {
+            return "qdl".to_string();
+        }
+    }
+
+    "block".to_string()
 }
 
 /// Extract all image objects from the nested JSON structure
@@ -316,6 +351,7 @@ pub fn filter_images_for_board(
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(0),
             download_repository: img.download_repository.clone().unwrap_or_default(),
+            flash_method: determine_flash_method(img),
         })
         .collect();
 

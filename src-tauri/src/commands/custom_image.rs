@@ -9,6 +9,7 @@ use tauri::State;
 use crate::config;
 use crate::decompress::{decompress_local_file, needs_decompression};
 use crate::images::{extract_images, fetch_all_images, get_unique_boards, BoardInfo};
+use crate::qdl::extract::open_tar_reader;
 use crate::utils::{get_cache_dir, normalize_slug, parse_armbian_filename};
 use crate::{log_error, log_info};
 
@@ -86,7 +87,7 @@ pub async fn select_custom_image(window: tauri::Window) -> Result<Option<CustomI
         .file()
         .add_filter(
             "Disk Images",
-            &["img", "iso", "raw", "xz", "gz", "bz2", "zst"],
+            &["img", "iso", "raw", "xz", "gz", "bz2", "zst", "tar"],
         )
         .add_filter("All Files", &["*"])
         .set_title("Select Disk Image")
@@ -173,6 +174,77 @@ pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), 
     let _ = std::fs::remove_dir(&custom_decompress_dir);
 
     Ok(())
+}
+
+/// Check if a custom image file is a QDL (Qualcomm EDL) archive
+///
+/// Inspects the archive contents for a valid QDL structure:
+/// - rawprogram0.xml (partition programming instructions)
+/// - prog_firehose_ddr.elf (Sahara firehose programmer)
+///
+/// Supports plain .tar and compressed archives (.tar.xz, .tar.gz, .tar.bz2, .tar.zst).
+/// Files that are not TAR archives (e.g. .img) return false without error.
+#[tauri::command]
+pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
+    let path = PathBuf::from(&image_path);
+
+    log_info!(
+        "custom_image",
+        "Checking if image has QDL structure: {}",
+        image_path
+    );
+
+    // Try to open as TAR (plain or compressed) and inspect contents.
+    // If it's not a valid archive, it's not QDL — return false without error.
+    let reader = match open_tar_reader(&path) {
+        Ok(r) => r,
+        Err(_) => return Ok(false),
+    };
+    let has_qdl_structure = check_tar_for_qdl(reader);
+
+    log_info!(
+        "custom_image",
+        "Archive has QDL structure: {}",
+        has_qdl_structure
+    );
+    Ok(has_qdl_structure)
+}
+
+/// Scan a TAR archive reader for QDL-required files
+fn check_tar_for_qdl<R: std::io::Read>(reader: R) -> bool {
+    let mut archive = tar::Archive::new(reader);
+    let mut has_rawprogram = false;
+    let mut has_firehose = false;
+
+    let entries = match archive.entries() {
+        Ok(e) => e,
+        Err(_) => return false,
+    };
+
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        let filename = entry
+            .path()
+            .ok()
+            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()));
+
+        if let Some(name) = filename {
+            if crate::qdl::extract::REQUIRED_FILES.contains(&name.as_str()) {
+                has_rawprogram = true;
+            }
+            if name == crate::qdl::extract::FIREHOSE_ELF {
+                has_firehose = true;
+            }
+            if has_rawprogram && has_firehose {
+                return true;
+            }
+        }
+    }
+
+    false
 }
 
 /// Detect board information from custom image filename

@@ -43,6 +43,8 @@ pub struct ArmbianImage {
     pub platinum_support_until: Option<String>,
     /// Board support level: "conf", "csc", "eos", "tvb", "wip"
     pub board_support: Option<String>,
+    /// Flash method: "block" (default SD/USB), "qdl" (Qualcomm EDL)
+    pub flash_method: Option<String>,
 }
 
 /// Board information for display
@@ -76,4 +78,6 @@ pub struct ImageInfo {
     pub file_url_sha: Option<String>,
     pub file_size: u64,
     pub download_repository: String,
+    /// Flash method: "block" (default) or "qdl" (Qualcomm EDL)
+    pub flash_method: String,
 }
