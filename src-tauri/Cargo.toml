@@ -21,6 +21,7 @@ tauri = { version = "2", features = ["protocol-asset", "macos-private-api"] }
 # - Last checked: 2025-01-21
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 tauri-plugin-store = "2"

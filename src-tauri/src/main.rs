@@ -130,6 +130,7 @@ fn main() {
 
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::new().build());
@@ -163,6 +164,7 @@ fn main() {
             commands::operations::force_delete_cached_image,
             commands::operations::continue_download_without_sha,
             commands::operations::cleanup_failed_download,
+            commands::operations::inject_autoconfig,
             commands::progress::cancel_operation,
             commands::progress::get_download_progress,
             commands::progress::get_flash_progress,

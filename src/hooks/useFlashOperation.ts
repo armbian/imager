@@ -23,8 +23,11 @@ import {
   getBlockDevices,
   continueDownloadWithoutSha,
   cleanupFailedDownload,
+  getSystemInfo,
 } from './useTauri';
+import { invoke } from '@tauri-apps/api/core';
 import { getSkipVerify } from './useSettings';
+import { generateAutoconfigPayload } from './useAutoconfig';
 import { POLLING, CACHE, STORAGE_KEYS } from '../config';
 import { isDeviceConnected } from '../utils/deviceUtils';
 
@@ -321,6 +324,22 @@ export function useFlashOperation({
     try {
       await flashImage(path, device.path, !skipVerifyRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
+      
+      const autoconfigPayload = await generateAutoconfigPayload();
+      if (autoconfigPayload) {
+        setStage('configuring');
+        
+        try {
+          const sysInfo = await getSystemInfo();
+          if (sysInfo.platform === 'linux') {
+             // Let the backend inject it to the partition securely via pkexec
+             await invoke('inject_autoconfig', { devicePath: device.path, payload: autoconfigPayload });
+          }
+        } catch (e) {
+          console.warn("Autoconfig injection fallback triggered or failed. Assumed manual placement:", e);
+        }
+      }
+      
       setStage('complete');
       setProgress(100);
       setFlashFailureCount(0);
