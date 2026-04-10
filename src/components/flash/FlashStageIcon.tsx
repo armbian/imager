@@ -7,6 +7,7 @@ import {
   Archive,
   Shield,
   ShieldCheck,
+  Settings,
 } from 'lucide-react';
 import { UI } from '../../config';
 
@@ -17,6 +18,7 @@ export type FlashStage =
   | 'decompressing'
   | 'flashing'
   | 'verifying'
+  | 'configuring'
   | 'complete'
   | 'error';
 
@@ -39,6 +41,8 @@ export function FlashStageIcon({ stage, size = UI.ICON_SIZE.FLASH_STAGE }: Flash
       return <HardDrive size={size} className="stage-icon flashing" />;
     case 'verifying':
       return <Check size={size} className="stage-icon verifying" />;
+    case 'configuring':
+      return <Settings size={size} className="stage-icon configuring" />;
     case 'complete':
       return <CheckCircle size={size} className="stage-icon complete" />;
     case 'error':
@@ -61,6 +65,8 @@ export function getStageKey(stage: FlashStage): string {
       return 'flash.writing';
     case 'verifying':
       return 'flash.verifying';
+    case 'configuring':
+      return 'flash.configuring';
     case 'complete':
       return 'flash.complete';
     case 'error':

@@ -265,3 +265,98 @@ pub async fn cleanup_failed_download(state: State<'_, AppState>) -> Result<(), S
     crate::download::cleanup_pending_download(state.download_state.clone()).await;
     Ok(())
 }
+
+/// Inject the autoconfig payload dynamically onto the newly flashed Linux filesystem
+#[tauri::command]
+pub async fn inject_autoconfig(device_path: String, payload: String) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        use std::process::Command;
+        use std::fs::{self, File};
+        use std::io::Write;
+        use std::thread;
+        use std::time::Duration;
+
+        log_info!("operations", "Injecting armbian-firstlogin.conf to block device: {}", device_path);
+
+        // 1. Force the kernel to re-read the partition table
+        log_info!("operations", "Running partprobe to refresh partitions on {}", device_path);
+        let _ = Command::new("partprobe").arg(&device_path).status();
+        
+        // Brief sleep to allow dev handler to surface the partition block node
+        thread::sleep(Duration::from_secs(3));
+
+        // 2. Identify the boot partition
+        // On SD cards/eMMC (mmcblkX) or NVMe (nvmeXn1), partition 1 usually adds 'p1'.
+        // On USB/SATA (sdX), partition 1 usually adds '1'.
+        let part_suffix = if device_path.contains("mmcblk") || device_path.contains("nvme") {
+            "p1"
+        } else {
+            "1"
+        };
+        let part_path = format!("{}{}", device_path, part_suffix);
+        log_info!("operations", "Targeting partition: {}", part_path);
+
+        // 3. Setup temporary mount directory
+        let mount_dir = "/tmp/armbian-config-mount";
+        let _ = fs::create_dir_all(mount_dir);
+
+        // 4. Mount partition
+        log_info!("operations", "Mounting {} to {}", part_path, mount_dir);
+        let mount_status = Command::new("mount")
+            .arg(&part_path)
+            .arg(mount_dir)
+            .status()
+            .map_err(|e| format!("Failed to execute mount: {}", e))?;
+
+        if !mount_status.success() {
+            log_error!("operations", "Failed to mount partition {}", part_path);
+            return Err("Failed to mount target ext4 partition".to_string());
+        }
+
+        // 5. Determine target path and write configuration
+        // Armbian traditionally checks /boot/armbian-firstlogin.conf, or fallback to /armbian-firstlogin.conf
+        let boot_dir = format!("{}/boot", mount_dir);
+        let target_file_path = if std::path::Path::new(&boot_dir).exists() {
+            format!("{}/armbian-firstlogin.conf", boot_dir)
+        } else {
+            format!("{}/armbian-firstlogin.conf", mount_dir)
+        };
+
+        log_info!("operations", "Writing configuration payload to {}", target_file_path);
+        
+        let write_result = (|| -> std::io::Result<()> {
+            let mut file = File::create(&target_file_path)?;
+            file.write_all(payload.as_bytes())?;
+            file.sync_all()?;
+            Ok(())
+        })();
+
+        if let Err(e) = write_result {
+            log_error!("operations", "Failed to write payload: {}", e);
+        } else {
+            log_info!("operations", "Successfully wrote autoconfig payload.");
+        }
+
+        // 6. Cleanup: Unmount directory
+        log_info!("operations", "Unmounting {}", mount_dir);
+        let umount_status = Command::new("umount")
+            .arg(mount_dir)
+            .status()
+            .map_err(|e| format!("Failed to execute umount: {}", e))?;
+
+        if !umount_status.success() {
+            log_error!("operations", "Warning: Failed to gracefully unmount {}", mount_dir);
+        }
+
+        let _ = fs::remove_dir(mount_dir); // Attempt simple cleanup
+
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        // On non-Linux, this should not be called dynamically as the frontend catches it.
+        Err("Autoconfig dynamic injection is only supported on Linux native hosts.".to_string())
+    }
+}

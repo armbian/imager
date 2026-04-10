@@ -2,6 +2,7 @@ import { Factory, Cpu, Database, HardDrive, FolderOpen, Archive } from 'lucide-r
 import { useTranslation } from 'react-i18next';
 import type { BoardInfo, ImageInfo, BlockDevice, Manufacturer } from '../../types';
 import { MarqueeText } from '../shared';
+import { AutoconfigButton } from '../settings/AutoconfigButton';
 
 interface HomePageProps {
   selectedManufacturer: Manufacturer | null;
@@ -61,6 +62,10 @@ export function HomePage({
                 <FolderOpen size={28} />
                 <span className="home-button-text">{t('home.useCustomImage')}</span>
               </button>
+            </div>
+
+            <div className="home-button-group" style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+              <AutoconfigButton />
             </div>
 
             <div className="home-button-group">
@@ -187,7 +192,7 @@ export function HomePage({
           </div>
         </div>
 
-        <div className="home-custom-section">
+        <div className="home-custom-section" style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
           <button
             className="home-custom-button"
             onClick={selectedImage.image_variant === 'cached' ? onOpenCacheManager : onChooseCustomImage}
@@ -197,6 +202,8 @@ export function HomePage({
               ? t('home.changeCachedImage')
               : t('home.changeCustomImage')}
           </button>
+
+          <AutoconfigButton />
         </div>
       </div>
     );
@@ -287,7 +294,7 @@ export function HomePage({
       </div>
 
       {!selectedManufacturer && (
-        <div className="home-custom-section">
+        <div className="home-custom-section" style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
           <button
             className="home-custom-button"
             onClick={onChooseCustomImage}
@@ -295,6 +302,8 @@ export function HomePage({
             <FolderOpen size={16} />
             {t('home.useCustomImage')}
           </button>
+
+          <AutoconfigButton />
         </div>
       )}
     </div>

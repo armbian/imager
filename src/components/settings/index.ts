@@ -7,3 +7,5 @@ export { DeveloperSection } from './DeveloperSection';
 export { AboutSection } from './AboutSection';
 export { LogsModal } from './LogsModal';
 export { CacheManagerModal } from './CacheManagerModal';
+export { AutoconfigButton } from './AutoconfigButton';
+export { AutoconfigModal } from './AutoconfigModal';
