@@ -4,7 +4,7 @@ version = "1.0.0"
 description = "Armbian Imager - Flash Armbian OS images to SD cards and USB drives"
 authors = ["Armbian", "SuperKali <hello@superkali.me>"]
 edition = "2021"
-rust-version = "1.77.2"
+rust-version = "1.85.0"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -39,6 +39,12 @@ sha2 = "0.10"
 hex = "0.4"
 base64 = "0.22"
 dirs = "5"
+# QDL (Qualcomm Device Loader) for EDL-based board flashing (e.g., Arduino UNO Q)
+qdl = { git = "https://github.com/qualcomm/qdlrs", rev = "4cc11c81bad548504ec243493d30f5fb33c6ceff", features = ["usb"] }
+nusb = "0.2"
+tar = "0.4"
+xmltree = "0.11"
+indexmap = "2"
 once_cell = "1.21.3"
 chrono = "0.4"
 sys-locale = "0.3"

@@ -25,6 +25,8 @@ export interface ImageInfo {
   file_url_sha: string | null;
   file_size: number;
   download_repository: string;
+  /** Flash method: "block" (default SD/USB) or "qdl" (Qualcomm EDL) */
+  flash_method: string;
   // Custom image fields
   is_custom?: boolean;
   custom_path?: string;
@@ -59,6 +61,22 @@ export interface FlashProgress {
   is_verifying: boolean;
   progress_percent: number;
   error: string | null;
+  /** Whether the current operation is a QDL (Qualcomm EDL) flash */
+  is_qdl_mode: boolean;
+  /** Current QDL stage (e.g., "sahara", "firehose", "partition:boot.img") */
+  qdl_stage: string | null;
+  /** Total number of partitions to program in QDL mode */
+  partitions_total: number;
+  /** Number of partitions programmed so far in QDL mode */
+  partitions_written: number;
+}
+
+/** Represents a Qualcomm device in EDL mode detected via USB */
+export interface QdlDevice {
+  serial: string;
+  bus_id: string;
+  device_address: number;
+  description: string;
 }
 
 /**

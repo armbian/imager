@@ -40,8 +40,12 @@
     "dataWarning": "Svi podaci na odabranom uređaju bit će izbrisani",
     "successHint": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj i umetnuti ga u {{boardName}}.",
     "successHintCustom": "Vaša SD kartica je spremna! Možete sigurno ukloniti uređaj.",
+    "successHintQdl": "Flashanje završeno! Uređaj je spreman za pokretanje.",
     "noShaTitle": "Provjera integriteta nije dostupna",
-    "noShaMessage": "SHA kontrolna suma za ovu sliku nije dostupna. Zapisivanje će se nastaviti bez provjere integriteta."
+    "noShaMessage": "SHA kontrolna suma za ovu sliku nije dostupna. Zapisivanje će se nastaviti bez provjere integriteta.",
+    "extracting": "Raspakiravanje arhive...",
+    "qdlSahara": "Učitavanje firmware loadera...",
+    "qdlFirehose": "Zapisivanje particija..."
   },
   "modal": {
     "selectManufacturer": "Odaberi proizvođača",
@@ -77,7 +81,9 @@
     "refresh": "Osvježi",
     "showSystemDevices": "Prikaži sustavne uređaje",
     "hideSystemDevices": "Sakrij sustavne uređaje",
-    "locked": "Zaključano"
+    "locked": "Zaključano",
+    "qdlNotFound": "EDL uređaj nije pronađen. Postavite ploču u EDL način rada i spojite je putem USB-a.",
+    "qdlInstructions": "Postavite jumper na JCTL pinove, zatim spojite USB-C kabel."
   },
   "header": {
     "stepManufacturer": "Proizvođač",
@@ -104,7 +110,11 @@
     "authCancelled": "Autorizaciju je otkazao korisnik",
     "decompressionFailed": "Raspakiravanje neuspješno",
     "uploadFailed": "Slanje neuspješno",
-    "deviceDisconnected": "Uređaj je isključen"
+    "deviceDisconnected": "Uređaj je isključen",
+    "qdlDisconnected": "Uređaj odspojен tijekom flashanja. Ponovno spojite u EDL način i pokušajte ponovno.",
+    "qdlCancelled": "Flashanje otkazano.",
+    "qdlPermissionDenied": "USB pristup odbijen. Na Linuxu, instalirajte udev pravila i blokirajte qcserial modul.",
+    "qdlConnectionFailed": "Povezivanje s EDL uređajem nije uspjelo. Provjerite je li uređaj u EDL načinu i spojen putem USB-a."
   },
   "custom": {
     "customImage": "Prilagođena slika"

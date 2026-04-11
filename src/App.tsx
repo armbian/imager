@@ -4,7 +4,7 @@ import { Header, HomePage } from './components/layout';
 import { ManufacturerModal, BoardModal, ImageModal, DeviceModal, ArmbianBoardModal } from './components/modals';
 import { FlashProgress } from './components/flash';
 import { SettingsButton, CacheManagerModal } from './components/settings';
-import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getCachedBoardImage, checkNeedsDecompression, decompressCustomImage } from './hooks/useTauri';
+import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getCachedBoardImage, checkNeedsDecompression, decompressCustomImage, checkIsQdlImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import { useConnectivity } from './hooks/useConnectivity';
 import { ToastProvider, useToasts } from './hooks/useToasts';
@@ -229,6 +229,7 @@ function AppContent() {
         file_url_sha: null,
         file_size: size,
         download_repository: 'cache',
+        flash_method: 'block',
         is_custom: true,
         custom_path: imagePath,
       };
@@ -324,6 +325,18 @@ function AppContent() {
           logWarn('app', `Failed to detect board from filename: ${err}`);
         }
 
+        // Check if the custom image is a QDL (Qualcomm EDL) TAR archive
+        let flashMethod = 'block';
+        try {
+          const isQdl = await checkIsQdlImage(result.path);
+          if (isQdl) {
+            flashMethod = 'qdl';
+            logInfo('app', `Custom image detected as QDL archive: ${result.name}`);
+          }
+        } catch {
+          // Ignore QDL detection errors, default to block
+        }
+
         // Create a custom ImageInfo object
         const customImage: ImageInfo = {
           armbian_version: 'Custom',
@@ -337,6 +350,7 @@ function AppContent() {
           file_url_sha: null,
           file_size: result.size,
           download_repository: 'local',
+          flash_method: flashMethod,
           is_custom: true,
           custom_path: result.path,
         };
@@ -491,6 +505,7 @@ function AppContent() {
         isOpen={activeModal === 'device'}
         onClose={() => setActiveModal('none')}
         onSelect={handleDeviceSelect}
+        flashMethod={selectedImage?.flash_method}
       />
 
       {/* Armbian board detection modal */}

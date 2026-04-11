@@ -40,8 +40,12 @@
     "dataWarning": "Alle Daten auf dem ausgewählten Gerät werden gelöscht",
     "successHint": "Ihre SD-Karte ist bereit! Sie können das Gerät sicher entfernen und in Ihr {{boardName}} einsetzen.",
     "successHintCustom": "Ihre SD-Karte ist bereit! Sie können das Gerät sicher entfernen.",
+    "successHintQdl": "Flash abgeschlossen! Das Gerät ist startbereit.",
     "noShaTitle": "Integritätsprüfung nicht verfügbar",
-    "noShaMessage": "Die SHA-Prüfsumme für dieses Image ist nicht verfügbar. Das Flashen wird ohne Integritätsprüfung fortgesetzt."
+    "noShaMessage": "Die SHA-Prüfsumme für dieses Image ist nicht verfügbar. Das Flashen wird ohne Integritätsprüfung fortgesetzt.",
+    "extracting": "Archiv wird entpackt...",
+    "qdlSahara": "Firmware-Loader wird hochgeladen...",
+    "qdlFirehose": "Partitionen werden geschrieben..."
   },
   "modal": {
     "selectManufacturer": "Hersteller auswählen",
@@ -77,7 +81,9 @@
     "refresh": "Aktualisieren",
     "showSystemDevices": "Systemlaufwerke anzeigen",
     "hideSystemDevices": "Systemlaufwerke ausblenden",
-    "locked": "Gesperrt"
+    "locked": "Gesperrt",
+    "qdlNotFound": "Kein EDL-Gerät gefunden. Versetzen Sie Ihr Board in den EDL-Modus und verbinden Sie es per USB.",
+    "qdlInstructions": "Setzen Sie den Jumper auf die JCTL-Pins und verbinden Sie das USB-C-Kabel."
   },
   "header": {
     "stepManufacturer": "Hersteller",
@@ -104,7 +110,11 @@
     "authCancelled": "Autorisierung vom Benutzer abgebrochen",
     "decompressionFailed": "Dekomprimierung fehlgeschlagen",
     "uploadFailed": "Hochladen fehlgeschlagen",
-    "deviceDisconnected": "Gerät wurde getrennt"
+    "deviceDisconnected": "Gerät wurde getrennt",
+    "qdlDisconnected": "Gerät während des Flashens getrennt. Im EDL-Modus erneut verbinden und wiederholen.",
+    "qdlCancelled": "Flash abgebrochen.",
+    "qdlPermissionDenied": "USB-Zugriff verweigert. Unter Linux udev-Regeln installieren und das Modul qcserial blacklisten.",
+    "qdlConnectionFailed": "Verbindung zum EDL-Gerät fehlgeschlagen. Stellen Sie sicher, dass das Gerät im EDL-Modus und per USB verbunden ist."
   },
   "custom": {
     "customImage": "Benutzerdefiniertes Image"

@@ -40,8 +40,12 @@
     "dataWarning": "所选设备上的所有数据将被删除",
     "successHint": "您的SD卡已准备就绪！您可以安全地移除设备并将其插入您的{{boardName}}。",
     "successHintCustom": "您的SD卡已准备就绪！您可以安全地移除设备。",
+    "successHintQdl": "刷写完成！设备已准备好启动。",
     "noShaTitle": "完整性检查不可用",
-    "noShaMessage": "此映像的 SHA 校验和不可用。烧录将继续进行，但不进行完整性验证。"
+    "noShaMessage": "此映像的 SHA 校验和不可用。烧录将继续进行，但不进行完整性验证。",
+    "extracting": "正在解压归档文件...",
+    "qdlSahara": "正在上传固件加载器...",
+    "qdlFirehose": "正在写入分区..."
   },
   "modal": {
     "selectManufacturer": "选择制造商",
@@ -77,7 +81,9 @@
     "refresh": "刷新",
     "showSystemDevices": "显示系统驱动器",
     "hideSystemDevices": "隐藏系统驱动器",
-    "locked": "已锁定"
+    "locked": "已锁定",
+    "qdlNotFound": "未找到 EDL 设备。请将开发板切换到 EDL 模式并通过 USB 连接。",
+    "qdlInstructions": "在 JCTL 引脚上放置跳线帽，然后连接 USB-C 数据线。"
   },
   "header": {
     "stepManufacturer": "制造商",
@@ -104,7 +110,11 @@
     "authCancelled": "用户取消了授权",
     "decompressionFailed": "解压失败",
     "uploadFailed": "上传失败",
-    "deviceDisconnected": "设备已断开连接"
+    "deviceDisconnected": "设备已断开连接",
+    "qdlDisconnected": "刷写过程中设备断开连接。请在 EDL 模式下重新连接并重试。",
+    "qdlCancelled": "刷写已取消。",
+    "qdlPermissionDenied": "USB 访问被拒绝。在 Linux 上，请安装 udev 规则并屏蔽 qcserial 模块。",
+    "qdlConnectionFailed": "无法连接到 EDL 设备。请确保设备处于 EDL 模式并通过 USB 连接。"
   },
   "custom": {
     "customImage": "自定义镜像"

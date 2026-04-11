@@ -40,8 +40,12 @@
     "dataWarning": "Toutes les données sur le périphérique sélectionné seront effacées",
     "successHint": "Votre carte SD est prête ! Vous pouvez retirer le périphérique en toute sécurité et l'insérer dans votre {{boardName}}.",
     "successHintCustom": "Votre carte SD est prête ! Vous pouvez retirer le périphérique en toute sécurité.",
+    "successHintQdl": "Flash terminé ! L'appareil est prêt à démarrer.",
     "noShaTitle": "Vérification d'intégrité non disponible",
-    "noShaMessage": "La somme de contrôle SHA pour cette image n'est pas disponible. Le flashage se poursuivra sans vérification d'intégrité."
+    "noShaMessage": "La somme de contrôle SHA pour cette image n'est pas disponible. Le flashage se poursuivra sans vérification d'intégrité.",
+    "extracting": "Extraction de l'archive...",
+    "qdlSahara": "Chargement du firmware...",
+    "qdlFirehose": "Écriture des partitions..."
   },
   "modal": {
     "selectManufacturer": "Sélectionner le fabricant",
@@ -77,7 +81,9 @@
     "refresh": "Actualiser",
     "showSystemDevices": "Afficher les disques système",
     "hideSystemDevices": "Masquer les disques système",
-    "locked": "Verrouillé"
+    "locked": "Verrouillé",
+    "qdlNotFound": "Aucun appareil EDL trouvé. Mettez votre carte en mode EDL et connectez-la par USB.",
+    "qdlInstructions": "Placez le cavalier sur les broches JCTL, puis connectez le câble USB-C."
   },
   "header": {
     "stepManufacturer": "Fabricant",
@@ -104,7 +110,11 @@
     "authCancelled": "Autorisation annulée par l'utilisateur",
     "decompressionFailed": "Échec de la décompression",
     "uploadFailed": "Échec du téléversement",
-    "deviceDisconnected": "L'appareil a été déconnecté"
+    "deviceDisconnected": "L'appareil a été déconnecté",
+    "qdlDisconnected": "Appareil déconnecté pendant le flash. Reconnectez en mode EDL et réessayez.",
+    "qdlCancelled": "Flash annulé.",
+    "qdlPermissionDenied": "Accès USB refusé. Sous Linux, installez les règles udev et bloquez le module qcserial.",
+    "qdlConnectionFailed": "Connexion au périphérique EDL échouée. Vérifiez qu'il est en mode EDL et connecté par USB."
   },
   "custom": {
     "customImage": "Image personnalisée"

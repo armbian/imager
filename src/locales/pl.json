@@ -40,8 +40,12 @@
     "dataWarning": "Wszystkie dane na wybranym urządzeniu zostaną usunięte",
     "successHint": "Twoja karta SD jest gotowa! Możesz bezpiecznie wyjąć urządzenie i włożyć je do swojego {{boardName}}.",
     "successHintCustom": "Twoja karta SD jest gotowa! Możesz bezpiecznie wyjąć urządzenie.",
+    "successHintQdl": "Flash zakończony! Urządzenie jest gotowe do uruchomienia.",
     "noShaTitle": "Weryfikacja integralności niedostępna",
-    "noShaMessage": "Suma kontrolna SHA dla tego obrazu nie jest dostępna. Zapis będzie kontynuowany bez weryfikacji integralności."
+    "noShaMessage": "Suma kontrolna SHA dla tego obrazu nie jest dostępna. Zapis będzie kontynuowany bez weryfikacji integralności.",
+    "extracting": "Rozpakowywanie archiwum...",
+    "qdlSahara": "Przesyłanie programu ładującego firmware...",
+    "qdlFirehose": "Zapisywanie partycji..."
   },
   "modal": {
     "selectManufacturer": "Wybierz producenta",
@@ -77,7 +81,9 @@
     "refresh": "Odśwież",
     "showSystemDevices": "Pokaż dyski systemowe",
     "hideSystemDevices": "Ukryj dyski systemowe",
-    "locked": "Zablokowane"
+    "locked": "Zablokowane",
+    "qdlNotFound": "Nie znaleziono urządzenia EDL. Przełącz płytkę w tryb EDL i podłącz przez USB.",
+    "qdlInstructions": "Umieść zworkę na pinach JCTL, a następnie podłącz kabel USB-C."
   },
   "header": {
     "stepManufacturer": "Producent",
@@ -104,7 +110,11 @@
     "authCancelled": "Autoryzacja anulowana przez użytkownika",
     "decompressionFailed": "Rozpakowywanie nie powiodło się",
     "uploadFailed": "Przesyłanie nie powiodło się",
-    "deviceDisconnected": "Urządzenie zostało odłączone"
+    "deviceDisconnected": "Urządzenie zostało odłączone",
+    "qdlDisconnected": "Urządzenie odłączone podczas flashowania. Podłącz ponownie w trybie EDL i spróbuj ponownie.",
+    "qdlCancelled": "Flashowanie anulowane.",
+    "qdlPermissionDenied": "Odmowa dostępu USB. Na Linuxie zainstaluj reguły udev i zablokuj moduł qcserial.",
+    "qdlConnectionFailed": "Nie udało się połączyć z urządzeniem EDL. Upewnij się, że jest w trybie EDL i podłączone przez USB."
   },
   "custom": {
     "customImage": "Własny obraz"

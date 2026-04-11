@@ -94,11 +94,12 @@ export function HomePage({
               <Database size={28} />
               <span className="home-button-text-multi">
                 <MarqueeText text={selectedImage.preinstalled_application || selectedImage.image_variant || ''} className="home-button-title" />
-                <span className="home-button-subtitle">
-                  {selectedImage.distro_release && selectedImage.kernel_branch
+                <MarqueeText
+                  text={selectedImage.distro_release && selectedImage.kernel_branch
                     ? `${selectedImage.distro_release} · ${selectedImage.kernel_branch}`
                     : selectedImage.distro_release || selectedImage.kernel_branch || '\u00A0'}
-                </span>
+                  className="home-button-subtitle"
+                />
               </span>
             </button>
           </div>
@@ -159,11 +160,12 @@ export function HomePage({
               <Database size={28} />
               <span className="home-button-text-multi">
                 <MarqueeText text={selectedImage.preinstalled_application || selectedImage.image_variant || ''} className="home-button-title" />
-                <span className="home-button-subtitle">
-                  {selectedImage.distro_release && selectedImage.kernel_branch
+                <MarqueeText
+                  text={selectedImage.distro_release && selectedImage.kernel_branch
                     ? `${selectedImage.distro_release} · ${selectedImage.kernel_branch}`
                     : selectedImage.distro_release || selectedImage.kernel_branch || '\u00A0'}
-                </span>
+                  className="home-button-subtitle"
+                />
               </span>
             </button>
           </div>
@@ -254,11 +256,12 @@ export function HomePage({
             {selectedImage ? (
               <span className="home-button-text-multi">
                 <MarqueeText text={selectedImage.preinstalled_application || selectedImage.image_variant || ''} className="home-button-title" />
-                <span className="home-button-subtitle">
-                  {selectedImage.distro_release && selectedImage.kernel_branch
+                <MarqueeText
+                  text={selectedImage.distro_release && selectedImage.kernel_branch
                     ? `${selectedImage.distro_release} · ${selectedImage.kernel_branch}`
                     : selectedImage.distro_release || selectedImage.kernel_branch || '\u00A0'}
-                </span>
+                  className="home-button-subtitle"
+                />
               </span>
             ) : (
               <span className="home-button-text">{t('home.chooseOs')}</span>

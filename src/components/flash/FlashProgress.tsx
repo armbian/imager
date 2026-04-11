@@ -5,7 +5,7 @@ import type { BoardInfo, ImageInfo, BlockDevice } from '../../types';
 import { getImageLogo, getOsName } from '../../assets/os-logos';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { useFlashOperation } from '../../hooks/useFlashOperation';
-import { FlashStageIcon, getStageKey } from './FlashStageIcon';
+import { FlashStageIcon, getStageKey, type FlashStage } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
 import { ErrorDisplay, MarqueeText, ConfirmationDialog } from '../shared';
 import fallbackImage from '../../assets/armbian-logo_nofound.png';
@@ -56,6 +56,10 @@ export function FlashProgress({
     return `Armbian ${image.armbian_version} ${image.distro_release}`;
   }
 
+  /** Stages that show an indeterminate (animated) progress bar instead of a percentage */
+  const INDETERMINATE_STAGES: FlashStage[] = ['decompressing', 'verifying_sha', 'extracting', 'qdl_sahara'];
+  const isIndeterminate = INDETERMINATE_STAGES.includes(stage);
+
   const showHeader = stage !== 'authorizing' && stage !== 'error';
 
   return (
@@ -102,8 +106,8 @@ export function FlashProgress({
               </div>
               <div className="flash-device-row">
                 <HardDrive size={16} />
-                <MarqueeText text={device.model || device.name} maxWidth={150} className="flash-device-name" />
-                <span className="flash-device-size">{device.size_formatted}</span>
+                <MarqueeText text={device.model || device.name} maxWidth={200} className="flash-device-name" />
+                {device.size_formatted && <span className="flash-device-size">{device.size_formatted}</span>}
               </div>
             </div>
           </div>
@@ -119,18 +123,16 @@ export function FlashProgress({
           stage !== 'authorizing' && (
             <div className="progress-container">
               <div
-                className={`progress-bar ${
-                  stage === 'decompressing' || stage === 'verifying_sha' ? 'indeterminate' : ''
-                }`}
+                className={`progress-bar ${isIndeterminate ? 'indeterminate' : ''}`}
               >
                 <div
                   className="progress-fill"
                   style={{
-                    width: stage === 'decompressing' || stage === 'verifying_sha' ? '100%' : `${progress}%`,
+                    width: isIndeterminate ? '100%' : `${progress}%`,
                   }}
                 />
               </div>
-              {stage !== 'decompressing' && stage !== 'verifying_sha' && (
+              {!isIndeterminate && (
                 <span className="progress-text">{progress.toFixed(0)}%</span>
               )}
             </div>
@@ -138,9 +140,11 @@ export function FlashProgress({
 
         {stage === 'complete' && (
           <p className="flash-success-hint">
-            {image.is_custom
-              ? t('flash.successHintCustom')
-              : t('flash.successHint', { boardName: board.name })}
+            {image.flash_method === 'qdl'
+              ? t('flash.successHintQdl')
+              : image.is_custom
+                ? t('flash.successHintCustom')
+                : t('flash.successHint', { boardName: board.name })}
           </p>
         )}
 
