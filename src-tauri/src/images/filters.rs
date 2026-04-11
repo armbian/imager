@@ -28,16 +28,81 @@ fn capitalize_vendor(vendor: &str) -> String {
         .join("-")
 }
 
-/// Check if file extension is a valid image file
-/// Valid extensions: img.xz, oowow.img.xz, kebab.img.xz, tar, tar.xz, etc.
-/// Invalid extensions: .asc, .torrent, .sha
-fn is_valid_image_extension(ext: &str) -> bool {
+/// Check if a file (extension + url) represents a valid flashable image
+///
+/// The Armbian API uses `file_extension` inconsistently:
+/// - Most entries have compound extensions like `img.xz`, `tar.xz`, `oowow.img.xz`
+/// - Some entries (e.g., arduino-uno-q) have only `xz` and the real extension
+///   is inside the filename (e.g., `...trixie_edge_6.19.0_minimal.tar.xz`)
+/// - Some supplementary files use compound extensions too — FIP firmware uses
+///   `img.xz` (with `.fip.img.xz` URL) and LK bootloaders use bare `xz` (with
+///   `.lk.bin.xz` URL). Both must NOT appear as flashable images.
+///
+/// We apply two checks: reject supplementary patterns in the URL first, then
+/// accept compound image/archive extensions OR bare compression extensions
+/// whose URL contains a flashable pattern.
+fn is_valid_image_file(ext: &str, file_url: Option<&str>) -> bool {
     let ext_lower = ext.to_lowercase();
+
+    // Exclude metadata/signature files
     if ext_lower.contains("asc") || ext_lower.contains("torrent") || ext_lower.contains("sha") {
         return false;
     }
-    // Accept standard image files and TAR archives (for QDL boards)
-    ext_lower.contains("img") || ext_lower.contains("tar")
+
+    // Exclude partial/specialized images that aren't complete flashable OS images:
+    // - ufs.img.xz / ufs.xz: UFS filesystem images (alternative storage format)
+    // - rootfs.img.xz: Root filesystem only (no bootloader)
+    // - recovery.img.xz: Recovery partitions
+    // - kebab/csot/boe.img.xz: Display panel firmware variants
+    // - hyperv.zip: Hyper-V packages (not a disk image)
+    if ext_lower.starts_with("ufs")
+        || ext_lower.starts_with("rootfs")
+        || ext_lower.starts_with("recovery")
+        || ext_lower.starts_with("kebab")
+        || ext_lower.starts_with("csot")
+        || ext_lower.starts_with("boe")
+        || ext_lower.contains("hyperv")
+    {
+        return false;
+    }
+
+    // Reject supplementary blobs by URL pattern regardless of extension.
+    // Examples: *.lk.bin.xz (LK bootloader), *.fip.img.xz (firmware package),
+    // *.boot.img.xz (boot image), *.u-boot.img.xz (U-Boot binary).
+    if let Some(url) = file_url {
+        let url_lower = url.to_lowercase();
+        if url_lower.contains(".lk.bin.")
+            || url_lower.contains(".fip.")
+            || url_lower.contains(".boot.img.")
+            || url_lower.contains(".u-boot.")
+        {
+            return false;
+        }
+    }
+
+    // Compound extensions are self-describing
+    if ext_lower.contains("img")
+        || ext_lower.contains("iso")
+        || ext_lower.contains("raw")
+        || ext_lower.contains("tar")
+    {
+        return true;
+    }
+
+    // Bare compression extension: verify the URL contains a flashable pattern
+    // (real extension is inside the filename, e.g., `...minimal.tar.xz`)
+    let is_bare_compression = matches!(ext_lower.as_str(), "xz" | "gz" | "bz2" | "zst");
+    if is_bare_compression {
+        if let Some(url) = file_url {
+            let url_lower = url.to_lowercase();
+            return url_lower.contains(".tar.")
+                || url_lower.contains(".img.")
+                || url_lower.contains(".iso.")
+                || url_lower.contains(".raw.");
+        }
+    }
+
+    false
 }
 
 /// Known board slugs that require QDL (Qualcomm EDL) flashing
@@ -87,7 +152,7 @@ fn extract_images_recursive(value: &serde_json::Value, images: &mut Vec<ArmbianI
             if map.contains_key("board_slug") {
                 if let Ok(img) = serde_json::from_value::<ArmbianImage>(value.clone()) {
                     if let Some(ref ext) = img.file_extension {
-                        if is_valid_image_extension(ext) {
+                        if is_valid_image_file(ext, img.file_url.as_deref()) {
                             let kernel = img.kernel_branch.as_deref().unwrap_or("");
                             if kernel != "cloud" {
                                 images.push(img);

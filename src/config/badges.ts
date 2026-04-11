@@ -27,10 +27,12 @@ export const DESKTOP_BADGES: Record<string, BadgeConfig> = {
  * Kernel type badges
  */
 export const KERNEL_BADGES: Record<string, BadgeConfig> = {
-  'current': { label: 'Current', color: '#10b981' },  // Green
-  'edge': { label: 'Edge', color: '#ef4444' },        // Red
-  'legacy': { label: 'Legacy', color: '#6b7280' },    // Gray
-  'vendor': { label: 'Vendor', color: '#8b5cf6' },    // Purple
+  'current': { label: 'Current', color: '#10b981' },     // Green
+  'edge': { label: 'Edge', color: '#ef4444' },           // Red
+  'legacy': { label: 'Legacy', color: '#6b7280' },       // Gray
+  'vendor': { label: 'Vendor', color: '#8b5cf6' },       // Purple
+  'collabora': { label: 'Collabora', color: '#f59e0b' }, // Amber
+  'sc8280xp': { label: 'SC8280XP', color: '#06b6d4' },   // Cyan
 };
 
 /**
