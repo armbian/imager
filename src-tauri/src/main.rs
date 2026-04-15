@@ -118,12 +118,15 @@ fn main() {
         std::env::consts::ARCH
     );
     log_info!("main", "Config URLs:");
-    log_info!("main", "  - Images API: {}", config::urls::ALL_IMAGES);
+    log_info!("main", "  - API Base: {}", config::urls::API_BASE);
     log_info!(
         "main",
         "  - Board images: {}",
         config::urls::BOARD_IMAGES_BASE
     );
+
+    // Remove legacy api-images.json cache from pre-migration format
+    images::cleanup_legacy_cache();
 
     // Clean up orphaned custom decompressed images from previous sessions
     // (Cache management is done in setup with access to settings)
@@ -154,6 +157,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             commands::board_queries::get_boards,
             commands::board_queries::get_images_for_board,
+            commands::board_queries::get_vendors,
             commands::board_queries::get_block_devices,
             commands::scraping::get_cached_board_image,
             commands::scraping::get_cached_vendor_logo,

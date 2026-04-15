@@ -402,134 +402,37 @@ pub async fn read_as_data_uri(path: &Path) -> Option<String> {
     }
 }
 
-/// Read the cached API JSON from disk (same path used by `images::fetch_all_images`)
-///
-/// Returns `Some(json_text)` if the file exists and can be read, `None` otherwise.
-fn read_api_cache_from_disk() -> Option<String> {
-    let path = crate::images::get_api_cache_path();
-    if !path.exists() {
-        return None;
-    }
-    match std::fs::read_to_string(&path) {
-        Ok(text) => Some(text),
-        Err(e) => {
-            log_warn!(MODULE, "Failed to read local API cache: {}", e);
-            None
-        }
-    }
-}
-
-/// Fetch the API JSON from the remote server (fallback for prepopulate)
-async fn fetch_api_for_prepopulate() -> Option<String> {
-    use std::time::Duration;
-
-    let client = match reqwest::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()
-    {
-        Ok(c) => c,
-        Err(e) => {
-            log_warn!(MODULE, "Failed to build HTTP client for prepopulate: {}", e);
-            return None;
-        }
-    };
-
-    let response = match client.get(config::urls::ALL_IMAGES).send().await {
-        Ok(r) if r.status().is_success() => r,
-        Ok(r) => {
-            log_warn!(
-                MODULE,
-                "API returned {} during prepopulate, skipping",
-                r.status()
-            );
-            return None;
-        }
-        Err(e) => {
-            log_info!(MODULE, "Cannot reach API for prepopulate (offline?): {}", e);
-            return None;
-        }
-    };
-
-    match response.text().await {
-        Ok(t) => Some(t),
-        Err(e) => {
-            log_warn!(MODULE, "Failed to read API response: {}", e);
-            None
-        }
-    }
-}
-
 /// Pre-populate the asset cache by downloading all board images and vendor logos
 ///
-/// Reads the board list from the local API cache on disk (populated by
-/// `images::fetch_all_images`). Falls back to fetching from the remote API
-/// if the local cache is missing. Uses a semaphore to limit concurrency.
+/// Fetches board and vendor lists from the Armbian REST API (with disk cache fallback),
+/// then downloads images and logos using a semaphore to limit concurrency.
 /// Intended to be called once at app startup in the background.
 pub async fn prepopulate_assets() {
     log_info!(MODULE, "Pre-populating asset cache...");
 
-    // Try reading the locally cached API response first (avoids duplicate HTTP request)
-    let json_text = match read_api_cache_from_disk() {
-        Some(text) => {
-            log_info!(MODULE, "Using local API cache for prepopulate");
-            text
-        }
-        None => {
-            // Fallback: fetch from API if local cache is not available yet
-            log_info!(
-                MODULE,
-                "No local API cache, fetching from API for prepopulate"
-            );
-            match fetch_api_for_prepopulate().await {
-                Some(text) => text,
-                None => return,
-            }
+    // Fetch boards and vendors from API (with disk cache fallback)
+    let boards = match crate::images::fetch_boards().await {
+        Ok(b) => b,
+        Err(e) => {
+            log_warn!(MODULE, "Cannot fetch boards for prepopulate: {}", e);
+            return;
         }
     };
 
-    // Parse to extract board slugs and vendor logos
-    // API returns { "assets": [...] }
-    let root: serde_json::Value = match serde_json::from_str(&json_text) {
+    let vendors = match crate::images::fetch_vendors().await {
         Ok(v) => v,
         Err(e) => {
-            log_warn!(MODULE, "Failed to parse API JSON: {}", e);
-            return;
-        }
-    };
-    let images = match root.get("assets").and_then(|v| v.as_array()) {
-        Some(arr) => arr,
-        None => {
-            log_warn!(MODULE, "API JSON missing 'assets' array");
-            return;
+            log_warn!(MODULE, "Cannot fetch vendors for prepopulate: {}", e);
+            Vec::new() // Continue with board images even if vendors fail
         }
     };
 
-    // Collect unique board slugs and vendor logos
-    let mut board_slugs = std::collections::HashSet::new();
-    let mut vendor_logos: std::collections::HashMap<String, String> =
-        std::collections::HashMap::new();
-
-    for image in images {
-        if let Some(slug) = image.get("board_slug").and_then(|v| v.as_str()) {
-            board_slugs.insert(slug.to_string());
-        }
-        if let Some(vendor) = image.get("board_vendor").and_then(|v| v.as_str()) {
-            if let Some(logo) = image.get("company_logo").and_then(|v| v.as_str()) {
-                if !logo.is_empty() && !vendor.is_empty() {
-                    vendor_logos
-                        .entry(vendor.to_string())
-                        .or_insert_with(|| logo.to_string());
-                }
-            }
-        }
-    }
-
-    let total = board_slugs.len() + vendor_logos.len();
-    log_info!(
+    let total = boards.len() + vendors.len();
+    log_debug!(
         MODULE,
         "Pre-populating {} board images + {} vendor logos ({} total)",
-        board_slugs.len(),
-        vendor_logos.len(),
+        boards.len(),
+        vendors.len(),
         total
     );
 
@@ -537,8 +440,9 @@ pub async fn prepopulate_assets() {
     let mut handles = Vec::new();
 
     // Download board images
-    for slug in board_slugs {
+    for board in &boards {
         let sem = semaphore.clone();
+        let slug = board.slug.clone();
         handles.push(tokio::spawn(async move {
             let _permit = match sem.acquire().await {
                 Ok(p) => p,
@@ -555,14 +459,16 @@ pub async fn prepopulate_assets() {
     }
 
     // Download vendor logos
-    for (vendor_id, logo_url) in vendor_logos {
+    for vendor in &vendors {
         let sem = semaphore.clone();
+        let slug = vendor.slug.clone();
         handles.push(tokio::spawn(async move {
             let _permit = match sem.acquire().await {
                 Ok(p) => p,
                 Err(_) => return,
             };
-            get_asset("vendors", &vendor_id, &logo_url).await;
+            let url = format!("{}{}.png", config::urls::VENDOR_IMAGES_BASE, slug);
+            get_asset("vendors", &slug, &url).await;
         }));
     }
 
@@ -607,7 +513,7 @@ pub async fn refresh_stale_assets() {
         return;
     }
 
-    log_info!(
+    log_debug!(
         MODULE,
         "Refreshing {} stale assets (of {} total)",
         stale_entries.len(),
@@ -641,18 +547,18 @@ pub async fn refresh_stale_assets() {
                 return;
             }
 
-            // Use stored URL if available, otherwise reconstruct for boards
-            let url = match &entry.url {
-                Some(u) => u.clone(),
-                None => match kind {
-                    "boards" => format!(
-                        "{}{}/{}.png",
-                        config::urls::BOARD_IMAGES_BASE,
-                        config::urls::BOARD_IMAGE_SIZE,
-                        asset_key
-                    ),
-                    // Legacy entries without URL cannot be refreshed
-                    _ => return,
+            // Reconstruct URL from kind and asset key
+            let url = match kind {
+                "boards" => format!(
+                    "{}{}/{}.png",
+                    config::urls::BOARD_IMAGES_BASE,
+                    config::urls::BOARD_IMAGE_SIZE,
+                    asset_key
+                ),
+                "vendors" => format!("{}{}.png", config::urls::VENDOR_IMAGES_BASE, asset_key),
+                _ => match &entry.url {
+                    Some(u) => u.clone(),
+                    None => return,
                 },
             };
 
@@ -675,7 +581,7 @@ pub async fn refresh_stale_assets() {
         }
     }
 
-    log_info!(
+    log_debug!(
         MODULE,
         "Background refresh complete: {} assets processed",
         processed
