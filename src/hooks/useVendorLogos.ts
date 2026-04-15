@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { BoardInfo } from '../types';
-import { preloadImage } from '../utils';
 import { getCachedVendorLogo } from './useTauri';
 import { VENDOR } from '../config';
 
@@ -29,18 +28,19 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
     }
   }, [isActive]);
 
-  // Preload logos via local cache, falling back to remote
+  // Preload logos via local cache using vendor slugs
   useEffect(() => {
     if (!isActive || !boards?.length || state.isLoaded) return;
 
-    const vendorLogos = new Map<string, string>();
+    // Collect unique vendor slugs from boards
+    const vendorSlugs = new Set<string>();
     for (const board of boards) {
-      if (board.vendor && board.vendor !== VENDOR.FALLBACK_ID && board.vendor_logo) {
-        vendorLogos.set(board.vendor, board.vendor_logo);
+      if (board.vendor && board.vendor !== VENDOR.FALLBACK_ID) {
+        vendorSlugs.add(board.vendor);
       }
     }
 
-    if (vendorLogos.size === 0) {
+    if (vendorSlugs.size === 0) {
       setState({ failedLogos: new Set(), cachedUrls: new Map(), isLoaded: true });
       return;
     }
@@ -49,24 +49,19 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
     const failed = new Set<string>();
     const cached = new Map<string, string>();
 
-    vendorLogos.forEach((logoUrl, vendorId) => {
-      // Try cache first, fall back to remote preload
-      getCachedVendorLogo(vendorId, logoUrl).then((dataUri) => {
+    vendorSlugs.forEach((vendorSlug) => {
+      // Fetch logo via backend cache (constructs URL from slug)
+      getCachedVendorLogo(vendorSlug).then((dataUri) => {
         if (dataUri) {
-          cached.set(vendorId, dataUri);
+          cached.set(vendorSlug, dataUri);
         } else {
-          // No cached path — try remote preload as fallback
-          return preloadImage(logoUrl).then((success) => {
-            if (!success) {
-              failed.add(vendorId);
-            }
-          });
+          failed.add(vendorSlug);
         }
       }).catch(() => {
-        failed.add(vendorId);
+        failed.add(vendorSlug);
       }).finally(() => {
         loaded++;
-        if (loaded >= vendorLogos.size) {
+        if (loaded >= vendorSlugs.size) {
           setState({ failedLogos: failed, cachedUrls: cached, isLoaded: true });
         }
       });
@@ -75,7 +70,7 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
 
   // Helper to get effective vendor (considering failed logos)
   const getEffectiveVendor = useCallback((board: BoardInfo): string => {
-    if (!board.vendor_logo || state.failedLogos.has(board.vendor)) {
+    if (!board.vendor || state.failedLogos.has(board.vendor)) {
       return VENDOR.FALLBACK_ID;
     }
     return board.vendor || VENDOR.FALLBACK_ID;
@@ -83,7 +78,7 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
 
   // Check if a vendor has a valid logo
   const hasValidLogo = useCallback((board: BoardInfo): boolean => {
-    return !!(board.vendor_logo && !state.failedLogos.has(board.vendor));
+    return !!(board.vendor && !state.failedLogos.has(board.vendor));
   }, [state.failedLogos]);
 
   return {
@@ -127,14 +122,14 @@ export function useManufacturerList(
       standardCount: number;
     }> = {};
 
-    // Build vendor map with board counts, platinum board counts, and standard board counts
+    // Build vendor map with board counts and support tier counts
     for (const board of boards) {
       const validLogo = hasValidLogo(board);
       const vendorId = validLogo ? (board.vendor || VENDOR.FALLBACK_ID) : VENDOR.FALLBACK_ID;
       const vendorName = validLogo ? (board.vendor_name || 'Other') : 'Other';
-      // Prefer cached local URL over remote URL
+      // Use cached local data URI for vendor logo
       const vendorLogo = validLogo
-        ? (cachedUrls.get(board.vendor) || board.vendor_logo)
+        ? (cachedUrls.get(board.vendor) || null)
         : null;
 
       if (!vendorMap[vendorId]) {
@@ -149,12 +144,12 @@ export function useManufacturerList(
       vendorMap[vendorId].count++;
 
       // Increment platinum count if this board has platinum support
-      if (board.has_platinum_support) {
+      if (board.support_tier === 'platinum') {
         vendorMap[vendorId].platinumCount++;
       }
 
       // Increment standard count if this board has standard support
-      if (board.has_standard_support) {
+      if (board.support_tier === 'standard') {
         vendorMap[vendorId].standardCount++;
       }
     }

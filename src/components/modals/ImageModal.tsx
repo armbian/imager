@@ -34,10 +34,10 @@ interface ImageModalProps {
 const IMAGE_FILTER_PREDICATES: Record<Exclude<ImageFilterType, 'all'>, (img: ImageInfo) => boolean> = {
   // Recommended: promoted images
   recommended: (img) => img.promoted === true,
-  // Stable: from archive repository and not trunk version
-  stable: (img) => img.download_repository === 'archive' && !img.armbian_version.includes('trunk'),
-  // Nightly: trunk versions
-  nightly: (img) => img.armbian_version.includes('trunk'),
+  // Stable: stability field is "stable"
+  stable: (img) => img.stability === 'stable',
+  // Nightly: stability field is "nightly"
+  nightly: (img) => img.stability === 'nightly',
   // Apps: has preinstalled application
   apps: (img) => !!(img.preinstalled_application && img.preinstalled_application.length > 0),
   // Barebone/Minimal: no desktop environment and no preinstalled apps
@@ -91,7 +91,7 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
   // Use hook for async data fetching
   const { data: allImages, loading, error, reload } = useAsyncDataWhen<ImageInfo[]>(
     isOpen && !!board,
-    () => getImagesForBoard(board!.slug, undefined, undefined, undefined, false),
+    () => getImagesForBoard(board!.slug),
     [isOpen, board?.slug]
   );
 
@@ -117,8 +117,8 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
    */
   function handleImageClick(image: ImageInfo) {
     // Check if warning is needed
-    const isNightly = image.armbian_version.includes('trunk');
-    const isCommunityBoard = board?.has_community_support === true;
+    const isNightly = image.stability === 'nightly';
+    const isCommunityBoard = board?.support_tier === 'community';
 
     // No warning for custom images or stable images on supported boards
     if (!isNightly && !isCommunityBoard) {
@@ -236,7 +236,7 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
 
                 <div className="list-item-content" style={{ flex: 1 }}>
                   <div className="list-item-title">
-                    Armbian {image.armbian_version} {image.distro_release}
+                    Armbian {image.release} {image.distro_release}
                   </div>
 
                   {/* Side panel with main info */}
@@ -326,7 +326,7 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
           isOpen={showUnstableWarning}
           title={t('modal.imageStatusTitle')}
           message={
-            board?.has_community_support === true
+            board?.support_tier === 'community'
               ? t('modal.communityBoardMessage')
               : t('modal.nightlyBuildMessage')
           }

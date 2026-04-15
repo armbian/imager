@@ -16,37 +16,37 @@ interface BoardBadgesProps {
 export function BoardBadges({ board, className = '' }: BoardBadgesProps) {
   return (
     <div className={`board-grid-badges ${className}`}>
-      {board.has_platinum_support && (
+      {board.support_tier === 'platinum' && (
         <span className="badge-platinum">
           <Crown size={10} />
           <span>Platinum</span>
         </span>
       )}
-      {board.has_standard_support && !board.has_platinum_support && (
+      {board.support_tier === 'standard' && (
         <span className="badge-standard">
           <Shield size={10} />
           <span>Standard</span>
         </span>
       )}
-      {board.has_community_support && (
+      {board.support_tier === 'community' && (
         <span className="badge-community">
           <Users size={10} />
           <span>Community</span>
         </span>
       )}
-      {board.has_eos_support && (
+      {board.support_tier === 'eos' && (
         <span className="badge-eos">
           <Clock size={10} />
           <span>EOS</span>
         </span>
       )}
-      {board.has_tvb_support && (
+      {board.support_tier === 'tvb' && (
         <span className="badge-tvb">
           <Tv size={10} />
           <span>TV Box</span>
         </span>
       )}
-      {board.has_wip_support && (
+      {board.support_tier === 'wip' && (
         <span className="badge-wip">
           <Wrench size={10} />
           <span>WIP</span>

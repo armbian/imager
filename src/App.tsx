@@ -218,7 +218,7 @@ function AppContent() {
 
       // Create ImageInfo for the cached image (same pattern as handleCustomImage)
       const cachedImage: ImageInfo = {
-        armbian_version: 'Cached',
+        release: 'Cached',
         distro_release: filename,
         kernel_branch: '',
         kernel_version: '',
@@ -226,10 +226,13 @@ function AppContent() {
         preinstalled_application: '',
         promoted: false,
         file_url: '',
-        file_url_sha: null,
+        direct_url: '',
+        sha_url: null,
         file_size: size,
-        download_repository: 'cache',
-        flash_method: 'block',
+        stability: 'stable',
+        format: 'sd',
+        companions: [],
+        display_variants: [],
         is_custom: true,
         custom_path: imagePath,
       };
@@ -246,14 +249,10 @@ function AppContent() {
         name: boardName || t('custom.customImage'),
         vendor: hasCacheMetadata ? 'detected' : 'cached',
         vendor_name: hasCacheMetadata ? (boardName || 'Unknown') : 'Cached',
-        vendor_logo: null,
+        support_tier: 'community',
         image_count: 1,
-        has_standard_support: false,
-        has_community_support: false,
-        has_platinum_support: false,
-        has_eos_support: false,
-        has_tvb_support: false,
-        has_wip_support: false,
+        has_desktop: false,
+        promoted: false,
       };
 
       setSelectedManufacturer({
@@ -339,7 +338,7 @@ function AppContent() {
 
         // Create a custom ImageInfo object
         const customImage: ImageInfo = {
-          armbian_version: 'Custom',
+          release: 'Custom',
           distro_release: result.name,
           kernel_branch: '',
           kernel_version: '',
@@ -347,10 +346,13 @@ function AppContent() {
           preinstalled_application: '',
           promoted: false,
           file_url: '',
-          file_url_sha: null,
+          direct_url: '',
+          sha_url: null,
           file_size: result.size,
-          download_repository: 'local',
-          flash_method: flashMethod,
+          stability: 'stable',
+          format: flashMethod,
+          companions: [],
+          display_variants: [],
           is_custom: true,
           custom_path: result.path,
         };
@@ -364,14 +366,10 @@ function AppContent() {
           name: t('custom.customImage'),
           vendor: 'custom',
           vendor_name: 'Custom',
-          vendor_logo: null,
+          support_tier: 'community',
           image_count: 1,
-          has_standard_support: false,
-          has_community_support: false,
-          has_platinum_support: false,
-          has_eos_support: false,
-          has_tvb_support: false,
-          has_wip_support: false,
+          has_desktop: false,
+          promoted: false,
         };
 
         // Set manufacturer for display consistency (same pattern as cached image reuse)
@@ -505,7 +503,7 @@ function AppContent() {
         isOpen={activeModal === 'device'}
         onClose={() => setActiveModal('none')}
         onSelect={handleDeviceSelect}
-        flashMethod={selectedImage?.flash_method}
+        flashMethod={selectedImage?.format}
       />
 
       {/* Armbian board detection modal */}
