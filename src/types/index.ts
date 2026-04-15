@@ -1,20 +1,28 @@
 export interface BoardInfo {
   slug: string;
   name: string;
+  /** Vendor slug identifier (e.g., "radxa") */
   vendor: string;
+  /** Vendor display name (e.g., "Radxa") */
   vendor_name: string;
-  vendor_logo: string | null;
+  /** Support tier: "platinum", "standard", "community", "eos", "tvb", "wip" */
+  support_tier: string;
   image_count: number;
-  has_standard_support: boolean;
-  has_community_support: boolean;
-  has_platinum_support: boolean;
-  has_eos_support: boolean;
-  has_tvb_support: boolean;
-  has_wip_support: boolean;
+  /** Whether desktop environment images are available */
+  has_desktop: boolean;
+  /** Whether this board is featured/promoted */
+  promoted: boolean;
+  /** System-on-Chip model (e.g., "RK3588") */
+  soc?: string;
+  /** CPU architecture (e.g., "arm64") */
+  architecture?: string;
+  /** Short board description */
+  summary?: string;
 }
 
 export interface ImageInfo {
-  armbian_version: string;
+  /** Armbian release version (e.g., "24.02.0") */
+  release: string;
   distro_release: string;
   kernel_branch: string;
   kernel_version: string;
@@ -22,14 +30,48 @@ export interface ImageInfo {
   preinstalled_application: string;
   promoted: boolean;
   file_url: string;
-  file_url_sha: string | null;
+  /** Direct CDN download URL */
+  direct_url: string;
+  /** SHA256 checksum file URL */
+  sha_url: string | null;
   file_size: number;
-  download_repository: string;
-  /** Flash method: "block" (default SD/USB) or "qdl" (Qualcomm EDL) */
-  flash_method: string;
+  /** Stability level: "stable", "edge", "nightly" */
+  stability: string;
+  /** Image format: "sd" (block), "qdl" (Qualcomm EDL), "rootfs", "qemu", "hyperv" */
+  format: string;
+  /** Companion files (bootloaders, firmware, etc.) */
+  companions: CompanionInfo[];
+  /** Display variant files for multi-panel devices */
+  display_variants: DisplayVariantInfo[];
   // Custom image fields
   is_custom?: boolean;
   custom_path?: string;
+}
+
+/** Companion file info (bootloader, fip, recovery, etc.) */
+export interface CompanionInfo {
+  type_name: string;
+  label: string;
+  url: string;
+  size_bytes: number;
+}
+
+/** Display variant for multi-panel devices */
+export interface DisplayVariantInfo {
+  label: string;
+  url: string;
+  size_bytes: number;
+}
+
+/** Vendor/manufacturer information from the API */
+export interface VendorInfo {
+  slug: string;
+  name: string;
+  logo_url?: string;
+  website?: string;
+  description?: string;
+  board_count: number;
+  partner_tier?: string;
 }
 
 export interface BlockDevice {

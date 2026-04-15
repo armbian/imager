@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo, CachedImageInfo, QdlDevice } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo, CachedImageInfo, QdlDevice, VendorInfo } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
   return invoke('get_boards');
@@ -10,15 +10,19 @@ export async function getImagesForBoard(
   preappFilter?: string,
   kernelFilter?: string,
   variantFilter?: string,
-  stableOnly: boolean = false
+  stability?: string
 ): Promise<ImageInfo[]> {
   return invoke('get_images_for_board', {
     boardSlug,
     preappFilter,
     kernelFilter,
     variantFilter,
-    stableOnly,
+    stability,
   });
+}
+
+export async function getVendors(): Promise<VendorInfo[]> {
+  return invoke('get_vendors');
 }
 
 export async function getBlockDevices(): Promise<BlockDevice[]> {
@@ -29,8 +33,8 @@ export async function requestWriteAuthorization(devicePath: string): Promise<boo
   return invoke('request_write_authorization', { devicePath });
 }
 
-export async function downloadImage(fileUrl: string, fileUrlSha?: string | null): Promise<string> {
-  return invoke('download_image', { fileUrl, fileUrlSha });
+export async function downloadImage(fileUrl: string, shaUrl?: string | null): Promise<string> {
+  return invoke('download_image', { fileUrl, shaUrl });
 }
 
 export async function getDownloadProgress(): Promise<DownloadProgress> {
@@ -301,8 +305,8 @@ export async function getCachedBoardImage(boardSlug: string): Promise<string | n
  * Returns a data URI (data:image/png;base64,...) for the cached logo, or null
  * if the logo is unavailable (offline + not cached).
  */
-export async function getCachedVendorLogo(vendorId: string, logoUrl: string): Promise<string | null> {
-  return invoke('get_cached_vendor_logo', { vendorId, logoUrl });
+export async function getCachedVendorLogo(vendorSlug: string): Promise<string | null> {
+  return invoke('get_cached_vendor_logo', { vendorSlug });
 }
 
 // ============================================================================

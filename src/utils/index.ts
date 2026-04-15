@@ -144,29 +144,20 @@ export function getErrorMessage(error: unknown, fallback: string = 'An error occ
   return fallback;
 }
 
+/** Support tier priority order (lower index = higher priority) */
+const SUPPORT_TIER_ORDER = ['platinum', 'standard', 'community', 'eos', 'tvb', 'wip'];
+
 /**
  * Sort comparator for boards: Platinum > Standard > Community > EOS > TVB > WIP > Others (alphabetically)
  */
 export function compareBoardsBySupport<T extends {
-  has_platinum_support: boolean;
-  has_standard_support: boolean;
-  has_community_support: boolean;
-  has_eos_support: boolean;
-  has_tvb_support: boolean;
-  has_wip_support: boolean;
+  support_tier: string;
   name: string;
 }>(a: T, b: T): number {
-  if (a.has_platinum_support && !b.has_platinum_support) return -1;
-  if (!a.has_platinum_support && b.has_platinum_support) return 1;
-  if (a.has_standard_support && !b.has_standard_support) return -1;
-  if (!a.has_standard_support && b.has_standard_support) return 1;
-  if (a.has_community_support && !b.has_community_support) return -1;
-  if (!a.has_community_support && b.has_community_support) return 1;
-  if (a.has_eos_support && !b.has_eos_support) return -1;
-  if (!a.has_eos_support && b.has_eos_support) return 1;
-  if (a.has_tvb_support && !b.has_tvb_support) return -1;
-  if (!a.has_tvb_support && b.has_tvb_support) return 1;
-  if (a.has_wip_support && !b.has_wip_support) return -1;
-  if (!a.has_wip_support && b.has_wip_support) return 1;
+  const aIdx = SUPPORT_TIER_ORDER.indexOf(a.support_tier);
+  const bIdx = SUPPORT_TIER_ORDER.indexOf(b.support_tier);
+  const aPriority = aIdx === -1 ? SUPPORT_TIER_ORDER.length : aIdx;
+  const bPriority = bIdx === -1 ? SUPPORT_TIER_ORDER.length : bIdx;
+  if (aPriority !== bPriority) return aPriority - bPriority;
   return a.name.localeCompare(b.name);
 }
