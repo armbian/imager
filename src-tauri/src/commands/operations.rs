@@ -54,7 +54,7 @@ pub async fn request_write_authorization(device_path: String) -> Result<bool, St
 #[tauri::command]
 pub async fn download_image(
     file_url: String,
-    file_url_sha: Option<String>,
+    sha_url: Option<String>,
     state: State<'_, AppState>,
 ) -> Result<String, String> {
     log_info!("operations", "Starting download: {}", file_url);
@@ -63,22 +63,18 @@ pub async fn download_image(
         "Download directory: {:?}",
         get_cache_dir(config::app::NAME).join("images")
     );
-    if let Some(ref sha) = file_url_sha {
-        log_info!("operations", "SHA URL: {}", sha);
+    if let Some(ref sha) = sha_url {
+        log_debug!("operations", "SHA URL: {}", sha);
     } else {
-        log_info!("operations", "No SHA URL provided");
-        log_debug!("operations", "SHA verification will be skipped");
+        log_debug!(
+            "operations",
+            "No SHA URL provided; verification will be skipped"
+        );
     }
     let download_dir = get_cache_dir(config::app::NAME).join("images");
 
     let download_state = state.download_state.clone();
-    let result = do_download(
-        &file_url,
-        file_url_sha.as_deref(),
-        &download_dir,
-        download_state,
-    )
-    .await;
+    let result = do_download(&file_url, sha_url.as_deref(), &download_dir, download_state).await;
 
     match &result {
         Ok(path) => {

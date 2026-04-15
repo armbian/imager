@@ -40,7 +40,7 @@ pub fn log_debug_from_frontend(module: String, message: String) {
 #[tauri::command]
 pub fn get_system_locale() -> String {
     let locale = get_locale().unwrap_or_else(|| "en-US".to_string());
-    log_info!(MODULE, "Detected system locale: {}", locale);
+    log_debug!(MODULE, "Detected system locale: {}", locale);
     locale
 }
 
@@ -209,12 +209,12 @@ fn open_url_windows(url: &str) -> Result<(), String> {
 
 /// Check if the application can reach the Armbian API
 ///
-/// Performs a HEAD request to the images API with a 5-second timeout.
+/// Performs a GET request to the API health endpoint with a 5-second timeout.
 /// Returns true if reachable, false if offline or any error occurs.
 #[tauri::command]
 pub async fn check_connectivity() -> bool {
     match CONNECTIVITY_CLIENT
-        .head(crate::config::urls::ALL_IMAGES)
+        .get(crate::config::urls::HEALTH)
         .send()
         .await
     {
@@ -269,7 +269,7 @@ pub fn get_armbian_release() -> Option<ArmbianReleaseInfo> {
 
         // Check if file exists
         if !std::path::Path::new(path).exists() {
-            log_info!(MODULE, "{} not found - not running on Armbian", path);
+            log_debug!(MODULE, "{} not found - not running on Armbian", path);
             return None;
         }
 

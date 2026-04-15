@@ -8,10 +8,10 @@ use tauri::State;
 
 use crate::config;
 use crate::decompress::{decompress_local_file, needs_decompression};
-use crate::images::{extract_images, fetch_all_images, get_unique_boards, BoardInfo};
+use crate::images::{fetch_boards, map_board, BoardInfo};
 use crate::qdl::extract::open_tar_reader;
 use crate::utils::{get_cache_dir, normalize_slug, parse_armbian_filename};
-use crate::{log_error, log_info};
+use crate::{log_debug, log_error, log_info};
 
 use super::state::AppState;
 
@@ -28,7 +28,7 @@ pub struct CustomImageInfo {
 pub async fn check_needs_decompression(image_path: String) -> Result<bool, String> {
     let path = PathBuf::from(&image_path);
     let needs = needs_decompression(&path);
-    log_info!(
+    log_debug!(
         "custom_image",
         "Check decompression for {}: {}",
         image_path,
@@ -195,7 +195,7 @@ pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
 
     // For plain .tar files, full content inspection is fast
     if filename.ends_with(".tar") {
-        log_info!(
+        log_debug!(
             "custom_image",
             "Checking plain TAR for QDL structure: {}",
             image_path
@@ -205,7 +205,7 @@ pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
             Err(_) => return Ok(false),
         };
         let has_qdl = check_tar_for_qdl(reader);
-        log_info!("custom_image", "Archive has QDL structure: {}", has_qdl);
+        log_debug!("custom_image", "Archive has QDL structure: {}", has_qdl);
         return Ok(has_qdl);
     }
 
@@ -216,7 +216,7 @@ pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
     // .img.xz). The actual QDL file structure is validated after full extraction
     // in the flash pipeline (extract.rs::validate_required_files).
     if filename.contains(".tar.") {
-        log_info!(
+        log_debug!(
             "custom_image",
             "Checking compressed TAR validity: {}",
             image_path
@@ -226,7 +226,7 @@ pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
             Err(_) => return Ok(false),
         };
         let has_qdl = quick_check_qdl_structure(reader);
-        log_info!("custom_image", "QDL structure detected: {}", has_qdl);
+        log_debug!("custom_image", "QDL structure detected: {}", has_qdl);
         return Ok(has_qdl);
     }
 
@@ -327,24 +327,24 @@ pub async fn detect_board_from_filename(
     filename: String,
     state: State<'_, AppState>,
 ) -> Result<Option<BoardInfo>, String> {
-    log_info!(
+    log_debug!(
         "custom_image",
-        "=== Starting board detection from filename: {} ===",
+        "Starting board detection from filename: {}",
         filename
     );
 
-    // 1. Extract filename from path (remove directory)
+    // Extract filename from path (remove directory)
     let path = PathBuf::from(&filename);
     let filename_only = path
         .file_name()
         .and_then(|n| n.to_str())
         .ok_or("Invalid filename")?;
 
-    // 2. Parse Armbian filename using shared utility
+    // Parse Armbian filename using shared utility
     let parsed = match parse_armbian_filename(filename_only) {
         Some(info) => info,
         None => {
-            log_info!(
+            log_debug!(
                 "custom_image",
                 "Not an Armbian image or invalid format: {}",
                 filename_only
@@ -353,74 +353,51 @@ pub async fn detect_board_from_filename(
         }
     };
 
-    log_info!(
+    log_debug!(
         "custom_image",
         "Extracted board slug from filename: {}",
         parsed.board_slug
     );
 
-    // 3. Normalize board slug for matching against API data
+    // Normalize board slug for matching against API data
     let normalized_slug = normalize_slug(&parsed.board_slug);
-    log_info!("custom_image", "Normalized board slug: {}", normalized_slug);
+    log_debug!("custom_image", "Normalized board slug: {}", normalized_slug);
 
-    // 7. Ensure board data is loaded (auto-load if not cached)
-    // Use compare-and-swap pattern to prevent race conditions
-    log_info!("custom_image", "Checking if board data is cached...");
+    // Ensure board data is loaded (auto-load if not cached)
     {
         let needs_loading = {
-            let json_guard = state.images_json.lock().await;
-            json_guard.is_none()
+            let boards_guard = state.boards.lock().await;
+            boards_guard.is_none()
         };
 
         if needs_loading {
-            log_info!(
-                "custom_image",
-                "Board data not cached, fetching from API..."
-            );
-            let json = fetch_all_images().await.map_err(|e| {
+            log_debug!("custom_image", "Board data not cached, fetching from API");
+            let api_boards = fetch_boards().await.map_err(|e| {
                 log_error!("custom_image", "Failed to fetch board data: {}", e);
                 format!("Failed to fetch board data: {}", e)
             })?;
 
             // Cache the fetched data
-            let mut json_guard = state.images_json.lock().await;
-            // Double-check: another thread might have loaded it while we were fetching
-            if json_guard.is_none() {
-                *json_guard = Some(json);
-                log_info!("custom_image", "Board data cached successfully");
-            } else {
-                log_info!(
-                    "custom_image",
-                    "Board data was already cached by another thread"
-                );
+            let mut boards_guard = state.boards.lock().await;
+            if boards_guard.is_none() {
+                *boards_guard = Some(api_boards);
             }
         }
     }
 
-    // 8. Get cached boards data (now guaranteed to be loaded)
-    // Extract boards in a scoped block to release lock early
+    // Get cached boards data (now guaranteed to be loaded)
     let matching_board = {
-        log_info!("custom_image", "Accessing cached board data...");
-        let json_guard = state.images_json.lock().await;
-        let json = json_guard.as_ref().ok_or("Images not loaded")?;
+        let boards_guard = state.boards.lock().await;
+        let api_boards = boards_guard.as_ref().ok_or("Boards not loaded")?;
 
-        log_info!("custom_image", "Loaded images JSON, extracting boards...");
-        let images = extract_images(json);
-        log_info!("custom_image", "Extracted {} images", images.len());
-        let boards = get_unique_boards(&images);
-        log_info!(
-            "custom_image",
-            "Found {} unique boards in database",
-            boards.len()
-        );
-        // Lock released here
+        let boards: Vec<BoardInfo> = api_boards.iter().map(map_board).collect();
+        log_debug!("custom_image", "Found {} boards in database", boards.len());
 
-        // 9. Find matching board by slug
+        // Find matching board by slug
         boards
-            .iter()
+            .into_iter()
             .find(|board| board.slug == normalized_slug)
-            .cloned()
-    }; // matching_board is now owned, lock is released
+    };
 
     if let Some(ref board) = matching_board {
         log_info!(
@@ -437,6 +414,5 @@ pub async fn detect_board_from_filename(
         );
     }
 
-    log_info!("custom_image", "Board detection completed successfully");
     Ok(matching_board)
 }
