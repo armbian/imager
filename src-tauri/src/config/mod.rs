@@ -19,14 +19,20 @@ pub mod app {
 
 /// API endpoints and URLs
 pub mod urls {
-    /// Armbian all-images JSON endpoint
-    pub const ALL_IMAGES: &str = "https://github.armbian.com/armbian-images.json";
+    /// Armbian REST API base URL
+    pub const API_BASE: &str = "https://api.armbian.com/api/v1";
 
-    /// Base URL for board images (cache.armbian.com/images/{size}/{board_slug}.png)
-    pub const BOARD_IMAGES_BASE: &str = "https://cache.armbian.com/images/";
+    /// Health check endpoint (no auth required)
+    pub const HEALTH: &str = "https://api.armbian.com/api/v1/health";
 
-    /// Default image size for board photos (272px width, natural aspect ratio)
-    pub const BOARD_IMAGE_SIZE: &str = "272";
+    /// Base URL for board images (api.armbian.com/api/v1/images/boards/{size}/{slug}.png)
+    pub const BOARD_IMAGES_BASE: &str = "https://api.armbian.com/api/v1/images/boards/";
+
+    /// Default image size for board photos (480px width, natural aspect ratio)
+    pub const BOARD_IMAGE_SIZE: &str = "480";
+
+    /// Base URL for vendor logos (api.armbian.com/api/v1/images/vendors/{size}/{slug}.png)
+    pub const VENDOR_IMAGES_BASE: &str = "https://api.armbian.com/api/v1/images/vendors/480/";
 }
 
 /// Download and decompression settings
@@ -117,6 +123,12 @@ pub mod http {
 
     /// Short timeout for quick requests like board info (10 seconds)
     pub const SHORT_TIMEOUT_SECS: u64 = 10;
+
+    /// Client identification header name for the Armbian REST API
+    pub const CLIENT_HEADER_NAME: &str = "X-Armbian-Client";
+
+    /// Client identification header value for the Armbian Imager
+    pub const CLIENT_HEADER_VALUE: &str = "armbian-imager";
 }
 
 /// Image filtering constants
