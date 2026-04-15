@@ -53,7 +53,7 @@ export function FlashProgress({
     if (image.is_custom) {
       return image.distro_release;
     }
-    return `Armbian ${image.armbian_version} ${image.distro_release}`;
+    return `Armbian ${image.release} ${image.distro_release}`;
   }
 
   /** Stages that show an indeterminate (animated) progress bar instead of a percentage */
@@ -140,7 +140,7 @@ export function FlashProgress({
 
         {stage === 'complete' && (
           <p className="flash-success-hint">
-            {image.flash_method === 'qdl'
+            {image.format === 'qdl'
               ? t('flash.successHintQdl')
               : image.is_custom
                 ? t('flash.successHintCustom')
