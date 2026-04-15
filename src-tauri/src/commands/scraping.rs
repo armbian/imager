@@ -1,7 +1,7 @@
 //! Asset caching module
 //!
 //! Serves board images and vendor logos from the local picture cache
-//! as base64 data URIs, downloading from cache.armbian.com on first access.
+//! as base64 data URIs, downloading from the Armbian API on first access.
 
 use crate::config;
 use crate::picture_cache;
@@ -35,14 +35,12 @@ pub async fn get_cached_board_image(board_slug: String) -> Result<Option<String>
 /// or `None` if the logo is unavailable (offline and not cached).
 ///
 /// # Arguments
-/// * `vendor_id` - Vendor identifier for cache key
-/// * `logo_url` - Full remote URL for the vendor logo
+/// * `vendor_slug` - Vendor identifier used to construct the logo URL
 #[tauri::command]
-pub async fn get_cached_vendor_logo(
-    vendor_id: String,
-    logo_url: String,
-) -> Result<Option<String>, String> {
-    let path = picture_cache::get_asset("vendors", &vendor_id, &logo_url).await;
+pub async fn get_cached_vendor_logo(vendor_slug: String) -> Result<Option<String>, String> {
+    let url = format!("{}{}.png", config::urls::VENDOR_IMAGES_BASE, vendor_slug);
+
+    let path = picture_cache::get_asset("vendors", &vendor_slug, &url).await;
     match path {
         Some(p) => Ok(picture_cache::read_as_data_uri(&p).await),
         None => Ok(None),
