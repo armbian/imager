@@ -128,7 +128,7 @@ fn get_cached_files_by_age_internal() -> Result<Vec<CacheEntry>, String> {
     }
 
     // Sort by modification time (oldest first for LRU eviction)
-    files.sort_by(|a, b| a.modified.cmp(&b.modified));
+    files.sort_by_key(|a| a.modified);
 
     Ok(files)
 }
