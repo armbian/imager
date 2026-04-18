@@ -275,7 +275,9 @@ export function useFlashOperation({
     }, POLLING.DOWNLOAD_PROGRESS);
 
     try {
-      const path = await downloadImage(image.file_url, image.sha_url);
+      // direct_url carries the full filename; file_url is the pretty
+      // mirror-selector URL (legacy redi_url) and has no extension.
+      const path = await downloadImage(image.direct_url, image.sha_url);
       setImagePath(path);
       if (intervalRef.current) clearInterval(intervalRef.current);
       startFlash(path);
