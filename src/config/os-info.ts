@@ -33,6 +33,7 @@ export const OS_INFO: Record<string, OsInfoConfig> = {
   // Ubuntu releases
   'noble': { name: 'Ubuntu 24.04', color: 'transparent', logo: ubuntuLogo },
   'jammy': { name: 'Ubuntu 22.04', color: 'transparent', logo: ubuntuLogo },
+  'resolute': { name: 'Ubuntu 25.10', color: 'transparent', logo: ubuntuLogo },
   'plucky': { name: 'Ubuntu 25.04', color: 'transparent', logo: ubuntuLogo },
   'oracular': { name: 'Ubuntu 24.10', color: 'transparent', logo: ubuntuLogo },
   'focal': { name: 'Ubuntu 20.04', color: 'transparent', logo: ubuntuLogo },
