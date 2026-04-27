@@ -68,9 +68,6 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "UTC"
-    # Separate PRs for each action
-    groups: []
-    versioning-strategy: "increase"
     open-pull-requests-limit: 10
     commit-message:
       prefix: "ci"
