@@ -6,6 +6,7 @@ import armbianLogo from '../armbian-logo.png';
 // App Logos
 import homeassistantLogo from './homeassistant.png';
 import openmediavaultLogo from './openmediavault.jpeg';
+import codeServerLogo from './code-server.png';
 
 // Import OS_INFO from config as single source of truth
 import { OS_INFO } from '../../config/os-info';
@@ -21,6 +22,7 @@ export const appLogos: Record<string, string> = {
   'home assistant': homeassistantLogo,
   openmediavault: openmediavaultLogo,
   omv: openmediavaultLogo,
+  sdk: codeServerLogo,
 };
 
 /**

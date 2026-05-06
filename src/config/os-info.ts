@@ -6,6 +6,7 @@ import debianLogo from '../assets/os-logos/debian.svg';
 import ubuntuLogo from '../assets/os-logos/ubuntu.png';
 import homeassistantLogo from '../assets/os-logos/homeassistant.png';
 import openmediavaultLogo from '../assets/os-logos/openmediavault.jpeg';
+import codeServerLogo from '../assets/os-logos/code-server.png';
 
 export interface OsInfoConfig {
   name: string;
@@ -48,6 +49,7 @@ export const APP_INFO: Record<string, AppInfoConfig> = {
   'homeassistant': { name: 'Home Assistant', color: 'transparent', badgeColor: '#18bcf2', logo: homeassistantLogo },
   'openmediavault': { name: 'OpenMediaVault', color: 'transparent', badgeColor: '#5dacdf', logo: openmediavaultLogo },
   'omv': { name: 'OpenMediaVault', color: 'transparent', badgeColor: '#5dacdf', logo: openmediavaultLogo },
+  'sdk': { name: 'Code server + Armbian sources', color: 'transparent', badgeColor: '#1e88e5', logo: codeServerLogo },
   'nextcloud': { name: 'Nextcloud', color: '#0082c9', badgeColor: '#0082c9', logo: null },
   'openwrt': { name: 'OpenWrt', color: '#00a3e0', badgeColor: '#00a3e0', logo: null },
   'pihole': { name: 'Pi-hole', color: '#96060c', badgeColor: '#96060c', logo: null },
