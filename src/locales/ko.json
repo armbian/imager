@@ -61,6 +61,7 @@
     "promoted": "추천",
     "stable": "안정 버전",
     "nightly": "나이틀리",
+    "rolling": "롤링 릴리스",
     "apps": "앱",
     "minimal": "최소",
     "allImages": "모든 이미지",

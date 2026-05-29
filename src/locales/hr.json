@@ -61,6 +61,7 @@
     "promoted": "Preporučeno",
     "stable": "Stabilno",
     "nightly": "Noćno",
+    "rolling": "Rolling Release",
     "apps": "Aplikacije",
     "minimal": "Minimalno",
     "allImages": "Sve slike",

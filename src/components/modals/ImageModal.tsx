@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Download, Package, Monitor, Terminal, Zap, Star, Layers, Shield, FlaskConical, AppWindow, Box } from 'lucide-react';
+import { Download, Package, Monitor, Terminal, Zap, Star, Layers, Shield, FlaskConical, RefreshCw, AppWindow, Box } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal';
 import { ErrorDisplay, ListItemSkeleton, ConfirmationDialog } from '../shared';
@@ -31,13 +31,18 @@ interface ImageModalProps {
  * Filter predicates - defined once, used for both checking availability and filtering
  * Each predicate returns true if the image matches the filter criteria
  */
+/** True for trunk / rolling-release builds (release version contains "trunk") */
+const isTrunkImage = (img: ImageInfo): boolean => img.release.toLowerCase().includes('trunk');
+
 const IMAGE_FILTER_PREDICATES: Record<Exclude<ImageFilterType, 'all'>, (img: ImageInfo) => boolean> = {
   // Recommended: promoted images
   recommended: (img) => img.promoted === true,
-  // Stable: stability field is "stable"
-  stable: (img) => img.stability === 'stable',
+  // Stable: released builds, excluding rolling/trunk (which has its own filter)
+  stable: (img) => img.stability === 'stable' && !isTrunkImage(img),
   // Nightly: stability field is "nightly"
   nightly: (img) => img.stability === 'nightly',
+  // Rolling: trunk / rolling-release builds
+  rolling: isTrunkImage,
   // Apps: has preinstalled application
   apps: (img) => !!(img.preinstalled_application && img.preinstalled_application.length > 0),
   // Barebone/Minimal: no desktop environment and no preinstalled apps
@@ -69,6 +74,7 @@ const FILTER_BUTTONS: Array<{
   { key: 'recommended', labelKey: 'modal.promoted', icon: Star },
   { key: 'stable', labelKey: 'modal.stable', icon: Shield },
   { key: 'nightly', labelKey: 'modal.nightly', icon: FlaskConical },
+  { key: 'rolling', labelKey: 'modal.rolling', icon: RefreshCw },
   { key: 'apps', labelKey: 'modal.apps', icon: AppWindow },
   { key: 'barebone', labelKey: 'modal.minimal', icon: Box },
 ];
@@ -152,11 +158,12 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
 
   // Calculate available filters based on all images
   const availableFilters = useMemo(() => {
-    if (!allImages) return { recommended: false, stable: false, nightly: false, apps: false, barebone: false };
+    if (!allImages) return { recommended: false, stable: false, nightly: false, rolling: false, apps: false, barebone: false };
     return {
       recommended: hasImagesForFilter(allImages, 'recommended'),
       stable: hasImagesForFilter(allImages, 'stable'),
       nightly: hasImagesForFilter(allImages, 'nightly'),
+      rolling: hasImagesForFilter(allImages, 'rolling'),
       apps: hasImagesForFilter(allImages, 'apps'),
       barebone: hasImagesForFilter(allImages, 'barebone'),
     };

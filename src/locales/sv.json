@@ -62,6 +62,7 @@
     "promoted": "Rekommenderad",
     "stable": "Stabil",
     "nightly": "Nightly",
+    "rolling": "Rullande utgåva",
     "apps": "Appar",
     "minimal": "Minimal",
     "allImages": "Alla images",

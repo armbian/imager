@@ -61,6 +61,7 @@
     "promoted": "推荐",
     "stable": "稳定版",
     "nightly": "每日构建",
+    "rolling": "滚动发布",
     "apps": "应用",
     "minimal": "最小化",
     "allImages": "所有镜像",

@@ -61,6 +61,7 @@
     "promoted": "Önerilen",
     "stable": "Kararlı",
     "nightly": "Nightly",
+    "rolling": "Rolling Release",
     "apps": "Uygulamalar",
     "minimal": "Minimal",
     "allImages": "Tüm İmajlar",

@@ -61,6 +61,7 @@
     "promoted": "おすすめ",
     "stable": "安定版",
     "nightly": "ナイトリー",
+    "rolling": "ローリングリリース",
     "apps": "アプリ",
     "minimal": "最小構成",
     "allImages": "すべてのイメージ",

@@ -134,7 +134,7 @@ export interface Manufacturer {
 /**
  * Filter type for image list
  */
-export type ImageFilterType = 'all' | 'recommended' | 'stable' | 'nightly' | 'apps' | 'barebone';
+export type ImageFilterType = 'all' | 'recommended' | 'stable' | 'nightly' | 'rolling' | 'apps' | 'barebone';
 
 /**
  * Selection step in the wizard flow

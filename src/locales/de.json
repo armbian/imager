@@ -61,6 +61,7 @@
     "promoted": "Empfohlen",
     "stable": "Stabil",
     "nightly": "Nightly",
+    "rolling": "Rolling Release",
     "apps": "Apps",
     "minimal": "Minimal",
     "allImages": "Alle Images",

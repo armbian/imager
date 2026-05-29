@@ -61,6 +61,7 @@
     "promoted": "Aanbevolen",
     "stable": "Stabiel",
     "nightly": "Nightly",
+    "rolling": "Rolling Release",
     "apps": "Apps",
     "minimal": "Minimaal",
     "allImages": "Alle images",

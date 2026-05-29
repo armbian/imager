@@ -61,6 +61,7 @@
     "promoted": "Рекомендовані",
     "stable": "Стабільна",
     "nightly": "Nightly",
+    "rolling": "Ковзний реліз",
     "apps": "Додатки",
     "minimal": "Мінімальна",
     "allImages": "Усі образи",
