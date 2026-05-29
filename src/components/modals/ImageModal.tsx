@@ -241,54 +241,36 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
 
                   {/* Side panel with main info */}
                   <div className="image-info-side-panel">
-                    {/* Preinstalled app badge - replaces desktop when present */}
-                    {image.preinstalled_application ? (
+                    {/* Variant badge (desktop or CLI) - always shown, even with an app overlay */}
+                    {desktopEnv && DESKTOP_BADGES[desktopEnv] ? (
                       <div
                         className="side-info-badge"
                         style={{
-                          background: appInfo?.badgeColor || 'var(--accent)',
-                          boxShadow: `0 2px 6px ${appInfo?.badgeColor || 'rgba(249, 115, 22, 0.4)'}66`,
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                          boxShadow: '0 2px 6px rgba(59, 130, 246, 0.4)',
                           border: 'none',
                           color: 'white',
                         }}
                       >
-                        <AppWindow size={11} />
-                        <span>{image.preinstalled_application}</span>
+                        <Monitor size={11} />
+                        <span>{DESKTOP_BADGES[desktopEnv].label}</span>
                       </div>
                     ) : (
-                      // Show desktop or CLI only if NO preinstalled app
-                      <>
-                        {desktopEnv && DESKTOP_BADGES[desktopEnv] ? (
-                          <div
-                            className="side-info-badge"
-                            style={{
-                              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                              boxShadow: '0 2px 6px rgba(59, 130, 246, 0.4)',
-                              border: 'none',
-                              color: 'white',
-                            }}
-                          >
-                            <Monitor size={11} />
-                            <span>{DESKTOP_BADGES[desktopEnv].label}</span>
-                          </div>
-                        ) : (
-                          <div
-                            className="side-info-badge"
-                            style={{
-                              background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
-                              boxShadow: '0 2px 6px rgba(100, 116, 139, 0.3)',
-                              border: 'none',
-                              color: 'white',
-                            }}
-                          >
-                            <Terminal size={11} />
-                            <span>CLI</span>
-                          </div>
-                        )}
-                      </>
+                      <div
+                        className="side-info-badge"
+                        style={{
+                          background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                          boxShadow: '0 2px 6px rgba(100, 116, 139, 0.3)',
+                          border: 'none',
+                          color: 'white',
+                        }}
+                      >
+                        <Terminal size={11} />
+                        <span>CLI</span>
+                      </div>
                     )}
 
-                    {/* Kernel info - SECOND */}
+                    {/* Kernel branch badge */}
                     {badgeConfig && (
                       <div
                         className="side-info-badge badge-kernel"
@@ -304,6 +286,22 @@ export function ImageModal({ isOpen, onClose, onSelect, board }: ImageModalProps
                         {image.kernel_version && (
                           <span style={{ opacity: 0.9, fontSize: '11px', marginLeft: 2 }}> {image.kernel_version}</span>
                         )}
+                      </div>
+                    )}
+
+                    {/* Preinstalled app badge - shown in addition to the variant, not instead of it */}
+                    {image.preinstalled_application && (
+                      <div
+                        className="side-info-badge"
+                        style={{
+                          background: appInfo?.badgeColor || 'var(--accent)',
+                          boxShadow: `0 2px 6px ${appInfo?.badgeColor || 'rgba(249, 115, 22, 0.4)'}66`,
+                          border: 'none',
+                          color: 'white',
+                        }}
+                      >
+                        <AppWindow size={11} />
+                        <span>{appInfo?.badge ?? appInfo?.name ?? image.preinstalled_application}</span>
                       </div>
                     )}
                   </div>
