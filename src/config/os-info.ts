@@ -6,6 +6,9 @@ import debianLogo from '../assets/os-logos/debian.svg';
 import ubuntuLogo from '../assets/os-logos/ubuntu.png';
 import homeassistantLogo from '../assets/os-logos/homeassistant.png';
 import openmediavaultLogo from '../assets/os-logos/openmediavault.jpeg';
+import codeServerLogo from '../assets/os-logos/code-server.png';
+import openhabLogo from '../assets/os-logos/openhab.png';
+import kaliLogo from '../assets/os-logos/kali.png';
 
 export interface OsInfoConfig {
   name: string;
@@ -15,6 +18,8 @@ export interface OsInfoConfig {
 
 export interface AppInfoConfig {
   name: string;
+  /** Optional short badge label (e.g. "SDK"); falls back to `name` when omitted */
+  badge?: string;
   color: string;
   badgeColor: string;
   logo: string | null;
@@ -48,10 +53,13 @@ export const APP_INFO: Record<string, AppInfoConfig> = {
   'homeassistant': { name: 'Home Assistant', color: 'transparent', badgeColor: '#18bcf2', logo: homeassistantLogo },
   'openmediavault': { name: 'OpenMediaVault', color: 'transparent', badgeColor: '#5dacdf', logo: openmediavaultLogo },
   'omv': { name: 'OpenMediaVault', color: 'transparent', badgeColor: '#5dacdf', logo: openmediavaultLogo },
+  'sdk': { name: 'Code server + Armbian sources', badge: 'SDK', color: 'transparent', badgeColor: '#1e88e5', logo: codeServerLogo },
   'nextcloud': { name: 'Nextcloud', color: '#0082c9', badgeColor: '#0082c9', logo: null },
   'openwrt': { name: 'OpenWrt', color: '#00a3e0', badgeColor: '#00a3e0', logo: null },
   'pihole': { name: 'Pi-hole', color: '#96060c', badgeColor: '#96060c', logo: null },
   'kodi': { name: 'Kodi', color: '#17b2e7', badgeColor: '#17b2e7', logo: null },
+  'openhab': { name: 'openHAB', color: 'transparent', badgeColor: '#e64a19', logo: openhabLogo },
+  'kali': { name: 'Kali Linux', color: 'transparent', badgeColor: '#367bf0', logo: kaliLogo },
 };
 
 /**

@@ -3,12 +3,8 @@ import debianLogo from './debian.svg';
 import ubuntuLogo from './ubuntu.png';
 import armbianLogo from '../armbian-logo.png';
 
-// App Logos
-import homeassistantLogo from './homeassistant.png';
-import openmediavaultLogo from './openmediavault.jpeg';
-
-// Import OS_INFO from config as single source of truth
-import { OS_INFO } from '../../config/os-info';
+// Import OS_INFO / APP_INFO from config as the single source of truth for logos
+import { APP_INFO, OS_INFO } from '../../config/os-info';
 
 export const osLogos: Record<string, string> = {
   debian: debianLogo,
@@ -16,12 +12,12 @@ export const osLogos: Record<string, string> = {
   armbian: armbianLogo,
 };
 
-export const appLogos: Record<string, string> = {
-  homeassistant: homeassistantLogo,
-  'home assistant': homeassistantLogo,
-  openmediavault: openmediavaultLogo,
-  omv: openmediavaultLogo,
-};
+// Derive app logos from APP_INFO so each app's logo is declared in one place (os-info.ts)
+export const appLogos: Record<string, string> = Object.fromEntries(
+  Object.entries(APP_INFO)
+    .filter(([, info]) => info.logo)
+    .map(([key, info]) => [key, info.logo as string]),
+);
 
 /**
  * Get the appropriate logo for an image based on distro release and preinstalled app

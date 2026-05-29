@@ -19,7 +19,7 @@ export const DESKTOP_BADGES: Record<string, BadgeConfig> = {
   'mate': { label: 'MATE', color: '#9bda5a' },
   'lxde': { label: 'LXDE', color: '#a4a4a4' },
   'lxqt': { label: 'LXQt', color: '#0192d3' },
-  'i3': { label: 'i3wm', color: '#1a8cff' },
+  'i3': { label: 'i3WM', color: '#1a8cff' },
   'sway': { label: 'Sway', color: '#68b0d8' },
 };
 
@@ -33,6 +33,7 @@ export const KERNEL_BADGES: Record<string, BadgeConfig> = {
   'vendor': { label: 'Vendor', color: '#8b5cf6' },       // Purple
   'collabora': { label: 'Collabora', color: '#f59e0b' }, // Amber
   'sc8280xp': { label: 'SC8280XP', color: '#06b6d4' },   // Cyan
+  'cloud': { label: 'Cloud', color: '#0ea5e9' },         // Sky blue
 };
 
 /**
