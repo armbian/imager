@@ -66,23 +66,6 @@ struct DiskGeometry {
     bytes_per_sector: u32,
 }
 
-/// VOLUME_DISK_EXTENT - maps a volume extent to a physical disk
-#[repr(C)]
-#[derive(Debug, Clone)]
-struct VolumeDiskExtent {
-    disk_number: u32,
-    starting_offset: u64,
-    extent_length: u64,
-}
-
-/// VOLUME_DISK_EXTENTS - contains array of volume-to-disk mappings
-#[repr(C)]
-#[derive(Debug, Clone)]
-struct VolumeDiskExtents {
-    number_of_extents: u32,
-    extents: [VolumeDiskExtent; 1],
-}
-
 /// GET_MEDIA_TYPES structure header returned by IOCTL_STORAGE_GET_MEDIA_TYPES_EX
 /// See: https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ni-winioctl-ioctl_storage_get_media_types_ex
 #[repr(C)]
@@ -361,10 +344,29 @@ fn get_drive_letters_for_disk(disk_number: i32) -> Option<Vec<String>> {
         unsafe { CloseHandle(handle) };
 
         if result != 0 {
-            let extents = unsafe { &*(extents_bytes.as_ptr() as *const VolumeDiskExtents) };
+            // Parse extents by offset, count clamped to the buffer, to avoid the
+            // out-of-bounds panic on multi-extent volumes (#136).
+            const HEADER: usize = 8; // u32 count + 4 padding
+            const EXTENT: usize = 24; // DISK_EXTENT: u32 + pad + u64 + u64
 
-            for j in 0..extents.number_of_extents {
-                if extents.extents[j as usize].disk_number as i32 == disk_number {
+            let count = u32::from_le_bytes([
+                extents_bytes[0],
+                extents_bytes[1],
+                extents_bytes[2],
+                extents_bytes[3],
+            ]) as usize;
+            let usable = (bytes_returned as usize).min(extents_bytes.len());
+            let count = count.min(usable.saturating_sub(HEADER) / EXTENT);
+
+            for j in 0..count {
+                let base = HEADER + j * EXTENT;
+                let disk_no = u32::from_le_bytes([
+                    extents_bytes[base],
+                    extents_bytes[base + 1],
+                    extents_bytes[base + 2],
+                    extents_bytes[base + 3],
+                ]);
+                if disk_no as i32 == disk_number {
                     drive_letters.push(format!("{}:", letter_char));
                     break;
                 }
