@@ -1,6 +1,6 @@
 [package]
 name = "armbian-imager"
-version = "1.0.0"
+version = "2.0.0"
 description = "Armbian Imager - Flash Armbian OS images to SD cards and USB drives"
 authors = ["Armbian", "SuperKali <hello@superkali.me>"]
 edition = "2021"
@@ -49,6 +49,8 @@ once_cell = "1.21.3"
 chrono = "0.4"
 sys-locale = "0.3"
 filetime = "0.2"
+# In-repo crate: writes the first-boot autoconfig file into an image's ext4 rootfs
+armbian-write-conf = { path = "../crates/armbian-write-conf" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 # Linux-specific dependencies for block device access

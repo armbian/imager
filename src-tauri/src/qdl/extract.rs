@@ -1,10 +1,5 @@
-//! TAR archive extraction for QDL images
-//!
-//! QDL images are distributed as TAR archives containing:
-//! - flash/prog_firehose_ddr.elf (Sahara firehose programmer)
-//! - flash/rawprogram0.xml (partition programming instructions)
-//! - flash/patch0.xml (post-flash patches)
-//! - Partition images (boot.img, firmware blobs, etc.)
+//! TAR archive extraction for QDL images. Archives contain flash/prog_firehose_ddr.elf (Sahara programmer),
+//! flash/rawprogram0.xml (partition instructions), flash/patch0.xml (post-flash patches), and partition images.
 
 use std::fs;
 use std::path::{Component, Path, PathBuf};
@@ -27,7 +22,6 @@ pub fn extract_qdl_archive(tar_path: &Path, output_dir: &Path) -> Result<PathBuf
         output_dir.display()
     );
 
-    // Create extraction directory
     let extract_dir = output_dir.join("qdl-extract");
     if extract_dir.exists() {
         fs::remove_dir_all(&extract_dir)
@@ -36,14 +30,10 @@ pub fn extract_qdl_archive(tar_path: &Path, output_dir: &Path) -> Result<PathBuf
     fs::create_dir_all(&extract_dir)
         .map_err(|e| format!("Failed to create extraction directory: {}", e))?;
 
-    // Open and extract the TAR archive with path traversal protection
     let reader = open_tar_reader(tar_path)?;
     safe_unpack(reader, &extract_dir)?;
 
-    // Find the flash directory (may be nested, e.g., arduino-images/flash/)
     let flash_dir = find_flash_dir(&extract_dir)?;
-
-    // Validate required files exist
     validate_required_files(&flash_dir)?;
 
     log_info!(
@@ -58,19 +48,17 @@ pub fn extract_qdl_archive(tar_path: &Path, output_dir: &Path) -> Result<PathBuf
 /// Find the flash-files directory in the extracted archive (a "flash" dir or
 /// rawprogram0.xml directly), handling nesting like arduino-images/flash/.
 fn find_flash_dir(extract_dir: &Path) -> Result<PathBuf, String> {
-    // Check if rawprogram0.xml is directly in extract_dir
     if extract_dir.join("rawprogram0.xml").exists() {
         return Ok(extract_dir.to_path_buf());
     }
 
-    // Search for a "flash" subdirectory (possibly nested)
     if let Some(flash_dir) = find_dir_recursive(extract_dir, "flash", 3) {
         if flash_dir.join("rawprogram0.xml").exists() {
             return Ok(flash_dir);
         }
     }
 
-    // Search for rawprogram0.xml anywhere in the extracted tree
+    // Last resort: locate rawprogram0.xml anywhere in the tree.
     if let Some(parent) = find_file_parent(extract_dir, "rawprogram0.xml", 4) {
         return Ok(parent);
     }
@@ -126,7 +114,6 @@ fn find_file_parent(base: &Path, filename: &str, max_depth: u32) -> Option<PathB
 
 /// Validate that all required files for QDL flashing exist in the flash directory
 fn validate_required_files(flash_dir: &Path) -> Result<(), String> {
-    // Check for firehose programmer
     if !flash_dir.join(FIREHOSE_ELF).exists() {
         log_error!(
             "qdl::extract",
@@ -139,7 +126,6 @@ fn validate_required_files(flash_dir: &Path) -> Result<(), String> {
         ));
     }
 
-    // Check for required XML files
     for filename in REQUIRED_FILES {
         if !flash_dir.join(filename).exists() {
             log_error!("qdl::extract", "Missing required file: {}", filename);
@@ -194,7 +180,6 @@ fn safe_unpack<R: std::io::Read>(reader: R, extract_dir: &Path) -> Result<(), St
             .path()
             .map_err(|e| format!("Failed to read entry path: {}", e))?;
 
-        // Reject any entry containing parent directory traversal components
         for component in path.components() {
             if matches!(component, Component::ParentDir) {
                 return Err("Archive contains path traversal entry (../)".to_string());

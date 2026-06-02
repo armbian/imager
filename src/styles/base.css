@@ -1,6 +1,4 @@
-/* ========================================
-   BASE STYLES
-   ======================================== */
+/* BASE STYLES */
 
 * {
   box-sizing: border-box;
@@ -22,9 +20,7 @@ body {
   overflow: hidden;
 }
 
-/* ========================================
-   SCROLLBAR
-   ======================================== */
+/* SCROLLBAR */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -42,9 +38,7 @@ body {
   background: var(--text-muted);
 }
 
-/* ========================================
-   STATES
-   ======================================== */
+/* STATES */
 .loading {
   display: flex;
   flex-direction: column;

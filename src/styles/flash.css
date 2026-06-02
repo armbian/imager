@@ -1,102 +1,199 @@
-/* ========================================
-   FLASH PROGRESS
-   ======================================== */
+/* FLASH PROGRESS */
 .flash-container {
-  max-width: min(95vw, 620px);
   width: 100%;
   margin: 0 auto;
 }
 
+/* Centered states: authorizing keeps a narrow centered column; error screen spans full two-column width up to its cap. */
 .flash-container.centered {
+  max-width: min(94vw, 940px);
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  min-height: 280px;
+  min-height: 320px;
 }
 
-.flash-header {
+/* Two-column stage: board left, panel right. Mirrors .device-confirm__inner. */
+.flash-stage {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 20px 24px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
+  justify-content: center;
+  gap: clamp(36px, 5vw, 84px);
+  width: 100%;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: clamp(16px, 4vh, 36px) 8px;
+  animation: confirmContentIn 0.45s var(--ease-out-expo) 0.12s both;
 }
 
-.flash-board-image {
-  width: 100px;
-  height: 100px;
+/* Floating board column — reuses the home glow + drift verbatim. */
+.flash-stage__board {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flash-stage__board::before {
+  content: '';
+  position: absolute;
+  width: 78%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--accent-rgb), 0.28) 0%,
+    rgba(var(--accent-rgb), 0.1) 38%,
+    transparent 70%
+  );
+  filter: blur(14px);
+  z-index: 0;
+  animation: confirmGlow 6s ease-in-out infinite;
+}
+
+/* Board photo drifts over the halo; overrides the old fixed box + scale hack. */
+.flash-stage__board .flash-board-image {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+  max-width: clamp(260px, 30vw, 400px);
   object-fit: contain;
-  flex-shrink: 0;
-  transform: scale(1.5);
+  transform: none;
+  filter: drop-shadow(0 30px 44px rgba(0, 0, 0, 0.5));
+  animation: confirmFloat 5.5s ease-in-out infinite;
 }
 
-.flash-custom-image-icon {
+/* Custom-image placeholder (no board photo): frameless glyph floating over the glow, framed by breathing rings. */
+.flash-stage__board .flash-custom-glyph {
+  position: relative;
+  z-index: 1;
+  width: clamp(200px, 26vw, 320px);
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  color: var(--text-secondary);
-  transform: none;
+  animation: confirmFloat 5.5s ease-in-out infinite;
 }
 
+/* Concentric rings rippling outward, echoing the offline hero motif. */
+.flash-stage__board .flash-custom-glyph__ring {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 62%;
+  height: 62%;
+  border: 1.5px solid rgba(var(--accent-rgb), 0.45);
+  border-radius: 50%;
+  opacity: 0;
+  animation: flashCustomRipple 3.4s var(--ease-out-expo) infinite;
+}
+
+.flash-stage__board .flash-custom-glyph__ring:nth-child(2) {
+  animation-delay: 1.7s;
+}
+
+.flash-stage__board .flash-custom-glyph__icon {
+  position: relative;
+  z-index: 1;
+  width: clamp(64px, 8vw, 96px);
+  height: clamp(64px, 8vw, 96px);
+  color: rgb(var(--accent-rgb));
+  filter: drop-shadow(0 14px 28px rgba(var(--accent-rgb), 0.35));
+  animation: flashCustomPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes flashCustomRipple {
+  0% { opacity: 0; transform: scale(0.55); }
+  22% { opacity: 0.5; }
+  100% { opacity: 0; transform: scale(2); }
+}
+
+@keyframes flashCustomPulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+/* Right column: summary stacked above the status panel. */
+.flash-stage__main {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  text-align: left;
+}
+
+/* Board summary (left-aligned in the panel column). */
 .flash-info {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-  flex: 1;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 0 0 auto;
 }
 
 .flash-info h2 {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
 }
 
 .flash-info-badges {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   align-items: center;
+  /* Stretch to the panel column so the two badges share one row and shrink
+     (marquee-scrolling their text) instead of wrapping onto separate lines. */
+  width: 100%;
+  min-width: 0;
 }
 
-.flash-info-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
+/* Both badges share one fixed height + padding so they always match.
+   min-width:0 lets them shrink below content width when the row is tight. */
+.os-badge,
+.flash-device-row {
+  height: 36px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
-.flash-info-row svg {
-  flex-shrink: 0;
-  opacity: 0.7;
-}
-
-/* OS Badge - compact pill style */
 .os-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 6px;
+  gap: 8px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: var(--radius-2xl);
   max-width: 100%;
 }
 
-.os-badge-logo {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+/* Distro-tinted chip with a white vector mark (matches the OS gallery side block). */
+.os-badge-chip {
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.os-badge-chip__logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  filter: brightness(0) invert(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
 }
 
 .os-badge-icon {
@@ -107,88 +204,68 @@
 }
 
 .os-badge-text {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Absorb the badge's shrink so the logo stays fixed and the text scrolls. */
+  flex: 1 1 0;
+  min-width: 0;
 }
 
-.flash-info-label {
-  color: var(--text-muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.flash-info-value {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-/* Device row - pill style matching OS badge */
 .flash-device-row {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 8px;
-  background: rgba(242, 101, 34, 0.08);
-  border: 1px solid rgba(242, 101, 34, 0.2);
-  border-radius: 16px;
+  gap: 8px;
+  background: rgba(var(--accent-rgb), 0.08);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  border-radius: var(--radius-2xl);
   width: fit-content;
 }
 
 .flash-device-row svg {
   color: var(--accent);
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
 }
 
 .flash-device-name {
   color: var(--accent);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
+  /* Absorb the badge's shrink so the icon/size stay fixed and the name scrolls. */
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .flash-device-size {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   margin-left: 4px;
   padding-left: 8px;
-  border-left: 1px solid rgba(242, 101, 34, 0.2);
+  border-left: 1px solid rgba(var(--accent-rgb), 0.2);
+  flex-shrink: 0;
 }
 
-.flash-status {
-  padding: 24px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  text-align: center;
+/* Icon + title group; reused by the centered fallback (key={stage} → entrance). */
+.flash-status__head {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-sm);
+  gap: 12px;
+  animation: flashStageIn var(--dur-medium) var(--ease-out-expo) both;
 }
 
-/* Only use min-height when showing progress (not in centered/error mode) */
-.flash-container:not(.centered) .flash-status {
-  min-height: 140px;
+/* Title + icon entrance on each stage change (cross-fade + gentle rise). */
+@keyframes flashStageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.flash-status h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 10px 0;
-}
-
-/* ========================================
-   STAGE ICONS
-   ======================================== */
+/* STAGE ICONS */
 .stage-icon {
   color: var(--text-muted);
 }
@@ -196,26 +273,22 @@
 .stage-icon.downloading,
 .stage-icon.flashing {
   color: var(--accent);
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: pulse var(--dur-loop) ease-in-out infinite;
 }
 
 .stage-icon.decompressing {
   color: var(--accent);
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: pulse var(--dur-loop) ease-in-out infinite;
 }
 
 .stage-icon.verifying-sha {
   color: var(--accent);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.stage-icon.ready {
-  color: var(--color-success);
+  animation: pulse var(--dur-loop) ease-in-out infinite;
 }
 
 .stage-icon.verifying {
   color: var(--color-warning);
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: pulse var(--dur-loop) ease-in-out infinite;
 }
 
 .stage-icon.complete {
@@ -231,14 +304,12 @@
   50% { opacity: 0.5; }
 }
 
-/* ========================================
-   PROGRESS BAR
-   ======================================== */
+/* PROGRESS BAR */
 .progress-container {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-top: 16px;
+  margin-top: 14px;
   width: 100%;
 }
 
@@ -246,7 +317,7 @@
   flex: 1;
   height: 10px;
   background: var(--progress-bg, var(--bg-secondary));
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--border-light);
   position: relative;
@@ -262,13 +333,13 @@
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent) 0%, #ff8c42 100%);
-  border-radius: 6px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-md);
+  transition: width var(--dur-slow) var(--ease-standard);
   position: relative;
-  box-shadow: 0 0 10px rgba(242, 101, 34, 0.4);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.4);
 }
 
-/* Shimmer effect overlay */
+/* Moving shimmer highlight swept across the fill */
 .progress-fill::before {
   content: '';
   position: absolute;
@@ -306,7 +377,7 @@
   }
 }
 
-/* Pulsing glow at leading edge */
+/* Pulsing glow at the leading edge */
 .progress-fill::after {
   content: '';
   position: absolute;
@@ -320,7 +391,7 @@
     rgba(255, 255, 255, 0.5) 100%
   );
   border-radius: 0 6px 6px 0;
-  animation: pulseEdge 1.5s ease-in-out infinite;
+  animation: pulseEdge var(--dur-loop) ease-in-out infinite;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -344,7 +415,7 @@
   }
 }
 
-/* Stripe pattern for visual interest - combined with gradient */
+/* Diagonal stripe overlay blended onto the gradient fill */
 .progress-fill {
   background:
     linear-gradient(90deg, var(--accent) 0%, #ff8c42 100%),
@@ -373,14 +444,13 @@
   }
 }
 
-/* Indeterminate progress bar animation - enhanced */
 .progress-bar.indeterminate {
   position: relative;
 }
 
 .progress-bar.indeterminate .progress-fill {
   width: 30% !important;
-  animation: indeterminateSlide 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  animation: indeterminateSlide var(--dur-loop) infinite var(--ease-standard);
   background: linear-gradient(90deg, var(--accent-hover) 0%, var(--accent) 50%, var(--accent-hover) 100%);
 }
 
@@ -396,7 +466,6 @@
   }
 }
 
-/* Progress text */
 .progress-text {
   font-size: 15px;
   font-weight: 700;
@@ -406,10 +475,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   .progress-fill {
-    transition: width 0.2s ease;
+    transition: width var(--dur-base) ease;
   }
 
   .progress-fill::before,
@@ -424,6 +492,90 @@
   .progress-bar.indeterminate .progress-fill {
     animation: indeterminateReduced 2s infinite linear;
   }
+
+  /* Existing flash-stage selectors opt out of motion. */
+  .flash-stage,
+  .flash-stage__board .flash-board-image,
+  .flash-stage__board .flash-custom-glyph,
+  .flash-stage__board .flash-custom-glyph__icon,
+  .flash-status__head {
+    animation: none;
+  }
+
+  /* Custom placeholder: hide the ripple rings, keep a static glyph. */
+  .flash-stage__board .flash-custom-glyph__ring {
+    animation: none;
+    opacity: 0;
+  }
+
+  /* Board glow: keep a static halo, no progress-driven scale/transition. */
+  .flash-stage__board::before {
+    animation: none;
+    transition: none;
+    transform: none;
+    opacity: 0.7;
+  }
+
+  /* Progress block / label / fallback: no entrance or kinetic motion. */
+  .flash-progress,
+  .flash-progress__head,
+  .flash-fallback {
+    animation: none;
+  }
+
+  /* Track: width snaps; indeterminate becomes a static centered sliver. */
+  .flash-track__fill {
+    transition: width var(--dur-base) ease;
+  }
+  .flash-track__fill.is-indeterminate {
+    animation: none;
+    transform: none;
+    inset: 0;
+    width: 40%;
+    margin-inline: auto;
+  }
+  /* Phase dots: drop the spring/glow transition. */
+  .flash-dot {
+    transition: none;
+  }
+
+  /* Completion: reveal the check + text instantly, no pop/glow/stagger. */
+  .flash-progress__head.is-done .stage-icon,
+  .flash-progress .flash-success-hint {
+    animation: none;
+    filter: none;
+  }
+
+  /* Error screen: kill the hero animation, ripples, glow, float, card entrances. */
+  .error-screen__hero,
+  .error-screen__title,
+  .error-screen__hint,
+  .error-screen__card {
+    animation: none;
+  }
+  .error-screen__hero::before,
+  .error-screen__glyph,
+  .error-screen__ring {
+    animation: none;
+  }
+  .error-screen__ring {
+    opacity: 0;
+  }
+  .error-screen__row,
+  .error-screen__row::before,
+  .error-screen__chip,
+  .error-screen__arrow {
+    transition: none;
+  }
+
+  /* Share link: drop the glyph-nudge micro-motion. */
+  .paste-url,
+  .paste-url svg {
+    transition: none;
+  }
+  .paste-url:hover svg {
+    transform: none;
+  }
 }
 
 @keyframes indeterminateReduced {
@@ -435,20 +587,25 @@
   }
 }
 
-/* ========================================
-   FLASH ACTIONS
-   ======================================== */
-.flash-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
+/* FLASH ACTIONS */
 .flash-actions-inline {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-sm);
   margin-top: 20px;
+}
+
+/* Tier-3 actions inside the error/authorizing fallback only.
+   Scoping keeps the 'complete' stage action row unchanged. */
+.flash-fallback .flash-actions-inline {
+  margin-top: 0;
+  width: 100%;
+  gap: var(--space-md);
+}
+
+.flash-fallback .flash-actions-inline .btn {
+  min-width: 120px;
+  justify-content: center;
 }
 
 .flash-success-hint {
@@ -472,108 +629,51 @@
   font-size: 13px;
 }
 
-/* ========================================
-   ERROR DIALOG
-   ======================================== */
-.error-dialog {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  width: 100%;
-}
-
-.error-dialog-message {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 10px 14px;
-  background: var(--color-error-bg);
-  border: 1px solid var(--color-error);
-  border-radius: var(--radius-lg);
-  color: var(--color-error);
-  font-size: 13px;
-  width: 100%;
-  justify-content: center;
-}
-
-.upload-logs-btn {
-  margin-top: 4px;
-}
-
-.paste-result {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  width: 100%;
-}
-
-.paste-qr {
-  flex-shrink: 0;
-}
-
-.qr-code {
-  width: 120px;
-  height: 120px;
-  border-radius: 6px;
-  background: white;
-  padding: 2px;
-}
-
-.paste-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  justify-content: center;
-  align-items: flex-start;
-}
-
-.paste-label {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.paste-url-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
+/* Link affordance: accent, trailing external-link glyph, hover color + glyph nudge. */
 .paste-url {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-  word-break: break-all;
+  gap: 6px;
+  max-width: 100%;
+  padding: 2px 0;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
   text-align: left;
+  text-decoration: none;
+  word-break: break-all;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur-fast) var(--ease-out-expo);
+}
+
+.paste-url svg {
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: transform var(--dur-fast) var(--ease-out-expo);
 }
 
 .paste-url:hover {
-  text-decoration: underline;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.paste-url:hover svg {
+  transform: translate(1px, -1px);
+}
+
+.paste-url:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.5);
+  outline-offset: 3px;
 }
 
 .btn-icon {
   width: 32px;
   height: 32px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
@@ -581,7 +681,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all var(--dur-fast) ease;
   flex-shrink: 0;
 }
 
@@ -591,20 +691,7 @@
   color: var(--accent);
 }
 
-.upload-error {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-error-bg);
-  border-radius: var(--radius-md);
-  color: var(--color-error);
-  font-size: 12px;
-}
-
-/* ========================================
-   ERROR DISPLAY COMPACT (for modals)
-   ======================================== */
+/* ERROR DISPLAY COMPACT (for modals) */
 .error-display-compact {
   display: flex;
   flex-direction: column;
@@ -635,4 +722,442 @@
   gap: var(--space-xs);
   color: var(--color-error);
   font-size: 12px;
+}
+
+/* FLASH REDESIGN — "THE METRIC" (type-led, card-less); classes flash-scoped, shared .progress-* untouched. */
+
+/* --- Hero board: larger on big screens, glow brightens with progress --- */
+.flash-stage__board .flash-board-image {
+  /* Hero board — dominant on the canvas. */
+  max-width: clamp(360px, 46vw, 660px);
+}
+
+/* Default if --flash-progress is absent (e.g. first paint). */
+.flash-stage__board {
+  --flash-progress: 0;
+}
+
+/* Progress-coupled halo: opacity 0.55→1.0 + gentle scale as % climbs; augments (not replaces) confirmGlow breathing. */
+.flash-stage__board::before {
+  opacity: calc(0.55 + (var(--flash-progress) / 100) * 0.45);
+  transform: scale(calc(0.98 + (var(--flash-progress) / 100) * 0.08));
+  transition:
+    opacity var(--dur-slow) var(--ease-standard),
+    transform var(--dur-slow) var(--ease-standard);
+}
+
+/* --- Right column: stage label + one hairline progress bar (no card) --- */
+.flash-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  width: 100%;
+  /* Anti-jump: hold a stable height across stages. */
+  min-height: clamp(96px, 11vw, 132px);
+  justify-content: center;
+  animation: confirmContentIn 0.45s var(--ease-out-expo) 0.18s both;
+}
+
+/* Stage icon + label — remounts per stage (key) → cross-fade entrance. */
+.flash-progress__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: flashWordIn var(--dur-medium) var(--ease-out-expo) both;
+}
+.flash-progress__label {
+  font-size: clamp(18px, 1.8vw, 23px);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.flash-progress__label.is-done {
+  color: var(--color-success);
+}
+
+/* --- Completion celebration: spring-pop the check + glow, stagger the text. --- */
+.flash-progress__head.is-done .stage-icon {
+  transform-origin: center;
+  animation:
+    flashCheckPop var(--dur-slower) var(--ease-spring) both,
+    flashCheckGlow 1s var(--ease-standard) both;
+}
+.flash-progress .flash-success-hint {
+  animation: flashWordIn var(--dur-medium) var(--ease-out-expo) 0.18s both;
+}
+
+@keyframes flashCheckPop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  55%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes flashCheckGlow {
+  0%   { filter: drop-shadow(0 0 0 rgba(var(--color-success-rgb), 0)); }
+  45%  { filter: drop-shadow(0 0 14px rgba(var(--color-success-rgb), 0.75)); }
+  100% { filter: drop-shadow(0 0 6px rgba(var(--color-success-rgb), 0.3)); }
+}
+
+/* Bar + phase dots stacked tightly together. */
+.flash-progress__bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* The single hairline bar. Determinate fills; indeterminate sweeps. */
+.flash-track {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.12);
+  overflow: hidden;
+}
+.flash-track__fill {
+  height: 100%;
+  width: 0;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--accent) 0%, #ff8c42 100%);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.4);
+  transition: width var(--dur-slow) var(--ease-out-expo);
+}
+/* Indeterminate: a fixed-width sliver slides across (transform = WebKit-safe). */
+.flash-track__fill.is-indeterminate {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 32%;
+  transition: none;
+  animation: flashTrackSlide var(--dur-loop) var(--ease-standard) infinite;
+}
+
+/* Phase dots: compact iOS-style cluster, centred under the bar. */
+.flash-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;        /* match .flash-track */
+}
+.flash-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.18);
+  transition:
+    width var(--dur-medium) var(--ease-spring),
+    background-color var(--dur-medium) var(--ease-standard),
+    box-shadow var(--dur-medium) var(--ease-standard);
+}
+.flash-dot.is-done {
+  background: rgba(var(--accent-rgb), 0.55);
+}
+.flash-dot.is-current {
+  width: 20px;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.45);
+}
+
+/* --- Centered fallback (authorizing / error): card-less. --- */
+.flash-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  text-align: center;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 220px;
+  justify-content: center;
+  padding: var(--space-lg) 0;
+  animation: confirmContentIn 0.45s var(--ease-out-expo) both;
+}
+
+/* DIAGNOSIS group: vertical stack, tight internal gap (halo → title). */
+.flash-fallback .flash-status__head {
+  flex-direction: column;
+  gap: var(--space-md);
+  align-items: center;
+  text-align: center;
+}
+
+.flash-fallback h3 {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* ERROR SCREEN (flash failure): two-column layout mirroring the offline screen, error-tinted. */
+.error-screen {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(32px, 6vw, 88px);
+  width: 100%;
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 0 var(--space-2xl);
+}
+
+/* Hero: error glyph over a breathing glow, framed by concentric rings. */
+.error-screen__hero {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(200px, 26vw, 320px);
+  aspect-ratio: 1;
+  animation: confirmContentIn 0.45s var(--ease-out-expo) 0.06s both;
+}
+
+.error-screen__hero::before {
+  content: '';
+  position: absolute;
+  width: 80%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(var(--color-error-rgb), 0.24) 0%,
+    rgba(var(--color-error-rgb), 0.08) 40%,
+    transparent 70%
+  );
+  filter: blur(16px);
+  z-index: 0;
+  animation: confirmGlow 6s ease-in-out infinite;
+}
+
+.error-screen__ring {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid rgba(var(--color-error-rgb), 0.32);
+  opacity: 0;
+  z-index: 0;
+  animation: offlineRipple 3.4s var(--ease-out-expo) infinite;
+}
+.error-screen__ring:nth-child(2) {
+  animation-delay: 1.7s;
+}
+
+.error-screen__glyph {
+  position: relative;
+  z-index: 1;
+  width: clamp(64px, 8vw, 104px);
+  height: auto;
+  color: var(--color-error);
+  animation: confirmFloat 5.5s ease-in-out infinite;
+  filter: drop-shadow(0 14px 26px rgba(var(--color-error-rgb), 0.28));
+}
+
+/* Right column: title + diagnosis + remedy card + actions, left-aligned. */
+.error-screen__main {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 430px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.error-screen__title {
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  animation: confirmContentIn 0.45s var(--ease-out-expo) 0.14s both;
+}
+
+.error-screen__hint {
+  margin: var(--space-md) 0 var(--space-xl);
+  max-width: 34em;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  animation: confirmContentIn 0.45s var(--ease-out-expo) 0.2s both;
+}
+
+/* Remedy card: one surface, hairline border (mirrors .offline__actions). */
+.error-screen__card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+  animation: confirmContentIn 0.45s var(--ease-out-expo) 0.28s both;
+}
+
+/* Upload-logs row — quiet accent affordance with a dormant glow. */
+.error-screen__row {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-lg);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary);
+  font: inherit;
+  transition: background var(--dur-base) var(--ease-standard);
+}
+
+.error-screen__row::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(
+    120% 140% at 14% 50%,
+    rgba(var(--accent-rgb), 0.1) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity var(--dur-medium) var(--ease-standard);
+}
+
+.error-screen__chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent);
+  transition: background var(--dur-base) var(--ease-standard);
+}
+
+.error-screen__label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.error-screen__arrow {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition:
+    color var(--dur-base) var(--ease-standard),
+    transform var(--dur-base) var(--ease-standard);
+}
+
+.error-screen__row:hover:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.05);
+}
+.error-screen__row:hover:not(:disabled)::before {
+  opacity: 1;
+}
+.error-screen__row:hover:not(:disabled) .error-screen__chip {
+  background: rgba(var(--accent-rgb), 0.16);
+}
+.error-screen__row:hover:not(:disabled) .error-screen__arrow {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+.error-screen__row:active:not(:disabled) {
+  background: rgba(var(--accent-rgb), 0.09);
+}
+.error-screen__row:focus-visible {
+  outline: none;
+  background: rgba(var(--accent-rgb), 0.08);
+  box-shadow: inset 0 0 0 1.5px rgba(var(--accent-rgb), 0.5);
+}
+.error-screen__row:disabled {
+  cursor: default;
+}
+
+/* Remedy: QR tile + share link, occupying the card once logs are uploaded. */
+.error-screen__paste {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-lg);
+}
+
+.error-screen__qr {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  display: block;
+  width: 116px;
+  height: 116px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+
+.error-screen__paste-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  align-items: flex-start;
+}
+
+.error-screen__paste-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+/* Inline upload-failure chip. */
+.error-screen__upload-error {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  padding: 6px 12px;
+  background: var(--color-error-bg);
+  border: 1px solid rgba(var(--color-error-rgb), 0.22);
+  border-radius: var(--radius-pill);
+  color: var(--color-error);
+  font-size: 12px;
+}
+
+/* Action buttons row: equal-width Cancel / Retry. */
+.error-screen__buttons {
+  display: flex;
+  gap: var(--space-md);
+  width: 100%;
+  margin-top: var(--space-xl);
+}
+.error-screen__buttons .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ============================ KEYFRAMES ============================ */
+@keyframes flashWordIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes flashTrackSlide {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(420%); }
 }

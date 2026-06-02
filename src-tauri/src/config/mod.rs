@@ -1,7 +1,5 @@
-//! Application configuration and constants
-//!
-//! Centralizes all hard-coded values, URLs, and configuration options.
-//! Some constants are defined for future use and consistency.
+//! Centralized hard-coded values, URLs, and configuration options.
+//! Allows dead_code: some consts are only referenced under platform cfg blocks.
 
 #![allow(dead_code)]
 
@@ -9,9 +7,6 @@
 pub mod app {
     /// Application name used for cache directories
     pub const NAME: &str = "armbian-imager";
-
-    /// Application display name
-    pub const DISPLAY_NAME: &str = "Armbian Imager";
 
     /// User agent for HTTP requests
     pub const USER_AGENT: &str = "Armbian-Imager/1.0";
@@ -37,9 +32,6 @@ pub mod urls {
 
 /// Download and decompression settings
 pub mod download {
-    /// Download buffer size (1 MB)
-    pub const BUFFER_SIZE: usize = 1024 * 1024;
-
     /// Decompression buffer size (8 MB)
     pub const DECOMPRESS_BUFFER_SIZE: usize = 8 * 1024 * 1024;
 
@@ -58,9 +50,6 @@ pub mod flash {
     /// Erase chunk size (1 MB)
     pub const ERASE_CHUNK_SIZE: usize = 1024 * 1024;
 
-    /// Progress log interval (percentage points)
-    pub const LOG_INTERVAL_PERCENT: u64 = 6;
-
     /// Delay after unmount before writing (milliseconds)
     pub const UNMOUNT_DELAY_MS: u64 = 500;
 }
@@ -75,9 +64,6 @@ pub mod log_files {
 pub mod logging {
     /// SHA256 calculation buffer size
     pub const SHA_BUFFER_SIZE: usize = 8192;
-
-    /// SHA256 progress log interval (MB)
-    pub const SHA_LOG_INTERVAL_MB: u64 = 50;
 
     /// Download progress log interval (MB)
     pub const DOWNLOAD_LOG_INTERVAL_MB: u64 = 10;
@@ -94,23 +80,11 @@ pub mod logging {
 
 /// Log paste service settings
 pub mod paste {
-    /// Maximum lines to show in truncated preview
-    pub const TRUNCATE_LINES: usize = 500;
-
     /// Maximum log file size to upload (5 MB)
     pub const MAX_LOG_SIZE: u64 = 5 * 1024 * 1024;
 
     /// Maximum log lines to process
     pub const MAX_LOG_LINES: usize = 10_000;
-}
-
-/// Device detection settings
-pub mod devices {
-    /// Minimum device size to show (1 GB) - filters out small partitions
-    pub const MIN_SIZE_BYTES: u64 = 1024 * 1024 * 1024;
-
-    /// Maximum device size for removable media (2 TB)
-    pub const MAX_SIZE_BYTES: u64 = 2 * 1024 * 1024 * 1024 * 1024;
 }
 
 /// HTTP client settings
@@ -136,24 +110,12 @@ pub mod images {
     /// Filter value for empty preinstalled application
     pub const EMPTY_FILTER: &str = "__EMPTY__";
 
-    /// Stable repository identifier
-    pub const STABLE_REPO: &str = "archive";
-
     /// Temporary download file suffix
     pub const DOWNLOAD_SUFFIX: &str = ".downloading";
 }
 
 /// Cache management settings
 pub mod cache {
-    /// Minimum cache size: 1 GB
-    pub const MIN_SIZE: u64 = 1024 * 1024 * 1024;
-
-    /// Maximum cache size: 100 GB
-    pub const MAX_SIZE: u64 = 100 * 1024 * 1024 * 1024;
-
     /// Default maximum cache size (20 GB)
     pub const DEFAULT_MAX_SIZE: u64 = 20 * 1024 * 1024 * 1024;
-
-    /// Maximum consecutive flash failures before auto-deleting cached image
-    pub const MAX_FLASH_FAILURES: u32 = 3;
 }

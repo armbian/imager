@@ -1,16 +1,16 @@
-//! Core operations module
-//!
-//! Handles download and flash operations.
+//! Download and flash operations.
 
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
 use tauri_plugin_store::StoreExt;
 
-use crate::config;
+use armbian_write_conf::WriteConfError;
+
+use crate::autoconfig::AutoconfigConfig;
 use crate::download::download_image as do_download;
 use crate::flash::{flash_image as do_flash, request_authorization};
-use crate::utils::{get_cache_dir, validate_cache_path};
-use crate::{log_debug, log_error, log_info};
+use crate::utils::{app_cache_dir, images_dir, validate_cache_path};
+use crate::{log_debug, log_error, log_info, log_warn};
 
 use super::state::AppState;
 
@@ -56,11 +56,7 @@ pub async fn download_image(
     state: State<'_, AppState>,
 ) -> Result<String, String> {
     log_info!("operations", "Starting download: {}", file_url);
-    log_debug!(
-        "operations",
-        "Download directory: {:?}",
-        get_cache_dir(config::app::NAME).join("images")
-    );
+    log_debug!("operations", "Download directory: {:?}", images_dir());
     if let Some(ref sha) = sha_url {
         log_debug!("operations", "SHA URL: {}", sha);
     } else {
@@ -69,7 +65,7 @@ pub async fn download_image(
             "No SHA URL provided; verification will be skipped"
         );
     }
-    let download_dir = get_cache_dir(config::app::NAME).join("images");
+    let download_dir = images_dir();
 
     let download_state = state.download_state.clone();
     let result = do_download(&file_url, sha_url.as_deref(), &download_dir, download_state).await;
@@ -86,21 +82,24 @@ pub async fn download_image(
     }
 }
 
-/// Start flashing an image to a device
+/// Start flashing an image to a device. With `autoconfig` Some, injects the Armbian first-boot preset
+/// into a per-flash copy (original never mutated) and flashes that; None flashes the original directly.
 #[tauri::command]
 pub async fn flash_image(
     image_path: String,
     device_path: String,
     verify: bool,
+    autoconfig: Option<AutoconfigConfig>,
     state: State<'_, AppState>,
     _app: AppHandle,
 ) -> Result<(), String> {
     log_info!(
         "operations",
-        "Starting flash: {} -> {} (verify: {})",
+        "Starting flash: {} -> {} (verify: {}, autoconfig: {})",
         image_path,
         device_path,
-        verify
+        verify,
+        autoconfig.is_some()
     );
     log_debug!(
         "operations",
@@ -117,7 +116,33 @@ pub async fn flash_image(
     let path = PathBuf::from(&image_path);
     let flash_state = state.flash_state.clone();
 
-    let result = do_flash(&path, &device_path, flash_state, verify).await;
+    // Reset shared progress before auth/copy/unmount: frontend polls on invoke, so without an early
+    // reset it reads the previous flash's stale state (is_verifying=true, verified=100%) and latches onto it.
+    flash_state.reset();
+
+    // With a profile selected, flash a temp copy with the preset injected so the
+    // shared cached/decompressed image stays pristine.
+    let (flash_path, temp_copy) = match autoconfig {
+        Some(config) => {
+            let copy = prepare_autoconfig_copy(&path, &config)?;
+            (copy.clone(), Some(copy))
+        }
+        None => (path, None),
+    };
+
+    let result = do_flash(&flash_path, &device_path, flash_state, verify).await;
+
+    // Always remove the temp copy, regardless of flash outcome.
+    if let Some(copy) = temp_copy {
+        if let Err(e) = std::fs::remove_file(&copy) {
+            log_warn!(
+                "operations",
+                "Failed to remove autoconfig temp copy {}: {}",
+                copy.display(),
+                e
+            );
+        }
+    }
 
     match &result {
         Ok(_) => {
@@ -131,6 +156,57 @@ pub async fn flash_image(
     result
 }
 
+/// Copy the decompressed image to a per-flash temp file and inject the autoconfig preset into the copy.
+/// Aborts (deleting the copy) if the image has no writable ext4 rootfs, since a profile was requested.
+fn prepare_autoconfig_copy(
+    source: &std::path::Path,
+    config: &AutoconfigConfig,
+) -> Result<PathBuf, String> {
+    let temp_dir = app_cache_dir().join("autoconfig-temp");
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("Failed to create autoconfig temp directory: {}", e))?;
+
+    // Unique per-flash name to avoid collisions across concurrent/repeat flashes.
+    let stem = source
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "image.img".to_string());
+    let unique = format!(
+        "{}.{}.{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0),
+        stem
+    );
+    let copy_path = temp_dir.join(unique);
+
+    log_info!(
+        "operations",
+        "Copying image for autoconfig injection: {} -> {}",
+        source.display(),
+        copy_path.display()
+    );
+    std::fs::copy(source, &copy_path)
+        .map_err(|e| format!("Failed to copy image for autoconfig: {}", e))?;
+
+    if let Err(e) = crate::autoconfig::inject_into_image(&copy_path, config) {
+        // Clean up the half-prepared copy before bubbling up.
+        let _ = std::fs::remove_file(&copy_path);
+        let message = match e {
+            WriteConfError::UnsupportedImage(_) | WriteConfError::NoExt4Rootfs(_) => format!(
+                "This image does not have a writable ext4 root filesystem, so the selected autoconfig profile cannot be applied: {}",
+                e
+            ),
+            other => format!("Failed to apply autoconfig profile: {}", other),
+        };
+        return Err(message);
+    }
+
+    Ok(copy_path)
+}
+
 /// Force-delete a cached image (bypasses cache_enabled), for when a file looks corrupted
 #[tauri::command]
 pub async fn force_delete_cached_image(image_path: String) -> Result<(), String> {
@@ -138,7 +214,7 @@ pub async fn force_delete_cached_image(image_path: String) -> Result<(), String>
 
     let path = PathBuf::from(&image_path);
 
-    // Safety check: only delete files in our cache directory
+    // Refuse to delete anything outside our cache directory.
     if let Err(e) = validate_cache_path(&path) {
         log_error!(
             "operations",
@@ -172,13 +248,12 @@ pub async fn force_delete_cached_image(image_path: String) -> Result<(), String>
 pub async fn delete_downloaded_image(image_path: String, app: AppHandle) -> Result<(), String> {
     log_info!("operations", "Delete request for image: {}", image_path);
 
-    // Check if cache is enabled
     let cache_enabled = match app.store("settings.json") {
         Ok(store) => store
             .get("cache_enabled")
             .and_then(|v| v.as_bool())
             .unwrap_or(true),
-        Err(_) => true, // Default to cache enabled
+        Err(_) => true, // Default to cache enabled.
     };
 
     if cache_enabled {
@@ -188,12 +263,12 @@ pub async fn delete_downloaded_image(image_path: String, app: AppHandle) -> Resu
 
     let path = PathBuf::from(&image_path);
 
-    // Safety check: only delete files in our cache directory
+    // Refuse to delete anything outside our cache directory.
     let canonical_path = match validate_cache_path(&path) {
         Ok(p) => p,
         Err(e) => {
-            // If path or cache dir doesn't exist, skip silently
-            if !path.exists() || !get_cache_dir(config::app::NAME).exists() {
+            // Nothing to delete if the path or cache dir is already gone.
+            if !path.exists() || !app_cache_dir().exists() {
                 log_debug!(
                     "operations",
                     "Path or cache directory doesn't exist, skipping delete: {}",
@@ -222,13 +297,12 @@ pub async fn delete_downloaded_image(image_path: String, app: AppHandle) -> Resu
     Ok(())
 }
 
-/// Continue a download that failed due to SHA unavailable
-/// Uses the already downloaded file without re-downloading
+/// Finish a download that stalled on an unavailable SHA, reusing the downloaded file.
 #[tauri::command]
 pub async fn continue_download_without_sha(state: State<'_, AppState>) -> Result<String, String> {
     log_info!("operations", "Continuing download without SHA verification");
 
-    let download_dir = get_cache_dir(config::app::NAME).join("images");
+    let download_dir = images_dir();
     let download_state = state.download_state.clone();
 
     let result = crate::download::continue_without_sha(download_state, &download_dir).await;
@@ -245,8 +319,7 @@ pub async fn continue_download_without_sha(state: State<'_, AppState>) -> Result
     }
 }
 
-/// Clean up a failed download (delete temp file)
-/// Called when user cancels after SHA unavailable error
+/// Delete the temp file from a failed download (user cancelled after SHA-unavailable).
 #[tauri::command]
 pub async fn cleanup_failed_download(state: State<'_, AppState>) -> Result<(), String> {
     log_info!("operations", "Cleaning up failed download");

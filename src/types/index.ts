@@ -35,6 +35,8 @@ export interface ImageInfo {
   /** SHA256 checksum file URL */
   sha_url: string | null;
   file_size: number;
+  /** Build date (ISO 8601), when available */
+  build_date?: string | null;
   /** Stability level: "stable", "edge", "nightly" */
   stability: string;
   /** Image format: "sd" (block), "qdl" (Qualcomm EDL), "rootfs", "qemu", "hyperv" */
@@ -121,9 +123,7 @@ export interface QdlDevice {
   description: string;
 }
 
-/**
- * Manufacturer information for board categorization
- */
+/** Manufacturer information for board categorization */
 export interface Manufacturer {
   id: string;
   name: string;
@@ -131,33 +131,20 @@ export interface Manufacturer {
   boardCount: number;
 }
 
-/**
- * Filter type for image list
- */
-export type ImageFilterType = 'all' | 'recommended' | 'stable' | 'nightly' | 'rolling' | 'apps' | 'barebone';
+/** Filter type for the image list */
+export type ImageFilterType = 'all' | 'recommended' | 'stable' | 'rolling' | 'apps' | 'barebone';
 
-/**
- * Selection step in the wizard flow
- */
+/** Selection step in the wizard flow */
 export type SelectionStep = 'manufacturer' | 'board' | 'image' | 'device';
 
-/**
- * Modal type for app navigation (includes 'none' for closed state)
- */
-export type ModalType = 'none' | SelectionStep;
-
-/**
- * Custom image info from file picker
- */
+/** Custom image info from the file picker */
 export interface CustomImageInfo {
   path: string;
   name: string;
   size: number;
 }
 
-/**
- * Cached image metadata from the backend cache directory
- */
+/** Cached image metadata from the backend cache directory */
 export interface CachedImageInfo {
   filename: string;
   path: string;
@@ -170,8 +157,57 @@ export interface CachedImageInfo {
   board_name: string | null;
 }
 
+/** Cache size split into flashable images and assets (board/vendor photos + API JSON) */
+export interface CacheBreakdown {
+  /** Bytes used by flashable .img files */
+  images: number;
+  /** Bytes used by cached assets (photos, API JSON) */
+  assets: number;
+  /** Sum of images + assets */
+  total: number;
+}
+
 /** Board identification read from /etc/armbian-release */
 export interface ArmbianReleaseInfo {
   board: string; // e.g., "orangepi-5" - Board identifier for matching
   board_name: string; // e.g., "Orange Pi 5" - Human-readable board name for display
+}
+
+/** Login shell for the first user provisioned via autoconfig */
+export type UserShell = 'bash' | 'zsh';
+
+/** Armbian first-boot autoconfig settings; all fields optional, only set/non-empty values
+ * are written into the image's /root/.not_logged_in_yet file. */
+export interface AutoconfigConfig {
+  applyNetwork?: boolean;
+  ethernetEnabled?: boolean;
+  wifiEnabled?: boolean;
+  wifiSsid?: string;
+  wifiKey?: string;
+  wifiCountryCode?: string;
+  useStaticIp?: boolean;
+  staticIp?: string;
+  staticMask?: string;
+  staticGateway?: string;
+  staticDns?: string;
+  locale?: string;
+  timezone?: string;
+  langBasedOnLocation?: boolean;
+  rootPassword?: string;
+  rootKeyUrl?: string;
+  userName?: string;
+  userPassword?: string;
+  userKeyUrl?: string;
+  userShell?: UserShell;
+  userRealName?: string;
+  remoteConfigUrl?: string;
+}
+
+/** A named, client-side autoconfig profile the user can select before flashing */
+export interface AutoconfigProfile {
+  id: string;
+  name: string;
+  /** Unix timestamp (ms) of last edit, used for sorting */
+  updatedAt: number;
+  config: AutoconfigConfig;
 }

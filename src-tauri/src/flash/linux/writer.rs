@@ -1,7 +1,5 @@
-//! Linux device writer
-//!
-//! Writes images to block devices using UDisks2 for privilege escalation.
-//! UDisks2 handles authentication via polkit, so the app can run as a normal user.
+//! Linux device writer. Uses UDisks2 (polkit auth) so the app can run as a
+//! normal user, falling back to a direct open when UDisks2 is unavailable.
 
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -17,19 +15,17 @@ use crate::{log_debug, log_error, log_info};
 
 const MODULE: &str = "flash::linux::writer";
 
-/// Open a block device for writing using UDisks2
-/// This will trigger a polkit authentication dialog if needed
+/// Open a block device for writing via UDisks2, which prompts polkit auth as needed.
 async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
     use std::collections::HashMap;
 
     log_debug!(MODULE, "Opening device via UDisks2: {}", device_path);
 
-    // Create UDisks2 client
     let client = udisks2::Client::new()
         .await
         .map_err(|e| format!("Failed to connect to UDisks2: {}", e))?;
 
-    // Convert /dev/sdX to UDisks2 object path: /org/freedesktop/UDisks2/block_devices/sdX
+    // /dev/sdX maps to /org/freedesktop/UDisks2/block_devices/sdX.
     let dev_name = device_path
         .strip_prefix("/dev/")
         .ok_or_else(|| format!("Invalid device path: {}", device_path))?;
@@ -38,7 +34,6 @@ async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
 
     log_debug!(MODULE, "UDisks2 object path: {}", object_path);
 
-    // Get the block device object
     let object = client
         .object(object_path.as_str())
         .map_err(|e| format!("Device not found in UDisks2: {} ({})", device_path, e))?;
@@ -48,8 +43,6 @@ async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
         .await
         .map_err(|e| format!("Failed to get block interface: {}", e))?;
 
-    // Open device for read-write with exclusive access
-    // Options: empty HashMap for default options
     let options: HashMap<&str, udisks2::zbus::zvariant::Value<'_>> = HashMap::new();
 
     let fd = block
@@ -59,17 +52,15 @@ async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
 
     log_debug!(MODULE, "Device opened successfully via UDisks2");
 
-    // Convert the file descriptor to a File
-    // OwnedFd implements AsRawFd, so we get the raw fd and create a File from it
+    // Take ownership of the fd as a File, then forget the OwnedFd so it isn't closed twice.
     let raw_fd = fd.as_raw_fd();
     let file = unsafe { File::from_raw_fd(raw_fd) };
-    // Note: fd is consumed here since we take ownership via from_raw_fd
     std::mem::forget(fd);
 
     Ok(file)
 }
 
-/// Fallback: try to open device directly (requires root)
+/// Fallback open requiring root, used when UDisks2 is unavailable.
 fn open_device_direct(device_path: &str) -> Result<File, String> {
     use std::fs::OpenOptions;
 
@@ -98,7 +89,6 @@ pub async fn flash_image(
         device_path
     );
 
-    // Get image size
     let image_size = std::fs::metadata(image_path)
         .map_err(|e| format!("Failed to get image size: {}", e))?
         .len();
@@ -112,17 +102,15 @@ pub async fn flash_image(
         bytes_to_gb(image_size)
     );
 
-    // Unmount the device first
     log_info!(MODULE, "Unmounting device partitions...");
     unmount_device(device_path)?;
 
-    // Small delay to ensure unmount completes
+    // Give the unmount a moment to settle before writing.
     std::thread::sleep(std::time::Duration::from_millis(
         config::flash::UNMOUNT_DELAY_MS,
     ));
 
-    // Try to open device via UDisks2 first (handles polkit auth)
-    // Fall back to direct open if UDisks2 fails (e.g., if running as root)
+    // UDisks2 first (handles polkit auth), direct open as a root fallback.
     log_debug!(MODULE, "Opening device for writing...");
     let mut device = match open_device_udisks2(device_path).await {
         Ok(file) => file,
@@ -134,19 +122,15 @@ pub async fn flash_image(
 
     let device_fd = device.as_raw_fd();
 
-    // Quick erase - clear partition table area
     quick_erase(&mut device)?;
 
-    // Open image file
     let mut image_file =
         File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
 
-    // Write image in chunks with progress
     let chunk_size = config::flash::CHUNK_SIZE;
     let mut buffer = vec![0u8; chunk_size];
     let mut written: u64 = 0;
 
-    // Use ProgressTracker for automatic progress logging
     let mut tracker = ProgressTracker::new(
         "Write",
         MODULE,
@@ -180,7 +164,6 @@ pub async fn flash_image(
         written += bytes_read as u64;
         bytes_since_sync += bytes_read as u64;
 
-        // Periodic sync to flush data to disk and show real progress
         if bytes_since_sync >= config::logging::LINUX_SYNC_INTERVAL {
             unsafe {
                 libc::fdatasync(device_fd);
@@ -189,22 +172,18 @@ pub async fn flash_image(
             state.written_bytes.store(written, Ordering::SeqCst);
         }
 
-        // ProgressTracker handles logging automatically
         tracker.update(bytes_read as u64);
     }
 
-    // Log final summary
     tracker.finish();
     log_debug!(MODULE, "Syncing...");
 
-    // Sync
     device.flush().ok();
     unsafe {
         libc::fsync(device_fd);
     }
     sync_device(device_path);
 
-    // Verify if requested
     if verify {
         log_info!(MODULE, "Starting verification...");
         state.is_verifying.store(true, Ordering::SeqCst);
@@ -215,7 +194,6 @@ pub async fn flash_image(
             libc::posix_fadvise(device_fd, 0, image_size as i64, libc::POSIX_FADV_DONTNEED);
         }
 
-        // Seek back to beginning
         device
             .seek(SeekFrom::Start(0))
             .map_err(|e| format!("Failed to seek device: {}", e))?;
@@ -227,7 +205,7 @@ pub async fn flash_image(
     Ok(())
 }
 
-/// Quick erase - write zeros to first portion of device
+/// Zero the first portion of the device to wipe the old partition table.
 fn quick_erase(device: &mut File) -> Result<(), String> {
     let erase_size = config::flash::QUICK_ERASE_SIZE;
     let chunk_size = config::flash::ERASE_CHUNK_SIZE;
@@ -238,26 +216,15 @@ fn quick_erase(device: &mut File) -> Result<(), String> {
         erase_size / (1024 * 1024)
     );
 
-    // Seek to beginning
     device
         .seek(SeekFrom::Start(0))
         .map_err(|e| format!("Failed to seek to start: {}", e))?;
 
-    let zero_buffer = vec![0u8; chunk_size];
-    let mut erased: usize = 0;
+    crate::flash::write_zeros(device, erase_size, chunk_size)?;
 
-    while erased < erase_size {
-        let to_write = std::cmp::min(chunk_size, erase_size - erased);
-        device
-            .write_all(&zero_buffer[..to_write])
-            .map_err(|e| format!("Quick erase failed at byte {}: {}", erased, e))?;
-        erased += to_write;
-    }
-
-    // Sync the erase
     device.flush().ok();
 
-    // Seek back to beginning for image write
+    // Rewind so the image write starts at offset 0.
     device
         .seek(SeekFrom::Start(0))
         .map_err(|e| format!("Failed to seek to start: {}", e))?;

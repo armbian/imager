@@ -2,14 +2,14 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { load } from '@tauri-apps/plugin-store';
-import { SUPPORTED_LANGUAGES, getLanguageFromLocale } from './config/i18n';
+import { getLanguageFromLocale } from './config/i18n';
 
 // Load every locale JSON via Vite glob so new languages are picked up automatically
 const localeModules = import.meta.glob('./locales/*.json', { eager: true });
 
 // Build the i18next resources map keyed by language code
 const resources = Object.entries(localeModules).reduce((acc, [path, module]) => {
-  // Extract language code from path: './locales/en.json' -> 'en'
+  // './locales/en.json' -> 'en'
   const langCode = path.match(/\.\/locales\/(.+)\.json$/)?.[1];
   if (langCode && module) {
     acc[langCode] = { translation: module as Record<string, unknown> };
@@ -17,17 +17,11 @@ const resources = Object.entries(localeModules).reduce((acc, [path, module]) => 
   return acc;
 }, {} as Record<string, { translation: Record<string, unknown> }>);
 
-// Export supported language codes for use in other components
-export const supportedLanguages = SUPPORTED_LANGUAGES.map((lang) => lang.code);
-
-/**
- * Initialize i18n with saved language or system locale detection
- */
+/** Initialize i18n using the saved language, falling back to system locale detection */
 export async function initI18n(): Promise<void> {
   let language = 'en';
 
   try {
-    // Try to load saved language first using Store plugin
     const store = await load('settings.json', { autoSave: true, defaults: {} });
     const savedLanguage = await store.get<string>('language');
     if (savedLanguage) {
@@ -93,18 +87,9 @@ export async function changeLanguage(lang: string): Promise<void> {
   }
 }
 
-/**
- * Get the current language
- */
+/** Get the current language */
 export function getCurrentLanguage(): string {
   return i18n.language;
-}
-
-/**
- * Check if a language is supported
- */
-export function isLanguageSupported(lang: string): boolean {
-  return supportedLanguages.includes(lang);
 }
 
 export default i18n;

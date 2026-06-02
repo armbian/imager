@@ -1,9 +1,9 @@
 // Reusable confirmation dialog
 
 import type { ReactNode } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { COLORS } from '../../config';
 
 interface ConfirmationDialogProps {
   /** Whether the dialog is visible */
@@ -28,9 +28,7 @@ interface ConfirmationDialogProps {
   onConfirm: () => void;
 }
 
-/**
- * Modal confirmation dialog with cancel/confirm actions
- */
+/** Modal confirmation dialog with cancel/confirm actions. */
 export function ConfirmationDialog({
   isOpen,
   title,
@@ -47,11 +45,17 @@ export function ConfirmationDialog({
 
   if (!isOpen) return null;
 
-  return (
+  // Portal to <body> so the fixed overlay covers the whole viewport, escaping any
+  // transformed ancestor (e.g. the animated settings shell) that would otherwise trap it.
+  return createPortal(
     <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal confirm-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal confirm-modal ${isDanger ? 'is-danger' : ''}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Icon color comes from CSS (currentColor): amber for warnings, red for danger. */}
         <div className="confirm-icon">
-          <AlertTriangle size={32} color={COLORS.ALERT_WARNING} />
+          <TriangleAlert size={30} />
         </div>
         <h3 className="confirm-title">{title}</h3>
         <p className="confirm-text">{message}</p>
@@ -69,6 +73,7 @@ export function ConfirmationDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

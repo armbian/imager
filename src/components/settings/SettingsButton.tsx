@@ -5,8 +5,12 @@ import { SettingsModal } from './SettingsModal';
 import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 import { EVENTS } from '../../config';
 
-// Bottom-right settings icon that opens the settings modal
-export function SettingsButton() {
+interface SettingsButtonProps {
+  /** 'floating' = fixed bottom-right; 'inline' = sits within a toolbar/sidebar. */
+  variant?: 'floating' | 'inline';
+}
+
+export function SettingsButton({ variant = 'floating' }: SettingsButtonProps) {
   const { t } = useTranslation();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [openCount, setOpenCount] = useState(0);
@@ -23,7 +27,6 @@ export function SettingsButton() {
     duration: 200,
   });
 
-  /** Open settings modal */
   const handleOpenSettings = () => {
     setOpenCount((c) => c + 1);
     setIsSettingsOpen(true);
@@ -32,7 +35,7 @@ export function SettingsButton() {
   return (
     <>
       <button
-        className="settings-button"
+        className={`settings-button${variant === 'inline' ? ' settings-button--inline' : ''}`}
         onClick={handleOpenSettings}
         title={t('settings.title')}
         aria-label={t('settings.title')}

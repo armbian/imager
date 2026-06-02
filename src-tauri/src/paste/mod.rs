@@ -1,6 +1,3 @@
-//! Paste module for uploading logs to paste.armbian.com
-//!
-//! This module handles uploading application logs to the Armbian paste service
-//! for debugging and support purposes.
+//! Uploading application logs to paste.armbian.com for debugging and support.
 
 pub mod upload;

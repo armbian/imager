@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ImageInfo, BlockDevice } from '../types';
+import type { ImageInfo, BlockDevice, AutoconfigConfig } from '../types';
 import type { FlashStage } from '../components/flash/FlashStageIcon';
 import {
   downloadImage,
@@ -24,12 +24,15 @@ import {
 } from './useTauri';
 import { getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS } from '../config';
+import { getErrorMessage } from '../utils';
 import { isDeviceConnected } from '../utils/deviceUtils';
 import { isShaUnavailableError, translateQdlError } from '../utils/errorUtils';
 
 interface UseFlashOperationProps {
   image: ImageInfo;
   device: BlockDevice;
+  /** Opt-in autoconfig profile config written into the image on first boot; null when none. */
+  autoconfig?: AutoconfigConfig | null;
   onBack: () => void;
 }
 
@@ -46,10 +49,7 @@ interface UseFlashOperationReturn {
   handleShaWarningCancel: () => Promise<void>;
 }
 
-/**
- * Safely cleanup an image file, ignoring errors
- * Handles both custom (decompressed) and downloaded images
- */
+/** Delete a custom (decompressed) or downloaded image file, ignoring errors */
 async function cleanupImageSafely(
   path: string | null,
   isCustom?: boolean
@@ -70,6 +70,7 @@ async function cleanupImageSafely(
 export function useFlashOperation({
   image,
   device,
+  autoconfig,
   onBack,
 }: UseFlashOperationProps): UseFlashOperationReturn {
   const { t } = useTranslation();
@@ -85,9 +86,15 @@ export function useFlashOperation({
   const intervalRef = useRef<number | null>(null);
   const deviceMonitorRef = useRef<number | null>(null);
   const maxProgressRef = useRef<number>(0);
+  // True once this flash's write phase is observed; guards against a stale is_verifying from a
+  // previous run latching the UI onto "verifying" with a full bar before this run writes.
+  const flashWriteSeenRef = useRef<boolean>(false);
   const hasStartedRef = useRef<boolean>(false);
   const deviceDisconnectedRef = useRef<boolean>(false);
   const skipVerifyRef = useRef<boolean>(false);
+  // Keep the latest opt-in profile config for the event-driven flash flow.
+  const autoconfigRef = useRef<AutoconfigConfig | null>(autoconfig ?? null);
+  autoconfigRef.current = autoconfig ?? null;
 
   // Failure tracking via sessionStorage
   const failureStorageKey = `${STORAGE_KEYS.FLASH_FAILURE_PREFIX}${image.file_url}`;
@@ -128,10 +135,7 @@ export function useFlashOperation({
   /** Whether the current image uses QDL (Qualcomm EDL) flashing */
   const isQdlMode = image.format === 'qdl';
 
-  /**
-   * Check device connection and trigger disconnect handler if missing
-   * Returns true if device is still connected
-   */
+  /** Check the device is connected; trigger the disconnect handler and return false if not */
   const checkDeviceOrDisconnect = useCallback(async (): Promise<boolean> => {
     try {
       if (isQdlMode) {
@@ -173,9 +177,8 @@ export function useFlashOperation({
     setStage('error');
   }, [t, clearIntervals]);
 
-  // Monitor device connection during active operations
-  // QDL flash stages are excluded because the USB device is busy during
-  // Sahara/Firehose and disconnects after reset (both are expected behavior)
+  // Monitor device connection during active operations.
+  // QDL flash stages are excluded: the USB device is busy/resets during Sahara/Firehose (expected).
   useEffect(() => {
     const activeStages: FlashStage[] = isQdlMode
       ? ['downloading', 'verifying_sha', 'decompressing']
@@ -203,7 +206,7 @@ export function useFlashOperation({
   /** Handle custom image flow (decompress if needed, then flash) */
   async function handleCustomImage(customPath: string) {
     try {
-      // QDL custom images (.tar): pass directly to flash (extraction is internal)
+      // QDL custom images (.tar) flash directly; extraction is internal
       if (isQdlMode) {
         setImagePath(customPath);
         startFlash(customPath);
@@ -226,7 +229,7 @@ export function useFlashOperation({
       if (deviceDisconnectedRef.current) return;
       if (!(await checkDeviceOrDisconnect())) return;
 
-      setError(err instanceof Error ? err.message : t('error.decompressionFailed'));
+      setError(getErrorMessage(err, t('error.decompressionFailed')));
       setStage('error');
     }
   }
@@ -271,8 +274,7 @@ export function useFlashOperation({
     }, POLLING.DOWNLOAD_PROGRESS);
 
     try {
-      // direct_url carries the full filename; file_url is the pretty
-      // mirror-selector URL (legacy redi_url) and has no extension.
+      // Use direct_url: it carries the full filename, unlike the extensionless mirror-selector file_url.
       const path = await downloadImage(image.direct_url, image.sha_url);
       setImagePath(path);
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -281,9 +283,9 @@ export function useFlashOperation({
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (deviceDisconnectedRef.current) return;
 
-      const errorMsg = err instanceof Error ? err.message : String(err);
+      const errorMsg = getErrorMessage(err, String(err));
 
-      // SHA fetch failed - show modal (file already downloaded, not deleted)
+      // SHA fetch failed: show modal; the file is downloaded and kept
       if (isShaUnavailableError(errorMsg)) {
         setShowShaWarning(true);
         return;
@@ -291,7 +293,7 @@ export function useFlashOperation({
 
       if (!(await checkDeviceOrDisconnect())) return;
 
-      setError(err instanceof Error ? err.message : t('error.downloadFailed'));
+      setError(getErrorMessage(err, t('error.downloadFailed')));
       setStage('error');
     }
   }
@@ -301,38 +303,48 @@ export function useFlashOperation({
     setStage(isQdlMode ? 'extracting' : 'flashing');
     setProgress(0);
     maxProgressRef.current = 0;
+    flashWriteSeenRef.current = false;
 
     intervalRef.current = window.setInterval(async () => {
       try {
         const prog = await getFlashProgress();
 
-        // Update stage and progress based on QDL or standard mode
         if (prog.is_qdl_mode && prog.qdl_stage) {
           if (prog.qdl_stage === 'sahara' || prog.qdl_stage === 'connecting' || prog.qdl_stage === 'configuring') {
             setStage('qdl_sahara');
           } else if (prog.qdl_stage.startsWith('partition:') || prog.qdl_stage === 'firehose' || prog.qdl_stage === 'patching') {
             setStage('qdl_firehose');
           } else if (prog.qdl_stage === 'complete' || prog.qdl_stage === 'resetting') {
-            // Flash is done or resetting, don't trigger device disconnect error
+            // Done/resetting: don't trigger a device-disconnect error
             return;
           }
 
-          // Use byte-level progress (ProgressReader provides real-time updates)
           if (prog.progress_percent >= maxProgressRef.current) {
             maxProgressRef.current = prog.progress_percent;
             setProgress(prog.progress_percent);
           }
         } else {
-          if (prog.is_verifying) {
+          // A non-verifying poll means this run is actually writing: open the latch.
+          if (!prog.is_verifying) {
+            flashWriteSeenRef.current = true;
+          }
+          // Only honor verify once the write phase of THIS run has been seen, so a
+          // stale is_verifying from a previous flash can't jump straight to a full bar.
+          const verifying = prog.is_verifying && flashWriteSeenRef.current;
+
+          if (verifying) {
             setStage('verifying');
             if (maxProgressRef.current > 50) {
               maxProgressRef.current = 0;
             }
           }
 
-          if (prog.progress_percent >= maxProgressRef.current) {
-            maxProgressRef.current = prog.progress_percent;
-            setProgress(prog.progress_percent);
+          // Skip stale verify polls (is_verifying true before any write seen).
+          if (verifying || !prog.is_verifying) {
+            if (prog.progress_percent >= maxProgressRef.current) {
+              maxProgressRef.current = prog.progress_percent;
+              setProgress(prog.progress_percent);
+            }
           }
         }
         if (prog.error && !deviceDisconnectedRef.current) {
@@ -348,10 +360,11 @@ export function useFlashOperation({
     try {
       if (isQdlMode) {
         // QDL path: TAR archive → extract → Sahara → Firehose
-        await flashQdlImage(path);
+        // Pass autoconfig only when a profile was selected (else undefined = unchanged)
+        await flashQdlImage(path, undefined, autoconfigRef.current ?? undefined);
       } else {
-        // Standard path: image → block device write
-        await flashImage(path, device.path, !skipVerifyRef.current);
+        // Pass autoconfig only when a profile was selected (else undefined = unchanged)
+        await flashImage(path, device.path, !skipVerifyRef.current, autoconfigRef.current ?? undefined);
       }
       if (intervalRef.current) clearInterval(intervalRef.current);
       setStage('complete');
@@ -372,7 +385,7 @@ export function useFlashOperation({
         const currentCount = getFlashFailureCount() + 1;
         setFlashFailureCount(currentCount);
 
-        // Auto-drop cached image after too many failures (possibly corrupted)
+        // Drop cached image after too many failures (possibly corrupted)
         if (currentCount >= CACHE.MAX_FLASH_FAILURES) {
           try {
             await forceDeleteCachedImage(path);
@@ -386,7 +399,7 @@ export function useFlashOperation({
       if (!isQdlMode) {
         await cleanupImageSafely(path, image.is_custom);
       }
-      const rawError = err instanceof Error ? err.message : String(err);
+      const rawError = getErrorMessage(err, String(err));
       setError(translateQdlError(rawError, t));
       setStage('error');
     }
@@ -399,14 +412,13 @@ export function useFlashOperation({
     setError(null);
 
     try {
-      // Load skip verify setting once at the start
       try {
         skipVerifyRef.current = await getSkipVerify();
       } catch {
         skipVerifyRef.current = false;
       }
 
-      // QDL mode: skip block-device authorization (USB access handled by OS)
+      // QDL skips block-device authorization (USB access handled by OS)
       if (!isQdlMode) {
         const authorized = await requestWriteAuthorization(device.path);
         if (!authorized) {
@@ -422,7 +434,7 @@ export function useFlashOperation({
         startDownload();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('error.authFailed'));
+      setError(getErrorMessage(err, t('error.authFailed')));
       setStage('error');
     }
   }
@@ -448,8 +460,7 @@ export function useFlashOperation({
     try {
       await cancelOperation();
       if (intervalRef.current) clearInterval(intervalRef.current);
-      // For QDL: don't navigate away immediately, the blocking flash command
-      // needs time to detect cancellation and clean up. Show cancelling state.
+      // QDL: stay put so the blocking flash command can detect cancel and clean up
       if (isQdlMode) {
         setStage('authorizing');
         setProgress(0);
@@ -474,7 +485,7 @@ export function useFlashOperation({
         startFlash(imagePath);
         return;
       }
-      // Re-authorize before re-flashing existing image
+      // Re-authorize before re-flashing the existing image
       setStage('authorizing');
       try {
         const authorized = await requestWriteAuthorization(device.path);
@@ -485,7 +496,7 @@ export function useFlashOperation({
         }
         startFlash(imagePath);
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('error.authFailed'));
+        setError(getErrorMessage(err, t('error.authFailed')));
         setStage('error');
       }
     } else {
@@ -512,7 +523,7 @@ export function useFlashOperation({
       startFlash(path);
     } catch (err) {
       if (deviceDisconnectedRef.current) return;
-      setError(err instanceof Error ? err.message : t('error.decompressionFailed'));
+      setError(getErrorMessage(err, t('error.decompressionFailed')));
       setStage('error');
     }
   };

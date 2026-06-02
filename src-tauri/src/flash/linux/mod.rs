@@ -1,8 +1,5 @@
-//! Linux-specific flash implementation
-//!
-//! Uses direct device access after app is elevated via pkexec.
-//! When request_authorization is called and we're not root,
-//! pkexec is launched to restart the app with elevated privileges.
+//! Linux-specific flash implementation. Uses UDisks2 (polkit) for device
+//! access, falling back to a direct root open.
 
 mod privileges;
 mod writer;

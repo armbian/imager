@@ -1,6 +1,4 @@
-//! Progress tracking module
-//!
-//! Handles download and flash progress reporting.
+//! Progress tracking: download and flash progress reporting.
 
 use serde::{Deserialize, Serialize};
 use tauri::State;

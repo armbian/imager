@@ -1,15 +1,9 @@
-//! QDL flash orchestration
-//!
-//! Coordinates the full QDL flashing pipeline:
-//! 1. Connect to the EDL device via USB
-//! 2. Upload firehose programmer via Sahara protocol
-//! 3. Configure Firehose and program partitions from rawprogram0.xml
-//! 4. Apply patches from patch0.xml
-//! 5. Reset the device
+//! QDL flash orchestration: connect to EDL device via USB, upload firehose programmer via Sahara, configure
+//! Firehose and program partitions from rawprogram0.xml, apply patch0.xml patches, then reset the device.
 
 use std::fs;
 use std::io::{Read, Seek, SeekFrom};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
@@ -33,9 +27,9 @@ use crate::{log_info, log_warn};
 pub fn qdl_flash(
     flash_dir: &Path,
     serial: Option<String>,
+    autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
-    // Set QDL mode flag
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
     // --- Stage 1: Connect to EDL device ---
@@ -96,7 +90,7 @@ pub fn qdl_flash(
         log_info!("qdl::flash", "Chip serial number: {:#x}", serial);
     }
 
-    // Step 2b: Read OEM key hash
+    // Step 2b: Read OEM key hash (best effort, result unused).
     let _ = sahara_run(
         &mut device,
         SaharaMode::Command,
@@ -130,7 +124,7 @@ pub fn qdl_flash(
 
     log_info!("qdl::flash", "Firehose programmer uploaded successfully");
 
-    // Activate reset-on-drop now that Sahara is done
+    // Once the programmer is up, dropping the device should reset it.
     device.reset_on_drop = true;
 
     // --- Stage 3: Configure Firehose ---
@@ -138,19 +132,25 @@ pub fn qdl_flash(
     update_qdl_stage(&state, "configuring");
     log_info!("qdl::flash", "Configuring Firehose protocol...");
 
-    // Read welcome logs
     firehose_read(&mut device, firehose_parser_ack_nak)
         .map_err(|e| format!("Failed to read firehose welcome: {}", e))?;
 
-    // Send configuration
     firehose_configure(&mut device, false)
         .map_err(|e| format!("Firehose configuration failed: {}", e))?;
 
-    // Parse configure response (may negotiate buffer sizes)
+    // Configure response may renegotiate buffer sizes.
     firehose_read(&mut device, firehose_parser_configure_response)
         .map_err(|e| format!("Firehose configure handshake failed: {}", e))?;
 
     log_info!("qdl::flash", "Firehose configured successfully");
+
+    // --- Autoconfig injection (still within the "configuring" stage) ---
+    // Inject first-boot preset into the extracted ext4 rootfs blob IN PLACE before Firehose reads it.
+    // Skipped silently when no profile selected or rootfs is not an injectable bare-ext4 image.
+    if let Some(cfg) = autoconfig.as_ref() {
+        check_cancelled(&state)?;
+        inject_autoconfig(flash_dir, cfg)?;
+    }
 
     // --- Stage 4: Program partitions from rawprogram0.xml ---
     check_cancelled(&state)?;
@@ -185,6 +185,160 @@ pub fn qdl_flash(
     Ok(())
 }
 
+/// Offset of the ext4 superblock magic within a bare ext4 image, and its value.
+const EXT4_SB_OFFSET: u64 = 0x438;
+const EXT4_MAGIC: [u8; 2] = [0x53, 0xEF];
+
+/// Inject first-boot autoconfig preset into the extracted ext4 rootfs from rawprogram0.xml. Skips (warn) if non-injectable
+/// (non-ext4/sparse/readbackverify/file offset/multi-part, B3); ext4 write/validate fail or over window (B2) are fatal "[QDL_AUTOCONFIG_FAILED]".
+fn inject_autoconfig(
+    flash_dir: &Path,
+    config: &crate::autoconfig::AutoconfigConfig,
+) -> Result<(), String> {
+    let rawprogram_path = flash_dir.join("rawprogram0.xml");
+
+    let (rootfs_path, window_bytes) = match find_rootfs_image(flash_dir) {
+        Some(found) => found,
+        None => {
+            // B3: non-injectable rootfs -> skip, do not abort.
+            log_warn!(
+                "qdl::flash",
+                "Autoconfig: no injectable ext4 rootfs found in {}; skipping injection",
+                rawprogram_path.display()
+            );
+            return Ok(());
+        }
+    };
+
+    log_info!(
+        "qdl::flash",
+        "Autoconfig: injecting preset into rootfs {}",
+        rootfs_path.display()
+    );
+
+    // A confirmed-ext4 rootfs that fails to write/validate is fatal.
+    crate::autoconfig::inject_into_bare_ext4_image(&rootfs_path, config)
+        .map_err(|e| format!("[QDL_AUTOCONFIG_FAILED] {}", e))?;
+
+    // B2: the mutated file must still fit within the partition window.
+    let file_len = fs::metadata(&rootfs_path)
+        .map_err(|e| {
+            format!(
+                "[QDL_AUTOCONFIG_FAILED] failed to stat rootfs after injection: {}",
+                e
+            )
+        })?
+        .len();
+    if file_len > window_bytes {
+        return Err(format!(
+            "[QDL_AUTOCONFIG_FAILED] rootfs grew beyond partition window after injection \
+             ({} bytes > {} bytes)",
+            file_len, window_bytes
+        ));
+    }
+
+    log_info!(
+        "qdl::flash",
+        "Autoconfig: injection complete ({} bytes, window {} bytes)",
+        file_len,
+        window_bytes
+    );
+
+    Ok(())
+}
+
+/// Resolve injectable rootfs from rawprogram0.xml: `Some((path, window_bytes))` only if exactly one `label="rootfs"` entry is non-sparse,
+/// `readbackverify != true`, `file_sector_offset == 0`, file exists, ext4 magic at 0x438; else `None` (skip, B3/M3). Window = `num_partition_sectors * SECTOR_SIZE_IN_BYTES` (B2).
+fn find_rootfs_image(flash_dir: &Path) -> Option<(PathBuf, u64)> {
+    let xml_path = flash_dir.join("rawprogram0.xml");
+    let xml_data = fs::read(&xml_path).ok()?;
+    let xml = Element::parse(&xml_data[..]).ok()?;
+
+    // Collect all program entries labelled "rootfs".
+    let rootfs_entries: Vec<&Element> = xml
+        .children
+        .iter()
+        .filter_map(|n| {
+            if let XMLNode::Element(e) = n {
+                if e.name.to_lowercase() == "program"
+                    && e.attributes
+                        .get("label")
+                        .map(|s| s.eq_ignore_ascii_case("rootfs"))
+                        .unwrap_or(false)
+                {
+                    return Some(e);
+                }
+            }
+            None
+        })
+        .collect();
+
+    // M3: a multi-part rootfs is not injectable.
+    if rootfs_entries.len() != 1 {
+        return None;
+    }
+    let entry = rootfs_entries[0];
+    let attrs = &entry.attributes;
+
+    let filename = attrs.get("filename").map(|s| s.as_str()).unwrap_or("");
+    if filename.is_empty() {
+        return None;
+    }
+
+    // M3: sparse / readbackverify / non-zero file offset are not injectable.
+    let sparse = attrs
+        .get("sparse")
+        .map(|s| s.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    if sparse {
+        return None;
+    }
+    let readbackverify = attrs
+        .get("readbackverify")
+        .map(|s| s.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+    if readbackverify {
+        return None;
+    }
+    let file_sector_offset: u64 = attrs
+        .get("file_sector_offset")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
+    if file_sector_offset != 0 {
+        return None;
+    }
+
+    // M2: resolve as flash_dir.join(filename) + .exists() (no canonicalize).
+    let rootfs_path = flash_dir.join(filename);
+    if !rootfs_path.exists() {
+        return None;
+    }
+
+    // B3: probe the ext4 superblock magic at offset 0x438; non-ext4 -> skip.
+    let mut file = fs::File::open(&rootfs_path).ok()?;
+    file.seek(SeekFrom::Start(EXT4_SB_OFFSET)).ok()?;
+    let mut magic = [0u8; 2];
+    if file.read_exact(&mut magic).is_err() || magic != EXT4_MAGIC {
+        return None;
+    }
+
+    // B2: partition window = num_partition_sectors * SECTOR_SIZE_IN_BYTES.
+    let num_partition_sectors: u64 = attrs
+        .get("num_partition_sectors")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
+    let sector_size: u64 = attrs
+        .get("SECTOR_SIZE_IN_BYTES")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(512);
+    let window_bytes = num_partition_sectors.saturating_mul(sector_size);
+    if window_bytes == 0 {
+        return None;
+    }
+
+    Some((rootfs_path, window_bytes))
+}
+
 /// Parse rawprogram0.xml and program each partition
 fn program_from_xml<T: QdlChan>(
     channel: &mut T,
@@ -198,7 +352,7 @@ fn program_from_xml<T: QdlChan>(
     let xml = Element::parse(&xml_data[..])
         .map_err(|e| format!("Failed to parse rawprogram0.xml: {}", e))?;
 
-    // Count programmable entries for progress tracking
+    // Pre-count real program entries to size the progress total.
     let program_entries: Vec<&Element> = xml
         .children
         .iter()
@@ -215,7 +369,6 @@ fn program_from_xml<T: QdlChan>(
                         .get("num_partition_sectors")
                         .and_then(|s| s.parse().ok())
                         .unwrap_or(0);
-                    // Skip empty or zero-length entries
                     if !filename.is_empty() && num_sectors > 0 && flash_dir.join(filename).exists()
                     {
                         return Some(e);
@@ -238,7 +391,7 @@ fn program_from_xml<T: QdlChan>(
         total_entries
     );
 
-    // Calculate total bytes for progress based on sector counts
+    // Progress total in bytes, derived from each entry's sector count.
     let sector_size = channel.fh_config().storage_sector_size;
     let total_bytes: u64 = program_entries
         .iter()
@@ -256,7 +409,7 @@ fn program_from_xml<T: QdlChan>(
     let mut bytes_written: u64 = 0;
     let mut partition_idx: u64 = 0;
 
-    // Process all XML children (program, patch, read, etc.)
+    // Only <program> entries here; patches come from patch0.xml later.
     for node in &xml.children {
         if let XMLNode::Element(e) = node {
             match e.name.to_lowercase().as_str() {
@@ -271,8 +424,7 @@ fn program_from_xml<T: QdlChan>(
                     )?;
                 }
                 _ => {
-                    // Skip non-program entries in rawprogram0.xml
-                    // (patches are handled separately from patch0.xml)
+                    // Non-program entries are ignored here.
                 }
             }
         }
@@ -314,12 +466,10 @@ fn program_single_partition<T: QdlChan>(
         .unwrap_or(0);
     let sector_size = channel.fh_config().storage_sector_size;
 
-    // Skip zero-length entries
     if num_sectors == 0 {
         return Ok(());
     }
 
-    // Skip entries without files (allow-missing semantics)
     if filename.is_empty() {
         return Ok(());
     }
@@ -335,10 +485,8 @@ fn program_single_partition<T: QdlChan>(
         return Ok(());
     }
 
-    // Check cancellation before each partition
     check_cancelled(state)?;
 
-    // Update progress stage
     let display_label = if label.is_empty() { filename } else { label };
     {
         let mut stage = state.qdl.stage.lock().unwrap_or_else(|p| p.into_inner());
@@ -360,7 +508,6 @@ fn program_single_partition<T: QdlChan>(
     let mut file =
         fs::File::open(&file_path).map_err(|e| format!("Failed to open {}: {}", filename, e))?;
 
-    // Apply file sector offset if specified
     if file_sector_offset > 0 {
         file.seek(SeekFrom::Current(
             sector_size as i64 * file_sector_offset as i64,
@@ -389,7 +536,7 @@ fn program_single_partition<T: QdlChan>(
     )
     .map_err(|e| format!("Failed to program partition {}: {}", display_label, e))?;
 
-    // Finalize progress using sector count (matches total_bytes calculation)
+    // Settle progress on the sector-count figure, matching the total_bytes math.
     *bytes_written += num_sectors as u64 * sector_size as u64;
     state.written_bytes.store(*bytes_written, Ordering::SeqCst);
     *partition_idx += 1;
@@ -414,7 +561,7 @@ fn patch_from_xml<T: QdlChan>(channel: &mut T, patch_path: &Path) -> Result<(), 
     for node in &xml.children {
         if let XMLNode::Element(e) = node {
             if e.name.to_lowercase() == "patch" {
-                // Only apply patches targeting device storage (filename == "DISK")
+                // Apply only patches that target device storage (filename == "DISK").
                 let filename = e
                     .attributes
                     .get("filename")
@@ -487,10 +634,8 @@ fn check_cancelled(state: &FlashState) -> Result<(), String> {
     }
 }
 
-/// Read wrapper that reports progress and aborts on cancellation.
-///
-/// Counts requested buffer size (not bytes returned) to match sector-based
-/// totals, and erroring on cancel propagates as a caught spawn_blocking panic.
+/// Read wrapper reporting progress and aborting on cancellation; counts requested
+/// buffer size (not bytes returned) so progress matches the sector-based totals.
 struct ProgressReader<R: Read, F: FnMut(u64)> {
     inner: R,
     bytes_transferred: u64,
@@ -511,7 +656,7 @@ impl<R: Read, F: FnMut(u64)> ProgressReader<R, F> {
 
 impl<R: Read, F: FnMut(u64)> Read for ProgressReader<R, F> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        // Check cancellation on every chunk (~1MB) for responsive cancel
+        // Per-chunk cancellation check keeps cancel responsive mid-partition.
         if self.state.is_cancelled.load(Ordering::SeqCst) {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Interrupted,

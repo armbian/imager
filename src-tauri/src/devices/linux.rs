@@ -1,6 +1,4 @@
-//! Linux device detection
-//!
-//! Uses lsblk to enumerate block devices.
+//! Linux device detection via lsblk.
 
 use std::fs;
 use std::process::Command;
@@ -10,10 +8,8 @@ use crate::utils::format_size;
 
 use super::types::{normalize_bus_type, BlockDevice};
 
-/// Checks if a device is read-only by reading /sys/block/{device}/ro
-/// Returns true if the device is read-only (write-protected)
+/// Whether a device is write-protected, per /sys/block/{device}/ro.
 fn is_device_read_only(device_name: &str) -> bool {
-    // Extract base device name (e.g., "sda" from "/dev/sda" or "mmcblk0" from "/dev/mmcblk0")
     let base_name = device_name
         .trim_start_matches("/dev/")
         .split('p')
@@ -29,7 +25,7 @@ fn is_device_read_only(device_name: &str) -> bool {
 
 /// Get list of block devices on Linux
 pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
-    // Use JSON output for reliable parsing (handles spaces in model names)
+    // JSON output parses reliably even when model names contain spaces.
     let output = Command::new("lsblk")
         .args(["-dpJo", "NAME,SIZE,MODEL,RM,TRAN", "-b"])
         .output()
@@ -51,7 +47,6 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
     let mut devices = Vec::new();
     let system_disks = get_system_disks();
 
-    // Parse JSON output
     let json: serde_json::Value =
         serde_json::from_str(&stdout).map_err(|e| format!("Failed to parse lsblk JSON: {}", e))?;
 
@@ -62,7 +57,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
     for dev in blockdevices {
         let path = dev["name"].as_str().unwrap_or("");
 
-        // Skip non-standard devices
+        // Only consider real disk device paths.
         if !path.starts_with("/dev/sd")
             && !path.starts_with("/dev/hd")
             && !path.starts_with("/dev/vd")
@@ -79,12 +74,12 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
 
         let dev_name = path.strip_prefix("/dev/").unwrap_or(path);
 
-        // Mark as system disk instead of skipping (consistent with macOS behavior)
+        // Flag rather than drop system disks, matching the macOS behavior.
         let is_system = system_disks
             .iter()
             .any(|sys| sys.starts_with(dev_name) || dev_name.starts_with(sys));
 
-        // Parse size - can be string or number in JSON
+        // lsblk JSON may encode size as a number or a string.
         let size: u64 = match &dev["size"] {
             serde_json::Value::Number(n) => n.as_u64().unwrap_or(0),
             serde_json::Value::String(s) => s.parse().unwrap_or(0),
@@ -96,7 +91,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
 
         let model = dev["model"].as_str().unwrap_or("").trim().to_string();
 
-        // RM field: "1" or true means removable
+        // RM is "1"/true when the device is removable.
         let is_removable = match &dev["rm"] {
             serde_json::Value::Bool(b) => *b,
             serde_json::Value::String(s) => s == "1",
@@ -104,7 +99,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             _ => false,
         };
 
-        // Get transport type from TRAN field, with fallback to device path
+        // Prefer the TRAN field, then infer the bus from the device path.
         let tran = dev["tran"].as_str().unwrap_or("");
         let bus_type = normalize_bus_type(tran).or_else(|| {
             if path.contains("mmcblk") {
@@ -116,7 +111,6 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             }
         });
 
-        // Check read-only status via sysfs
         let is_read_only = is_device_read_only(dev_name);
 
         devices.push(BlockDevice {
@@ -135,7 +129,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
     Ok(devices)
 }
 
-/// Get list of system disk names to exclude
+/// Block device names backing the root and boot mounts.
 fn get_system_disks() -> Vec<String> {
     let mut system_disks = Vec::new();
 

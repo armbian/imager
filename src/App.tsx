@@ -1,22 +1,26 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Header, HomePage } from './components/layout';
-import { ManufacturerModal, BoardModal, ImageModal, DeviceModal, ArmbianBoardModal } from './components/modals';
+import { Header, HomePage, WelcomePage } from './components/layout';
+import { ArmbianBoardModal } from './components/modals';
 import { FlashProgress } from './components/flash';
-import { SettingsButton, CacheManagerModal } from './components/settings';
+import { CacheManagerModal } from './components/settings';
 import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getCachedBoardImage, checkNeedsDecompression, decompressCustomImage, checkIsQdlImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import { useConnectivity } from './hooks/useConnectivity';
 import { ToastProvider, useToasts } from './hooks/useToasts';
-import { getArmbianBoardDetection } from './hooks/useSettings';
-import { EVENTS } from './config';
-import type { BoardInfo, ImageInfo, BlockDevice, ModalType, SelectionStep, Manufacturer, ArmbianReleaseInfo } from './types';
+import { UpdateProvider } from './contexts/UpdateContext';
+import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
+import { AUTOCONFIG_PROFILE_SELECTED_EVENT } from './components/layout/DevicePanel';
+import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT } from './config';
+import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig } from './types';
 import './styles/index.css';
 
 function App() {
   return (
     <ToastProvider>
-      <AppContent />
+      <UpdateProvider>
+        <AppContent />
+      </UpdateProvider>
     </ToastProvider>
   );
 }
@@ -25,43 +29,107 @@ function App() {
 function AppContent() {
   const { t } = useTranslation();
   const [isFlashing, setIsFlashing] = useState(false);
-  const [activeModal, setActiveModal] = useState<ModalType>('none');
+  // Shown on every launch until the user hits "Start now"
+  const [showWelcome, setShowWelcome] = useState(true);
+  // One-shot entrance animation window: true only while the main UI staggers in
+  const [entering, setEntering] = useState(false);
+  const prevShowWelcomeRef = useRef(showWelcome);
   const [selectedManufacturer, setSelectedManufacturer] = useState<Manufacturer | null>(null);
   const [selectedBoard, setSelectedBoard] = useState<BoardInfo | null>(null);
   const [selectedImage, setSelectedImage] = useState<ImageInfo | null>(null);
   const [selectedDevice, setSelectedDevice] = useState<BlockDevice | null>(null);
+  // Opt-in autoconfig profile id picked at flash time; null means unchanged behaviour.
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  const [autoconfig, setAutoconfig] = useState<AutoconfigConfig | null>(null);
 
-  // Toast notifications
   const { showSuccess, showError } = useToasts();
 
-  // Connectivity monitoring
   const { isOnline } = useConnectivity();
   const prevOnlineRef = useRef<boolean | null>(null);
 
   // Armbian board detection state
   const [armbianInfo, setArmbianInfo] = useState<ArmbianReleaseInfo | null>(null);
-  const [detectedBoard, setDetectedBoard] = useState<BoardInfo | null>(null); // Cache matched board
-  const [armbianBoardImageUrl, setArmbianBoardImageUrl] = useState<string | null>(null); // Preloaded board image
+  const [detectedBoard, setDetectedBoard] = useState<BoardInfo | null>(null);
+  const [armbianBoardImageUrl, setArmbianBoardImageUrl] = useState<string | null>(null);
   const [showArmbianModal, setShowArmbianModal] = useState(false);
-  const [showCacheManager, setShowCacheManager] = useState(false); // Standalone cache manager for offline mode
+  // Board queued by silent ('auto') detection, applied once the welcome screen is dismissed.
+  const [pendingAutoSelect, setPendingAutoSelect] = useState<BoardInfo | null>(null);
+  const [showCacheManager, setShowCacheManager] = useState(false);
   const armbianCheckRef = useRef(false); // Prevent double execution in Strict Mode
 
-  // Monitor selected device - clear if disconnected (only when not flashing)
+  // Skip the landing page on startup when the user disabled it; defaults to showing it
+  useEffect(() => {
+    getShowWelcome()
+      .then((show) => {
+        if (!show) setShowWelcome(false);
+      })
+      .catch(() => {
+        // Keep showing the welcome page on failure
+      });
+  }, []);
+
+  // Fire the entrance animation once on the welcome->main transition
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    if (prevShowWelcomeRef.current && !showWelcome) {
+      setEntering(true);
+      // Match the longest staggered animation so the class clears before hover state
+      timeoutId = setTimeout(() => setEntering(false), 1100);
+    }
+    prevShowWelcomeRef.current = showWelcome;
+    return () => clearTimeout(timeoutId);
+  }, [showWelcome]);
+
+  // Clear selected device if disconnected, only when not flashing
   useDeviceMonitor(
     selectedDevice,
     useCallback(() => setSelectedDevice(null), []),
     !isFlashing
   );
 
-  // Handle connectivity transitions
+  // Receive the opt-in autoconfig profile id chosen in the DevicePanel confirm view
   useEffect(() => {
-    // Show toast when connection is restored (not on initial mount)
+    const handler = (e: Event) => {
+      const id = (e as CustomEvent<{ id: string | null }>).detail?.id ?? null;
+      setSelectedProfileId(id);
+    };
+    window.addEventListener(AUTOCONFIG_PROFILE_SELECTED_EVENT, handler);
+    return () => window.removeEventListener(AUTOCONFIG_PROFILE_SELECTED_EVENT, handler);
+  }, []);
+
+  // Resolve the picked profile id to its config; null when no profile is selected
+  useEffect(() => {
+    if (!selectedProfileId) {
+      setAutoconfig(null);
+      return;
+    }
+    let cancelled = false;
+    getAutoconfigProfile(selectedProfileId)
+      .then((profile) => {
+        if (!cancelled) setAutoconfig(profile?.config ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setAutoconfig(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProfileId]);
+
+  useEffect(() => {
+    // Toast on reconnect, but not on initial mount
     if (prevOnlineRef.current === false && isOnline) {
       showSuccess(t('home.connectionRestored'));
     }
 
-    // Reset non-local selections when going offline, API images can't be downloaded
-    if (prevOnlineRef.current === true && !isOnline && selectedImage && !selectedImage.is_custom) {
+    // Going offline drops any API-driven selection (manufacturer/board/API image) back to the offline
+    // layout, but preserves local custom/cached images (is_custom), which work offline.
+    if (
+      prevOnlineRef.current === true &&
+      !isOnline &&
+      selectedManufacturer &&
+      !selectedImage?.is_custom
+    ) {
       resetSelectionsFrom('manufacturer');
     }
 
@@ -73,16 +141,16 @@ function AppContent() {
   const autoSelectBoard = useCallback(async (board: BoardInfo) => {
     try {
       const manufacturer: Manufacturer = {
-        id: board.vendor || 'other',
+        id: board.vendor || VENDOR.FALLBACK_ID,
         name: board.vendor_name || 'Other',
         color: 'slate',
         boardCount: 1,
       };
 
+      // Auto-selection fills the flow but never dismisses the landing; that is gated on the welcome screen.
       setSelectedManufacturer(manufacturer);
       setSelectedBoard(board);
 
-      // Image and device are still chosen by the user
       setSelectedImage(null);
       setSelectedDevice(null);
 
@@ -92,30 +160,35 @@ function AppContent() {
     }
   }, []);
 
+  // Apply a silent ('auto') detection only once past the welcome screen, so it auto-completes
+  // the flow instead of skipping the landing.
+  useEffect(() => {
+    if (!showWelcome && pendingAutoSelect) {
+      autoSelectBoard(pendingAutoSelect);
+      setPendingAutoSelect(null);
+    }
+  }, [showWelcome, pendingAutoSelect, autoSelectBoard]);
+
   // On startup, detect an Armbian host and either show the modal or auto-select
   useEffect(() => {
     const checkArmbianSystem = async () => {
       try {
-        // Re-run only when coming back online after being offline
         if (armbianCheckRef.current) return;
 
         // Armbian detection is Linux-only
         const systemInfo = await getSystemInfo();
         if (systemInfo.platform !== 'linux') {
-          // Set ref to prevent re-checking on non-Linux platforms
           armbianCheckRef.current = true;
           logInfo('app', `Skipping Armbian detection on ${systemInfo.platform}`);
           return;
         }
 
-        // Skip if offline, board matching requires API data
+        // Skip if offline, board matching requires API data; don't set ref so it retries when online
         if (!isOnline) {
           logInfo('app', 'Skipping Armbian board detection: offline');
-          // Don't set ref - allow retry when online
           return;
         }
 
-        // Mark as executed to prevent re-runs
         armbianCheckRef.current = true;
 
         const info = await getArmbianRelease();
@@ -126,15 +199,11 @@ function AppContent() {
 
         setArmbianInfo(info);
 
-        // Get detection mode from settings
         const detectionMode = await getArmbianBoardDetection();
-
-        // Skip if disabled
         if (detectionMode === 'disabled') {
           return;
         }
 
-        // Fetch boards to find matching board
         const boards = await getBoards();
         const matchedBoard = boards.find((b) => b.slug === info.board);
 
@@ -145,10 +214,9 @@ function AppContent() {
 
         logInfo('app', `Found matching board in API: ${matchedBoard.name}`);
 
-        // Cache the matched board for use in modal
         setDetectedBoard(matchedBoard);
 
-        // Load board image from local cache (downloads if online and not cached)
+        // Load board image from local cache (downloads if online and uncached)
         try {
           const cachedDataUri = await getCachedBoardImage(matchedBoard.slug);
           setArmbianBoardImageUrl(cachedDataUri);
@@ -160,11 +228,10 @@ function AppContent() {
         }
 
         if (detectionMode === 'modal') {
-          // Show confirmation modal
           setShowArmbianModal(true);
         } else if (detectionMode === 'auto') {
-          // Auto-select without confirmation
-          await autoSelectBoard(matchedBoard);
+          // Queue the silent auto-selection; it runs after the welcome screen, never skipping it.
+          setPendingAutoSelect(matchedBoard);
         }
       } catch (err) {
         logWarn('app', `Failed to check for Armbian system: ${err}`);
@@ -172,7 +239,6 @@ function AppContent() {
     };
 
     checkArmbianSystem();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline]);
 
   // Reuse a cached image from the Cache Manager: select its board and image
@@ -182,7 +248,6 @@ function AppContent() {
 
       logInfo('app', `Reusing cached image: ${filename}`);
 
-      // Try to detect board from filename
       let matchedBoard: BoardInfo | null = null;
       try {
         matchedBoard = await detectBoardFromFilename(filename);
@@ -193,7 +258,6 @@ function AppContent() {
         // Ignore detection errors
       }
 
-      // Check if image needs decompression
       let imagePath = path;
       try {
         const needsDecompress = await checkNeedsDecompression(path);
@@ -206,13 +270,12 @@ function AppContent() {
         // Continue with original path
       }
 
-      // Create ImageInfo for the cached image (same pattern as handleCustomImage)
       const cachedImage: ImageInfo = {
         release: 'Cached',
         distro_release: filename,
         kernel_branch: '',
         kernel_version: '',
-        image_variant: 'cached',
+        image_variant: IMAGE_VARIANT.CACHED,
         preinstalled_application: '',
         promoted: false,
         file_url: '',
@@ -227,17 +290,15 @@ function AppContent() {
         custom_path: imagePath,
       };
 
-      // Reset downstream selections (board, image, device)
       resetSelectionsFrom('board');
 
-      // Use API-matched board, or build a fallback from cache metadata.
-      // When offline, the API match fails but the cache manager still provides
-      // boardSlug/boardName parsed from the filename, use those for display.
-      const hasCacheMetadata = boardSlug && boardSlug !== 'cached';
+      // API-matched board, else fall back to cache metadata (boardSlug/boardName
+      // parsed from the filename) since the API match fails when offline.
+      const hasCacheMetadata = boardSlug && boardSlug !== SLUGS.CACHED;
       const displayBoard = matchedBoard || {
-        slug: boardSlug || 'cached',
+        slug: boardSlug || SLUGS.CACHED,
         name: boardName || t('custom.customImage'),
-        vendor: hasCacheMetadata ? 'detected' : 'cached',
+        vendor: hasCacheMetadata ? SLUGS.DETECTED : SLUGS.CACHED,
         vendor_name: hasCacheMetadata ? (boardName || 'Unknown') : 'Cached',
         support_tier: 'community',
         image_count: 1,
@@ -267,39 +328,48 @@ function AppContent() {
     if (stepIndex <= 0) setSelectedManufacturer(null);
     if (stepIndex <= 1) setSelectedBoard(null);
     if (stepIndex <= 2) setSelectedImage(null);
-    if (stepIndex <= 3) setSelectedDevice(null);
+    if (stepIndex <= 3) {
+      setSelectedDevice(null);
+      // The profile picker belongs to the device step; drop the opt-in selection.
+      setSelectedProfileId(null);
+    }
   }
 
   function handleManufacturerSelect(manufacturer: Manufacturer) {
     setSelectedManufacturer(manufacturer);
-    resetSelectionsFrom('board'); // Reset board, image, device
-    setActiveModal('none');
+    resetSelectionsFrom('board');
   }
 
   function handleBoardSelect(board: BoardInfo) {
     setSelectedBoard(board);
-    resetSelectionsFrom('image'); // Reset image, device
-    setActiveModal('none');
+    resetSelectionsFrom('image');
   }
 
   function handleImageSelect(image: ImageInfo) {
     setSelectedImage(image);
-    resetSelectionsFrom('device'); // Reset device
-    setActiveModal('none');
+    resetSelectionsFrom('device');
   }
 
+  // Reveals the inline confirm summary; does not start flashing yet
   function handleDeviceSelect(device: BlockDevice) {
     setSelectedDevice(device);
-    setActiveModal('none');
-    // Start flashing immediately after device selection
+  }
+
+  // Confirm the inline summary: begin flashing the picked device
+  function handleConfirmFlash() {
     setIsFlashing(true);
+  }
+
+  // Cancel the inline confirm: drop back to the device list
+  function handleClearDevice() {
+    setSelectedDevice(null);
+    setSelectedProfileId(null);
   }
 
   async function handleCustomImage() {
     try {
       const result = await selectCustomImage();
       if (result) {
-        // Detect board from filename
         let detectedBoard: BoardInfo | null = null;
         try {
           detectedBoard = await detectBoardFromFilename(result.name);
@@ -311,7 +381,7 @@ function AppContent() {
           logWarn('app', `Failed to detect board from filename: ${err}`);
         }
 
-        // Check if the custom image is a QDL (Qualcomm EDL) TAR archive
+        // QDL (Qualcomm EDL) TAR archives flash differently than block images
         let flashMethod = 'block';
         try {
           const isQdl = await checkIsQdlImage(result.path);
@@ -320,16 +390,15 @@ function AppContent() {
             logInfo('app', `Custom image detected as QDL archive: ${result.name}`);
           }
         } catch {
-          // Ignore QDL detection errors, default to block
+          // Default to block on detection failure
         }
 
-        // Create a custom ImageInfo object
         const customImage: ImageInfo = {
           release: 'Custom',
           distro_release: result.name,
           kernel_branch: '',
           kernel_version: '',
-          image_variant: 'custom',
+          image_variant: IMAGE_VARIANT.CUSTOM,
           preinstalled_application: '',
           promoted: false,
           file_url: '',
@@ -344,14 +413,13 @@ function AppContent() {
           custom_path: result.path,
         };
 
-        // Reset selections and set board for display
         resetSelectionsFrom('manufacturer');
 
-        // Use detected board if found, otherwise use generic custom board
+        // Use detected board if found, otherwise a generic custom board
         const displayBoard = detectedBoard || {
-          slug: 'custom',
+          slug: SLUGS.CUSTOM,
           name: t('custom.customImage'),
-          vendor: 'custom',
+          vendor: SLUGS.CUSTOM,
           vendor_name: 'Custom',
           support_tier: 'community',
           image_count: 1,
@@ -359,7 +427,6 @@ function AppContent() {
           promoted: false,
         };
 
-        // Set manufacturer for display consistency (same pattern as cached image reuse)
         setSelectedManufacturer({
           id: displayBoard.vendor,
           name: displayBoard.vendor_name,
@@ -368,6 +435,8 @@ function AppContent() {
         });
         setSelectedBoard(displayBoard);
         setSelectedImage(customImage);
+        // A custom image bypasses the landing and enters the flow directly
+        setShowWelcome(false);
       }
     } catch (err) {
       console.error('Failed to select custom image:', err);
@@ -376,12 +445,13 @@ function AppContent() {
 
   function handleComplete() {
     setIsFlashing(false);
-    resetSelectionsFrom('manufacturer'); // Reset all selections
+    resetSelectionsFrom('manufacturer');
   }
 
   function handleBackFromFlash() {
     setIsFlashing(false);
-    setSelectedDevice(null); // Reset device to allow re-selection
+    setSelectedDevice(null); // Allow re-selection
+    setSelectedProfileId(null);
   }
 
   function handleReset() {
@@ -389,9 +459,8 @@ function AppContent() {
   }
 
   function handleNavigateToStep(step: SelectionStep) {
-    // Reset selections from this step onwards, then open the modal
+    // Reset from this step onward so it becomes the active inline panel
     resetSelectionsFrom(step);
-    setActiveModal(step);
   }
 
   // Confirm the Armbian modal: auto-select the detected board (from cache, no refetch)
@@ -406,23 +475,21 @@ function AppContent() {
     setShowArmbianModal(false);
   }, [detectedBoard, autoSelectBoard]);
 
-  /**
-   * Handle Armbian modal cancel - dismiss and proceed with manual selection
-   */
+  /** Dismiss the Armbian modal and proceed with manual selection */
   const handleArmbianCancel = useCallback(() => {
     logInfo('app', 'User cancelled Armbian board auto-selection');
     setShowArmbianModal(false);
   }, []);
 
-  /**
-   * Handle detection disabled from Armbian modal cancel - show informative toast
-   */
+  /** Show a toast when board detection is disabled from the Armbian modal */
   const handleDetectionDisabled = useCallback(() => {
     showError(t('armbian.disabledToast'));
   }, [showError, t]);
 
   return (
     <div className="app">
+      {/* macOS overlay titlebar drag strip; reserved 42px stays clear of the traffic-light controls */}
+      <div className="titlebar-drag" data-tauri-drag-region />
       <Header
         selectedManufacturer={selectedManufacturer}
         selectedBoard={selectedBoard}
@@ -432,68 +499,57 @@ function AppContent() {
         onNavigateToStep={handleNavigateToStep}
         isFlashing={isFlashing}
         isOnline={isOnline}
+        hideSteps={showWelcome}
+        hideSettings={showWelcome || isFlashing}
+        hideLogo={showWelcome}
+        entering={entering}
       />
 
-      <main className="main-content">
-        {!isFlashing ? (
-          <HomePage
-            selectedManufacturer={selectedManufacturer}
-            selectedBoard={selectedBoard}
-            selectedImage={selectedImage}
-            selectedDevice={selectedDevice}
-            onChooseManufacturer={() => setActiveModal('manufacturer')}
-            onChooseBoard={() => setActiveModal('board')}
-            onChooseImage={() => setActiveModal('image')}
-            onChooseDevice={() => setActiveModal('device')}
-            onChooseCustomImage={handleCustomImage}
-            onOpenCacheManager={() => setShowCacheManager(true)}
-            isOnline={isOnline}
-          />
-        ) : (
+      <main
+        className={`main-content${
+          isFlashing ? '' : showWelcome ? ' main-content--welcome' : ' main-content--home'
+        }`}
+      >
+        {isFlashing ? (
           selectedBoard && selectedImage && selectedDevice && (
             <FlashProgress
               board={selectedBoard}
               image={selectedImage}
               device={selectedDevice}
+              autoconfig={autoconfig}
               onComplete={handleComplete}
               onBack={handleBackFromFlash}
             />
           )
+        ) : showWelcome ? (
+          <WelcomePage onStart={() => setShowWelcome(false)} />
+        ) : (
+          <HomePage
+            selectedManufacturer={selectedManufacturer}
+            selectedBoard={selectedBoard}
+            selectedImage={selectedImage}
+            selectedDevice={selectedDevice}
+            onChooseManufacturer={() => resetSelectionsFrom('manufacturer')}
+            onChooseBoard={() => resetSelectionsFrom('board')}
+            onChooseImage={() => resetSelectionsFrom('image')}
+            onChooseDevice={() => resetSelectionsFrom('device')}
+            onChooseCustomImage={handleCustomImage}
+            onOpenCacheManager={() => setShowCacheManager(true)}
+            onSelectManufacturer={handleManufacturerSelect}
+            onSelectBoard={handleBoardSelect}
+            onSelectImage={handleImageSelect}
+            onSelectDevice={handleDeviceSelect}
+            onConfirmDevice={handleConfirmFlash}
+            onClearDevice={handleClearDevice}
+            isOnline={isOnline}
+            entering={entering}
+          />
         )}
       </main>
 
-      {/* Modals */}
-      <ManufacturerModal
-        isOpen={activeModal === 'manufacturer'}
-        onClose={() => setActiveModal('none')}
-        onSelect={handleManufacturerSelect}
-      />
-
-      <BoardModal
-        isOpen={activeModal === 'board'}
-        onClose={() => setActiveModal('none')}
-        onSelect={handleBoardSelect}
-        manufacturer={selectedManufacturer}
-      />
-
-      <ImageModal
-        isOpen={activeModal === 'image'}
-        onClose={() => setActiveModal('none')}
-        onSelect={handleImageSelect}
-        board={selectedBoard}
-      />
-
-      <DeviceModal
-        isOpen={activeModal === 'device'}
-        onClose={() => setActiveModal('none')}
-        onSelect={handleDeviceSelect}
-        flashMethod={selectedImage?.format}
-      />
-
-      {/* Armbian board detection modal */}
       {armbianInfo && (
         <ArmbianBoardModal
-          isOpen={showArmbianModal}
+          isOpen={showArmbianModal && !showWelcome}
           onClose={handleArmbianCancel}
           onConfirm={handleArmbianConfirm}
           onDetectionDisabled={handleDetectionDisabled}
@@ -508,8 +564,6 @@ function AppContent() {
         isOpen={showCacheManager}
         onClose={() => setShowCacheManager(false)}
       />
-
-      {!isFlashing && <SettingsButton />}
     </div>
   );
 }

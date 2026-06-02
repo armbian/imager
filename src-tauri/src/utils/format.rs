@@ -1,10 +1,6 @@
-//! Formatting utilities for human-readable output
-//!
-//! Provides consistent formatting functions for the application.
+//! Formatting helpers for human-readable output and Armbian filename parsing.
 
-/// Bytes per megabyte constant
 pub const MB: u64 = 1024 * 1024;
-/// Bytes per gigabyte constant
 pub const GB: u64 = 1024 * 1024 * 1024;
 
 /// Convert bytes to megabytes as f64 (for calculations and logging)
@@ -56,43 +52,30 @@ pub struct ArmbianFilenameInfo {
     pub desktop: Option<String>,
 }
 
-/// Strip compression and image extensions from a filename
-///
-/// Removes trailing `.xz`, `.gz`, `.zst`, `.bz2` and then `.img`.
+/// Strip a trailing compression extension and then .img.
 fn strip_image_extensions(filename: &str) -> &str {
-    let name = filename
-        .strip_suffix(".xz")
-        .or_else(|| filename.strip_suffix(".gz"))
-        .or_else(|| filename.strip_suffix(".zst"))
-        .or_else(|| filename.strip_suffix(".bz2"))
-        .unwrap_or(filename);
-
+    let name = super::strip_compression_ext(filename);
     name.strip_suffix(".img").unwrap_or(name)
 }
 
-/// Parse an Armbian image filename into structured metadata.
-///
-/// Handles three naming conventions:
-/// - Standard:  `Armbian_{version}_{board}_{distro}_{branch}_{kernel}[_{desktop}]`
-/// - Labeled:   `Armbian_{label}_{version}_{board}_...` (label when parts[1] is non-numeric)
-/// - Prefixed:  `Armbian-unofficial_{version}_{board}_...`
+/// Parse an Armbian image filename into structured metadata. Three conventions: Standard `Armbian_{version}_{board}_{distro}_{branch}_{kernel}[_{desktop}]`,
+/// Labeled `Armbian_{label}_{version}_{board}_...` (label when parts[1] is non-numeric), Prefixed `Armbian-unofficial_{version}_{board}_...`.
 pub fn parse_armbian_filename(filename: &str) -> Option<ArmbianFilenameInfo> {
     let name = strip_image_extensions(filename);
     let parts: Vec<&str> = name.split('_').collect();
 
-    // Must start with "Armbian" (possibly hyphenated, e.g. "Armbian-unofficial")
+    // Must start with "Armbian", possibly hyphenated (e.g. "Armbian-unofficial").
     if parts.len() < 4 || !parts[0].to_ascii_lowercase().starts_with("armbian") {
         return None;
     }
 
-    // If parts[1] doesn't start with a digit, it's a label (e.g. "community")
+    // A non-numeric parts[1] is a label (e.g. "community"), shifting later fields by one.
     let offset = if !parts[1].starts_with(|c: char| c.is_ascii_digit()) {
         1
     } else {
         0
     };
 
-    // Board is at index 2+offset; need at least that many parts
     let board_index = 2 + offset;
     if board_index >= parts.len() {
         return None;
@@ -114,8 +97,7 @@ pub fn parse_armbian_filename(filename: &str) -> Option<ArmbianFilenameInfo> {
     })
 }
 
-/// Normalize a slug by replacing non-alphanumeric chars with hyphens
-/// and collapsing multiple hyphens into one
+/// Lowercase a slug, replace non-alphanumeric chars with hyphens, and collapse runs of hyphens.
 pub fn normalize_slug(slug: &str) -> String {
     slug.to_lowercase()
         .chars()

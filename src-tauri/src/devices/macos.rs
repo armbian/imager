@@ -1,7 +1,4 @@
-//! macOS device detection using DiskArbitration framework
-//!
-//! Uses the native DiskArbitration API for fast, low-latency
-//! device enumeration without spawning external processes.
+//! macOS device detection via the native DiskArbitration framework.
 
 use std::sync::{Mutex, OnceLock};
 
@@ -18,9 +15,7 @@ use super::types::{detect_sd_from_name, normalize_bus_type, BlockDevice};
 /// Cached system disk identifier, resolved once at startup
 static SYSTEM_DISK: OnceLock<Option<String>> = OnceLock::new();
 
-// ---------------------------------------------------------------------------
 // DiskArbitration FFI bindings
-// ---------------------------------------------------------------------------
 mod da {
     use core_foundation::base::{kCFAllocatorDefault, CFType};
     use core_foundation::base::{CFAllocatorRef, TCFType};
@@ -103,8 +98,6 @@ mod da {
         }
     }
 
-    // Typed helpers for reading disk description dictionaries
-
     pub fn get_string(dict: &CFDictionary<CFString, CFType>, key: CFStringRef) -> Option<String> {
         unsafe {
             let cf_key = CFString::wrap_under_get_rule(key);
@@ -134,9 +127,7 @@ mod da {
     }
 }
 
-// ---------------------------------------------------------------------------
 // Device enumeration
-// ---------------------------------------------------------------------------
 
 /// Callback invoked by DiskArbitration for each discovered disk
 extern "C" fn disk_appeared_callback(disk: da::DADiskRef, context: *mut std::ffi::c_void) {
@@ -159,7 +150,7 @@ unsafe fn process_disk(disk: da::DADiskRef) -> Option<BlockDevice> {
     }
     let desc: CFDictionary<CFString, CFType> = CFDictionary::wrap_under_create_rule(desc_ref);
 
-    // Skip partitions
+    // Whole-media only: skip partition slices.
     if !da::get_bool(&desc, da::kDADiskDescriptionMediaWholeKey).unwrap_or(false) {
         return None;
     }
@@ -181,13 +172,12 @@ unsafe fn process_disk(disk: da::DADiskRef) -> Option<BlockDevice> {
         da::get_string(&desc, da::kDADiskDescriptionDeviceProtocolKey).unwrap_or_default();
     let content = da::get_string(&desc, da::kDADiskDescriptionMediaContentKey).unwrap_or_default();
 
-    // Physical disks have content "GUID_partition_scheme", "FDisk_partition_scheme",
-    // or empty. APFS containers and other synthesized disks carry a GUID instead.
+    // Physical disks have a partition_scheme content or empty; APFS/synthesized disks carry a GUID.
     if !content.is_empty() && !content.contains("partition_scheme") {
         return None;
     }
 
-    // Skip virtual / disk-image protocols
+    // Skip virtual and disk-image backed media.
     let proto_upper = protocol.to_uppercase();
     if proto_upper.contains("VIRTUAL") || proto_upper.contains("DISK IMAGE") {
         return None;
@@ -200,7 +190,7 @@ unsafe fn process_disk(disk: da::DADiskRef) -> Option<BlockDevice> {
     let media_name = da::get_string(&desc, da::kDADiskDescriptionMediaNameKey).unwrap_or_default();
     let model = da::get_string(&desc, da::kDADiskDescriptionDeviceModelKey).unwrap_or_default();
 
-    // Determine bus type from protocol, media name, or icon resource
+    // Bus type from protocol, falling back to media name then icon resource.
     let bus_type = normalize_bus_type(&protocol)
         .or_else(|| detect_sd_from_name(&media_name))
         .or_else(|| check_sd_icon(&desc));
@@ -248,12 +238,9 @@ unsafe fn check_sd_icon(desc: &CFDictionary<CFString, CFType>) -> Option<String>
     }
 }
 
-// ---------------------------------------------------------------------------
 // Public API
-// ---------------------------------------------------------------------------
 
-/// Enumerate block devices via the DiskArbitration framework.
-/// The system disk identifier is resolved once and cached.
+/// Enumerate block devices via DiskArbitration; the system disk is resolved once and cached.
 pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
     let session = da::SafeSession::new().ok_or_else(|| {
         log_error!("devices", "Failed to create DiskArbitration session");
@@ -278,7 +265,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             &devices as *const Mutex<Vec<BlockDevice>> as *mut std::ffi::c_void,
         );
 
-        // Brief run-loop spin to collect all disk-appeared callbacks
+        // Spin the run loop briefly so all disk-appeared callbacks fire.
         CFRunLoop::run_in_mode(
             kCFRunLoopDefaultMode,
             std::time::Duration::from_millis(50),
@@ -297,7 +284,6 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
         format!("Failed to collect devices: {}", e)
     })?;
 
-    // Mark system disk
     let system_disk = SYSTEM_DISK.get_or_init(get_system_disk);
     if let Some(ref sys_disk) = system_disk {
         for device in &mut result {

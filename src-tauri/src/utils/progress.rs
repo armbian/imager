@@ -1,7 +1,5 @@
-//! Progress tracking utility
-//!
-//! Provides a reusable progress tracker with speed calculation for
-//! download, flash, verification, SHA256, and decompression operations.
+//! Reusable progress tracker with speed calculation for download, flash,
+//! verification, SHA256, and decompression operations.
 
 use std::time::Instant;
 
@@ -66,13 +64,10 @@ impl ProgressTracker {
         }
     }
 
-    /// Update progress and automatically log if interval reached
-    ///
-    /// Returns Some(ProgressUpdate) if it's time to log, None otherwise
+    /// Add progress; returns Some(ProgressUpdate) and logs only when a log interval is crossed.
     pub fn update(&mut self, bytes_added: u64) -> Option<ProgressUpdate> {
         self.processed_bytes += bytes_added;
 
-        // Check if we've crossed a log interval boundary
         if self.log_interval_bytes == 0 {
             return None;
         }
@@ -105,7 +100,6 @@ impl ProgressTracker {
                 speed_mbps,
             };
 
-            // Auto-log progress (debug level)
             if self.total_bytes > 0 {
                 log_debug!(
                     &self.module_name,

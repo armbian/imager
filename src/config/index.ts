@@ -1,6 +1,4 @@
-/**
- * Configuration exports
- */
+// Configuration exports
 
 // OS/App information
 export {
@@ -8,6 +6,7 @@ export {
   APP_INFO,
   getOsInfo,
   getAppInfo,
+  getImageVariantLabel,
   type OsInfoConfig,
   type AppInfoConfig,
 } from './os-info';
@@ -32,12 +31,24 @@ export {
   EVENTS,
   STORAGE_KEYS,
   SETTINGS,
+  PALETTE,
   COLORS,
   QR_CODE,
   UI,
   VENDOR,
+  SLUGS,
+  IMAGE_VARIANT,
   type DeviceType,
 } from './constants';
 
-// Device colors
-export { DEVICE_COLORS, getDeviceColors, type DeviceColorConfig } from './deviceColors';
+// Support tiers
+export {
+  SUPPORT_TIER,
+  SUPPORT_TIER_LABEL,
+  SUPPORT_TIER_ORDER,
+  PARTNER_TIER_RANK,
+} from './supportTiers';
+
+// Image filters
+export { isTrunkImage, IMAGE_FILTER_PREDICATES, FILTER_BUTTONS, categoryOf } from './imageFilters';
+export type { OsCategory } from './imageFilters';

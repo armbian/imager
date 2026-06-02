@@ -1,20 +1,43 @@
-/**
- * Device-related utility functions
- */
-
-import type { BlockDevice } from '../types';
+import type { BlockDevice, QdlDevice } from '../types';
 import type { DeviceType } from '../config/constants';
 
-/**
- * Check if a device is still connected
- */
+/** Check if device lists are different (by comparing paths and sizes). */
+export function devicesChanged(prev: BlockDevice[] | null, next: BlockDevice[]): boolean {
+  if (!prev) return true;
+  if (prev.length !== next.length) return true;
+  const prevKeys = new Set(prev.map((d) => `${d.path}:${d.size}`));
+  return next.some((d) => !prevKeys.has(`${d.path}:${d.size}`));
+}
+
+/** Sort devices: system first, then by size descending. */
+export function sortDevices(devices: BlockDevice[]): BlockDevice[] {
+  return [...devices].sort((a, b) => {
+    if (a.is_system !== b.is_system) return a.is_system ? -1 : 1;
+    return b.size - a.size;
+  });
+}
+
+/** Map a QDL device onto BlockDevice so it flows through the same selection UI. */
+export function qdlToBlockDevice(qdl: QdlDevice): BlockDevice {
+  return {
+    path: `qdl://${qdl.bus_id}/${qdl.device_address}`,
+    name: `Bus ${qdl.bus_id} Addr ${qdl.device_address}`,
+    size: 0,
+    size_formatted: '',
+    model: 'Qualcomm Emergency Download',
+    is_removable: true,
+    is_system: false,
+    bus_type: 'USB',
+    is_read_only: false,
+  };
+}
+
+/** Check if a device is still in the connected list */
 export function isDeviceConnected(devicePath: string, devices: BlockDevice[]): boolean {
   return devices.some(d => d.path === devicePath);
 }
 
-/**
- * Detect device type from BlockDevice properties
- */
+/** Detect the device type from a BlockDevice's properties */
 export function getDeviceType(device: BlockDevice): DeviceType {
   if (device.is_system) {
     return 'system';

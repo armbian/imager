@@ -2,6 +2,7 @@
 
 import { Crown, Shield, Users, Clock, Tv, Wrench } from 'lucide-react';
 import type { BoardInfo } from '../../types';
+import { SUPPORT_TIER, SUPPORT_TIER_LABEL } from '../../config';
 
 interface BoardBadgesProps {
   board: BoardInfo;
@@ -11,40 +12,40 @@ interface BoardBadgesProps {
 export function BoardBadges({ board, className = '' }: BoardBadgesProps) {
   return (
     <div className={`board-grid-badges ${className}`}>
-      {board.support_tier === 'platinum' && (
+      {board.support_tier === SUPPORT_TIER.PLATINUM && (
         <span className="badge-platinum">
           <Crown size={10} />
-          <span>Platinum</span>
+          <span>{SUPPORT_TIER_LABEL[SUPPORT_TIER.PLATINUM]}</span>
         </span>
       )}
-      {board.support_tier === 'standard' && (
+      {board.support_tier === SUPPORT_TIER.STANDARD && (
         <span className="badge-standard">
           <Shield size={10} />
-          <span>Standard</span>
+          <span>{SUPPORT_TIER_LABEL[SUPPORT_TIER.STANDARD]}</span>
         </span>
       )}
-      {board.support_tier === 'community' && (
+      {board.support_tier === SUPPORT_TIER.COMMUNITY && (
         <span className="badge-community">
           <Users size={10} />
-          <span>Community</span>
+          <span>{SUPPORT_TIER_LABEL[SUPPORT_TIER.COMMUNITY]}</span>
         </span>
       )}
-      {board.support_tier === 'eos' && (
+      {board.support_tier === SUPPORT_TIER.EOS && (
         <span className="badge-eos">
           <Clock size={10} />
-          <span>EOS</span>
+          <span>{SUPPORT_TIER_LABEL[SUPPORT_TIER.EOS]}</span>
         </span>
       )}
-      {board.support_tier === 'tvb' && (
+      {board.support_tier === SUPPORT_TIER.TVB && (
         <span className="badge-tvb">
           <Tv size={10} />
-          <span>TV Box</span>
+          <span>{SUPPORT_TIER_LABEL[SUPPORT_TIER.TVB]}</span>
         </span>
       )}
-      {board.support_tier === 'wip' && (
+      {board.support_tier === SUPPORT_TIER.WIP && (
         <span className="badge-wip">
           <Wrench size={10} />
-          <span>WIP</span>
+          <span>{SUPPORT_TIER_LABEL[SUPPORT_TIER.WIP]}</span>
         </span>
       )}
     </div>

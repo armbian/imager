@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Skeleton loading with a minimum visibility window to avoid flicker.
- * Shows immediately on load, hides only after data is ready and `minDuration` (default 300ms) elapses.
- */
+/** Skeleton loading with a min visibility window to avoid flicker: shows on load, hides
+ * only after data is ready and `minDuration` (default 300ms) elapses. */
 export function useSkeletonLoading(
   loading: boolean,
   isReady: boolean,

@@ -1,7 +1,4 @@
-//! Shared verification logic for all platforms
-//!
-//! This module provides common verification functionality that can be used
-//! across macOS, Linux, and Windows implementations.
+//! Shared verification logic for all platforms.
 
 #![allow(dead_code)]
 
@@ -43,7 +40,6 @@ pub fn verify_data<R: Read>(
 
     let image_size = state.total_bytes.load(Ordering::SeqCst);
 
-    // Use ProgressTracker for automatic progress logging
     let mut tracker = ProgressTracker::new(
         "Verify",
         MODULE,
@@ -73,7 +69,7 @@ pub fn verify_data<R: Read>(
             break;
         }
 
-        // Read same amount from device
+        // Read the matching byte count back from the device.
         let mut device_read = 0;
         while device_read < image_read {
             let n = device_reader
@@ -114,11 +110,9 @@ pub fn verify_data<R: Read>(
         verified += image_read as u64;
         state.verified_bytes.store(verified, Ordering::SeqCst);
 
-        // ProgressTracker handles logging automatically
         tracker.update(image_read as u64);
     }
 
-    // Log final summary
     tracker.finish();
     Ok(())
 }
@@ -127,7 +121,6 @@ pub fn verify_data<R: Read>(
 mod tests {
     #[test]
     fn test_verify_matching_data() {
-        // This test requires a temp file, which we'll skip for now
-        // In production, we'd create temp files and verify they match
+        // TODO: requires temp-file setup
     }
 }

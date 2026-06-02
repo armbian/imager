@@ -13,7 +13,6 @@ export function useSettingsGroup<T extends Record<string, unknown>>(
     const loadAllSettings = async () => {
       const entries = Object.entries(config) as Array<[string, SettingsLoader<unknown>]>;
 
-      // Load all settings in parallel
       const results = await Promise.all(
         entries.map(async ([key, loader]) => {
           try {
@@ -26,7 +25,6 @@ export function useSettingsGroup<T extends Record<string, unknown>>(
         })
       );
 
-      // Update state with all loaded values
       const newValues = results.reduce((acc, [key, value]) => {
         if (value !== undefined) {
           acc[key as keyof T] = value as T[keyof T];

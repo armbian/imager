@@ -1,6 +1,4 @@
-//! System utilities commands
-//!
-//! Platform-specific system operations like opening URLs and locale detection.
+//! Platform-specific system utilities: opening URLs, locale and Armbian detection.
 
 use crate::{log_debug, log_info, log_warn};
 use serde::{Deserialize, Serialize};
@@ -11,9 +9,7 @@ const MODULE: &str = "commands::system";
 /// Shared HTTP client for connectivity checks (5s timeout)
 static CONNECTIVITY_CLIENT: once_cell::sync::Lazy<reqwest::Client> =
     once_cell::sync::Lazy::new(|| {
-        reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(5))
-            .build()
+        crate::utils::build_client(std::time::Duration::from_secs(5))
             .expect("Failed to build connectivity HTTP client")
     });
 
@@ -35,8 +31,7 @@ pub fn log_debug_from_frontend(module: String, message: String) {
     log_debug!(&format!("frontend::{}", module), "{}", message);
 }
 
-/// Get the system locale (e.g., "en-US", "it-IT", "de-DE")
-/// Returns the language code for i18n initialization
+/// System locale (e.g. "en-US") used to initialize i18n.
 #[tauri::command]
 pub fn get_system_locale() -> String {
     let locale = get_locale().unwrap_or_else(|| "en-US".to_string());
@@ -44,8 +39,7 @@ pub fn get_system_locale() -> String {
     locale
 }
 
-/// Open a URL in the default browser
-/// On Linux when running as root, uses runuser to open as the original user
+/// Open a URL in the default browser; on Linux running as root, opens as the original user.
 #[tauri::command]
 pub fn open_url(url: String) -> Result<(), String> {
     log_info!(MODULE, "Opening URL: {}", url);
@@ -70,33 +64,29 @@ pub fn open_url(url: String) -> Result<(), String> {
 fn open_url_linux(url: &str) -> Result<(), String> {
     use std::process::Command;
 
-    // Check if running as root
     let euid = unsafe { libc::geteuid() };
 
     if euid == 0 {
-        // Running as root - need to run xdg-open as the original user
+        // root can't reach the user's session bus, so open xdg-open as the original user.
         log_info!(
             MODULE,
             "Running as root, attempting to open URL as original user"
         );
 
-        // Try to get the original user from PKEXEC_UID or SUDO_UID
         let target_uid = std::env::var("PKEXEC_UID")
             .or_else(|_| std::env::var("SUDO_UID"))
             .ok()
             .and_then(|uid_str| uid_str.parse::<u32>().ok());
 
         if let Some(uid) = target_uid {
-            // Get username from UID
             let username = get_username_from_uid(uid);
 
             if let Some(username) = username {
                 log_info!(MODULE, "Opening URL as user: {} (uid: {})", username, uid);
 
-                // Build environment variables to pass
+                // Forward the env vars xdg-open needs to reach the user's D-Bus and display.
                 let mut env_args = vec!["env".to_string()];
 
-                // Pass critical environment variables for D-Bus and display
                 for var in &[
                     "DBUS_SESSION_BUS_ADDRESS",
                     "XDG_RUNTIME_DIR",
@@ -112,7 +102,7 @@ fn open_url_linux(url: &str) -> Result<(), String> {
                 env_args.push("xdg-open".to_string());
                 env_args.push(url.to_string());
 
-                // Try runuser first (better environment preservation)
+                // runuser preserves the environment better than pkexec, so try it first.
                 let result = Command::new("runuser")
                     .args(["-u", &username, "--"])
                     .args(&env_args)
@@ -126,7 +116,6 @@ fn open_url_linux(url: &str) -> Result<(), String> {
                     Err(e) => {
                         log_info!(MODULE, "runuser failed: {}, trying pkexec", e);
 
-                        // Fallback to pkexec --user
                         let result = Command::new("pkexec")
                             .args(["--user", &username, "xdg-open", url])
                             .spawn();
@@ -145,14 +134,13 @@ fn open_url_linux(url: &str) -> Result<(), String> {
             }
         }
 
-        // Fallback: try xdg-open directly (might not work but worth trying)
         log_info!(
             MODULE,
             "Could not determine original user, trying xdg-open directly"
         );
     }
 
-    // Not running as root, or fallback - use xdg-open directly
+    // Not root, or the as-user attempts above fell through.
     Command::new("xdg-open")
         .arg(url)
         .spawn()
@@ -232,9 +220,7 @@ pub async fn check_connectivity() -> bool {
     }
 }
 
-// ============================================================================
 // Armbian System Detection
-// ============================================================================
 
 /// Board identification read from /etc/armbian-release
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -252,13 +238,11 @@ pub fn get_armbian_release() -> Option<ArmbianReleaseInfo> {
 
         let path = "/etc/armbian-release";
 
-        // Check if file exists
         if !std::path::Path::new(path).exists() {
             log_debug!(MODULE, "{} not found - not running on Armbian", path);
             return None;
         }
 
-        // Read file content
         let content = match fs::read_to_string(path) {
             Ok(c) => c,
             Err(e) => {
@@ -267,7 +251,6 @@ pub fn get_armbian_release() -> Option<ArmbianReleaseInfo> {
             }
         };
 
-        // Parse key=value pairs
         let mut board = String::new();
         let mut board_name = String::new();
 
@@ -289,7 +272,6 @@ pub fn get_armbian_release() -> Option<ArmbianReleaseInfo> {
             }
         }
 
-        // Validate that we have the minimum required fields
         if board.is_empty() {
             log_warn!(MODULE, "Invalid {}: missing BOARD field", path);
             return None;

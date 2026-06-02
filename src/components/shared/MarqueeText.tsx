@@ -3,12 +3,16 @@ import { UI } from '../../config';
 
 interface MarqueeTextProps {
   text: string;
+  /** Fixed overflow threshold in px; omitted = measure own width and scroll when
+   * text exceeds available space (responsive mode). */
   maxWidth?: number;
   className?: string;
 }
 
 // Component for text that scrolls automatically if it overflows
-export function MarqueeText({ text, maxWidth = UI.MARQUEE.DEFAULT_WIDTH, className = '' }: MarqueeTextProps) {
+export function MarqueeText({ text, maxWidth, className = '' }: MarqueeTextProps) {
+  // No explicit cap → measure the real container width and react to layout changes.
+  const responsive = maxWidth === undefined;
   const containerRef = useRef<HTMLSpanElement>(null);
   const [isOverflow, setIsOverflow] = useState(false);
   const [scrollPercent, setScrollPercent] = useState(50);
@@ -42,7 +46,9 @@ export function MarqueeText({ text, maxWidth = UI.MARQUEE.DEFAULT_WIDTH, classNa
         }
       }
 
-      const overflow = singleTextWidth > maxWidth;
+      // Compare against the actual available width when responsive, else the cap.
+      const available = responsive ? containerRef.current.clientWidth : maxWidth;
+      const overflow = available > 0 && singleTextWidth > available;
       setIsOverflow(overflow);
 
       if (overflow) {
@@ -54,17 +60,27 @@ export function MarqueeText({ text, maxWidth = UI.MARQUEE.DEFAULT_WIDTH, classNa
 
     const timer = setTimeout(checkOverflow, 50);
     window.addEventListener('resize', checkOverflow);
+
+    // In responsive mode the column width can change without a window resize
+    // (sidebar/panel reflow), so observe the container itself.
+    let observer: ResizeObserver | undefined;
+    if (responsive && containerRef.current && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(checkOverflow);
+      observer.observe(containerRef.current);
+    }
+
     return () => {
       clearTimeout(timer);
       window.removeEventListener('resize', checkOverflow);
+      observer?.disconnect();
     };
-  }, [text, maxWidth]);
+  }, [text, maxWidth, responsive]);
 
   return (
     <span
       ref={containerRef}
       className={`marquee-container ${isOverflow ? 'overflow' : ''} ${className}`}
-      style={{ maxWidth: `${maxWidth}px` }}
+      style={{ maxWidth: responsive ? '100%' : `${maxWidth}px` }}
       title={text}
     >
       <span

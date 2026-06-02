@@ -1,6 +1,4 @@
-//! Block device detection module
-//!
-//! Platform-specific implementations for detecting available storage devices.
+//! Platform-specific block device detection.
 
 mod types;
 
@@ -13,10 +11,8 @@ mod linux;
 #[cfg(target_os = "windows")]
 mod windows;
 
-// Re-export types
 pub use types::BlockDevice;
 
-// Re-export platform-specific implementation
 #[cfg(target_os = "macos")]
 pub use macos::get_block_devices;
 

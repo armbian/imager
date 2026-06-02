@@ -1,0 +1,21 @@
+armbian-ext4fs
+==============
+
+This crate is a vendored fork of `ext4_rs` v1.3.3 by yuoo655
+(https://github.com/yuoo655/ext4_rs), distributed under the MIT License.
+The original MIT LICENSE is preserved alongside this file.
+
+Modifications made to the upstream source
+------------------------------------------
+
+1. Removed the `#![feature(error_in_core)]` nightly feature gate (from
+   src/lib.rs and src/prelude.rs). The capability is stable since Rust 1.81,
+   so removing the gate lets the crate build on stable Rust.
+
+2. In src/simple_interface/mod.rs, fn `ext4_file_open` now uses
+   `InodeFileType::S_IFREG` instead of `S_IFDIR`. The upstream value created
+   newly opened files as directories; regular files must be S_IFREG.
+   The S_IFDIR values in `ext4_dir_mk` and `ext4_dir_open` are unchanged.
+
+The upstream binary (src/main.rs) and its [[bin]] target were removed; only
+the library is retained.

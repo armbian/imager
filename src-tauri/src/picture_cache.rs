@@ -1,8 +1,5 @@
-//! Picture cache module
-//!
-//! Local disk cache for board images and vendor logos with ETag-based
-//! conditional refresh. Cache-first strategy: always serve from local
-//! cache immediately, refresh stale entries in the background.
+//! Local disk cache for board images and vendor logos with ETag-based conditional refresh.
+//! Cache-first: serve local immediately, refresh stale entries in the background.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -14,32 +11,28 @@ use tokio::sync::Mutex;
 use base64::Engine;
 
 use crate::config;
-use crate::utils::get_cache_dir;
 use crate::{log_debug, log_info, log_warn};
 
 const MODULE: &str = "picture_cache";
 
-/// Staleness threshold: 24 hours in seconds
+/// Entries older than this are considered stale (24 hours).
 const STALE_THRESHOLD_SECS: u64 = 24 * 60 * 60;
 
-/// Maximum concurrent background refresh requests
 const MAX_CONCURRENT_REFRESHES: usize = 5;
 
 /// Metadata for a single cached asset
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct AssetEntry {
-    /// ETag header from the server
     etag: Option<String>,
-    /// Last-Modified header from the server
     last_modified: Option<String>,
     /// Unix timestamp of last freshness check
     last_checked: u64,
-    /// Original remote URL (for background refresh)
+    /// Original remote URL, used for background refresh
     #[serde(default)]
     url: Option<String>,
 }
 
-/// Root metadata structure persisted as meta.json
+/// Root metadata persisted as meta.json
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct AssetsMeta {
     entries: HashMap<String, AssetEntry>,
@@ -51,23 +44,18 @@ static META: once_cell::sync::Lazy<Mutex<Option<AssetsMeta>>> =
 
 /// Shared HTTP client for asset downloads (10s timeout)
 static HTTP_CLIENT: once_cell::sync::Lazy<reqwest::Client> = once_cell::sync::Lazy::new(|| {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(10))
-        .build()
+    crate::utils::build_client(std::time::Duration::from_secs(10))
         .expect("Failed to build HTTP client")
 });
 
-/// Get the assets cache base directory
 fn get_assets_dir() -> PathBuf {
-    get_cache_dir(config::app::NAME).join("assets")
+    crate::utils::assets_dir()
 }
 
-/// Get the path to meta.json
 fn get_meta_path() -> PathBuf {
     get_assets_dir().join("meta.json")
 }
 
-/// Get current unix timestamp
 fn now_secs() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -75,7 +63,7 @@ fn now_secs() -> u64 {
         .as_secs()
 }
 
-/// Initialize metadata from disk if not yet loaded (helper for use under lock)
+/// Load metadata from disk on first access; call while holding the lock.
 fn init_meta_from_disk(guard: &mut Option<AssetsMeta>) -> &mut AssetsMeta {
     guard.get_or_insert_with(|| {
         let meta_path = get_meta_path();
@@ -96,9 +84,7 @@ fn init_meta_from_disk(guard: &mut Option<AssetsMeta>) -> &mut AssetsMeta {
     })
 }
 
-/// Persist metadata to disk (helper for use under lock)
-///
-/// Sync I/O keeps the critical section atomic since the file is small.
+/// Persist metadata to disk under lock; sync I/O keeps the section atomic (small file).
 fn persist_meta_to_disk(meta: &AssetsMeta) {
     let meta_path = get_meta_path();
     if let Some(parent) = meta_path.parent() {
@@ -117,9 +103,16 @@ async fn load_meta() -> AssetsMeta {
     init_meta_from_disk(&mut guard).clone()
 }
 
-/// Atomically update a single entry in metadata and persist to disk
-///
-/// Holds the mutex for the whole read-modify-write cycle to avoid lost updates.
+/// Drop the in-memory metadata so the next request reloads from disk.
+/// Called after the assets cache is cleared to avoid serving stale etags.
+pub async fn reset_meta() {
+    let mut guard = META.lock().await;
+    *guard = None;
+    log_debug!(MODULE, "Picture cache metadata reset");
+}
+
+/// Update one metadata entry and persist; holds the mutex across the whole
+/// read-modify-write to avoid lost updates.
 async fn update_entry(key: &str, entry: AssetEntry) {
     let mut guard = META.lock().await;
     let meta = init_meta_from_disk(&mut guard);
@@ -127,13 +120,9 @@ async fn update_entry(key: &str, entry: AssetEntry) {
     persist_meta_to_disk(meta);
 }
 
-/// Get a cached asset, downloading on miss
-///
-/// Cache-first: serve a local file immediately (refreshing in the background
-/// if stale), otherwise download synchronously. Returns `None` on failure.
-/// `kind` is the category dir ("boards" or "vendors"), `key` the slug/id.
+/// Get a cached asset, downloading on miss; serves fresh local immediately, refreshes stale in background.
+/// `kind` is the category dir ("boards"/"vendors"), `key` the slug/id. `None` on failure.
 pub async fn get_asset(kind: &str, key: &str, remote_url: &str) -> Option<PathBuf> {
-    // Reject keys with path traversal characters
     if key.contains('/') || key.contains('\\') || key.contains("..") {
         log_warn!(MODULE, "Rejected invalid asset key: {}", key);
         return None;
@@ -144,7 +133,6 @@ pub async fn get_asset(kind: &str, key: &str, remote_url: &str) -> Option<PathBu
     let file_path = asset_dir.join(format!("{}.png", key));
     let meta_key = format!("{}/{}", kind, key);
 
-    // Cache hit: return path immediately, spawn background refresh if stale
     if file_path.exists() {
         let meta = load_meta().await;
         let entry = meta.entries.get(&meta_key);
@@ -175,7 +163,7 @@ pub async fn get_asset(kind: &str, key: &str, remote_url: &str) -> Option<PathBu
         return Some(file_path);
     }
 
-    // Cache miss: download and return path (or None on failure)
+    // Cache miss: download synchronously.
     if let Err(e) = tokio::fs::create_dir_all(&asset_dir).await {
         log_warn!(
             MODULE,
@@ -202,7 +190,7 @@ async fn download_asset(meta_key: &str, url: &str, file_path: &Path) -> Option<P
         Ok(r) if r.status().is_success() => r,
         Ok(r) => {
             log_debug!(MODULE, "Asset download returned {}: {}", r.status(), url);
-            // Record the check so we don't retry immediately
+            // Record the check so we don't retry immediately.
             update_entry(
                 meta_key,
                 AssetEntry {
@@ -221,7 +209,6 @@ async fn download_asset(meta_key: &str, url: &str, file_path: &Path) -> Option<P
         }
     };
 
-    // Extract cache headers
     let etag = response
         .headers()
         .get("etag")
@@ -233,7 +220,6 @@ async fn download_asset(meta_key: &str, url: &str, file_path: &Path) -> Option<P
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
 
-    // Read body
     let bytes = match response.bytes().await {
         Ok(b) => b,
         Err(e) => {
@@ -242,7 +228,6 @@ async fn download_asset(meta_key: &str, url: &str, file_path: &Path) -> Option<P
         }
     };
 
-    // Write to disk
     if let Err(e) = tokio::fs::write(file_path, &bytes).await {
         log_warn!(
             MODULE,
@@ -253,7 +238,6 @@ async fn download_asset(meta_key: &str, url: &str, file_path: &Path) -> Option<P
         return None;
     }
 
-    // Update metadata
     update_entry(
         meta_key,
         AssetEntry {
@@ -279,7 +263,6 @@ async fn refresh_asset(
 ) {
     let mut request = HTTP_CLIENT.get(url);
 
-    // Add conditional headers
     if let Some(etag) = etag {
         request = request.header("If-None-Match", etag);
     }
@@ -290,7 +273,7 @@ async fn refresh_asset(
     match request.send().await {
         Ok(response) => {
             if response.status() == reqwest::StatusCode::NOT_MODIFIED {
-                // Asset unchanged -- just update last_checked
+                // Unchanged: only bump last_checked.
                 log_debug!(MODULE, "Asset unchanged (304): {}", meta_key);
                 update_entry(
                     meta_key,
@@ -303,7 +286,7 @@ async fn refresh_asset(
                 )
                 .await;
             } else if response.status().is_success() {
-                // Asset updated -- save new version
+                // Changed: save the new version.
                 let new_etag = response
                     .headers()
                     .get("etag")
@@ -339,7 +322,7 @@ async fn refresh_asset(
                 )
                 .await;
             } else {
-                // Error response -- just update last_checked to avoid retrying
+                // Error response: bump last_checked to avoid hammering retries.
                 log_debug!(
                     MODULE,
                     "Asset refresh returned {}: {}",
@@ -359,16 +342,14 @@ async fn refresh_asset(
             }
         }
         Err(e) => {
-            // Network error -- keep stale cache, don't update last_checked
+            // Network error: keep the stale cache and leave last_checked so we retry.
             log_debug!(MODULE, "Asset refresh failed for {}: {}", meta_key, e);
         }
     }
 }
 
-/// Read a cached image file and return it as a data URI (base64-encoded)
-///
-/// Returns `Some("data:image/png;base64,...")` if the file can be read,
-/// or `None` on any error. Works on all platforms without protocol issues.
+/// Read a cached image as a base64 data URI, sidestepping cross-platform
+/// custom-protocol issues.
 pub async fn read_as_data_uri(path: &Path) -> Option<String> {
     match tokio::fs::read(path).await {
         Ok(bytes) => {
@@ -387,13 +368,11 @@ pub async fn read_as_data_uri(path: &Path) -> Option<String> {
     }
 }
 
-/// Pre-populate the asset cache with all board images and vendor logos
-///
-/// Runs once at startup in the background; concurrency is capped by a semaphore.
+/// Pre-populate the asset cache with all board images and vendor logos.
+/// Runs once at startup, semaphore-capped.
 pub async fn prepopulate_assets() {
     log_info!(MODULE, "Pre-populating asset cache...");
 
-    // Fetch boards and vendors from API (with disk cache fallback)
     let boards = match crate::images::fetch_boards().await {
         Ok(b) => b,
         Err(e) => {
@@ -406,7 +385,7 @@ pub async fn prepopulate_assets() {
         Ok(v) => v,
         Err(e) => {
             log_warn!(MODULE, "Cannot fetch vendors for prepopulate: {}", e);
-            Vec::new() // Continue with board images even if vendors fail
+            Vec::new() // Proceed with board images even if vendors fail.
         }
     };
 
@@ -422,7 +401,6 @@ pub async fn prepopulate_assets() {
     let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(MAX_CONCURRENT_REFRESHES));
     let mut handles = Vec::new();
 
-    // Download board images
     for board in &boards {
         let sem = semaphore.clone();
         let slug = board.slug.clone();
@@ -441,7 +419,6 @@ pub async fn prepopulate_assets() {
         }));
     }
 
-    // Download vendor logos
     for vendor in &vendors {
         let sem = semaphore.clone();
         let slug = vendor.slug.clone();
@@ -512,7 +489,7 @@ pub async fn refresh_stale_assets() {
                 Err(_) => return,
             };
 
-            // Reconstruct file path and URL from key
+            // Reconstruct the file path and URL from the meta key.
             let parts: Vec<&str> = key.splitn(2, '/').collect();
             if parts.len() != 2 {
                 return;
@@ -521,12 +498,10 @@ pub async fn refresh_stale_assets() {
             let asset_key = parts[1];
             let file_path = assets_dir.join(kind).join(format!("{}.png", asset_key));
 
-            // Only refresh if file still exists on disk
             if !file_path.exists() {
                 return;
             }
 
-            // Reconstruct URL from kind and asset key
             let url = match kind {
                 "boards" => format!(
                     "{}{}/{}.png",
@@ -552,7 +527,6 @@ pub async fn refresh_stale_assets() {
         }));
     }
 
-    // Wait for all refreshes to complete
     let mut processed = 0;
     for handle in handles {
         if handle.await.is_ok() {

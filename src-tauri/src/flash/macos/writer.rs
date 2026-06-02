@@ -1,6 +1,4 @@
-//! Device writer module
-//!
-//! Handles opening devices with authorization and writing data.
+//! macOS device writer: opens devices via authopen authorization and writes data.
 
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
@@ -40,7 +38,7 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
         .ok_or("No authorization saved - call request_authorization first")?;
 
     if auth.device_path != device_path {
-        // Put it back if mismatch
+        // Restore the saved auth before bailing.
         *saved_guard = Some(auth);
         return Err(format!(
             "Authorization mismatch: saved for {} but trying to open {}",
@@ -54,13 +52,13 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
     drop(saved_guard); // Release lock before fork
 
     let result = unsafe {
-        // Create socket pair for receiving fd
+        // Socket pair receives the device fd back from authopen via SCM_RIGHTS.
         let mut sock_pair: [i32; 2] = [0; 2];
         if libc::socketpair(libc::AF_UNIX, libc::SOCK_STREAM, 0, sock_pair.as_mut_ptr()) != 0 {
             return Err("Failed to create socket pair".to_string());
         }
 
-        // Create pipe for stdin (to pass auth)
+        // Pipe feeds the external auth form to authopen's stdin.
         let mut stdin_pipe: [i32; 2] = [0; 2];
         if libc::pipe(stdin_pipe.as_mut_ptr()) != 0 {
             libc::close(sock_pair[0]);
@@ -78,13 +76,11 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
         }
 
         if pid == 0 {
-            // Child process
+            // Child: wire stdout to the socket and stdin to the auth pipe, then exec authopen.
             libc::close(sock_pair[0]);
             libc::close(stdin_pipe[1]);
 
-            // Redirect stdout to socket
             libc::dup2(sock_pair[1], libc::STDOUT_FILENO);
-            // Redirect stdin from pipe
             libc::dup2(stdin_pipe[0], libc::STDIN_FILENO);
 
             let authopen = std::ffi::CString::new("/usr/libexec/authopen").expect("static string");
@@ -111,11 +107,10 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
             libc::_exit(1);
         }
 
-        // Parent process
+        // Parent.
         libc::close(sock_pair[1]);
         libc::close(stdin_pipe[0]);
 
-        // Write the external auth form to authopen's stdin
         log_debug!(MODULE, "Sending saved authorization to authopen");
         libc::write(
             stdin_pipe[1],
@@ -124,7 +119,7 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
         );
         libc::close(stdin_pipe[1]);
 
-        // Receive file descriptor from authopen
+        // Receive the device fd from authopen over the socket.
         let buf_size = 64;
         let mut buf = vec![0u8; buf_size];
 
@@ -145,7 +140,7 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
         let size = libc::recvmsg(sock_pair[0], &mut msg, 0);
         log_debug!(MODULE, "recvmsg returned size: {}", size);
 
-        // Wait for child
+        // Reap the child, retrying on EINTR.
         let mut status: i32 = 0;
         loop {
             let wpid = libc::waitpid(pid, &mut status, 0);
@@ -169,7 +164,7 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
             ));
         }
 
-        // Extract fd from control message
+        // Pull the fd out of the SCM_RIGHTS control message.
         let cmsg = libc::CMSG_FIRSTHDR(&msg);
         if cmsg.is_null() {
             return Err("No control message received".to_string());
@@ -197,7 +192,7 @@ pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult
     Ok(result)
 }
 
-/// Quick erase - write zeros to first portion of device
+/// Zero the first portion of the device to wipe the old partition table.
 pub fn quick_erase(device: &mut File, device_fd: i32) -> Result<(), String> {
     let erase_size = config::flash::QUICK_ERASE_SIZE;
     let chunk_size = config::flash::ERASE_CHUNK_SIZE;
@@ -208,29 +203,18 @@ pub fn quick_erase(device: &mut File, device_fd: i32) -> Result<(), String> {
         erase_size / (1024 * 1024)
     );
 
-    // Seek to beginning
     unsafe {
         libc::lseek(device_fd, 0, libc::SEEK_SET);
     }
 
-    let zero_buffer = vec![0u8; chunk_size];
-    let mut erased: usize = 0;
+    crate::flash::write_zeros(device, erase_size, chunk_size)?;
 
-    while erased < erase_size {
-        let to_write = std::cmp::min(chunk_size, erase_size - erased);
-        device
-            .write_all(&zero_buffer[..to_write])
-            .map_err(|e| format!("Quick erase failed at byte {}: {}", erased, e))?;
-        erased += to_write;
-    }
-
-    // Sync the erase
     device.flush().ok();
     unsafe {
         libc::fsync(device_fd);
     }
 
-    // Seek back to beginning for image write
+    // Rewind so the image write starts at offset 0.
     unsafe {
         libc::lseek(device_fd, 0, libc::SEEK_SET);
     }
@@ -248,25 +232,23 @@ pub async fn flash_image(
 ) -> Result<(), String> {
     state.reset();
 
-    // Get image size
     let image_size = std::fs::metadata(image_path)
         .map_err(|e| format!("Failed to get image size: {}", e))?
         .len();
 
     state.total_bytes.store(image_size, Ordering::SeqCst);
 
-    // Use raw disk access for better performance
+    // rdisk is the raw, unbuffered device, much faster to write than disk.
     let raw_device = device_path.replace("/dev/disk", "/dev/rdisk");
 
-    // Unmount the device first
     unmount_device(device_path)?;
 
-    // Small delay to ensure unmount completes
+    // Give the unmount a moment to settle before writing.
     std::thread::sleep(std::time::Duration::from_millis(
         config::flash::UNMOUNT_DELAY_MS,
     ));
 
-    // Open device using saved authorization (no dialog here!)
+    // Reuse the auth captured earlier, so no dialog appears now.
     log_debug!(MODULE, "Opening device with saved authorization");
     let open_result = open_device_with_saved_auth(&raw_device)?;
     let mut device = open_result.file;
@@ -275,13 +257,12 @@ pub async fn flash_image(
 
     log_debug!(MODULE, "Keeping authorization ref alive during flash");
 
-    // Clear saved auth state (we have the auth_ref now)
     {
         let mut saved = SAVED_AUTH.lock().unwrap();
         *saved = None;
     }
 
-    // Use inner function to do the actual work, then always free auth at the end
+    // Delegate to an inner fn so we can always free the auth ref afterward.
     let result = do_flash_work(
         image_path,
         device_path,
@@ -295,7 +276,6 @@ pub async fn flash_image(
 
     drop(device);
 
-    // ALWAYS free the authorization - after everything is done
     unsafe {
         free_authorization(auth_ref_wrapper.0);
     }
@@ -303,7 +283,6 @@ pub async fn flash_image(
     result
 }
 
-/// Inner function to do flash work
 async fn do_flash_work(
     image_path: &PathBuf,
     device_path: &str,
@@ -313,19 +292,15 @@ async fn do_flash_work(
     state: Arc<FlashState>,
     verify: bool,
 ) -> Result<(), String> {
-    // Quick erase first - clear partition tables and boot sectors
     quick_erase(device, device_fd)?;
 
-    // Open image file
     let mut image_file =
         File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
 
-    // Write image in chunks with progress
     let chunk_size = config::flash::CHUNK_SIZE;
     let mut buffer = vec![0u8; chunk_size];
     let mut written: u64 = 0;
 
-    // Use ProgressTracker for automatic progress logging
     let mut tracker = ProgressTracker::new(
         "Write",
         MODULE,
@@ -382,26 +357,23 @@ async fn do_flash_work(
             ));
         }
 
-        // Track actual image bytes written, not padded bytes
+        // Count real image bytes, not the sector padding.
         written += bytes_read as u64;
         state.written_bytes.store(written, Ordering::SeqCst);
 
-        // ProgressTracker handles logging automatically
         tracker.update(bytes_read as u64);
     }
 
-    // Log final summary
     tracker.finish();
     log_debug!(MODULE, "Syncing...");
 
-    // Sync to ensure all data is written
     device.flush().ok();
     unsafe {
         libc::fsync(device_fd);
     }
     sync_device(device_path);
 
-    // Verify if requested - reuse same fd (no additional auth needed)
+    // Verification reuses the same fd, so no extra auth prompt.
     if verify {
         log_info!(MODULE, "Starting verification");
         verify_written_data(image_path, device, device_fd, state.clone())?;
@@ -418,12 +390,11 @@ fn verify_written_data(
     device_fd: i32,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
-    // Seek device back to beginning before verification
     unsafe {
         libc::lseek(device_fd, 0, libc::SEEK_SET);
     }
 
-    // BufReader keeps raw-device reads sector-aligned, avoiding EINVAL on the final read
+    // BufReader keeps raw-device reads sector-aligned, avoiding EINVAL on the final read.
     let mut buf_reader = BufReader::with_capacity(config::flash::CHUNK_SIZE, &*device);
     crate::flash::verify::verify_data(image_path, &mut buf_reader, state)
 }

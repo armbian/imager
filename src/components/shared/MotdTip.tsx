@@ -20,7 +20,7 @@ export function MotdTip() {
   const pickNextMessage = useCallback(() => {
     if (messagesRef.current.length === 0) return;
 
-    // Move to next message (cycling through)
+    // Cycle to the next message, wrapping at the end.
     currentIndexRef.current = (currentIndexRef.current + 1) % messagesRef.current.length;
     setTip(messagesRef.current[currentIndexRef.current]);
   }, []);
@@ -30,22 +30,20 @@ export function MotdTip() {
 
     const fetchMotd = async () => {
       try {
-        // Load MOTD preference
         const motdEnabled = await getShowMotd();
 
         if (!isMounted) return;
 
         setShowMotd(motdEnabled);
 
-        // Clear any existing interval
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         }
 
         if (!motdEnabled) {
-          setTip(null); // Clear the tip
-          return; // Don't fetch MOTD if disabled
+          setTip(null);
+          return;
         }
 
         const response = await fetch(LINKS.MOTD);
@@ -53,7 +51,6 @@ export function MotdTip() {
 
         if (!isMounted) return;
 
-        // Filter out expired messages
         const now = new Date();
         const validMessages = messages.filter((msg) => {
           if (!msg.expiration) return true;
@@ -63,11 +60,9 @@ export function MotdTip() {
 
         if (validMessages.length > 0) {
           messagesRef.current = validMessages;
-          // Pick a random starting message
           currentIndexRef.current = Math.floor(Math.random() * validMessages.length);
           setTip(validMessages[currentIndexRef.current]);
 
-          // Start rotation interval
           intervalRef.current = setInterval(pickNextMessage, TIMING.MOTD_ROTATION);
         }
       } catch (err) {
@@ -77,7 +72,6 @@ export function MotdTip() {
 
     fetchMotd();
 
-    // Listen for MOTD setting changes only
     const handleMotdChange = () => {
       fetchMotd();
     };
@@ -86,7 +80,6 @@ export function MotdTip() {
 
     return () => {
       isMounted = false;
-      // Cleanup interval and event listener
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -94,7 +87,7 @@ export function MotdTip() {
     };
   }, [pickNextMessage]);
 
-  // Don't render if we haven't loaded the setting yet, if MOTD is disabled, or if no tip
+  // Don't render if not loaded yet, disabled, or no tip (toggle lives in Settings)
   if (showMotd !== true || !tip) {
     return null;
   }
@@ -104,10 +97,15 @@ export function MotdTip() {
   };
 
   return (
-    <button className="motd-tip" onClick={handleClick}>
-      <Lightbulb size={16} className="motd-icon" />
-      <span className="motd-message">{tip.message}</span>
-      <ExternalLink size={14} className="motd-arrow" />
+    <button className="rail-tip" onClick={handleClick} title={tip.message}>
+      <span className="rail-tip__node">
+        <Lightbulb size={12} />
+      </span>
+      {/* key on the message so it re-fades each rotation */}
+      <span key={tip.message} className="rail-tip__msg">
+        {tip.message}
+      </span>
+      <ExternalLink size={13} className="rail-tip__arrow" />
     </button>
   );
 }

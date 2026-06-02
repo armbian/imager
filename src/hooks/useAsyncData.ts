@@ -1,33 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getErrorMessage } from '../utils';
 
-/**
- * Result of async data fetching
- */
+/** Result of async data fetching */
 export interface AsyncDataResult<T> {
-  /** The fetched data, null if not loaded yet */
   data: T | null;
-  /** Whether data is currently being loaded */
   loading: boolean;
-  /** Error message if fetch failed */
   error: string | null;
-  /** Function to reload the data */
   reload: () => Promise<void>;
 }
 
-/**
- * Options for useAsyncData hook
- */
+/** Options for useAsyncData hook */
 export interface UseAsyncDataOptions {
-  /** Whether to fetch data immediately on mount (default: true) */
+  /** Fetch immediately on mount (default: true) */
   immediate?: boolean;
   /** Reset data to null before reloading (default: false) */
   resetOnReload?: boolean;
 }
 
-/**
- * Internal hook that handles the core async data fetching logic.
- * Used by both useAsyncData and useAsyncDataWhen to avoid code duplication.
- */
+/** Core async fetching logic shared by useAsyncData and useAsyncDataWhen */
 function useAsyncDataCore<T>(
   fetcher: () => Promise<T>,
   options: { resetOnReload?: boolean; initialLoading?: boolean } = {}
@@ -38,11 +28,11 @@ function useAsyncDataCore<T>(
   const [loading, setLoading] = useState(initialLoading);
   const [error, setError] = useState<string | null>(null);
 
-  // Track if component is mounted to prevent state updates after unmount
+  // Prevent state updates after unmount
   const mountedRef = useRef(true);
-  // Track the current fetch to handle race conditions
+  // Discards stale results when a newer fetch supersedes this one
   const fetchIdRef = useRef(0);
-  // Store fetcher in ref to avoid recreating reload callback
+  // Avoids recreating the reload callback when fetcher changes
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
 
@@ -58,15 +48,14 @@ function useAsyncDataCore<T>(
     try {
       const result = await fetcherRef.current();
 
-      // Only update state if this is still the latest fetch and component is mounted
+      // Skip if a newer fetch superseded this one or the component unmounted
       if (mountedRef.current && currentFetchId === fetchIdRef.current) {
         setData(result);
         setError(null);
       }
     } catch (err) {
       if (mountedRef.current && currentFetchId === fetchIdRef.current) {
-        const message = err instanceof Error ? err.message : 'An error occurred';
-        setError(message);
+        setError(getErrorMessage(err));
       }
     } finally {
       if (mountedRef.current && currentFetchId === fetchIdRef.current) {
@@ -86,11 +75,7 @@ function useAsyncDataCore<T>(
   return { data, loading, error, reload, triggerFetch: reload };
 }
 
-/**
- * Async data fetching with loading/error state and reload.
- * @param fetcher - returns the data
- * @param deps - refetch when these change
- */
+/** Async data fetching with loading/error state, refetching when `deps` change */
 export function useAsyncData<T>(
   fetcher: () => Promise<T>,
   deps: React.DependencyList = [],
@@ -109,30 +94,6 @@ export function useAsyncData<T>(
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, immediate]);
-
-  return { data, loading, error, reload };
-}
-
-/**
- * Conditional async data fetching, only runs when `condition` is true.
- */
-export function useAsyncDataWhen<T>(
-  condition: boolean,
-  fetcher: () => Promise<T>,
-  deps: React.DependencyList = []
-): AsyncDataResult<T> {
-  const { data, loading: coreLoading, error, reload } = useAsyncDataCore(fetcher);
-
-  // Fetch only when condition is true
-  useEffect(() => {
-    if (condition) {
-      reload();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [condition, ...deps]);
-
-  // Show loading when condition is true but data hasn't been fetched yet
-  const loading = coreLoading || (condition && data === null && error === null);
 
   return { data, loading, error, reload };
 }

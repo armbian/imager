@@ -1,19 +1,11 @@
-/**
- * OS/Distro information configuration
- */
+/** OS/Distro information configuration */
 
-import debianLogo from '../assets/os-logos/debian.svg';
-import ubuntuLogo from '../assets/os-logos/ubuntu.png';
-import homeassistantLogo from '../assets/os-logos/homeassistant.png';
-import openmediavaultLogo from '../assets/os-logos/openmediavault.jpeg';
-import codeServerLogo from '../assets/os-logos/code-server.png';
-import openhabLogo from '../assets/os-logos/openhab.png';
-import kaliLogo from '../assets/os-logos/kali.png';
+import type { ImageInfo } from '../types';
+import { getDesktopEnv, DESKTOP_BADGES } from './badges';
 
 export interface OsInfoConfig {
   name: string;
   color: string;
-  logo: string;
 }
 
 export interface AppInfoConfig {
@@ -22,49 +14,38 @@ export interface AppInfoConfig {
   badge?: string;
   color: string;
   badgeColor: string;
-  logo: string | null;
 }
 
-/**
- * OS/Distro release information with local logos
- */
+/** OS/Distro release information */
 export const OS_INFO: Record<string, OsInfoConfig> = {
   // Debian releases
-  'bookworm': { name: 'Debian 12', color: 'transparent', logo: debianLogo },
-  'bullseye': { name: 'Debian 11', color: 'transparent', logo: debianLogo },
-  'trixie': { name: 'Debian 13', color: 'transparent', logo: debianLogo },
-  'forky': { name: 'Debian 14', color: 'transparent', logo: debianLogo },
-  'sid': { name: 'Debian Sid', color: 'transparent', logo: debianLogo },
+  'bookworm': { name: 'Debian 12', color: 'transparent' },
+  'bullseye': { name: 'Debian 11', color: 'transparent' },
+  'trixie': { name: 'Debian 13', color: 'transparent' },
+  'forky': { name: 'Debian 14', color: 'transparent' },
+  'sid': { name: 'Debian Sid', color: 'transparent' },
   // Ubuntu releases
-  'noble': { name: 'Ubuntu 24.04', color: 'transparent', logo: ubuntuLogo },
-  'jammy': { name: 'Ubuntu 22.04', color: 'transparent', logo: ubuntuLogo },
-  'resolute': { name: 'Ubuntu 26.04', color: 'transparent', logo: ubuntuLogo },
-  'plucky': { name: 'Ubuntu 25.04', color: 'transparent', logo: ubuntuLogo },
-  'oracular': { name: 'Ubuntu 24.10', color: 'transparent', logo: ubuntuLogo },
-  'focal': { name: 'Ubuntu 20.04', color: 'transparent', logo: ubuntuLogo },
-  'mantic': { name: 'Ubuntu 23.10', color: 'transparent', logo: ubuntuLogo },
-  'lunar': { name: 'Ubuntu 23.04', color: 'transparent', logo: ubuntuLogo },
+  'noble': { name: 'Ubuntu 24.04', color: 'transparent' },
+  'jammy': { name: 'Ubuntu 22.04', color: 'transparent' },
+  'resolute': { name: 'Ubuntu 26.04', color: 'transparent' },
+  'plucky': { name: 'Ubuntu 25.04', color: 'transparent' },
+  'oracular': { name: 'Ubuntu 24.10', color: 'transparent' },
+  'focal': { name: 'Ubuntu 20.04', color: 'transparent' },
+  'mantic': { name: 'Ubuntu 23.10', color: 'transparent' },
+  'lunar': { name: 'Ubuntu 23.04', color: 'transparent' },
 };
 
-/**
- * Special applications with their own branding
- */
+/** Special applications with their own branding */
 export const APP_INFO: Record<string, AppInfoConfig> = {
-  'homeassistant': { name: 'Home Assistant', color: 'transparent', badgeColor: '#18bcf2', logo: homeassistantLogo },
-  'openmediavault': { name: 'OpenMediaVault', color: 'transparent', badgeColor: '#5dacdf', logo: openmediavaultLogo },
-  'omv': { name: 'OpenMediaVault', color: 'transparent', badgeColor: '#5dacdf', logo: openmediavaultLogo },
-  'sdk': { name: 'Code server + Armbian sources', badge: 'SDK', color: 'transparent', badgeColor: '#1e88e5', logo: codeServerLogo },
-  'nextcloud': { name: 'Nextcloud', color: '#0082c9', badgeColor: '#0082c9', logo: null },
-  'openwrt': { name: 'OpenWrt', color: '#00a3e0', badgeColor: '#00a3e0', logo: null },
-  'pihole': { name: 'Pi-hole', color: '#96060c', badgeColor: '#96060c', logo: null },
-  'kodi': { name: 'Kodi', color: '#17b2e7', badgeColor: '#17b2e7', logo: null },
-  'openhab': { name: 'openHAB', color: 'transparent', badgeColor: '#e64a19', logo: openhabLogo },
-  'kali': { name: 'Kali Linux', color: 'transparent', badgeColor: '#367bf0', logo: kaliLogo },
+  'homeassistant': { name: 'Home Assistant', color: 'transparent', badgeColor: '#18bcf2' },
+  'openmediavault': { name: 'OpenMediaVault', color: 'transparent', badgeColor: '#5dacdf' },
+  'omv': { name: 'OpenMediaVault', color: 'transparent', badgeColor: '#5dacdf' },
+  'sdk': { name: 'Code server + Armbian sources', badge: 'SDK', color: 'transparent', badgeColor: '#1e88e5' },
+  'openhab': { name: 'openHAB', color: 'transparent', badgeColor: '#e64a19' },
+  'kali': { name: 'Kali Linux', color: 'transparent', badgeColor: '#367bf0' },
 };
 
-/**
- * Get OS info from distro release name
- */
+/** Get OS info from a distro release name */
 export function getOsInfo(distroRelease: string): OsInfoConfig | null {
   const release = distroRelease.toLowerCase();
   for (const [key, info] of Object.entries(OS_INFO)) {
@@ -75,9 +56,7 @@ export function getOsInfo(distroRelease: string): OsInfoConfig | null {
   return null;
 }
 
-/**
- * Get App info from preinstalled application
- */
+/** Get app info from a preinstalled application name */
 export function getAppInfo(app: string | null): AppInfoConfig | null {
   if (!app) return null;
   const appLower = app.toLowerCase();
@@ -87,4 +66,15 @@ export function getAppInfo(app: string | null): AppInfoConfig | null {
     }
   }
   return null;
+}
+
+/** Short variant label for an image: app name, else desktop badge label, else minimal fallback. */
+export function getImageVariantLabel(image: ImageInfo, t: (key: string) => string): string {
+  const appInfo = getAppInfo(image.preinstalled_application);
+  if (appInfo) return appInfo.badge ?? appInfo.name;
+
+  const desktopEnv = getDesktopEnv(image.image_variant);
+  if (desktopEnv && DESKTOP_BADGES[desktopEnv]) return DESKTOP_BADGES[desktopEnv].label;
+
+  return t('modal.minimal');
 }

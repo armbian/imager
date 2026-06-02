@@ -1,8 +1,8 @@
 import {
   Download,
   HardDrive,
-  CheckCircle,
-  XCircle,
+  CircleCheck,
+  CircleX,
   Check,
   Archive,
   Shield,
@@ -52,9 +52,9 @@ export function FlashStageIcon({ stage, size = UI.ICON_SIZE.FLASH_STAGE }: Flash
     case 'verifying':
       return <Check size={size} className="stage-icon verifying" />;
     case 'complete':
-      return <CheckCircle size={size} className="stage-icon complete" />;
+      return <CircleCheck size={size} className="stage-icon complete" />;
     case 'error':
-      return <XCircle size={size} className="stage-icon error" />;
+      return <CircleX size={size} className="stage-icon error" />;
   }
 }
 
@@ -84,4 +84,37 @@ export function getStageKey(stage: FlashStage): string {
     case 'error':
       return 'flash.failed';
   }
+}
+
+/** Maps a stage to its macro phase index (0=Download, 1=Prepare, 2=Write, 3=Verify, 4=all done). */
+// eslint-disable-next-line react-refresh/only-export-components
+export function stageToPhase(stage: FlashStage): number {
+  switch (stage) {
+    case 'authorizing':
+    case 'downloading':
+    case 'verifying_sha':
+      return 0;
+    case 'decompressing':
+    case 'extracting':
+      return 1;
+    case 'qdl_sahara':
+    case 'qdl_firehose':
+    case 'flashing':
+      return 2;
+    case 'verifying':
+      return 3;
+    case 'complete':
+      return 4;
+    case 'error':
+      return 0;
+  }
+}
+
+/** Stages shown with an indeterminate (breathing) bar instead of a percentage. */
+const INDETERMINATE_STAGES: FlashStage[] = ['decompressing', 'verifying_sha', 'extracting', 'qdl_sahara'];
+
+/** True when a stage has no meaningful percentage and uses the indeterminate bar. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function isIndeterminateStage(stage: FlashStage): boolean {
+  return INDETERMINATE_STAGES.includes(stage);
 }

@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { Upload, ExternalLink, AlertCircle } from 'lucide-react';
+import { Upload, ExternalLink, CircleAlert, CircleX, Loader2, ArrowRight, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { uploadLogs, openUrl } from '../../hooks/useTauri';
 import QRCode from 'qrcode';
 import { COLORS, QR_CODE } from '../../config';
+import { getErrorMessage } from '../../utils';
 
 interface ErrorDisplayProps {
   error: string;
   onRetry?: () => void;
+  /** Dismiss/cancel handler; renders the secondary button in full-screen mode. */
+  onCancel?: () => void;
   compact?: boolean;
 }
 
-export function ErrorDisplay({ error, onRetry, compact = false }: ErrorDisplayProps) {
+export function ErrorDisplay({ error, onRetry, onCancel, compact = false }: ErrorDisplayProps) {
   const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [pasteUrl, setPasteUrl] = useState<string | null>(null);
@@ -38,7 +41,7 @@ export function ErrorDisplay({ error, onRetry, compact = false }: ErrorDisplayPr
         setQrCodeDataUrl(qrDataUrl);
       }
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : t('error.uploadFailed'));
+      setUploadError(getErrorMessage(err, t('error.uploadFailed')));
     } finally {
       setUploading(false);
     }
@@ -57,7 +60,7 @@ export function ErrorDisplay({ error, onRetry, compact = false }: ErrorDisplayPr
     return (
       <div className="error-display-compact">
         <div className="error-display-message">
-          <AlertCircle size={18} />
+          <CircleAlert size={18} />
           <span>{error}</span>
         </div>
         <div className="error-display-actions">
@@ -84,7 +87,7 @@ export function ErrorDisplay({ error, onRetry, compact = false }: ErrorDisplayPr
         </div>
         {uploadError && (
           <div className="error-display-upload-error">
-            <AlertCircle size={12} />
+            <CircleAlert size={12} />
             <span>{uploadError}</span>
           </div>
         )}
@@ -92,45 +95,84 @@ export function ErrorDisplay({ error, onRetry, compact = false }: ErrorDisplayPr
     );
   }
 
+  // Full-screen failure: two-column layout coherent with the offline screen —
+  // an animated error hero on the left, the diagnosis + remedy on the right.
   return (
-    <div className="error-dialog">
-      <div className="error-dialog-message">
-        <AlertCircle size={20} />
-        <span>{error}</span>
+    <div className="error-screen">
+      <div className="error-screen__hero" aria-hidden="true">
+        <span className="error-screen__ring" />
+        <span className="error-screen__ring" />
+        <CircleX className="error-screen__glyph" size={72} strokeWidth={1.5} />
       </div>
 
-      {!pasteUrl ? (
-        <button
-          className="btn btn-secondary upload-logs-btn"
-          onClick={handleUploadLogs}
-          disabled={uploading}
-        >
-          <Upload size={16} />
-          {uploading ? t('errorDisplay.uploadingLogs') : t('errorDisplay.uploadLogsForSupport')}
-        </button>
-      ) : (
-        <div className="paste-result">
-          <div className="paste-qr">
-            {qrCodeDataUrl && (
-              <img src={qrCodeDataUrl} alt="QR Code" className="qr-code" />
+      <div className="error-screen__main">
+        <h2 className="error-screen__title">{t('flash.failed')}</h2>
+        {error && <p className="error-screen__hint">{error}</p>}
+
+        {/* Remedy card: one surface; upload-logs row turns into the QR + share link. */}
+        <div className="error-screen__card">
+          {!pasteUrl ? (
+            <button
+              type="button"
+              className="error-screen__row"
+              onClick={handleUploadLogs}
+              disabled={uploading}
+            >
+              <span className="error-screen__chip">
+                {uploading ? (
+                  <Loader2 size={18} className="spinning" />
+                ) : (
+                  <Upload size={18} />
+                )}
+              </span>
+              <span className="error-screen__label">
+                {uploading
+                  ? t('errorDisplay.uploadingLogs')
+                  : t('errorDisplay.uploadLogsForSupport')}
+              </span>
+              {!uploading && <ArrowRight className="error-screen__arrow" size={16} />}
+            </button>
+          ) : (
+            <div className="error-screen__paste">
+              {qrCodeDataUrl && (
+                <img src={qrCodeDataUrl} alt="QR Code" className="error-screen__qr" />
+              )}
+              <div className="error-screen__paste-info">
+                <span className="error-screen__paste-label">
+                  {t('errorDisplay.scanQrOrShare')}
+                </span>
+                <button className="paste-url" onClick={handleOpenUrl}>
+                  {pasteUrl}
+                  <ExternalLink size={12} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {uploadError && (
+          <div className="error-screen__upload-error">
+            <CircleAlert size={14} />
+            <span>{uploadError}</span>
+          </div>
+        )}
+
+        {(onRetry || onCancel) && (
+          <div className="error-screen__buttons">
+            {onCancel && (
+              <button className="btn btn-secondary" onClick={onCancel}>
+                {t('flash.cancel')}
+              </button>
+            )}
+            {onRetry && (
+              <button className="btn btn-primary" onClick={onRetry}>
+                <RotateCcw size={16} />
+                {t('flash.retry')}
+              </button>
             )}
           </div>
-          <div className="paste-info">
-            <span className="paste-label">{t('errorDisplay.scanQrOrShare')}</span>
-            <button className="paste-url" onClick={handleOpenUrl}>
-              {pasteUrl}
-              <ExternalLink size={12} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {uploadError && (
-        <div className="upload-error">
-          <AlertCircle size={14} />
-          <span>{uploadError}</span>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

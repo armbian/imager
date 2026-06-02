@@ -1,8 +1,5 @@
-//! API data mappers
-//!
-//! Simple mapping functions that convert API response types into
-//! frontend-facing types. The new REST API returns pre-processed data,
-//! so no complex extraction, validation, or deduplication is needed.
+//! Map API response types into frontend-facing types. The REST API returns
+//! pre-processed data, so no extraction or deduplication is needed.
 
 use super::models::{
     ApiBoardSummary, ApiImage, BoardInfo, CompanionInfo, DisplayVariantInfo, ImageInfo,
@@ -25,9 +22,20 @@ pub fn map_board(api: &ApiBoardSummary) -> BoardInfo {
     }
 }
 
+/// Formats the imager can actually write: raw block images (`sd`/`block`) and
+/// Qualcomm EDL (`qdl`). VM disk images (`qemu`/`hyperv`) and rootfs tarballs are
+/// not flashable to a device, so they are dropped from the listing.
+fn is_flashable_format(format: &str) -> bool {
+    matches!(format, "sd" | "block" | "qdl")
+}
+
 /// Map a list of API images to frontend-facing ImageInfo, sorted by promoted first then release
 pub fn map_images(api_images: Vec<ApiImage>) -> Vec<ImageInfo> {
-    let mut images: Vec<ImageInfo> = api_images.iter().map(map_image).collect();
+    let mut images: Vec<ImageInfo> = api_images
+        .iter()
+        .filter(|api| is_flashable_format(&api.format))
+        .map(map_image)
+        .collect();
 
     // Sort: promoted first, then by release version descending
     images.sort_by(|a, b| match (a.promoted, b.promoted) {
@@ -53,6 +61,7 @@ fn map_image(api: &ApiImage) -> ImageInfo {
         direct_url: api.download.direct_url.clone(),
         sha_url: api.download.sha_url.clone(),
         file_size: api.download.size_bytes,
+        build_date: api.download.updated_at.clone(),
         stability: api.stability.clone(),
         format: api.format.clone(),
         companions: api

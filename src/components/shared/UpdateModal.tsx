@@ -1,14 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Download, RefreshCw, CheckCircle, AlertCircle, X, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, RefreshCw, CircleCheck, CircleAlert, X, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { logInfo, isAppInApplications } from '../../hooks/useTauri';
+import { isAppInApplications } from '../../hooks/useTauri';
 import { formatFileSize, getErrorMessage } from '../../utils';
 import { ChangelogModal } from './ChangelogModal';
-import { getShowUpdaterModal } from '../../hooks/useSettings';
+import { useUpdate } from '../../contexts/UpdateContext';
 
-type UpdateState = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error';
+type UpdateState = 'available' | 'downloading' | 'ready' | 'error';
 
 interface DownloadProgress {
   downloaded: number;
@@ -17,56 +16,21 @@ interface DownloadProgress {
 
 export function UpdateModal() {
   const { t } = useTranslation();
-  const [state, setState] = useState<UpdateState>('idle');
-  const [update, setUpdate] = useState<Update | null>(null);
+  const { update, isOpen, close } = useUpdate();
+  const [state, setState] = useState<UpdateState>('available');
   const [progress, setProgress] = useState<DownloadProgress>({ downloaded: 0, total: null });
   const [error, setError] = useState<string | null>(null);
-  const [dismissed, setDismissed] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
-  const hasCheckedRef = useRef(false);
-  const hasLoggedDisabledRef = useRef(false);
 
-  const checkForUpdate = useCallback(async () => {
-    if (hasCheckedRef.current) return;
-    hasCheckedRef.current = true;
-
-    // Check if updater modal is enabled in settings
-    const showModal = await getShowUpdaterModal();
-    if (!showModal) {
-      // Log this message only once per session
-      if (!hasLoggedDisabledRef.current) {
-        logInfo('updater', 'Updater modal disabled in settings, skipping update check');
-        hasLoggedDisabledRef.current = true;
-      }
-      setState('idle');
-      return;
-    }
-
-    setState('checking');
-    setError(null);
-
-    try {
-      const updateResult = await check();
-
-      if (updateResult) {
-        setUpdate(updateResult);
-        setState('available');
-        logInfo('updater', `Update available: ${updateResult.currentVersion} -> ${updateResult.version}`);
-      } else {
-        logInfo('updater', 'No updates available');
-        setState('idle');
-      }
-    } catch (err) {
-      console.error('Failed to check for updates:', err);
-      // Update check failures are non-critical - user can continue using current version
-      setState('idle');
-    }
-  }, []);
-
+  // Reset to the offer view each time the dialog reopens.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Initial update check on mount
-    checkForUpdate();
-  }, [checkForUpdate]);
+    if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset dialog state on open
+      setState('available');
+      setError(null);
+      setProgress({ downloaded: 0, total: null });
+    }
+  }, [isOpen]);
 
   const handleDownloadAndInstall = async () => {
     if (!update) return;
@@ -87,8 +51,7 @@ export function UpdateModal() {
             }));
             break;
           case 'Finished':
-            // Download complete - don't set 'ready' here since install may still fail.
-            // State is set to 'ready' after downloadAndInstall() promise resolves.
+            // Defer 'ready' until the promise resolves; install may still fail
             break;
         }
       });
@@ -98,11 +61,7 @@ export function UpdateModal() {
       console.error('Failed to download update:', err);
       try {
         const inApps = await isAppInApplications();
-        if (!inApps) {
-          setError(t('update.errorNotInApplications'));
-        } else {
-          setError(getErrorMessage(err, 'Download failed'));
-        }
+        setError(inApps ? getErrorMessage(err, 'Download failed') : t('update.errorNotInApplications'));
       } catch {
         setError(getErrorMessage(err, 'Download failed'));
       }
@@ -120,18 +79,6 @@ export function UpdateModal() {
     }
   };
 
-  const handleLater = () => {
-    setDismissed(true);
-  };
-
-  const handleRetry = () => {
-    if (state === 'error' && update) {
-      handleDownloadAndInstall();
-    } else {
-      checkForUpdate();
-    }
-  };
-
   const formatBytes = (bytes: number): string => formatFileSize(bytes, '0 B', true);
 
   const getProgressPercentage = (): number => {
@@ -139,32 +86,28 @@ export function UpdateModal() {
     return Math.round((progress.downloaded / progress.total) * 100);
   };
 
-  // Hide modal when no update is available or user has dismissed it
-  if (state === 'idle' || state === 'checking' || dismissed) return null;
+  if (!isOpen || !update) return null;
 
   return (
     <>
       <div className="update-modal-overlay">
         <div className="update-modal">
-          {/* Close button for available state */}
           {state === 'available' && (
-            <button className="update-modal-close" onClick={handleLater} aria-label="Close">
+            <button className="update-modal-close" onClick={close} aria-label="Close">
               <X size={18} />
             </button>
           )}
 
-        {/* Icon */}
         <div className={`update-modal-icon ${state === 'ready' ? 'success' : ''} ${state === 'error' ? 'error' : ''}`}>
           {state === 'ready' ? (
-            <CheckCircle size={32} />
+            <CircleCheck size={32} />
           ) : state === 'error' ? (
-            <AlertCircle size={32} />
+            <CircleAlert size={32} />
           ) : (
             <RefreshCw size={32} className={state === 'downloading' ? 'spinning' : ''} />
           )}
         </div>
 
-        {/* Title */}
         <h2 className="update-modal-title">
           {state === 'available' && t('update.title')}
           {state === 'downloading' && t('update.downloading')}
@@ -172,8 +115,7 @@ export function UpdateModal() {
           {state === 'error' && t('update.error')}
         </h2>
 
-        {/* Message / Content */}
-        {state === 'available' && update && (
+        {state === 'available' && (
           <>
             <div className="update-version-info">
               <span className="update-version-current">{update.currentVersion}</span>
@@ -223,11 +165,10 @@ export function UpdateModal() {
           </p>
         )}
 
-        {/* Buttons */}
         <div className="update-modal-buttons">
           {state === 'available' && (
             <>
-              <button className="update-modal-btn secondary" onClick={handleLater}>
+              <button className="update-modal-btn secondary" onClick={close}>
                 {t('update.later')}
               </button>
               <button className="update-modal-btn primary" onClick={handleDownloadAndInstall}>
@@ -238,7 +179,7 @@ export function UpdateModal() {
           )}
 
           {state === 'downloading' && (
-            <button className="update-modal-btn secondary" onClick={handleLater}>
+            <button className="update-modal-btn secondary" onClick={close}>
               {t('update.cancel')}
             </button>
           )}
@@ -252,10 +193,10 @@ export function UpdateModal() {
 
           {state === 'error' && (
             <>
-              <button className="update-modal-btn secondary" onClick={handleLater}>
+              <button className="update-modal-btn secondary" onClick={close}>
                 {t('update.later')}
               </button>
-              <button className="update-modal-btn primary" onClick={handleRetry}>
+              <button className="update-modal-btn primary" onClick={handleDownloadAndInstall}>
                 {t('update.retry')}
               </button>
             </>
@@ -264,7 +205,6 @@ export function UpdateModal() {
       </div>
       </div>
 
-      {/* Changelog Modal */}
       {update && (
         <ChangelogModal
           isOpen={showChangelog}

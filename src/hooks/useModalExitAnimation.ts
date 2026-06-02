@@ -1,6 +1,7 @@
 // Consistent modal exit animation with double-trigger guard and pre/post-close callbacks
 
 import { useState, useCallback, useRef } from 'react';
+import { UI } from '../config';
 
 interface UseModalExitAnimationOptions {
   onClose: () => void;
@@ -16,7 +17,7 @@ interface UseModalExitAnimationReturn {
 
 export function useModalExitAnimation({
   onClose,
-  duration = 200,
+  duration = UI.MODAL_EXIT_MS,
   onExiting,
 }: UseModalExitAnimationOptions): UseModalExitAnimationReturn {
   const [isExiting, setIsExiting] = useState(false);
@@ -28,7 +29,7 @@ export function useModalExitAnimation({
       isExitingRef.current = true;
       setIsExiting(true);
 
-      // Call onExiting callback (e.g., disable settings, save state)
+      // Fires before the close, e.g. to disable settings or save state
       onExiting?.();
 
       setTimeout(() => {

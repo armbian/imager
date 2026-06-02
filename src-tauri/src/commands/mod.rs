@@ -1,5 +1,3 @@
-//! Commands module
-//!
 //! Tauri command handlers organized by responsibility.
 
 pub mod board_queries;

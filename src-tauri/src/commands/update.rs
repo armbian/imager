@@ -13,18 +13,17 @@ pub struct GitHubRelease {
 /// Fetch GitHub release metadata for a version tag (with or without a 'v' prefix)
 #[command]
 pub async fn get_github_release(version: String) -> Result<GitHubRelease, String> {
-    // Validate and trim version parameter
     let version = version.trim();
     if version.is_empty() {
         return Err("Version cannot be empty".to_string());
     }
 
-    let client = reqwest::Client::builder()
-        .user_agent("Armbian-Imager")
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+    // Standard user agent comes from build_client; use the default request timeout.
+    let client = crate::utils::build_client(std::time::Duration::from_secs(
+        crate::config::http::REQUEST_TIMEOUT_SECS,
+    ))?;
 
-    // Ensure version has 'v' prefix (GitHub releases use v1.1.9 format)
+    // GitHub release tags are v-prefixed (e.g. v1.1.9).
     let version_tag = if version.starts_with('v') {
         version.to_string()
     } else {
@@ -55,9 +54,8 @@ pub async fn get_github_release(version: String) -> Result<GitHubRelease, String
     Ok(release)
 }
 
-/// Whether the app runs from /Applications (always true off macOS).
-///
-/// macOS auto-updates fail outside /Applications; the frontend uses this to warn.
+/// Whether the app runs from /Applications (always true off macOS). macOS
+/// auto-updates fail outside /Applications; the frontend uses this to warn.
 #[command]
 pub async fn is_app_in_applications() -> Result<bool, String> {
     #[cfg(target_os = "macos")]

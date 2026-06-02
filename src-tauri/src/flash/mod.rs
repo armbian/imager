@@ -1,9 +1,5 @@
-//! Flash module - Platform-specific image flashing implementations
-//!
-//! This module provides privilege escalation and raw device writing for each platform:
-//! - macOS: Uses authopen with Touch ID support
-//! - Linux: Uses pkexec for privilege escalation
-//! - Windows: Requires running as Administrator
+//! Platform-specific image flashing: privilege escalation + raw device writing.
+//! macOS uses authopen (Touch ID), Linux uses pkexec, Windows needs Administrator.
 
 mod verify;
 
@@ -19,17 +15,13 @@ use std::process::Command;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use tokio::sync::Mutex;
 
-/// QDL (Qualcomm EDL) progress state
-///
-/// Uses `std::sync::Mutex` because `qdl_flash` runs in `spawn_blocking`.
+/// QDL (Qualcomm EDL) progress state. Uses `std::sync::Mutex` because `qdl_flash`
+/// runs in `spawn_blocking`.
 pub struct QdlProgress {
-    /// Whether the current operation is a QDL (Qualcomm EDL) flash
     pub is_active: AtomicBool,
     /// Current stage (e.g., "sahara", "firehose", "partition:boot.img")
     pub stage: std::sync::Mutex<String>,
-    /// Total number of partitions to program
     pub partitions_total: AtomicU64,
-    /// Number of partitions programmed so far
     pub partitions_written: AtomicU64,
 }
 
@@ -62,7 +54,6 @@ pub struct FlashState {
     pub is_verifying: AtomicBool,
     pub is_cancelled: AtomicBool,
     pub error: Mutex<Option<String>>,
-    /// QDL (Qualcomm EDL) specific progress tracking
     pub qdl: QdlProgress,
 }
 
@@ -89,7 +80,6 @@ impl FlashState {
     }
 }
 
-// Re-export the platform-specific flash_image function
 #[cfg(target_os = "linux")]
 pub use linux::flash_image;
 #[cfg(target_os = "macos")]
@@ -97,7 +87,6 @@ pub use macos::flash_image;
 #[cfg(target_os = "windows")]
 pub use windows::flash_image;
 
-// Re-export authorization functions
 #[cfg(target_os = "linux")]
 pub use linux::request_authorization;
 #[cfg(target_os = "macos")]
@@ -140,6 +129,26 @@ pub(crate) fn unmount_device(device_path: &str) -> Result<(), String> {
         let _ = device_path;
     }
 
+    Ok(())
+}
+
+/// Write `total` zero bytes in `chunk_size` chunks, shared by the platform
+/// quick_erase routines (which keep their own seek/sync).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub(crate) fn write_zeros(
+    device: &mut impl std::io::Write,
+    total: usize,
+    chunk_size: usize,
+) -> Result<(), String> {
+    let zero_buffer = vec![0u8; chunk_size];
+    let mut erased: usize = 0;
+    while erased < total {
+        let to_write = std::cmp::min(chunk_size, total - erased);
+        device
+            .write_all(&zero_buffer[..to_write])
+            .map_err(|e| format!("Quick erase failed at byte {}: {}", erased, e))?;
+        erased += to_write;
+    }
     Ok(())
 }
 

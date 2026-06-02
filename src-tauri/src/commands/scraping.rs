@@ -1,7 +1,5 @@
-//! Asset caching module
-//!
-//! Serves board images and vendor logos from the local picture cache
-//! as base64 data URIs, downloading from the Armbian API on first access.
+//! Asset caching: serves board images and vendor logos from the local picture
+//! cache as base64 data URIs, downloading from the Armbian API on first access.
 
 use crate::config;
 use crate::picture_cache;

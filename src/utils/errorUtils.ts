@@ -11,6 +11,7 @@ export function translateQdlError(error: string, t: (key: string) => string): st
   if (error.includes('[QDL_CANCELLED]')) return t('error.qdlCancelled');
   if (error.includes('[QDL_PERMISSION_DENIED]')) return t('error.qdlPermissionDenied');
   if (error.includes('[QDL_CONNECTION_FAILED]')) return t('error.qdlConnectionFailed');
+  if (error.includes('[QDL_AUTOCONFIG_FAILED]')) return t('error.qdlAutoconfigFailed');
   if (error.includes('[QDL_ERROR]')) return error.replace('[QDL_ERROR] ', '');
   return error;
 }

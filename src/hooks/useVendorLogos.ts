@@ -10,10 +10,7 @@ interface VendorLogoState {
   isLoaded: boolean;
 }
 
-/**
- * Hook to validate vendor logos by preloading them and tracking failures.
- * Vendors with failed logos (404, network errors, etc.) are grouped under "other".
- */
+/** Preload vendor logos and track failures; failed vendors are grouped under "other" */
 export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
   const [state, setState] = useState<VendorLogoState>({
     failedLogos: new Set(),
@@ -32,7 +29,6 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
   useEffect(() => {
     if (!isActive || !boards?.length || state.isLoaded) return;
 
-    // Collect unique vendor slugs from boards
     const vendorSlugs = new Set<string>();
     for (const board of boards) {
       if (board.vendor && board.vendor !== VENDOR.FALLBACK_ID) {
@@ -50,7 +46,6 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
     const cached = new Map<string, string>();
 
     vendorSlugs.forEach((vendorSlug) => {
-      // Fetch logo via backend cache (constructs URL from slug)
       getCachedVendorLogo(vendorSlug).then((dataUri) => {
         if (dataUri) {
           cached.set(vendorSlug, dataUri);
@@ -68,7 +63,7 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
     });
   }, [isActive, boards, state.isLoaded]);
 
-  // Helper to get effective vendor (considering failed logos)
+  // Falls back to "other" when the vendor's logo failed to load
   const getEffectiveVendor = useCallback((board: BoardInfo): string => {
     if (!board.vendor || state.failedLogos.has(board.vendor)) {
       return VENDOR.FALLBACK_ID;
@@ -76,7 +71,6 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
     return board.vendor || VENDOR.FALLBACK_ID;
   }, [state.failedLogos]);
 
-  // Check if a vendor has a valid logo
   const hasValidLogo = useCallback((board: BoardInfo): boolean => {
     return !!(board.vendor && !state.failedLogos.has(board.vendor));
   }, [state.failedLogos]);
@@ -99,10 +93,7 @@ export interface ManufacturerData {
   standardCount: number;
 }
 
-/**
- * Hook to build manufacturer list from boards with validated logos.
- * Boards with failed logos are grouped under "other".
- */
+/** Build the manufacturer list from boards; boards with failed logos go under "other" */
 export function useManufacturerList(
   boards: BoardInfo[] | null,
   isActive: boolean,
@@ -122,12 +113,10 @@ export function useManufacturerList(
       standardCount: number;
     }> = {};
 
-    // Build vendor map with board counts and support tier counts
     for (const board of boards) {
       const validLogo = hasValidLogo(board);
       const vendorId = validLogo ? (board.vendor || VENDOR.FALLBACK_ID) : VENDOR.FALLBACK_ID;
       const vendorName = validLogo ? (board.vendor_name || 'Other') : 'Other';
-      // Use cached local data URI for vendor logo
       const vendorLogo = validLogo
         ? (cachedUrls.get(board.vendor) || null)
         : null;
@@ -143,12 +132,9 @@ export function useManufacturerList(
       }
       vendorMap[vendorId].count++;
 
-      // Increment platinum count if this board has platinum support
       if (board.support_tier === 'platinum') {
         vendorMap[vendorId].platinumCount++;
       }
-
-      // Increment standard count if this board has standard support
       if (board.support_tier === 'standard') {
         vendorMap[vendorId].standardCount++;
       }
@@ -168,18 +154,17 @@ export function useManufacturerList(
         standardCount: data.standardCount,
       }))
       .sort((a, b) => {
-        // "Other" category always goes to the bottom
+        // "Other" always last
         if (a.id === VENDOR.FALLBACK_ID) return 1;
         if (b.id === VENDOR.FALLBACK_ID) return -1;
 
-        // Tier 1: Vendors with MORE than 1 platinum board (highest priority)
+        // Tier 1: >1 platinum board
         const aMultiPlatinum = a.platinumCount > 1;
         const bMultiPlatinum = b.platinumCount > 1;
 
         if (aMultiPlatinum && !bMultiPlatinum) return -1;
         if (!aMultiPlatinum && bMultiPlatinum) return 1;
 
-        // Within Tier 1, sort by platinum count (descending)
         if (aMultiPlatinum && bMultiPlatinum) {
           if (a.platinumCount !== b.platinumCount) {
             return b.platinumCount - a.platinumCount;
@@ -187,14 +172,13 @@ export function useManufacturerList(
           return b.boardCount - a.boardCount;
         }
 
-        // Tier 2: Vendors with exactly 1 platinum board (any platinum beats standard-only)
+        // Tier 2: exactly 1 platinum board (beats standard-only)
         const aSinglePlatinum = a.platinumCount === 1;
         const bSinglePlatinum = b.platinumCount === 1;
 
         if (aSinglePlatinum && !bSinglePlatinum) return -1;
         if (!aSinglePlatinum && bSinglePlatinum) return 1;
 
-        // Within Tier 2, sort by standard count then board count
         if (aSinglePlatinum && bSinglePlatinum) {
           if (a.standardCount !== b.standardCount) {
             return b.standardCount - a.standardCount;
@@ -202,14 +186,13 @@ export function useManufacturerList(
           return b.boardCount - a.boardCount;
         }
 
-        // Tier 3: Vendors with MORE than 1 standard board (no platinum)
+        // Tier 3: >1 standard board, no platinum
         const aMultiStandard = a.standardCount > 1;
         const bMultiStandard = b.standardCount > 1;
 
         if (aMultiStandard && !bMultiStandard) return -1;
         if (!aMultiStandard && bMultiStandard) return 1;
 
-        // Within Tier 3, sort by standard count (descending)
         if (aMultiStandard && bMultiStandard) {
           if (a.standardCount !== b.standardCount) {
             return b.standardCount - a.standardCount;
@@ -217,7 +200,7 @@ export function useManufacturerList(
           return b.boardCount - a.boardCount;
         }
 
-        // Tier 4: Remaining vendors - sort by total board count (descending)
+        // Tier 4: remaining vendors by total board count
         return b.boardCount - a.boardCount;
       });
 

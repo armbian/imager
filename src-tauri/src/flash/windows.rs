@@ -1,6 +1,4 @@
-//! Windows-specific flash implementation.
-//!
-//! Requires Administrator privileges for raw disk access.
+//! Windows-specific flash implementation. Requires Administrator for raw disk access.
 
 use super::FlashState;
 use crate::config;
@@ -25,9 +23,7 @@ const FILE_FLAG_NO_BUFFERING: u32 = 0x20000000;
 #[cfg(target_os = "windows")]
 const FILE_FLAG_WRITE_THROUGH: u32 = 0x80000000;
 
-/// Flashes an image to a block device.
-///
-/// Requires Administrator privileges on Windows.
+/// Flashes an image to a block device. Requires Administrator privileges.
 pub async fn flash_image(
     image_path: &PathBuf,
     device_path: &str,
@@ -74,7 +70,6 @@ pub async fn flash_image(
     let mut buffer = vec![0u8; chunk_size];
     let mut written: u64 = 0;
 
-    // Use ProgressTracker for automatic progress logging
     let mut tracker = ProgressTracker::new(
         "Write",
         MODULE,
@@ -107,7 +102,6 @@ pub async fn flash_image(
         written += bytes_read as u64;
         state.written_bytes.store(written, Ordering::SeqCst);
 
-        // ProgressTracker handles logging automatically
         tracker.update(bytes_read as u64);
     }
 
@@ -115,7 +109,6 @@ pub async fn flash_image(
     device.flush().ok();
     flush_device_buffers(&device)?;
 
-    // Log final summary
     tracker.finish();
 
     if verify {
@@ -163,27 +156,24 @@ impl Drop for VolumeLocks {
         log_info!(MODULE, "Releasing {} volume lock(s)...", self.handles.len());
 
         for handle in self.handles.drain(..) {
-            // Convert to usize for thread-safe transfer
+            // usize is Send, so the raw handle can cross the thread boundary.
             let handle_val = handle as usize;
 
-            // Spawn cleanup in separate thread to avoid blocking
-            std::thread::spawn(move || {
-                unsafe {
-                    let h = handle_val as *mut std::ffi::c_void;
-                    // Unlock volume before closing to prevent hangs
-                    let mut bytes_ret: u32 = 0;
-                    DeviceIoControl(
-                        h,
-                        FSCTL_UNLOCK_VOLUME,
-                        std::ptr::null(),
-                        0,
-                        std::ptr::null_mut(),
-                        0,
-                        &mut bytes_ret,
-                        std::ptr::null_mut(),
-                    );
-                    CloseHandle(h);
-                }
+            // Unlock off-thread so a stuck volume can't block the flash from returning.
+            std::thread::spawn(move || unsafe {
+                let h = handle_val as *mut std::ffi::c_void;
+                let mut bytes_ret: u32 = 0;
+                DeviceIoControl(
+                    h,
+                    FSCTL_UNLOCK_VOLUME,
+                    std::ptr::null(),
+                    0,
+                    std::ptr::null_mut(),
+                    0,
+                    &mut bytes_ret,
+                    std::ptr::null_mut(),
+                );
+                CloseHandle(h);
             });
         }
 
@@ -194,10 +184,7 @@ impl Drop for VolumeLocks {
 #[cfg(not(target_os = "windows"))]
 struct VolumeLocks;
 
-/// Locks and dismounts all volumes on the specified disk.
-///
-/// Uses `FindFirstVolume`/`FindNextVolume` to enumerate volumes and
-/// `IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS` to identify which disk they belong to.
+/// Locks and dismounts all volumes on the disk via `FindFirst/NextVolume` + `IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS`.
 /// Handles are kept open to prevent Windows from remounting during the operation.
 #[cfg(target_os = "windows")]
 fn lock_disk_volumes(disk_number: u32) -> Result<VolumeLocks, String> {
@@ -247,7 +234,7 @@ fn lock_disk_volumes(disk_number: u32) -> Result<VolumeLocks, String> {
                 .unwrap_or(volume_name.len());
             let vol_str = String::from_utf16_lossy(&volume_name[..vol_len]);
 
-            // Remove trailing backslash for CreateFile
+            // CreateFile wants the volume path without the trailing backslash.
             let vol_path: Vec<u16> = if vol_len > 0 && volume_name[vol_len - 1] == b'\\' as u16 {
                 volume_name[..vol_len - 1]
                     .iter()
@@ -385,9 +372,7 @@ fn flush_device_buffers(_device: &std::fs::File) -> Result<(), String> {
     Ok(())
 }
 
-/// Verifies written data using sector-aligned reads.
-///
-/// Required when using `FILE_FLAG_NO_BUFFERING` which bypasses the OS cache.
+/// Verifies written data using sector-aligned reads, required by `FILE_FLAG_NO_BUFFERING` (bypasses OS cache).
 #[cfg(target_os = "windows")]
 fn verify_with_sector_alignment(
     image_path: &PathBuf,
@@ -424,7 +409,6 @@ fn verify_with_sector_alignment(
     let mut device_buffer = vec![0u8; aligned_chunk_size];
     let mut verified: u64 = 0;
 
-    // Use ProgressTracker for automatic progress logging
     let mut tracker = ProgressTracker::new(
         "Verify",
         MODULE,
@@ -448,7 +432,7 @@ fn verify_with_sector_alignment(
             break;
         }
 
-        // Align device read to sector boundary
+        // Round the device read up to a whole sector (no-buffering requirement).
         let device_read_size = ((image_read + sector_size - 1) / sector_size) * sector_size;
 
         let mut total_read = 0;
@@ -490,11 +474,9 @@ fn verify_with_sector_alignment(
         verified += image_read as u64;
         state.verified_bytes.store(verified, Ordering::SeqCst);
 
-        // ProgressTracker handles logging automatically
         tracker.update(image_read as u64);
     }
 
-    // Log final summary
     tracker.finish();
     Ok(())
 }

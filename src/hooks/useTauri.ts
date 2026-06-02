@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo, CachedImageInfo, QdlDevice, VendorInfo } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
   return invoke('get_boards');
@@ -41,12 +41,15 @@ export async function getDownloadProgress(): Promise<DownloadProgress> {
   return invoke('get_download_progress');
 }
 
+/** Flash an image to a device. With `autoconfig`, the Armbian first-boot file is written
+ * into the image; omitting it keeps default behaviour. */
 export async function flashImage(
   imagePath: string,
   devicePath: string,
-  verify: boolean = true
+  verify: boolean = true,
+  autoconfig?: AutoconfigConfig | null
 ): Promise<void> {
-  return invoke('flash_image', { imagePath, devicePath, verify });
+  return invoke('flash_image', { imagePath, devicePath, verify, autoconfig });
 }
 
 export async function getFlashProgress(): Promise<FlashProgress> {
@@ -121,10 +124,6 @@ export async function logWarn(module: string, message: string): Promise<void> {
   return invoke('log_warn_from_frontend', { module, message });
 }
 
-export async function logDebug(module: string, message: string): Promise<void> {
-  return invoke('log_debug_from_frontend', { module, message });
-}
-
 export interface GitHubRelease {
   tag_name: string;
   name: string;
@@ -143,24 +142,17 @@ export async function isAppInApplications(): Promise<boolean> {
   return invoke('is_app_in_applications');
 }
 
-/**
- * Get the real system platform and architecture
- */
+/** Get the real system platform and architecture */
 export async function getSystemInfo(): Promise<{ platform: string; arch: string }> {
   return invoke('get_system_info');
 }
 
-/**
- * Get the Tauri framework version
- */
+/** Get the Tauri framework version */
 export async function getTauriVersion(): Promise<string> {
   return invoke('get_tauri_version');
 }
 
-/**
- * Get the current log file contents (last 10k lines if larger than 5MB).
- * ANSI color codes are preserved.
- */
+/** Get the log file contents (last 10k lines if over 5MB); ANSI colors preserved */
 export async function getLogs(): Promise<string> {
   return invoke('get_logs');
 }
@@ -169,9 +161,9 @@ export async function getLogs(): Promise<string> {
 // Cache Management
 // ============================================================================
 
-/** Get the total size of all cached images, in bytes */
-export async function getCacheSize(): Promise<number> {
-  return invoke('get_cache_size');
+/** Get the cache size split into flashable images and assets (photos + API JSON) */
+export async function getCacheBreakdown(): Promise<CacheBreakdown> {
+  return invoke('get_cache_breakdown');
 }
 
 /** Clear all cached images (irreversible) */
@@ -216,10 +208,7 @@ export async function getCachedVendorLogo(vendorSlug: string): Promise<string | 
 // Armbian System Detection
 // ============================================================================
 
-/**
- * Detect an Armbian host by reading /etc/armbian-release (Linux only).
- * Returns null when not on Armbian or on other platforms.
- */
+/** Detect an Armbian host via /etc/armbian-release (Linux only); null otherwise */
 export async function getArmbianRelease(): Promise<ArmbianReleaseInfo | null> {
   return invoke('get_armbian_release');
 }
@@ -231,9 +220,13 @@ export async function getQdlDevices(): Promise<QdlDevice[]> {
   return invoke('get_qdl_devices');
 }
 
-/** Flash a QDL image (TAR archive) to a device in EDL mode; `serial` targets a specific device */
-export async function flashQdlImage(tarPath: string, serial?: string): Promise<void> {
-  return invoke('flash_qdl_image', { tarPath, serial });
+/** Flash a QDL image (TAR archive) to a device in EDL mode; `serial` targets a specific device, `autoconfig` injects a profile */
+export async function flashQdlImage(
+  tarPath: string,
+  serial?: string,
+  autoconfig?: AutoconfigConfig | null
+): Promise<void> {
+  return invoke('flash_qdl_image', { tarPath, serial, autoconfig });
 }
 
 /** Check whether a TAR file is a QDL flash archive (has rawprogram0.xml + firehose ELF) */

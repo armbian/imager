@@ -1,6 +1,4 @@
-/* ========================================
-   RESPONSIVE - Medium-large screens (< 900px)
-   ======================================== */
+/* RESPONSIVE - Medium-large screens (< 900px) */
 @media (max-width: 900px) {
   .header {
     padding: 16px 24px;
@@ -27,46 +25,56 @@
 
   .header-steps {
     gap: 3px;
-    padding: 7px 10px;
   }
 
-  .home-buttons-inline {
-    flex-wrap: wrap;
-    gap: 12px;
+  /* Stack the stage: board on top, panel below. */
+  .flash-stage {
+    flex-direction: column;
+    gap: 20px;
+    padding: 16px 4px;
   }
 
-  .home-button {
-    min-width: 180px;
-    height: 120px;
-    padding: 20px 24px;
+  .flash-stage__board .flash-board-image {
+    max-width: clamp(180px, 42vw, 260px);
   }
 
-  .flash-header {
-    gap: 16px;
-    padding: 16px 20px;
+  .flash-stage__main {
+    max-width: 520px;
+    width: 100%;
+    gap: var(--space-lg);
   }
 
-  .flash-board-image {
-    width: 80px;
-    height: 80px;
+  /* Center summary + panel content when stacked. */
+  .flash-info {
+    align-items: center;
+    text-align: center;
   }
 
-  .flash-info h2 {
-    font-size: 17px;
+  .flash-info-badges {
+    justify-content: center;
   }
 
-  .flash-status {
-    padding: 18px;
+  /* Stacked: center the summary + progress block. */
+  .flash-info,
+  .flash-progress {
+    align-items: center;
+    text-align: center;
   }
-
-  .flash-status h3 {
-    font-size: 15px;
+  .flash-progress {
+    min-height: auto;
+  }
+  .flash-track {
+    margin-inline: auto;
+  }
+  .flash-dots {
+    margin-inline: auto;
+  }
+  .flash-fallback {
+    min-height: auto;
   }
 }
 
-/* ========================================
-   RESPONSIVE - Medium screens (< 700px)
-   ======================================== */
+/* RESPONSIVE - Medium screens (< 700px) */
 @media (max-width: 700px) {
   .header {
     padding: 12px 16px;
@@ -93,66 +101,76 @@
 
   .header-steps {
     gap: 2px;
-    padding: 6px 8px;
+  }
+
+  /* Drop step text on narrow widths, keep the numbered indicators */
+  .header-step-label {
+    display: none;
+  }
+
+  /* Stack: sidebar on top, focus panel below */
+  .split {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .split-nav {
+    border-right: none;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .focus-visual {
+    height: 110px;
+    margin-bottom: 14px;
+  }
+
+  .focus-visual img {
+    max-height: 110px;
   }
 }
 
-/* ========================================
-   RESPONSIVE - Small screens (< 600px)
-   ======================================== */
+/* RESPONSIVE - Small screens (< 600px) */
 @media (max-width: 600px) {
-  .home-buttons-inline {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
-    max-width: 300px;
-  }
-
-  /* Faster stagger for mobile */
-  .home-button-group:nth-child(1) .home-button { animation-delay: 0ms; }
-  .home-button-group:nth-child(2) .home-button { animation-delay: 80ms; }
-  .home-button-group:nth-child(3) .home-button { animation-delay: 160ms; }
-  .home-button-group:nth-child(4) .home-button { animation-delay: 240ms; }
-
-  .home-button {
-    min-width: auto;
-    width: 100%;
-  }
-
-  .home-write-button {
-    width: 100%;
+  .focus-title {
+    font-size: 19px;
   }
 
   .modal {
     max-height: 95vh;
     max-width: 98vw;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
   }
 
   .modal-overlay {
     padding: 8px;
   }
 
-  .flash-board-image {
-    width: 70px;
-    height: 70px;
+  .flash-stage__board .flash-board-image {
+    max-width: clamp(160px, 50vw, 220px);
   }
 
   .flash-info h2 {
-    font-size: 15px;
+    font-size: 18px;
+  }
+
+  .flash-progress__label {
+    font-size: clamp(16px, 5vw, 20px);
   }
 }
 
-/* ========================================
-   RESPONSIVE - Large screens (> 1200px)
-   ======================================== */
+/* RESPONSIVE - Large screens (> 1200px) */
 @media (min-width: 1200px) {
   .modal {
     max-width: 950px;
     max-height: 85vh;
   }
 
-  .flash-container {
-    max-width: 700px;
+  .flash-stage {
+    max-width: 1120px;
+  }
+
+  /* Grow the hero board toward the Home north-star size. */
+  .flash-stage__board .flash-board-image {
+    max-width: clamp(480px, 44vw, 740px);
   }
 }

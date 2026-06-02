@@ -1,49 +1,33 @@
-/**
- * Application constants and configuration values
- */
+/** Application constants and configuration values */
 
 /** Polling intervals in milliseconds */
 export const POLLING = {
-  /** Device connection check interval */
   DEVICE_CHECK: 2000,
-  /** Download progress update interval */
   DOWNLOAD_PROGRESS: 250,
-  /** Flash progress update interval */
   FLASH_PROGRESS: 250,
-  /** Connectivity check interval */
   CONNECTIVITY_CHECK: 30000,
 } as const;
 
-/** Device type identifiers */
 export type DeviceType = 'system' | 'sd' | 'usb' | 'sata' | 'sas' | 'nvme' | 'hdd';
 
-/** External links */
 export const LINKS = {
-  /** GitHub repository URL */
   GITHUB_REPO: 'https://github.com/armbian/imager',
-  /** Documentation URL */
   DOCS: 'https://docs.armbian.com',
-  /** Community forum URL */
   FORUM: 'https://forum.armbian.com',
-  /** MOTD (Message of the Day) JSON file */
   MOTD: 'https://raw.githubusercontent.com/armbian/os/main/motd.json',
 } as const;
 
 /** Timing constants in milliseconds */
 export const TIMING = {
-  /** MOTD rotation interval */
   MOTD_ROTATION: 30000,
-  /** Duration to show "Copied!" notification */
   COPIED_NOTIFICATION: 2000,
 } as const;
 
-/** Cache configuration */
 export const CACHE = {
-  /** Maximum consecutive flash failures before auto-deleting cached image */
+  /** Auto-delete a cached image after this many consecutive flash failures */
   MAX_FLASH_FAILURES: 3,
   /** Default maximum cache size: 20 GB */
   DEFAULT_SIZE: 20 * 1024 * 1024 * 1024,
-  /** Cache size options in bytes with display labels */
   SIZE_OPTIONS: [
     { value: 5 * 1024 * 1024 * 1024, label: '5 GB' },
     { value: 10 * 1024 * 1024 * 1024, label: '10 GB' },
@@ -55,48 +39,48 @@ export const CACHE = {
 
 /** Custom DOM events for inter-component communication */
 export const EVENTS = {
-  /** Fired when MOTD setting changes */
   MOTD_CHANGED: 'armbian-motd-changed',
-  /** Fired when general settings change */
   SETTINGS_CHANGED: 'armbian-settings-changed',
-  /** Fired when user selects a cached image for reuse */
   CACHE_IMAGE_REUSE: 'armbian-cache-image-reuse',
+  PROFILES_CHANGED: 'armbian-autoconfig-profiles-changed',
 } as const;
 
 /** Storage key prefixes for sessionStorage/localStorage */
 export const STORAGE_KEYS = {
-  /** Prefix for flash failure count (appended with image URL) */
+  /** Prefix, appended with the image URL */
   FLASH_FAILURE_PREFIX: 'flash_failure_count_',
 } as const;
 
 /** Settings store configuration */
 export const SETTINGS = {
-  /** Settings file name */
   FILE: 'settings.json',
-  /** Store key names */
   KEYS: {
     THEME: 'theme',
     LANGUAGE: 'language',
     SHOW_MOTD: 'show_motd',
+    SHOW_WELCOME: 'show_welcome',
     SHOW_UPDATER_MODAL: 'show_updater_modal',
     DEVELOPER_MODE: 'developer_mode',
     SKIP_VERIFY: 'skip_verify',
+    FORCE_OFFLINE: 'force_offline',
     CACHE_ENABLED: 'cache_enabled',
     CACHE_MAX_SIZE: 'cache_max_size',
     ARMBIAN_BOARD_DETECTION: 'armbian_board_detection',
+    AUTOCONFIG_PROFILES: 'autoconfig_profiles',
   },
-  /** Default values for settings */
   DEFAULTS: {
     THEME: 'auto',
     LANGUAGE: 'en',
     SHOW_MOTD: true,
+    SHOW_WELCOME: true,
     SHOW_UPDATER_MODAL: true,
     DEVELOPER_MODE: false,
     SKIP_VERIFY: false,
+    FORCE_OFFLINE: false,
     CACHE_ENABLED: true,
     ARMBIAN_BOARD_DETECTION: 'modal',
+    AUTOCONFIG_PROFILES: [] as [],
   },
-  /** Armbian board detection modes */
   ARMBIAN_DETECTION_MODES: {
     DISABLED: 'disabled',
     MODAL: 'modal',
@@ -104,37 +88,50 @@ export const SETTINGS = {
   },
 } as const;
 
+/** Shared color palette referenced across config modules */
+export const PALETTE = {
+  RED: '#ef4444',
+  GREEN: '#10b981',
+  AMBER: '#f59e0b',
+  BLUE: '#3b82f6',
+  VIOLET: '#8b5cf6',
+  CYAN: '#06b6d4',
+  SKY: '#0ea5e9',
+  SLATE: '#64748b',
+} as const;
+
 /** UI color constants */
 export const COLORS = {
-  /** Default icon color (slate-500) */
-  DEFAULT_ICON: '#64748b',
-  /** Alert/warning icon color (amber-500) */
-  ALERT_WARNING: '#f59e0b',
-  /** QR code foreground color */
+  DEFAULT_ICON: PALETTE.SLATE,
+  ALERT_WARNING: PALETTE.AMBER,
   QR_DARK: '#000000',
-  /** QR code background color */
   QR_LIGHT: '#ffffff',
 } as const;
 
-/** QR code configuration */
 export const QR_CODE = {
-  /** Width in pixels */
   WIDTH: 120,
-  /** Margin in modules */
-  MARGIN: 1,
+    MARGIN: 1,
 } as const;
 
 /** UI dimension constants */
 export const UI = {
-  /** Skeleton placeholder counts */
+  /** Staggered animation timing for list/grid items */
+  STAGGER: {
+    MAX_INDEX: 18,
+    STEP_S: 0.04,
+  },
+  /** Modal exit animation duration in milliseconds */
+  MODAL_EXIT_MS: 200,
   SKELETON: {
     BOARD_GRID_COUNT: 8,
     LIST_COUNT: 6,
     MANUFACTURER_MODAL: 6,
     DEVICE_MODAL: 4,
     IMAGE_MODAL: 6,
+    MANUFACTURER_PANEL: 12,
+    BOARD_PANEL: 10,
+    OS_PANEL: 8,
   },
-  /** Marquee text configuration */
   MARQUEE: {
     DEFAULT_WIDTH: 180,
     SEPARATOR_WIDTH: 5,
@@ -152,4 +149,17 @@ export const UI = {
 export const VENDOR = {
   /** Fallback vendor ID for boards with invalid/missing vendor */
   FALLBACK_ID: 'other',
+} as const;
+
+/** Special board slugs for synthetic selection entries */
+export const SLUGS = {
+  CUSTOM: 'custom',
+  CACHED: 'cached',
+  DETECTED: 'detected',
+} as const;
+
+/** Image variant identifiers for non-standard image sources */
+export const IMAGE_VARIANT = {
+  CACHED: 'cached',
+  CUSTOM: 'custom',
 } as const;

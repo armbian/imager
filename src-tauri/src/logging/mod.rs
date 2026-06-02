@@ -1,7 +1,4 @@
-//! Application logging system
-//!
-//! Provides structured, formatted logging with file output support.
-//! Logs are written to the application's log directory with timestamps
+//! Structured, formatted logging to the app's log directory, with timestamps
 //! and log level indicators.
 
 use chrono::{DateTime, Local};
@@ -12,7 +9,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 use crate::config;
-use crate::utils::get_cache_dir;
+use crate::utils::logs_dir;
 
 /// Log levels for categorizing messages
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -25,7 +22,6 @@ pub enum LogLevel {
 }
 
 impl LogLevel {
-    /// Get the string representation
     pub fn as_str(&self) -> &'static str {
         match self {
             LogLevel::Debug => "DEBUG",
@@ -91,7 +87,6 @@ impl Logger {
             return (None, None);
         }
 
-        // Create log file with timestamp
         let timestamp = Local::now().format("%Y%m%d_%H%M%S");
         let log_filename = format!("armbian-imager_{}.log", timestamp);
         let log_path = log_dir.join(&log_filename);
@@ -113,7 +108,6 @@ impl Logger {
         let timestamp = Local::now();
         let formatted_colored = self.format_message_colored(level, module, message, &timestamp);
 
-        // Console output
         if self.config.console_output {
             if self.config.use_colors {
                 eprintln!("{}", formatted_colored);
@@ -123,7 +117,7 @@ impl Logger {
             }
         }
 
-        // File output (with ANSI colors for hastebin)
+        // Keep ANSI colors in the file so hastebin renders them.
         if self.config.file_output {
             if let Some(ref mut file) = self.log_file {
                 let _ = writeln!(file, "{}", formatted_colored);
@@ -185,7 +179,7 @@ static LOGGER: Lazy<Mutex<Logger>> = Lazy::new(|| Mutex::new(Logger::new()));
 
 /// Get the log directory path
 pub fn get_log_dir() -> PathBuf {
-    get_cache_dir(config::app::NAME).join("logs")
+    logs_dir()
 }
 
 /// Get the current log file path (if any)
@@ -232,7 +226,6 @@ pub fn set_log_level(debug_enabled: bool) {
         };
         logger.set_min_level(new_level);
 
-        // Log the change after setting it (using the new level)
         let level_str = if debug_enabled { "DEBUG" } else { "INFO" };
         logger.log(
             LogLevel::Info,
@@ -288,7 +281,7 @@ pub fn cleanup_old_logs(keep_count: usize) -> Result<usize, String> {
         .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "log"))
         .collect();
 
-    // Sort by modification time (newest first)
+    // Newest first, so the skip below drops the oldest.
     log_files.sort_by(|a, b| {
         let a_time = a.metadata().and_then(|m| m.modified()).ok();
         let b_time = b.metadata().and_then(|m| m.modified()).ok();
@@ -305,29 +298,9 @@ pub fn cleanup_old_logs(keep_count: usize) -> Result<usize, String> {
     Ok(deleted)
 }
 
-/// Get total size of log files in bytes
-#[allow(dead_code)]
-pub fn get_logs_size() -> u64 {
-    let log_dir = get_log_dir();
-
-    if !log_dir.exists() {
-        return 0;
-    }
-
-    fs::read_dir(&log_dir)
-        .map(|entries| {
-            entries
-                .filter_map(|entry| entry.ok())
-                .filter_map(|entry| entry.metadata().ok())
-                .map(|meta| meta.len())
-                .sum()
-        })
-        .unwrap_or(0)
-}
-
 /// Initialize the logger (call at application startup)
 pub fn init() {
-    // Force initialization of the lazy static
+    // Force the lazy static to initialize now.
     drop(LOGGER.lock());
 
     info("logger", "Armbian Imager logging initialized");
@@ -336,7 +309,6 @@ pub fn init() {
         info("logger", &format!("Log file: {}", path.display()));
     }
 
-    // Clean up old logs, retaining the most recent ones
     match cleanup_old_logs(config::log_files::MAX_LOG_FILES) {
         Ok(deleted) if deleted > 0 => {
             info("logger", &format!("Cleaned up {} old log files", deleted));

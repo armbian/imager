@@ -1,0 +1,12 @@
+[package]
+name = "armbian-write-conf"
+version = "0.1.0"
+edition = "2021"
+description = "Write a small config file into an ext4 rootfs of a RAW disk image, in userspace, then validate."
+license = "MIT"
+
+[dependencies]
+armbian-ext4fs = { path = "vendor/armbian-ext4fs" }
+gptman = "3"
+mbrman = "0"
+ext4-view = { version = "0.9", features = ["std"] }

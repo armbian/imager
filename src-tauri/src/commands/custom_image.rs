@@ -1,16 +1,13 @@
-//! Custom image handling module
-//!
-//! Handles selection and processing of user-provided custom images.
+//! Selection and processing of user-provided custom images.
 
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tauri::State;
 
-use crate::config;
 use crate::decompress::{decompress_local_file, needs_decompression};
 use crate::images::{fetch_boards, map_board, BoardInfo};
 use crate::qdl::extract::open_tar_reader;
-use crate::utils::{get_cache_dir, normalize_slug, parse_armbian_filename};
+use crate::utils::{custom_decompress_dir, normalize_slug, parse_armbian_filename};
 use crate::{log_debug, log_error, log_info};
 
 use super::state::AppState;
@@ -37,8 +34,7 @@ pub async fn check_needs_decompression(image_path: String) -> Result<bool, Strin
     Ok(needs)
 }
 
-/// Decompress a custom image file
-/// Returns the path to the decompressed file
+/// Decompress a custom image file, returning the decompressed path.
 #[tauri::command]
 pub async fn decompress_custom_image(
     image_path: String,
@@ -48,10 +44,9 @@ pub async fn decompress_custom_image(
     let path = PathBuf::from(&image_path);
     let download_state = state.download_state.clone();
 
-    // Reset state for progress tracking
     download_state.reset();
 
-    // Run decompression in a blocking task
+    // Decompression is CPU-bound, so run it off the async runtime.
     let result = tokio::task::spawn_blocking(move || decompress_local_file(&path, &download_state))
         .await
         .map_err(|e| {
@@ -145,10 +140,10 @@ pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), 
     );
     let path = PathBuf::from(&image_path);
 
-    // Safety check: only delete files in our custom-decompress directory
-    let custom_decompress_dir = get_cache_dir(config::app::NAME).join("custom-decompress");
+    // Refuse to delete anything outside the custom-decompress directory.
+    let custom_dir = custom_decompress_dir();
 
-    if !path.starts_with(&custom_decompress_dir) {
+    if !path.starts_with(&custom_dir) {
         log_error!(
             "custom_image",
             "Attempted to delete file outside custom-decompress cache: {}",
@@ -170,8 +165,8 @@ pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), 
         log_info!("custom_image", "Deleted decompressed image: {}", image_path);
     }
 
-    // Try to remove empty parent directory (ignore errors)
-    let _ = std::fs::remove_dir(&custom_decompress_dir);
+    // Best-effort removal of the now-empty directory.
+    let _ = std::fs::remove_dir(&custom_dir);
 
     Ok(())
 }
@@ -187,7 +182,7 @@ pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
         .unwrap_or("")
         .to_lowercase();
 
-    // For plain .tar files, full content inspection is fast
+    // Plain .tar: cheap to inspect every entry.
     if filename.ends_with(".tar") {
         log_debug!(
             "custom_image",
@@ -203,24 +198,23 @@ pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
         return Ok(has_qdl);
     }
 
-    // Compressed TAR is always a QDL archive in Armbian; only decompress the
-    // first header to confirm validity (full validation happens after extraction).
+    // Compressed TAR: QDL requires BOTH rawprogram0.xml and prog_firehose_ddr.elf, so scan entries
+    // rather than sniff a flash/ dir or disk-sdcard.img name (a generic .tar.gz rootfs is NOT QDL).
     if filename.contains(".tar.") {
         log_debug!(
             "custom_image",
-            "Checking compressed TAR validity: {}",
+            "Checking compressed TAR for QDL structure: {}",
             image_path
         );
         let reader = match open_tar_reader(&path) {
             Ok(r) => r,
             Err(_) => return Ok(false),
         };
-        let has_qdl = quick_check_qdl_structure(reader);
+        let has_qdl = check_tar_for_qdl(reader);
         log_debug!("custom_image", "QDL structure detected: {}", has_qdl);
         return Ok(has_qdl);
     }
 
-    // Not a TAR archive
     Ok(false)
 }
 
@@ -261,51 +255,7 @@ fn check_tar_for_qdl<R: std::io::Read>(reader: R) -> bool {
     false
 }
 
-/// Quick check for QDL layout in a compressed TAR by reading only the first
-/// entry headers (a "flash/" directory), stopping before the large rootfs blob.
-fn quick_check_qdl_structure<R: std::io::Read>(reader: R) -> bool {
-    let mut archive = tar::Archive::new(reader);
-    let entries = match archive.entries() {
-        Ok(e) => e,
-        Err(_) => return false,
-    };
-
-    // Stop once a "flash/" directory is found or a large file is hit, since
-    // QDL directory and small-file entries precede the large rootfs.
-    const MAX_SMALL_ENTRIES: usize = 10;
-    const LARGE_FILE_THRESHOLD: u64 = 100 * 1024 * 1024; // 100MB
-
-    for (idx, entry) in entries.enumerate() {
-        let entry = match entry {
-            Ok(e) => e,
-            Err(_) => return false,
-        };
-
-        // Check entry path for QDL indicators (header only, no data decompression)
-        if let Ok(path) = entry.path() {
-            let path_str = path.to_string_lossy();
-            // Direct match: flash/ directory or files inside it
-            if path_str.ends_with("flash/") || path_str.contains("/flash/") {
-                return true;
-            }
-            // Armbian QDL archives contain partition images with these names
-            if path_str.contains("disk-sdcard.img") {
-                return true;
-            }
-        }
-
-        // Stop before the iterator advances past large file data (which would
-        // require decompressing it). We've already read this entry's header.
-        if entry.size() > LARGE_FILE_THRESHOLD || idx >= MAX_SMALL_ENTRIES {
-            break;
-        }
-    }
-
-    false
-}
-
-/// Detect board information from custom image filename
-/// Parses Armbian naming convention: Armbian_VERSION_BOARD_DISTRO_VENDOR_KERNEL_FLAVOR.img.xz
+/// Detect the board for a custom image by parsing its Armbian filename and matching the API list.
 #[tauri::command]
 pub async fn detect_board_from_filename(
     filename: String,
@@ -317,14 +267,12 @@ pub async fn detect_board_from_filename(
         filename
     );
 
-    // Extract filename from path (remove directory)
     let path = PathBuf::from(&filename);
     let filename_only = path
         .file_name()
         .and_then(|n| n.to_str())
         .ok_or("Invalid filename")?;
 
-    // Parse Armbian filename using shared utility
     let parsed = match parse_armbian_filename(filename_only) {
         Some(info) => info,
         None => {
@@ -343,11 +291,10 @@ pub async fn detect_board_from_filename(
         parsed.board_slug
     );
 
-    // Normalize board slug for matching against API data
     let normalized_slug = normalize_slug(&parsed.board_slug);
     log_debug!("custom_image", "Normalized board slug: {}", normalized_slug);
 
-    // Ensure board data is loaded (auto-load if not cached)
+    // Auto-load board data on first use; double-checked to avoid a redundant fetch.
     {
         let needs_loading = {
             let boards_guard = state.boards.lock().await;
@@ -361,7 +308,6 @@ pub async fn detect_board_from_filename(
                 format!("Failed to fetch board data: {}", e)
             })?;
 
-            // Cache the fetched data
             let mut boards_guard = state.boards.lock().await;
             if boards_guard.is_none() {
                 *boards_guard = Some(api_boards);
@@ -369,7 +315,6 @@ pub async fn detect_board_from_filename(
         }
     }
 
-    // Get cached boards data (now guaranteed to be loaded)
     let matching_board = {
         let boards_guard = state.boards.lock().await;
         let api_boards = boards_guard.as_ref().ok_or("Boards not loaded")?;
@@ -377,7 +322,6 @@ pub async fn detect_board_from_filename(
         let boards: Vec<BoardInfo> = api_boards.iter().map(map_board).collect();
         log_debug!("custom_image", "Found {} boards in database", boards.len());
 
-        // Find matching board by slug
         boards
             .into_iter()
             .find(|board| board.slug == normalized_slug)
@@ -399,4 +343,50 @@ pub async fn detect_board_from_filename(
     }
 
     Ok(matching_board)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::check_tar_for_qdl;
+
+    /// Build an in-memory uncompressed tar from `(path, contents)` entries.
+    fn build_tar(entries: &[(&str, &[u8])]) -> Vec<u8> {
+        let mut builder = tar::Builder::new(Vec::new());
+        for (path, contents) in entries {
+            let mut header = tar::Header::new_gnu();
+            header.set_size(contents.len() as u64);
+            header.set_mode(0o644);
+            header.set_cksum();
+            builder.append_data(&mut header, path, *contents).unwrap();
+        }
+        builder.into_inner().unwrap()
+    }
+
+    #[test]
+    fn flash_dir_only_is_not_qdl() {
+        // A tar carrying a flash/ dir and a disk-sdcard.img name but neither of
+        // the two required QDL files must NOT be detected as QDL.
+        let tar = build_tar(&[
+            ("arduino-images/flash/some-other.xml", b"<data/>"),
+            ("arduino-images/disk-sdcard.img.root", b"rootfs-bytes"),
+        ]);
+        assert!(!check_tar_for_qdl(&tar[..]));
+    }
+
+    #[test]
+    fn both_required_files_present_is_qdl() {
+        // rawprogram0.xml + prog_firehose_ddr.elf together => QDL.
+        let tar = build_tar(&[
+            ("arduino-images/flash/rawprogram0.xml", b"<data/>"),
+            ("arduino-images/flash/prog_firehose_ddr.elf", b"\x7fELF"),
+        ]);
+        assert!(check_tar_for_qdl(&tar[..]));
+    }
+
+    #[test]
+    fn only_rawprogram_is_not_qdl() {
+        // rawprogram0.xml alone (no firehose elf) must NOT be QDL.
+        let tar = build_tar(&[("flash/rawprogram0.xml", b"<data/>")]);
+        assert!(!check_tar_for_qdl(&tar[..]));
+    }
 }

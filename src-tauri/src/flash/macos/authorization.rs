@@ -1,6 +1,4 @@
-//! Authorization management module
-//!
-//! Handles macOS authorization requests and storage.
+//! macOS authorization requests and storage.
 
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -26,10 +24,8 @@ pub struct SavedAuthorization {
 /// Global state to store authorization between request and flash
 pub static SAVED_AUTH: Lazy<Mutex<Option<SavedAuthorization>>> = Lazy::new(|| Mutex::new(None));
 
-/// Request authorization BEFORE download starts
-/// This shows the dialog immediately when user clicks Write
+/// Show the auth dialog up front (on Write click) so the prompt precedes the download.
 pub fn request_authorization(device_path: &str) -> Result<bool, String> {
-    // Use raw disk path
     let raw_device = device_path.replace("/dev/disk", "/dev/rdisk");
 
     unsafe {
@@ -72,11 +68,10 @@ pub fn request_authorization(device_path: &str) -> Result<bool, String> {
         log_debug!(MODULE, "AuthorizationCreate returned status: {}", status);
 
         if status != 0 {
-            // User cancelled or error
+            // Non-zero status means the user cancelled or auth failed.
             return Ok(false);
         }
 
-        // Convert to external form
         let mut external_form = AuthorizationExternalForm::default();
         let status = AuthorizationMakeExternalForm(auth_ref, &mut external_form);
 
@@ -86,7 +81,7 @@ pub fn request_authorization(device_path: &str) -> Result<bool, String> {
             return Err(format!("Failed to create authorization: {}", status));
         }
 
-        // Save authorization for later use - KEEP auth_ref alive!
+        // Keep auth_ref alive: the saved external form is only valid while it lives.
         let mut saved = SAVED_AUTH.lock().unwrap();
         *saved = Some(SavedAuthorization {
             auth_ref: SafeAuthRef(auth_ref),

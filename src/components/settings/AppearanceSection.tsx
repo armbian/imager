@@ -1,18 +1,36 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import twemoji from 'twemoji';
+import { Check, Monitor, Moon, Search, Sun } from 'lucide-react';
 import { load } from '@tauri-apps/plugin-store';
 import { useTheme } from '../../contexts/ThemeContext';
 import { changeLanguage as i18nChangeLanguage, getCurrentLanguage } from '../../i18n';
-import { SUPPORTED_LANGUAGES } from '../../config/i18n';
+import { SUPPORTED_LANGUAGES, flagUrl } from '../../config/i18n';
 
-// Theme and language preference settings
+/** Theme option metadata for the segmented theme selector */
+interface ThemeOption {
+  /** Theme identifier passed to setTheme */
+  value: 'light' | 'dark' | 'auto';
+  /** Lucide icon component for the option */
+  Icon: typeof Sun;
+  /** i18n key for the option label */
+  labelKey: string;
+}
+
+/** Available theme options rendered as segmented cards */
+const THEME_OPTIONS: ThemeOption[] = [
+  { value: 'light', Icon: Sun, labelKey: 'settings.themeLight' },
+  { value: 'dark', Icon: Moon, labelKey: 'settings.themeDark' },
+  { value: 'auto', Icon: Monitor, labelKey: 'settings.themeAuto' },
+];
+
+/** Appearance settings: theme cards + searchable language grid. Defaults language to "auto"
+ * when none saved; flags are bundled twemoji SVGs (no runtime CDN or emoji-font dependency). */
 export function AppearanceSection() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [currentLanguage, setCurrentLanguage] = useState<string>(getCurrentLanguage());
   const [initialized, setInitialized] = useState(false);
-  const languageListRef = useRef<HTMLDivElement>(null);
+  const [search, setSearch] = useState('');
 
   // Default to "auto" when no language is explicitly saved
   useEffect(() => {
@@ -32,13 +50,8 @@ export function AppearanceSection() {
     checkAutoLanguage();
   }, []);
 
-  // Render flag emojis as Twemoji images
-  useEffect(() => {
-    if (languageListRef.current) {
-      twemoji.parse(languageListRef.current);
-    }
-  }, [currentLanguage]);
-
+  /** Apply the selected UI language immediately and track it in state.
+   * @param langCode - language code to activate (or "auto" for system locale) */
   const handleLanguageChange = async (langCode: string) => {
     try {
       await i18nChangeLanguage(langCode);
@@ -48,74 +61,84 @@ export function AppearanceSection() {
     }
   };
 
+  // Filter languages by name (case-insensitive); the "auto" entry is always shown
+  const filteredLanguages = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return SUPPORTED_LANGUAGES;
+    return SUPPORTED_LANGUAGES.filter(
+      (lang) => lang.code === 'auto' || lang.name.toLowerCase().includes(query)
+    );
+  }, [search]);
+
   if (!initialized) return null;
 
   return (
     <div className="settings-section">
-      {/* THEME Section */}
-      <div className="settings-category">
-        <h4 className="settings-category-title">{t('settings.chooseTheme')}</h4>
+      <div className="settings-group">
+        <h4 className="settings-group__title">{t('settings.chooseTheme')}</h4>
 
-        <div className="theme-boxes">
-          <div
-            className={`theme-box ${theme === 'light' ? 'active' : ''}`}
-            onClick={() => setTheme('light')}
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <span className="theme-box-label">{t('settings.themeLight')}</span>
-          </div>
-
-          <div
-            className={`theme-box ${theme === 'dark' ? 'active' : ''}`}
-            onClick={() => setTheme('dark')}
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="theme-box-label">{t('settings.themeDark')}</span>
-          </div>
-
-          <div
-            className={`theme-box ${theme === 'auto' ? 'active' : ''}`}
-            onClick={() => setTheme('auto')}
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="theme-box-label">{t('settings.themeAuto')}</span>
-          </div>
+        <div className="theme-seg" role="group" aria-label={t('settings.chooseTheme')}>
+          {THEME_OPTIONS.map(({ value, Icon, labelKey }) => (
+            <button
+              key={value}
+              type="button"
+              className={`theme-seg__card ${theme === value ? 'theme-seg__card--active' : ''}`}
+              aria-pressed={theme === value}
+              onClick={() => setTheme(value)}
+            >
+              <Icon size={28} className="theme-seg__icon" />
+              <span className="theme-seg__label">{t(labelKey)}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* LANGUAGE Section */}
-      <div className="settings-category" ref={languageListRef}>
-        <h4 className="settings-category-title">{t('settings.chooseLanguage')}</h4>
+      <div className="settings-group">
+        <h4 className="settings-group__title">{t('settings.chooseLanguage')}</h4>
 
-        <div className="settings-list">
-          {SUPPORTED_LANGUAGES.map((lang) => (
-            <div
-              key={lang.code}
-              className={`settings-list-item ${currentLanguage === lang.code ? 'active' : ''}`}
-              onClick={() => handleLanguageChange(lang.code)}
-            >
-              <div className="settings-list-item-left">
-                <span className="language-flag-emoji">{lang.flag}</span>
-                <span className="settings-list-item-label">
-                  {lang.name || t('settings.languageAuto')}
-                </span>
-              </div>
-              {currentLanguage === lang.code && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <polyline points="20 6 9 17 4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
+        <div className="settings-search">
+          <Search size={16} className="settings-search__icon" />
+          <input
+            type="text"
+            className="settings-search__input"
+            placeholder={t('settings.searchLanguage')}
+            aria-label={t('settings.searchLanguage')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="settings-langgrid">
+          {filteredLanguages.length === 0 ? (
+            <div className="no-results">
+              {t('settings.noLanguagesFound', { defaultValue: 'No languages found' })}
             </div>
-          ))}
+          ) : (
+            filteredLanguages.map((lang) => {
+              const isActive = currentLanguage === lang.code;
+              return (
+                <button
+                  key={lang.code}
+                  type="button"
+                  className={`settings-langgrid__item ${isActive ? 'settings-langgrid__item--active' : ''}`}
+                  aria-current={isActive ? 'true' : undefined}
+                  onClick={() => handleLanguageChange(lang.code)}
+                >
+                  {isActive && <Check size={15} className="settings-langgrid__check" strokeWidth={3} />}
+                  <span className="settings-langgrid__flag">
+                    {flagUrl(lang.code) ? (
+                      <img src={flagUrl(lang.code)} className="emoji" alt="" />
+                    ) : (
+                      lang.flag
+                    )}
+                  </span>
+                  <span className="settings-langgrid__label">
+                    {lang.name || t('settings.languageAuto')}
+                  </span>
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

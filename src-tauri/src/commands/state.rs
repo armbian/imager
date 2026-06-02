@@ -1,5 +1,3 @@
-//! Application state module
-//!
 //! Defines the shared application state used across commands.
 
 use std::sync::Arc;

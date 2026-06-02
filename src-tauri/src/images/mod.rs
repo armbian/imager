@@ -1,19 +1,16 @@
-//! Image management module
-//!
-//! Handles fetching board, image, and vendor data from the Armbian REST API.
-//! Caches API responses on disk for offline use.
+//! Fetching board, image, and vendor data from the Armbian REST API, with
+//! on-disk caching of responses for offline use.
 
 mod filters;
 mod models;
 
-// Re-export types and mapper functions
 pub use filters::{map_board, map_images};
 pub use models::{ApiBoardSummary, ApiImage, ApiVendor, BoardInfo, ImageInfo};
 
 use models::ApiResponse;
 
 use crate::config;
-use crate::utils::get_cache_dir;
+use crate::utils::assets_dir;
 use crate::{log_debug, log_error, log_warn};
 
 use once_cell::sync::Lazy;
@@ -42,19 +39,15 @@ static API_CLIENT: Lazy<reqwest::Client> = Lazy::new(|| {
         .expect("Failed to create API HTTP client")
 });
 
-/// Safety cap on pagination to avoid runaway loops if the API returns
-/// inconsistent `meta.total` values.
+/// Pagination cap guarding against runaway loops on inconsistent `meta.total`.
 const MAX_PAGES: u32 = 50;
 
 /// Get the path for a named cache file inside the assets directory
 fn get_cache_path(name: &str) -> PathBuf {
-    get_cache_dir(config::app::NAME)
-        .join("assets")
-        .join(format!("{}.json", name))
+    assets_dir().join(format!("{}.json", name))
 }
 
-/// Save data to a cache file atomically (temp file + rename), with a unique
-/// tmp suffix so concurrent writers don't collide.
+/// Save data to a cache file atomically via a uniquely-named temp file + rename.
 fn save_cache(name: &str, data: &str) {
     let path = get_cache_path(name);
     let data = data.to_string();
@@ -62,7 +55,7 @@ fn save_cache(name: &str, data: &str) {
         if let Some(parent) = path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        // Unique tmp name (timestamp + pid) avoids races between concurrent writers
+        // pid+timestamp tmp name keeps concurrent writers from clobbering.
         let pid = std::process::id();
         let nanos = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -106,11 +99,9 @@ async fn load_cache(name: &str) -> Result<String, String> {
     Ok(data)
 }
 
-/// Delete old API cache file from pre-migration format
+/// Delete the pre-migration API cache file.
 pub fn cleanup_legacy_cache() {
-    let legacy_path = get_cache_dir(config::app::NAME)
-        .join("assets")
-        .join("api-images.json");
+    let legacy_path = assets_dir().join("api-images.json");
     if legacy_path.exists() {
         match std::fs::remove_file(&legacy_path) {
             Ok(_) => log_debug!(
@@ -134,7 +125,6 @@ pub async fn fetch_boards() -> Result<Vec<ApiBoardSummary>, String> {
 
     match fetch_boards_from_api().await {
         Ok(boards) => {
-            // Save to disk cache
             if let Ok(json) = serde_json::to_string(&boards) {
                 save_cache("api-boards", &json);
             }
@@ -151,8 +141,8 @@ pub async fn fetch_boards() -> Result<Vec<ApiBoardSummary>, String> {
     }
 }
 
-/// Fetch boards directly from the remote API, paginating until an empty page
-/// or the `MAX_PAGES` cap (both guard against bad `meta.total` looping forever).
+/// Fetch boards from the remote API, paginating until an empty page or the
+/// `MAX_PAGES` cap (both guard against a bad `meta.total` looping forever).
 async fn fetch_boards_from_api() -> Result<Vec<ApiBoardSummary>, String> {
     let url_base = format!("{}/boards", config::urls::API_BASE);
     let mut all_boards = Vec::new();
@@ -172,7 +162,7 @@ async fn fetch_boards_from_api() -> Result<Vec<ApiBoardSummary>, String> {
             .await
             .map_err(|e| format!("Failed to parse boards response: {}", e))?;
 
-        // Guard against runaway loops: stop immediately on empty page
+        // An empty page ends pagination regardless of meta.total.
         if response.data.is_empty() {
             break;
         }
@@ -180,7 +170,7 @@ async fn fetch_boards_from_api() -> Result<Vec<ApiBoardSummary>, String> {
         let total = response.meta.total.unwrap_or(0);
         all_boards.extend(response.data);
 
-        // Stop when we've fetched enough to cover the advertised total
+        // Stop once we've covered the advertised total.
         if (page * limit) >= total {
             break;
         }
@@ -195,7 +185,7 @@ async fn fetch_boards_from_api() -> Result<Vec<ApiBoardSummary>, String> {
         );
     }
 
-    // Breakdown of support tiers for diagnostic purposes
+    // Tally support tiers for the diagnostic log line below.
     let mut platinum = 0u32;
     let mut standard = 0u32;
     let mut community = 0u32;
@@ -270,7 +260,6 @@ async fn fetch_images_from_api(
 ) -> Result<Vec<ApiImage>, String> {
     let url = format!("{}/boards/{}/images", config::urls::API_BASE, slug);
 
-    // Build query parameters using reqwest's encoder (handles URL-encoding)
     let mut params: Vec<(&str, String)> = Vec::new();
     if let Some(v) = variant {
         params.push(("variant", v.to_string()));

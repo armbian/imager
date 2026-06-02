@@ -1,7 +1,7 @@
 {
   "name": "armbian-imager",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Flash Armbian OS images to SD cards and USB drives",
   "author": "Armbian",
   "maintainers": [
@@ -42,12 +42,12 @@
     "qrcode": "^1.5.4",
     "react": "^19.2.2",
     "react-dom": "^19.2.2",
-    "react-i18next": "^16.5.0",
-    "twemoji": "^14.0.2"
+    "react-i18next": "^16.5.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@tauri-apps/cli": "^2.11.2",
+    "@twemoji/svg": "^15.0.0",
     "@types/node": "^24.10.3",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",

@@ -1,19 +1,13 @@
-//! Path utility functions
-//!
-//! Common path manipulation helpers used across the application.
+//! Path manipulation helpers used across the application.
 
 use std::path::{Path, PathBuf};
 
-use crate::config;
+use super::app_cache_dir;
 
-use super::get_cache_dir;
-
-/// Validates that a path resolves to within the cache directory.
-///
-/// Canonicalizes both paths to defeat symlink/traversal tricks, then checks
-/// containment. Returns the canonical path, or an error if outside the cache.
+/// Validate that a path resolves to within the cache directory, returning its
+/// canonical form. Canonicalizes both paths to defeat symlink/traversal tricks.
 pub fn validate_cache_path(path: &Path) -> Result<PathBuf, String> {
-    let cache_dir = get_cache_dir(config::app::NAME)
+    let cache_dir = app_cache_dir()
         .canonicalize()
         .map_err(|e| format!("Failed to resolve cache directory: {}", e))?;
     let canonical_path = path

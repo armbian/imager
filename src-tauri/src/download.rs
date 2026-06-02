@@ -1,6 +1,4 @@
-//! Download module
-//!
-//! Handles downloading Armbian images from the web.
+//! Downloading Armbian images from the web.
 
 use futures_util::StreamExt;
 use reqwest::Client;
@@ -28,7 +26,7 @@ pub struct DownloadState {
     pub is_cancelled: AtomicBool,
     pub error: Mutex<Option<String>>,
     pub output_path: Mutex<Option<PathBuf>>,
-    /// Temp file path for SHA unavailable retry (file kept for user decision)
+    /// Temp file kept when SHA is unavailable, so the user can decide to proceed.
     pub temp_path: Mutex<Option<PathBuf>>,
 }
 
@@ -74,8 +72,8 @@ fn extract_filename(url: &str) -> Result<&str, String> {
     Ok(filename)
 }
 
-/// Fetch expected SHA256 from URL
-/// Errors are prefixed with [SHA_UNAVAILABLE] to distinguish from SHA mismatch
+/// Fetch the expected SHA256. Errors are prefixed [SHA_UNAVAILABLE] to
+/// distinguish a fetch failure from a genuine mismatch.
 async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, String> {
     log_debug!(MODULE, "Fetching SHA256 from: {}", sha_url);
 
@@ -85,7 +83,7 @@ async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, St
         .await
         .map_err(|e| format!("[SHA_UNAVAILABLE] Failed to fetch SHA: {}", e))?;
 
-    // Log the final URL after redirect (shows which mirror serves the SHA)
+    // Post-redirect URL reveals which mirror served the SHA.
     let final_sha_url = response.url().to_string();
     if final_sha_url != sha_url {
         log_debug!(MODULE, "SHA redirected to mirror: {}", final_sha_url);
@@ -103,14 +101,13 @@ async fn fetch_expected_sha(client: &Client, sha_url: &str) -> Result<String, St
         .await
         .map_err(|e| format!("[SHA_UNAVAILABLE] Failed to read SHA response: {}", e))?;
 
-    // Parse SHA file format: "hash *filename" or "hash  filename"
+    // SHA file format is "hash *filename" or "hash  filename".
     let hash = content
         .split_whitespace()
         .next()
         .ok_or("[SHA_UNAVAILABLE] Invalid SHA file format")?
         .to_lowercase();
 
-    // Validate it looks like a SHA256 hash (64 hex chars)
     if hash.len() != 64 || !hash.chars().all(|c| c.is_ascii_hexdigit()) {
         return Err(format!(
             "[SHA_UNAVAILABLE] Invalid SHA256 hash format: {}",
@@ -133,11 +130,10 @@ fn calculate_file_sha256(path: &Path, state: &Arc<DownloadState>) -> Result<Stri
 
     let mut file = File::open(path).map_err(|e| format!("Failed to open file for SHA: {}", e))?;
     let mut hasher = Sha256::new();
-    let mut buffer = [0u8; 8192];
+    let mut buffer = [0u8; config::logging::SHA_BUFFER_SIZE];
     let mut bytes_processed = 0u64;
 
     loop {
-        // Check for cancellation
         if state.is_cancelled.load(Ordering::SeqCst) {
             log_info!(MODULE, "SHA256 calculation cancelled by user");
             return Err("SHA256 verification cancelled".to_string());
@@ -152,7 +148,6 @@ fn calculate_file_sha256(path: &Path, state: &Arc<DownloadState>) -> Result<Stri
         hasher.update(&buffer[..bytes_read]);
         bytes_processed += bytes_read as u64;
 
-        // Log progress every 10MB in debug mode
         if bytes_processed % (10 * 1024 * 1024) == 0 {
             log_debug!(
                 MODULE,
@@ -175,14 +170,12 @@ async fn verify_sha256(
     sha_url: &str,
     state: &Arc<DownloadState>,
 ) -> Result<(), String> {
-    // Check cancellation before fetching
     if state.is_cancelled.load(Ordering::SeqCst) {
         return Err("SHA256 verification cancelled".to_string());
     }
 
     let expected = fetch_expected_sha(client, sha_url).await?;
 
-    // Check cancellation after fetching
     if state.is_cancelled.load(Ordering::SeqCst) {
         return Err("SHA256 verification cancelled".to_string());
     }
@@ -206,8 +199,7 @@ async fn verify_sha256(
     }
 }
 
-/// Download and decompress an Armbian image
-/// If sha_url is provided, verifies the downloaded compressed file before decompression
+/// Download and decompress an Armbian image; when sha_url is given, verifies the compressed file first.
 pub async fn download_image(
     url: &str,
     sha_url: Option<&str>,
@@ -215,26 +207,23 @@ pub async fn download_image(
     state: Arc<DownloadState>,
 ) -> Result<PathBuf, String> {
     state.reset();
-    // Clear any stale temp_path from previous failed downloads
+    // Clear any stale temp_path left by a previous failed download.
     *state.temp_path.lock().await = None;
 
     let filename = extract_filename(url)?;
 
-    // Determine output filename (remove .xz if present)
     let output_filename = filename.trim_end_matches(".xz");
     let output_path = output_dir.join(output_filename);
 
     log_info!(MODULE, "Download requested: {}", url);
     log_debug!(MODULE, "Output path: {}", output_path.display());
 
-    // Check if image is already in cache (also updates mtime for LRU)
     if let Some(cached_path) = crate::cache::get_cached_image(output_filename) {
         log_info!(MODULE, "Using cached image: {}", cached_path.display());
         *state.output_path.lock().await = Some(cached_path.clone());
         return Ok(cached_path);
     }
 
-    // Create output directory if needed
     std::fs::create_dir_all(output_dir)
         .map_err(|e| format!("Failed to create output directory: {}", e))?;
 
@@ -243,14 +232,13 @@ pub async fn download_image(
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    // Start download
     log_info!(MODULE, "Starting download...");
     let response = client.get(url).send().await.map_err(|e| {
         log_error!(MODULE, "Failed to start download: {}", e);
         format!("Failed to start download: {}", e)
     })?;
 
-    // Log the final URL after redirect (shows which mirror is being used)
+    // Post-redirect URL reveals which mirror is being used.
     let final_url = response.url().to_string();
     if final_url != url {
         log_debug!(MODULE, "Redirected to mirror: {}", final_url);
@@ -264,7 +252,6 @@ pub async fn download_image(
         ));
     }
 
-    // Get content length
     let total_size = response.content_length().unwrap_or(0);
     state.total_bytes.store(total_size, Ordering::SeqCst);
 
@@ -275,12 +262,10 @@ pub async fn download_image(
         bytes_to_mb(total_size)
     );
 
-    // Create temp file for compressed data
-    let temp_path = output_dir.join(format!("{}.downloading", filename));
+    let temp_path = output_dir.join(format!("{}{}", filename, config::images::DOWNLOAD_SUFFIX));
     let mut temp_file =
         File::create(&temp_path).map_err(|e| format!("Failed to create temp file: {}", e))?;
 
-    // Download with progress tracking
     let mut stream = response.bytes_stream();
     let mut downloaded: u64 = 0;
     let mut tracker = ProgressTracker::new(
@@ -320,7 +305,6 @@ pub async fn download_image(
     drop(temp_file);
     tracker.finish();
 
-    // Verify SHA256 if URL provided
     if let Some(sha_url) = sha_url {
         state.is_verifying_sha.store(true, Ordering::SeqCst);
         log_info!(MODULE, "Verifying SHA256...");
@@ -332,13 +316,12 @@ pub async fn download_image(
                 log_error!(MODULE, "SHA256 verification failed: {}", e);
                 state.is_verifying_sha.store(false, Ordering::SeqCst);
 
-                // Check if it was a cancellation
                 if state.is_cancelled.load(Ordering::SeqCst) {
                     let _ = std::fs::remove_file(&temp_path);
                     return Err("Download cancelled".to_string());
                 }
 
-                // If SHA is unavailable (fetch failed), keep the file for user decision
+                // SHA unavailable: keep the file so the user can choose to proceed.
                 if e.contains("[SHA_UNAVAILABLE]") {
                     log_info!(
                         MODULE,
@@ -349,7 +332,7 @@ pub async fn download_image(
                     return Err(format!("SHA256 verification failed: {}", e));
                 }
 
-                // SHA mismatch (hash different) → delete file (corrupted image)
+                // Genuine mismatch means a corrupted image: delete it.
                 let _ = std::fs::remove_file(&temp_path);
                 return Err(format!("SHA256 verification failed: {}", e));
             }
@@ -359,7 +342,6 @@ pub async fn download_image(
         log_warn!(MODULE, "No SHA URL provided, skipping verification");
     }
 
-    // Decompress if needed
     if filename.ends_with(".xz") {
         state.is_decompressing.store(true, Ordering::SeqCst);
         log_info!(
@@ -367,7 +349,6 @@ pub async fn download_image(
             "Starting decompression with Rust lzma-rust2 (multi-threaded)..."
         );
 
-        // Use Rust lzma-rust2 library (multi-threaded) on all platforms
         if let Err(e) = decompress_with_rust_xz(&temp_path, &output_path, &state) {
             let _ = std::fs::remove_file(&temp_path);
             let _ = std::fs::remove_file(&output_path);
@@ -375,10 +356,8 @@ pub async fn download_image(
         }
         log_info!(MODULE, "Decompression complete");
 
-        // Clean up compressed temp file
         let _ = std::fs::remove_file(&temp_path);
     } else {
-        // No decompression needed, just rename
         if let Err(e) = std::fs::rename(&temp_path, &output_path) {
             let _ = std::fs::remove_file(&temp_path);
             return Err(format!("Failed to move file: {}", e));
@@ -390,8 +369,8 @@ pub async fn download_image(
     Ok(output_path)
 }
 
-/// Continue download without SHA verification (uses already downloaded file)
-/// Called when user confirms to proceed after SHA unavailable error
+/// Finish a download without SHA verification, reusing the already-downloaded
+/// temp file. Called when the user proceeds after a SHA-unavailable error.
 pub async fn continue_without_sha(
     state: Arc<DownloadState>,
     output_dir: &Path,
@@ -403,7 +382,7 @@ pub async fn continue_without_sha(
         .take()
         .ok_or("No pending download to continue")?;
 
-    // Defense in depth: verify temp_path is within cache directory
+    // Defense in depth: ensure temp_path is still inside the cache directory.
     if let Err(e) = validate_cache_path(&temp_path) {
         log_error!(
             MODULE,
@@ -425,16 +404,13 @@ pub async fn continue_without_sha(
         .and_then(|n| n.to_str())
         .ok_or("Invalid temp path")?;
 
-    // temp_path is "filename.xz.downloading" or "filename.img.downloading"
-    // Remove .downloading to get the original filename
-    let original_filename = filename.trim_end_matches(".downloading");
-    // Output without .xz extension
+    // temp_path is "<name>.downloading"; strip that, then the .xz if present.
+    let original_filename = filename.trim_end_matches(config::images::DOWNLOAD_SUFFIX);
     let output_filename = original_filename.trim_end_matches(".xz");
     let output_path = output_dir.join(output_filename);
 
     log_info!(MODULE, "Output path: {}", output_path.display());
 
-    // Decompress if needed
     if original_filename.ends_with(".xz") {
         state.is_decompressing.store(true, Ordering::SeqCst);
         log_info!(
@@ -451,10 +427,8 @@ pub async fn continue_without_sha(
         state.is_decompressing.store(false, Ordering::SeqCst);
         log_info!(MODULE, "Decompression complete");
 
-        // Clean up compressed temp file
         let _ = std::fs::remove_file(&temp_path);
     } else {
-        // No decompression needed, just rename
         if let Err(e) = std::fs::rename(&temp_path, &output_path) {
             let _ = std::fs::remove_file(&temp_path);
             return Err(format!("Failed to move file: {}", e));
@@ -466,8 +440,7 @@ pub async fn continue_without_sha(
     Ok(output_path)
 }
 
-/// Clean up temp file from a failed download
-/// Called when user cancels after SHA unavailable error
+/// Remove the temp file left by a failed download (user cancelled after SHA-unavailable).
 pub async fn cleanup_pending_download(state: Arc<DownloadState>) {
     if let Some(temp_path) = state.temp_path.lock().await.take() {
         log_info!(

@@ -1,27 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getTheme, setTheme as saveTheme } from '../hooks/useSettings';
 
-/**
- * Theme type
- */
 export type Theme = 'light' | 'dark' | 'auto';
 
-/**
- * Theme context interface
- */
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
 }
 
-/**
- * Theme context
- */
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-/**
- * Theme provider props
- */
 interface ThemeProviderProps {
   children: ReactNode;
 }
@@ -31,9 +19,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>('auto');
   const [isInitialized, setIsInitialized] = useState(false);
 
-  /**
-   * Apply theme to document element
-   */
+  // Apply theme classes to the document element
   const applyTheme = (selectedTheme: Theme) => {
     const root = document.documentElement;
 
@@ -49,9 +35,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }
   };
 
-  /**
-   * Load theme from storage on mount
-   */
+  // Load theme from storage on mount
   useEffect(() => {
     const loadTheme = async () => {
       try {
@@ -71,9 +55,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     loadTheme();
   }, []);
 
-  /**
-   * Set theme and persist to storage
-   */
+  // Set theme and persist to storage
   const setTheme = async (newTheme: Theme) => {
     setThemeState(newTheme);
     applyTheme(newTheme);

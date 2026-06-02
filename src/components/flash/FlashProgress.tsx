@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
 import { HardDrive, Disc, FileImage } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { BoardInfo, ImageInfo, BlockDevice } from '../../types';
-import { getImageLogo, getOsName } from '../../assets/os-logos';
+import type { BoardInfo, ImageInfo, BlockDevice, AutoconfigConfig } from '../../types';
+import { getOsName } from '../../assets/os-logos';
+import { getMonoLogo } from '../../config/mono-logos';
+import { distroBlock } from '../../utils/distroTheme';
+import { formatImageIdentity } from '../../utils';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { useFlashOperation } from '../../hooks/useFlashOperation';
-import { FlashStageIcon, getStageKey, type FlashStage } from './FlashStageIcon';
+import { FlashStageIcon, getStageKey, isIndeterminateStage } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
-import { ErrorDisplay, MarqueeText, ConfirmationDialog } from '../shared';
-import fallbackImage from '../../assets/armbian-logo_nofound.png';
+import { FlashPhaseDots } from './FlashPhaseDots';
+import { ErrorDisplay, MarqueeText, ConfirmationDialog, BoardImage } from '../shared';
 
 interface FlashProgressProps {
   board: BoardInfo;
   image: ImageInfo;
   device: BlockDevice;
+  /** Opt-in autoconfig profile config to write on first boot; null when none selected. */
+  autoconfig?: AutoconfigConfig | null;
   onComplete: () => void;
   onBack: () => void;
 }
@@ -22,12 +27,12 @@ export function FlashProgress({
   board,
   image,
   device,
+  autoconfig,
   onComplete,
   onBack,
 }: FlashProgressProps) {
   const { t } = useTranslation();
   const [boardImageUrl, setBoardImageUrl] = useState<string | null>(null);
-  const [imageLoadError, setImageLoadError] = useState(false);
 
   const {
     stage,
@@ -39,123 +44,159 @@ export function FlashProgress({
     handleBack,
     handleShaWarningConfirm,
     handleShaWarningCancel,
-  } = useFlashOperation({ image, device, onBack });
+  } = useFlashOperation({ image, device, autoconfig, onBack });
 
   useEffect(() => {
     getCachedBoardImage(board.slug)
       .then(setBoardImageUrl)
-      .catch(() => { /* fall back to placeholder image */ });
+      .catch(() => {
+        /* fall back to placeholder image */
+      });
   }, [board.slug]);
 
+  /** Branded OS identity, matching the sidebar/OS card (e.g. "Armbian 26.2.0 GNOME"). */
   function getImageDisplayText(): string {
-    if (image.is_custom) {
-      return image.distro_release;
-    }
-    return `Armbian ${image.release} ${image.distro_release}`;
+    return formatImageIdentity(image, t).title;
   }
 
-  // Stages with an animated bar rather than a percentage
-  const INDETERMINATE_STAGES: FlashStage[] = ['decompressing', 'verifying_sha', 'extracting', 'qdl_sahara'];
-  const isIndeterminate = INDETERMINATE_STAGES.includes(stage);
+  // Stages with a breathing bar instead of a percentage.
+  const isIndeterminate = isIndeterminateStage(stage);
 
   const showHeader = stage !== 'authorizing' && stage !== 'error';
+  const isError = stage === 'error';
+  const isComplete = stage === 'complete';
+  const isCustomIcon = image.is_custom && board.slug === 'custom';
+
+  // Glow brightness tracks progress; indeterminate stages sit at mid-glow.
+  const glowProgress = isComplete ? 100 : isIndeterminate ? 50 : progress;
 
   return (
     <div className={`flash-container ${!showHeader ? 'centered' : ''}`}>
-      {showHeader && (
-        <div className="flash-header">
-          {image.is_custom && board.slug === 'custom' ? (
-            // Generic icon for non-Armbian or undetected custom images
-            <div className="flash-board-image flash-custom-image-icon">
-              <FileImage size={40} />
-            </div>
-          ) : (
-            // Board image for detected Armbian custom images OR standard images
-            <img
-              src={imageLoadError ? fallbackImage : (boardImageUrl || fallbackImage)}
-              alt={board.name}
-              className="flash-board-image"
-              onError={() => setImageLoadError(true)}
-            />
-          )}
-          <div className="flash-info">
-            <h2>{board.name}</h2>
-            <div className="flash-info-badges">
-              <div
-                className="os-badge"
-                title={image.is_custom ? image.distro_release : undefined}
-              >
-                {(() => {
-                  const logo = getImageLogo(
-                    image.distro_release,
-                    image.preinstalled_application
-                  );
-                  return logo ? (
-                    <img
-                      src={logo}
-                      alt={getOsName(image.distro_release)}
-                      className="os-badge-logo"
-                    />
-                  ) : (
-                    <Disc size={20} className="os-badge-icon" />
-                  );
-                })()}
-                <MarqueeText text={getImageDisplayText()} maxWidth={200} className="os-badge-text" />
+      {showHeader ? (
+        <div className="flash-stage">
+          <div
+            className="flash-stage__board"
+            style={{ '--flash-progress': `${glowProgress}` } as React.CSSProperties}
+          >
+            {isCustomIcon ? (
+              // No board photo: a dedicated custom-image glyph floating over the glow,
+              // framed by breathing rings — always the same, regardless of the file.
+              <div className="flash-custom-glyph" aria-hidden="true">
+                <span className="flash-custom-glyph__ring" />
+                <span className="flash-custom-glyph__ring" />
+                <FileImage className="flash-custom-glyph__icon" strokeWidth={1.5} />
               </div>
-              <div className="flash-device-row">
-                <HardDrive size={16} />
-                <MarqueeText text={device.model || device.name} maxWidth={200} className="flash-device-name" />
-                {device.size_formatted && <span className="flash-device-size">{device.size_formatted}</span>}
-              </div>
-            </div>
+            ) : (
+              <BoardImage src={boardImageUrl} alt={board.name} className="flash-board-image" />
+            )}
           </div>
-        </div>
-      )}
 
-      <div className={`flash-status ${stage}`}>
-        <FlashStageIcon stage={stage} />
-        <h3>{t(getStageKey(stage))}</h3>
-
-        {stage !== 'complete' &&
-          stage !== 'error' &&
-          stage !== 'authorizing' && (
-            <div className="progress-container">
-              <div
-                className={`progress-bar ${isIndeterminate ? 'indeterminate' : ''}`}
-              >
+          <div className="flash-stage__main">
+            <div className="flash-info">
+              <h2>{board.name}</h2>
+              <div className="flash-info-badges">
                 <div
-                  className="progress-fill"
-                  style={{
-                    width: isIndeterminate ? '100%' : `${progress}%`,
-                  }}
-                />
+                  className="os-badge"
+                  title={image.is_custom ? image.distro_release : undefined}
+                >
+                  {(() => {
+                    // White vector mark on a distro-tinted chip (Ubuntu/Debian), matching the OS gallery.
+                    const logo = getMonoLogo(
+                      image.distro_release,
+                      image.preinstalled_application
+                    );
+                    return logo ? (
+                      <span
+                        className="os-badge-chip"
+                        style={{ background: distroBlock(getOsName(image.distro_release)) }}
+                      >
+                        <img
+                          src={logo}
+                          alt={getOsName(image.distro_release)}
+                          className="os-badge-chip__logo"
+                        />
+                      </span>
+                    ) : (
+                      <Disc size={20} className="os-badge-icon" />
+                    );
+                  })()}
+                  <MarqueeText text={getImageDisplayText()} className="os-badge-text" />
+                </div>
+                <div className="flash-device-row">
+                  <HardDrive size={16} />
+                  <MarqueeText text={device.model || device.name} className="flash-device-name" />
+                  {device.size_formatted && <span className="flash-device-size">{device.size_formatted}</span>}
+                </div>
               </div>
-              {!isIndeterminate && (
-                <span className="progress-text">{progress.toFixed(0)}%</span>
+            </div>
+
+            <div className="flash-progress">
+              <div
+                className={`flash-progress__head${isComplete ? ' is-done' : ''}`}
+                key={stage}
+              >
+                <FlashStageIcon stage={stage} />
+                <span className={`flash-progress__label${isComplete ? ' is-done' : ''}`}>
+                  {t(getStageKey(stage))}
+                </span>
+              </div>
+
+              {!isComplete && (
+                <div className="flash-progress__bar">
+                  <div className="flash-track" role="presentation" aria-hidden="true">
+                    <div
+                      className={`flash-track__fill${isIndeterminate ? ' is-indeterminate' : ''}`}
+                      style={isIndeterminate ? undefined : { width: `${progress}%` }}
+                    />
+                  </div>
+                  <FlashPhaseDots stage={stage} />
+                </div>
+              )}
+
+              {isComplete && (
+                <p className="flash-success-hint">
+                  {image.format === 'qdl'
+                    ? t('flash.successHintQdl')
+                    : image.is_custom
+                      ? t('flash.successHintCustom')
+                      : t('flash.successHint', { boardName: board.name })}
+                </p>
               )}
             </div>
-          )}
 
-        {stage === 'complete' && (
-          <p className="flash-success-hint">
-            {image.format === 'qdl'
-              ? t('flash.successHintQdl')
-              : image.is_custom
-                ? t('flash.successHintCustom')
-                : t('flash.successHint', { boardName: board.name })}
-          </p>
-        )}
-
-        {error && <ErrorDisplay error={error} />}
-
-        <FlashActions
-          stage={stage}
-          onComplete={onComplete}
-          onBack={handleBack}
+            <FlashActions
+              stage={stage}
+              onComplete={onComplete}
+              onBack={handleBack}
+              onRetry={handleRetry}
+              onCancel={handleCancel}
+            />
+          </div>
+        </div>
+      ) : isError ? (
+        // Failure: full-screen two-column error layout (hero + diagnosis + remedy).
+        <ErrorDisplay
+          error={error || ''}
           onRetry={handleRetry}
-          onCancel={handleCancel}
+          onCancel={handleBack}
         />
-      </div>
+      ) : (
+        // Authorizing (pkexec): narrow centered status column.
+        <div className="flash-fallback">
+          <div className="flash-status__head" key={stage}>
+            <FlashStageIcon stage={stage} />
+            <h3>{t(getStageKey(stage))}</h3>
+          </div>
+
+          <FlashActions
+            stage={stage}
+            onComplete={onComplete}
+            onBack={handleBack}
+            onRetry={handleRetry}
+            onCancel={handleCancel}
+          />
+        </div>
+      )}
 
       {showShaWarning && (
         <ConfirmationDialog

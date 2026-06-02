@@ -1,8 +1,8 @@
-//! System utilities for CPU, paths, and platform detection
-//!
-//! Provides system-level utilities for cross-platform functionality.
+//! System utilities: CPU info, cache/data paths, and platform detection.
 
 use std::path::PathBuf;
+
+use crate::config;
 
 /// Get the number of CPU cores available on the system
 pub fn get_cpu_cores() -> usize {
@@ -11,24 +11,21 @@ pub fn get_cpu_cores() -> usize {
         .unwrap_or(2)
 }
 
-/// Get recommended thread count for CPU-intensive operations
-/// Uses half of available cores to avoid saturating the system
+/// Recommended thread count for CPU-heavy work: half the cores, to avoid
+/// saturating the system.
 pub fn get_recommended_threads() -> usize {
     std::cmp::max(1, get_cpu_cores() / 2)
 }
 
-/// Get the cache directory for the application
-/// On Linux, when running as root via pkexec/sudo, uses the original user's cache directory
+/// Application cache directory. On Linux under pkexec/sudo, prefers the original user's cache.
 pub fn get_cache_dir(app_name: &str) -> PathBuf {
     #[cfg(target_os = "linux")]
     {
-        // Check if running as root
+        // When elevated, prefer the invoking user's ~/.cache over root's.
         let euid = unsafe { libc::geteuid() };
         if euid == 0 {
-            // Try to get the original user's home directory
             if let Some(home) = get_original_user_home() {
                 let cache_dir = PathBuf::from(home).join(".cache").join(app_name);
-                // Try to create the directory (may fail if permissions are wrong)
                 let _ = std::fs::create_dir_all(&cache_dir);
                 return cache_dir;
             }
@@ -42,12 +39,42 @@ pub fn get_cache_dir(app_name: &str) -> PathBuf {
         .join(app_name)
 }
 
+/// Root application cache directory.
+pub fn app_cache_dir() -> PathBuf {
+    get_cache_dir(config::app::NAME)
+}
+
+/// Directory holding downloaded OS images.
+pub fn images_dir() -> PathBuf {
+    app_cache_dir().join("images")
+}
+
+/// Directory holding cached board and vendor assets.
+pub fn assets_dir() -> PathBuf {
+    app_cache_dir().join("assets")
+}
+
+/// Directory holding decompressed custom images.
+pub fn custom_decompress_dir() -> PathBuf {
+    app_cache_dir().join("custom-decompress")
+}
+
+/// Directory holding temporary files for QDL operations.
+pub fn qdl_temp_dir() -> PathBuf {
+    app_cache_dir().join("qdl-temp")
+}
+
+/// Directory holding session log files.
+pub fn logs_dir() -> PathBuf {
+    app_cache_dir().join("logs")
+}
+
 /// Get the original user's home directory when running as root via pkexec/sudo
 #[cfg(target_os = "linux")]
 fn get_original_user_home() -> Option<String> {
     use std::ffi::CStr;
 
-    // Try PKEXEC_UID first (set by pkexec), then SUDO_UID
+    // PKEXEC_UID (set by pkexec) takes priority over SUDO_UID.
     let uid = std::env::var("PKEXEC_UID")
         .or_else(|_| std::env::var("SUDO_UID"))
         .ok()
@@ -67,7 +94,7 @@ fn get_original_user_home() -> Option<String> {
         }
     }
 
-    // Fallback: check SUDO_USER and get their home
+    // Fall back to resolving SUDO_USER by name.
     if let Ok(sudo_user) = std::env::var("SUDO_USER") {
         unsafe {
             let user_cstr = std::ffi::CString::new(sudo_user).ok()?;

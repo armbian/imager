@@ -1,34 +1,29 @@
-/**
- * Device type color configuration
- * Used for visual distinction of different storage device types
- */
+/** Color configuration per storage device type for visual distinction */
 
+import { PALETTE } from './constants';
 import type { DeviceType } from './constants';
 
 export interface DeviceColorConfig {
-  /** Background color (with transparency for subtle effect) */
+  /** Semi-transparent for a subtle effect */
   background: string;
-  /** Text/icon color */
   text: string;
-  /** Border color (optional) */
   border?: string;
 }
 
-/** Color mapping for each device type */
 export const DEVICE_COLORS: Record<DeviceType, DeviceColorConfig> = {
   system: {
     background: 'rgba(239, 68, 68, 0.1)',
-    text: '#ef4444',
+    text: PALETTE.RED,
     border: 'rgba(239, 68, 68, 0.3)',
   },
   sd: {
     background: 'rgba(59, 130, 246, 0.1)',
-    text: '#3b82f6',
+    text: PALETTE.BLUE,
     border: 'rgba(59, 130, 246, 0.3)',
   },
   usb: {
     background: 'rgba(16, 185, 129, 0.1)',
-    text: '#10b981',
+    text: PALETTE.GREEN,
     border: 'rgba(16, 185, 129, 0.3)',
   },
   sata: {

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Code, FileText } from 'lucide-react';
+import { ChevronRight, Code, FileText } from 'lucide-react';
 import { getDeveloperMode, setDeveloperMode } from '../../hooks/useSettings';
 import { useSettingsGroup } from '../../hooks/useSettingsGroup';
 import { LogsModal } from './LogsModal';
 import { EVENTS } from '../../config';
 
-// Developer mode toggle and log viewer
+/** Developer settings: dev-mode toggle and session log viewer entry, using the shared
+ * settings-group / settings-row glass vocabulary. */
 export function DeveloperSection() {
   const { t } = useTranslation();
   const [developerMode, setDeveloperModeState] = useState<boolean>(false);
@@ -20,6 +21,7 @@ export function DeveloperSection() {
     developerMode: getDeveloperMode,
   });
 
+  // Sync local state once the persisted developer-mode value is read.
   useEffect(() => {
     if (settingsGroup.developerMode !== undefined) {
       setDeveloperModeState(settingsGroup.developerMode);
@@ -48,53 +50,64 @@ export function DeveloperSection() {
     }
   };
 
+  // Gate rendering until the persisted setting has been loaded.
   if (!initialized) return null;
 
   return (
     <div className="settings-section">
-      <h3 className="settings-section-title">{t('settings.developer')}</h3>
+      <div className="settings-group">
+        <h3 className="settings-group__title">{t('settings.developer')}</h3>
 
-      <div className="settings-list">
-        {/* Developer Mode Toggle */}
-        <div className="settings-item">
-          <div className="settings-item-left">
-            <div className="settings-item-icon">
-              <Code />
+        <div className="settings-group__card">
+          {/* Developer-mode toggle */}
+          <div className="settings-row">
+            <div className="settings-row__main">
+              <div className="settings-row__icon">
+                <Code />
+              </div>
+              <div className="settings-row__text">
+                <div className="settings-row__label">{t('settings.developerMode')}</div>
+                <div className="settings-row__desc">{t('settings.developerModeDescription')}</div>
+              </div>
             </div>
-            <div className="settings-item-content">
-              <div className="settings-item-label">{t('settings.developerMode')}</div>
-              <div className="settings-item-description">{t('settings.developerModeDescription')}</div>
-            </div>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={developerMode}
+                onChange={handleToggleDeveloperMode}
+                disabled={isToggling}
+              />
+              <span className="toggle-slider"></span>
+            </label>
           </div>
-          <label className="toggle-switch">
-            <input
-              type="checkbox"
-              checked={developerMode}
-              onChange={handleToggleDeveloperMode}
-              disabled={isToggling}
-            />
-            <span className="toggle-slider"></span>
-          </label>
-        </div>
 
-        {/* View Logs Button */}
-        <div className="settings-item settings-item-clickable" onClick={() => setLogsModalOpen(true)}>
-          <div className="settings-item-left">
-            <div className="settings-item-icon">
-              <FileText />
+          {/* Log viewer entry point */}
+          <div
+            className="settings-row settings-row--clickable"
+            role="button"
+            tabIndex={0}
+            onClick={() => setLogsModalOpen(true)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setLogsModalOpen(true);
+              }
+            }}
+          >
+            <div className="settings-row__main">
+              <div className="settings-row__icon">
+                <FileText />
+              </div>
+              <div className="settings-row__text">
+                <div className="settings-row__label">{t('settings.viewLogs')}</div>
+                <div className="settings-row__desc">{t('settings.viewLogsDescription')}</div>
+              </div>
             </div>
-            <div className="settings-item-content">
-              <div className="settings-item-label">{t('settings.viewLogs')}</div>
-              <div className="settings-item-description">{t('settings.viewLogsDescription')}</div>
-            </div>
+            <ChevronRight className="settings-row__arrow" size={20} />
           </div>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
         </div>
       </div>
 
-      {/* Logs Modal */}
       <LogsModal isOpen={logsModalOpen} onClose={() => setLogsModalOpen(false)} />
     </div>
   );

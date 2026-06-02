@@ -3,6 +3,7 @@ import { X, FileText, ExternalLink, Calendar, Loader2, Users } from 'lucide-reac
 import { useTranslation } from 'react-i18next';
 import { getGithubRelease, openUrl } from '../../hooks/useTauri';
 import type { GitHubRelease } from '../../hooks/useTauri';
+import { getErrorMessage } from '../../utils';
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
         setRelease(releaseData);
       } catch (err) {
         console.error('Failed to fetch release:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch changelog');
+        setError(getErrorMessage(err, 'Failed to fetch changelog'));
       } finally {
         setLoading(false);
       }
@@ -58,15 +59,14 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
     });
   };
 
-  // Convert the release body's markdown (headers, lists, links, code, bold/italic) to HTML
+  // Convert the release body's markdown to HTML
   const parseReleaseBody = (body: string | null): string => {
     if (!body) return t('update.noChangelog', 'No changelog available');
 
-    // Remove "Full Changelog" section that GitHub adds at the end
+    // Strip the "Full Changelog" line GitHub appends
     let cleanedBody = body.replace(/\*\*Full Changelog\*\*: https:\/\/github\.com\/[^\s]+/gi, '');
     cleanedBody = cleanedBody.replace(/Full Changelog: https:\/\/github\.com\/[^\s]+/gi, '');
 
-    // Split into lines for better list processing
     const lines = cleanedBody.split('\n');
     let html = '';
     let inList = false;
@@ -75,7 +75,6 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // Check for code blocks
       if (line.trim().startsWith('```')) {
         inCodeBlock = !inCodeBlock;
         continue;
@@ -86,7 +85,6 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
         continue;
       }
 
-      // Check for list items
       const isListItem = /^\s*[-*]\s+/.test(line);
 
       if (isListItem) {
@@ -97,26 +95,22 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
 
         const itemContent = line.replace(/^\s*[-*]\s+/, '');
         const formattedItem = itemContent
-          // Remove PR/issue URLs and replace with #number
           .replace(/ https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)/g, ' #PR$1 ')
           .replace(/\[[^\]]+\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)\)/g, '#PR$1')
-          // NOW do HTML escape (won't break the text)
+          // Escape only after PR placeholders are inserted, so the markup survives
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
-          // Replace placeholders with actual HTML
           .replace(/#PR(\d+)/g, '<span class="pr-number">#$1</span>')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\*([^*]+)\*/g, '<em>$1</em>')
           .replace(/`([^`]+)`/g, '<code>$1</code>')
-          // Remove remaining markdown GitHub links (commits, etc)
           .replace(/\[([^\]]+)\]\(https:\/\/github\.com\/[^)]+\)/g, '$1')
-          // Remove any remaining bare GitHub URLs (commits, etc)
           .replace(/https:\/\/github\.com\/[^\s]+/g, '')
-          .replace(/,\s*$/g, '') // Remove trailing comma after URL removal
-          .replace(/\s+/g, ' ') // Clean up extra whitespace
+          .replace(/,\s*$/g, '')
+          .replace(/\s+/g, ' ')
           .trim()
-          // Keep only non-GitHub external links (markdown format)
+          // Keep non-GitHub external links
           .replace(/\[([^\]]+)\]\((?!https?:\/\/github\.com)(https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
         html += `<li>${formattedItem}</li>`;
@@ -126,13 +120,11 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
           inList = false;
         }
 
-        // Handle empty lines as paragraph breaks
         if (line.trim() === '') {
           html += '<br />';
           continue;
         }
 
-        // Handle headers
         if (line.startsWith('### ')) {
           html += `<h3>${line.slice(4)}</h3>`;
           continue;
@@ -143,43 +135,35 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
           continue;
         }
 
-        // Regular paragraph line
         const formattedLine = line
-          // Remove PR/issue URLs and replace with #number
           .replace(/ https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)/g, ' #PR$1 ')
           .replace(/\[[^\]]+\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)\)/g, '#PR$1')
-          // NOW do HTML escape (won't break the text)
+          // Escape only after PR placeholders are inserted, so the markup survives
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/>/g, '&gt;')
-          // Replace placeholders with actual HTML
           .replace(/#PR(\d+)/g, '<span class="pr-number">#$1</span>')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
           .replace(/\*([^*]+)\*/g, '<em>$1</em>')
           .replace(/`([^`]+)`/g, '<code>$1</code>')
-          // Remove remaining markdown GitHub links (commits, etc)
           .replace(/\[([^\]]+)\]\(https:\/\/github\.com\/[^)]+\)/g, '$1')
-          // Remove any remaining bare GitHub URLs (commits, etc)
           .replace(/https:\/\/github\.com\/[^\s]+/g, '')
-          .replace(/,\s*$/g, '') // Remove trailing comma after URL removal
-          .replace(/\s+/g, ' ') // Clean up extra whitespace
+          .replace(/,\s*$/g, '')
+          .replace(/\s+/g, ' ')
           .trim()
-          // Keep only non-GitHub external links (markdown format)
+          // Keep non-GitHub external links
           .replace(/\[([^\]]+)\]\((?!https?:\/\/github\.com)(https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
         html += `<p>${formattedLine}</p>`;
       }
     }
 
-    // Close unclosed list
     if (inList) {
       html += '</ul>';
     }
 
-    // Remove trailing <br /> tags to avoid extra space at the end
+    // Collapse stray/duplicate <br /> tags to avoid extra spacing
     html = html.replace(/(<br\s*\/?>)+$/g, '');
-
-    // Remove multiple <br /> tags and <br /> before headers to avoid extra spacing
     html = html.replace(/(<br\s*\/?>){2,}/g, '<br />');
     html = html.replace(/<br\s*\/?>\s*<h2>/g, '<h2>');
     html = html.replace(/<br\s*\/?>\s*<h3>/g, '<h3>');
@@ -193,10 +177,11 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
         className="changelog-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="changelog-modal-header">
           <div className="changelog-modal-title">
-            <FileText size={20} />
+            <span className="changelog-modal-title__icon">
+              <FileText size={16} />
+            </span>
             <span>{t('update.changelogTitle', 'What\'s New')}</span>
           </div>
           <button
@@ -208,7 +193,6 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
           </button>
         </div>
 
-        {/* Content */}
         <div className="changelog-modal-content">
           {loading ? (
             <div className="changelog-loading">
@@ -224,7 +208,6 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
             </div>
           ) : release ? (
             <>
-              {/* Release info */}
               <div className="changelog-info">
                 <h2 className="changelog-version">{release.name || release.tag_name}</h2>
                 <div className="changelog-meta">
@@ -242,7 +225,6 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
                 </div>
               </div>
 
-              {/* Release notes */}
               <div
                 className="changelog-body"
                 dangerouslySetInnerHTML={{
@@ -250,7 +232,6 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
                 }}
               />
 
-              {/* Contributors section */}
               {contributors.length > 0 && (
                 <div className="changelog-contributors">
                   <div className="changelog-contributors-header">

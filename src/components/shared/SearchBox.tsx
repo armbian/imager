@@ -16,9 +16,7 @@ interface SearchBoxProps {
   autoFocus?: boolean;
 }
 
-/**
- * Search input with icon for filtering lists
- */
+/** Search input with icon for filtering lists. */
 export function SearchBox({
   value,
   onChange,

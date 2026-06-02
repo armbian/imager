@@ -1,7 +1,4 @@
-//! Log upload functionality for paste.armbian.com
-//!
-//! Uploads application logs to the Armbian paste service for debugging.
-//! The service is a Hastebin instance that accepts raw text via POST.
+//! Log upload to paste.armbian.com, a Hastebin instance accepting raw text via POST.
 
 use std::fs;
 
@@ -25,7 +22,6 @@ pub struct UploadResult {
 fn collect_logs() -> Result<String, String> {
     let mut content = String::new();
 
-    // Add header with system info
     content.push_str("=== Armbian Imager Log Upload ===\n");
     content.push_str(&format!(
         "Timestamp: {}\n",
@@ -39,7 +35,6 @@ fn collect_logs() -> Result<String, String> {
     ));
     content.push('\n');
 
-    // Get current session log
     if let Some(log_path) = get_current_log_path() {
         content.push_str("=== Current Session Log ===\n");
         match fs::read_to_string(&log_path) {
@@ -54,7 +49,7 @@ fn collect_logs() -> Result<String, String> {
         content.push_str("No current log file available.\n");
     }
 
-    // Check for previous session logs (in case of crash recovery)
+    // Also attach recent prior-session logs, useful after a crash.
     let log_dir = get_log_dir();
     if log_dir.exists() {
         let mut log_files: Vec<_> = fs::read_dir(&log_dir)
@@ -63,20 +58,20 @@ fn collect_logs() -> Result<String, String> {
             .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "log"))
             .collect();
 
-        // Sort by modification time (newest first)
+        // Newest first, so we attach the most recent prior sessions.
         log_files.sort_by(|a, b| {
             let a_time = a.metadata().and_then(|m| m.modified()).ok();
             let b_time = b.metadata().and_then(|m| m.modified()).ok();
             b_time.cmp(&a_time)
         });
 
-        // Include up to 2 previous logs if they exist
+        // Include at most 2 previous logs.
         let current_log = get_current_log_path();
         let mut included = 0;
         for entry in log_files.iter() {
             let path = entry.path();
 
-            // Skip current log (already included)
+            // Current session log is already included above.
             if let Some(ref current) = current_log {
                 if &path == current {
                     continue;
@@ -94,7 +89,7 @@ fn collect_logs() -> Result<String, String> {
 
             match fs::read_to_string(&path) {
                 Ok(log_content) => {
-                    // Limit previous logs to last 500 lines
+                    // Cap each previous log at its last 500 lines.
                     let lines: Vec<&str> = log_content.lines().collect();
                     if lines.len() > 500 {
                         content.push_str(&format!(
@@ -121,14 +116,11 @@ fn collect_logs() -> Result<String, String> {
     Ok(content)
 }
 
-/// Upload logs to paste.armbian.com
-///
-/// Returns the URL and key of the uploaded paste, or an error message.
+/// Upload logs to paste.armbian.com, returning the paste URL and key.
 #[tauri::command]
 pub async fn upload_logs() -> Result<UploadResult, String> {
     log_info!("paste", "Starting log upload to paste.armbian.com");
 
-    // Collect log content
     let content = collect_logs()?;
 
     if content.trim().is_empty() {
@@ -137,13 +129,8 @@ pub async fn upload_logs() -> Result<UploadResult, String> {
 
     log_info!("paste", "Collected {} bytes of log data", content.len());
 
-    // Create HTTP client
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
+    let client = crate::utils::build_client(std::time::Duration::from_secs(30))?;
 
-    // Upload to paste service
     let url = format!("{}{}", PASTE_URL, PASTE_ENDPOINT);
     let response = client
         .post(&url)
@@ -163,7 +150,7 @@ pub async fn upload_logs() -> Result<UploadResult, String> {
         return Err(format!("Upload failed: HTTP {}", status));
     }
 
-    // Response is the full URL as plain text
+    // The response body is the full paste URL as plain text.
     let paste_url = response
         .text()
         .await
@@ -174,7 +161,7 @@ pub async fn upload_logs() -> Result<UploadResult, String> {
         .trim()
         .to_string();
 
-    // Extract key from URL (last path segment)
+    // The key is the last path segment of the URL.
     let key = paste_url
         .rsplit('/')
         .next()
@@ -195,7 +182,6 @@ mod tests {
 
     #[test]
     fn test_collect_logs() {
-        // Should not panic even if no logs exist
         let result = collect_logs();
         assert!(result.is_ok());
         let content = result.unwrap();

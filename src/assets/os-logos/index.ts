@@ -1,77 +1,9 @@
-// OS Logos
-import debianLogo from './debian.svg';
-import ubuntuLogo from './ubuntu.png';
-import armbianLogo from '../armbian-logo.png';
+import { OS_INFO } from '../../config/os-info';
 
-// Import OS_INFO / APP_INFO from config as the single source of truth for logos
-import { APP_INFO, OS_INFO } from '../../config/os-info';
-
-export const osLogos: Record<string, string> = {
-  debian: debianLogo,
-  ubuntu: ubuntuLogo,
-  armbian: armbianLogo,
-};
-
-// Derive app logos from APP_INFO so each app's logo is declared in one place (os-info.ts)
-export const appLogos: Record<string, string> = Object.fromEntries(
-  Object.entries(APP_INFO)
-    .filter(([, info]) => info.logo)
-    .map(([key, info]) => [key, info.logo as string]),
-);
-
-/** Pick an image logo by priority: preinstalled-app logo > distro OS logo > null (generic icon) */
-export function getImageLogo(distroRelease: string, preinstalledApp?: string): string | null {
-  // First check if there's a preinstalled app with a logo
-  if (preinstalledApp) {
-    const appKey = preinstalledApp.toLowerCase();
-    for (const [key, logo] of Object.entries(appLogos)) {
-      if (appKey.includes(key)) {
-        return logo;
-      }
-    }
-  }
-
-  // Check OS based on distro release (also works for custom image filenames)
-  const distro = distroRelease.toLowerCase();
-
-  // Check for apps in filename (for custom images)
-  for (const [key, logo] of Object.entries(appLogos)) {
-    if (distro.includes(key)) {
-      return logo;
-    }
-  }
-
-  // Check OS_INFO for known codenames (single source of truth)
-  for (const [codename, info] of Object.entries(OS_INFO)) {
-    if (distro.includes(codename)) {
-      return info.logo;
-    }
-  }
-
-  // Check for explicit OS names
-  if (distro.includes('ubuntu')) {
-    return osLogos.ubuntu;
-  }
-
-  if (distro.includes('debian')) {
-    return osLogos.debian;
-  }
-
-  if (distro.includes('armbian')) {
-    return osLogos.armbian;
-  }
-
-  // Return null for unrecognized OS (caller should show generic icon)
-  return null;
-}
-
-/**
- * Get the OS name from distro release
- */
+/** Resolve a human-readable OS name from a distro release string. */
 export function getOsName(distroRelease: string): string {
   const distro = distroRelease.toLowerCase();
 
-  // Check OS_INFO for known codenames
   for (const [codename, info] of Object.entries(OS_INFO)) {
     if (distro.includes(codename)) {
       return info.name;

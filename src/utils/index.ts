@@ -1,9 +1,47 @@
-// Shared utility functions and constants
+import { COLORS, UI, SLUGS, SUPPORT_TIER_ORDER } from '../config';
+import { getImageVariantLabel, getOsInfo } from '../config/os-info';
+import { getDesktopEnv, DESKTOP_BADGES } from '../config/badges';
+import type { ImageInfo } from '../types';
 
-import { COLORS } from '../config';
+// Re-export color helpers from the dedicated color module
+export { hexToRgb, hexToRgba } from './color';
 
 /** Default color for icons without specific branding */
 export const DEFAULT_COLOR = COLORS.DEFAULT_ICON;
+
+/** Compute a staggered CSS animation delay clamped to UI.STAGGER.MAX_INDEX. */
+export function staggerDelay(index: number): string {
+  return `${Math.min(index, UI.STAGGER.MAX_INDEX) * UI.STAGGER.STEP_S}s`;
+}
+
+/** Format a Unix timestamp as relative time (e.g. "2 hours ago"). */
+export function formatRelativeTime(
+  timestamp: number,
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string {
+  const now = Math.floor(Date.now() / 1000);
+  const diff = now - timestamp;
+
+  if (diff < 60) return t('settings.cache.justNow');
+  if (diff < 3600) return t('settings.cache.minutesAgo', { count: Math.floor(diff / 60) });
+  if (diff < 86400) return t('settings.cache.hoursAgo', { count: Math.floor(diff / 3600) });
+  return t('settings.cache.daysAgo', { count: Math.floor(diff / 86400) });
+}
+
+/** Fisher-Yates shuffle returning a new array. */
+export function shuffle<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/** Whether a board is a real detected board (not the custom or cached placeholder). */
+export function isDetectedBoard(board: { slug: string } | null | undefined): boolean {
+  return !!board && board.slug !== SLUGS.CUSTOM && board.slug !== SLUGS.CACHED;
+}
 
 /** Format a byte size as human-readable text (e.g. "1.5 GB"); `unknownText` covers 0/unknown */
 export function formatFileSize(
@@ -34,16 +72,6 @@ export function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-/** Preload an image, resolving true if it loaded and false on error */
-export function preloadImage(url: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => resolve(true);
-    img.onerror = () => resolve(false);
-    img.src = url;
-  });
-}
-
 /** Parsed metadata from an Armbian image filename */
 export interface ArmbianFilenameInfo {
   /** Board slug (lowercase, e.g. "nanopi-m5") */
@@ -60,16 +88,9 @@ export interface ArmbianFilenameInfo {
   desktop: string | null;
 }
 
-/**
- * Parse an Armbian image filename into structured metadata.
- *
- * Handles three naming conventions:
- * - Standard:  `Armbian_{version}_{board}_{distro}_{branch}_{kernel}[_{desktop}]`
- * - Labeled:   `Armbian_{label}_{version}_{board}_...` (label when parts[1] is non-numeric)
- * - Prefixed:  `Armbian-unofficial_{version}_{board}_...`
- */
+/** Parse an Armbian image filename into structured metadata across three conventions: Standard
+ * `Armbian_{version}_{board}_...`, Labeled `Armbian_{label}_{version}_{board}_...` (label when parts[1] non-numeric), Prefixed `Armbian-unofficial_{version}_{board}_...`. */
 export function parseArmbianFilename(filename: string): ArmbianFilenameInfo | null {
-  // Strip path if present
   const basename = filename.split('/').pop()?.split('\\').pop() ?? filename;
 
   // Strip compression extensions, then .img
@@ -109,6 +130,90 @@ export function parseArmbianFilename(filename: string): ArmbianFilenameInfo | nu
   };
 }
 
+/** Stable identity key for an Armbian image filename (board+version+distro+branch+kernel+desktop),
+ * used to match a remote image against locally cached files regardless of compression extension.
+ * Returns null when the name isn't a recognizable Armbian image. */
+export function armbianIdentityKey(filename: string): string | null {
+  const parsed = parseArmbianFilename(filename);
+  if (!parsed) return null;
+  return [parsed.boardSlug, parsed.version, parsed.distro, parsed.branch, parsed.kernel, parsed.desktop]
+    .map((part) => (part ?? '').toLowerCase())
+    .join('|');
+}
+
+/**
+ * Split an Armbian version into its headline base and optional build/trunk suffix.
+ * "26.2.0-trunk.904" -> { base: "26.2.0", build: "trunk.904" }; "26.5.1" -> { base: "26.5.1", build: "" }.
+ */
+export function splitArmbianVersion(version: string): { base: string; build: string } {
+  const raw = version || '';
+  const dash = raw.indexOf('-');
+  return dash === -1 ? { base: raw, build: '' } : { base: raw.slice(0, dash), build: raw.slice(dash + 1) };
+}
+
+/** Format an ISO 8601 date as a short, locale-aware date (e.g. "29 May 2026"); undefined when unparseable. */
+export function formatDate(iso: string, locale?: string): string | undefined {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+/** Strip ANSI escape sequences (terminal colour codes) from `text` so it copies/exports as plain text. */
+export function stripAnsiCodes(text: string): string {
+  // eslint-disable-next-line no-control-regex -- matching control chars is intentional
+  const ansiEscapePattern = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
+  return text.replace(ansiEscapePattern, '');
+}
+
+/** True when the string is a well-formed http(s) URL. */
+export function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/** Strip a leading vendor name from a board name so a vendor kicker and the name don't repeat it. */
+export function stripVendorPrefix(name: string, vendorName: string): string {
+  if (!vendorName || !name.toLowerCase().startsWith(vendorName.toLowerCase())) return name;
+  return name.slice(vendorName.length).trim() || name;
+}
+
+/** Branded OS identity (title + meta) for home OS row and flash header. API images use structured fields;
+ * custom/cached parse distro_release filename — Armbian builds (incl. trunk/unofficial) yield version+variant (GNOME/Minimal/…), else raw filename with no meta. */
+export function formatImageIdentity(
+  image: ImageInfo,
+  t: (key: string) => string
+): { title: string; meta: string | null } {
+  if (image.is_custom) {
+    const parsed = parseArmbianFilename(image.distro_release || '');
+    if (parsed?.version) {
+      const version = splitArmbianVersion(parsed.version).base;
+      const desktopEnv = parsed.desktop ? getDesktopEnv(parsed.desktop) : null;
+      const variant =
+        desktopEnv && DESKTOP_BADGES[desktopEnv] ? DESKTOP_BADGES[desktopEnv].label : t('modal.minimal');
+      const os = parsed.distro ? getOsInfo(parsed.distro)?.name ?? null : null;
+      return {
+        title: `Armbian ${version} ${variant}`.replace(/\s+/g, ' ').trim(),
+        meta: os && parsed.branch ? `${os} · ${parsed.branch}` : os || parsed.branch || null,
+      };
+    }
+    return { title: image.distro_release || '', meta: null };
+  }
+
+  const version = splitArmbianVersion(image.release || '').base;
+  const meta =
+    image.distro_release && image.kernel_branch
+      ? `${image.distro_release} · ${image.kernel_branch}`
+      : image.distro_release || image.kernel_branch || null;
+  return {
+    title: `Armbian ${version} ${getImageVariantLabel(image, t)}`.replace(/\s+/g, ' ').trim(),
+    meta: meta || null,
+  };
+}
+
 /** Extract a message from an unknown error value, using `fallback` if none found */
 export function getErrorMessage(error: unknown, fallback: string = 'An error occurred'): string {
   if (error instanceof Error) return error.message;
@@ -116,12 +221,7 @@ export function getErrorMessage(error: unknown, fallback: string = 'An error occ
   return fallback;
 }
 
-/** Support tier priority order (lower index = higher priority) */
-const SUPPORT_TIER_ORDER = ['platinum', 'standard', 'community', 'eos', 'tvb', 'wip'];
-
-/**
- * Sort comparator for boards: Platinum > Standard > Community > EOS > TVB > WIP > Others (alphabetically)
- */
+/** Board sort comparator: by support tier, then alphabetically. */
 export function compareBoardsBySupport<T extends {
   support_tier: string;
   name: string;

@@ -1,10 +1,7 @@
-//! Security framework FFI bindings
-//!
-//! C bindings for macOS Security.framework authorization.
+//! C FFI bindings for macOS Security.framework authorization.
 
 use std::ffi::c_void;
 
-// Security framework bindings
 #[link(name = "Security", kind = "framework")]
 extern "C" {
     pub fn AuthorizationCreate(

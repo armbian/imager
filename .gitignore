@@ -41,6 +41,9 @@ Thumbs.db
 src-tauri/target/
 src-tauri/gen/
 
+# Rust crates build artifacts
+crates/*/target/
+
 # Test coverage
 coverage/
 

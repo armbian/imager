@@ -1,20 +1,5 @@
-/* ========================================
-   ARMBIAN IMAGER - CSS Module Index
-   ========================================
-
-   This file imports all CSS modules in the correct order.
-   Order matters: theme variables must be loaded first,
-   then base styles, then components that use them.
-
-   Structure:
-   - theme.css      : CSS variables, colors, dark mode
-   - base.css       : Reset, scrollbars, loading states
-   - layout.css     : App container, header, home page
-   - components.css : Buttons, badges, lists, forms
-   - modal.css      : Modal dialogs and overlays
-   - flash.css      : Flash progress UI
-   - responsive.css : Media queries (must be last)
-   ======================================== */
+/* CSS module index. Import order matters: theme vars first, then base, layout,
+   components, modal, flash, and responsive (media queries) last. */
 
 @import './theme.css';
 @import './base.css';
@@ -22,4 +7,5 @@
 @import './components.css';
 @import './modal.css';
 @import './flash.css';
+@import './settings.css';
 @import './responsive.css';

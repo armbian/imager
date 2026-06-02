@@ -1,6 +1,4 @@
-//! Device types and shared utilities
-//!
-//! Common types and helpers for block device representation across platforms.
+//! Device types and shared helpers for block device representation.
 
 use serde::{Deserialize, Serialize};
 
@@ -27,8 +25,7 @@ pub struct BlockDevice {
     pub is_read_only: bool,
 }
 
-/// Normalize a platform-specific transport/protocol string (macOS/Linux/Windows)
-/// into a canonical bus type; None for unknown or empty input.
+/// Normalize a platform transport/protocol string into a canonical bus type; None if empty.
 pub fn normalize_bus_type(transport: &str) -> Option<String> {
     if transport.is_empty() {
         return None;
@@ -51,10 +48,7 @@ pub fn normalize_bus_type(transport: &str) -> Option<String> {
     }
 }
 
-/// Detect SD card from a model or media name string.
-///
-/// Checks for common SD card identifiers (SDXC, SDHC, SD Card)
-/// that may appear in device model names across platforms.
+/// Detect an SD card from a model/media name by matching SDXC/SDHC/SD Card markers.
 #[allow(dead_code)]
 pub fn detect_sd_from_name(name: &str) -> Option<String> {
     let lower = name.to_lowercase();

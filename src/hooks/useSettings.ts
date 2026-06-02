@@ -1,7 +1,8 @@
 // Persistent settings access via the Tauri Store plugin (no backend commands)
 
 import { load } from '@tauri-apps/plugin-store';
-import { CACHE, SETTINGS } from '../config';
+import { CACHE, EVENTS, SETTINGS } from '../config';
+import type { AutoconfigProfile } from '../types';
 let storeInstance: Awaited<ReturnType<typeof load>> | null = null;
 let storePromise: Promise<Awaited<ReturnType<typeof load>>> | null = null;
 
@@ -48,27 +49,6 @@ export async function setTheme(theme: string): Promise<void> {
   }
 }
 
-/** Get the language preference (e.g. 'en', 'de', 'fr') */
-export async function getLanguage(): Promise<string> {
-  try {
-    const store = await getStore();
-    return (await store.get<string>(SETTINGS.KEYS.LANGUAGE)) || SETTINGS.DEFAULTS.LANGUAGE;
-  } catch (error) {
-    throw new Error(`Failed to get language: ${error}`);
-  }
-}
-
-/** Set the language preference (e.g. 'en', 'de', 'fr') */
-export async function setLanguage(language: string): Promise<void> {
-  try {
-    const store = await getStore();
-    await store.set(SETTINGS.KEYS.LANGUAGE, language);
-    await store.save();
-  } catch (error) {
-    throw new Error(`Failed to set language: ${error}`);
-  }
-}
-
 /** Get the MOTD visibility preference */
 export async function getShowMotd(): Promise<boolean> {
   try {
@@ -88,6 +68,28 @@ export async function setShowMotd(show: boolean): Promise<void> {
     await store.save();
   } catch (error) {
     throw new Error(`Failed to set MOTD preference: ${error}`);
+  }
+}
+
+/** Get the welcome screen visibility preference */
+export async function getShowWelcome(): Promise<boolean> {
+  try {
+    const store = await getStore();
+    const value = await store.get<boolean>(SETTINGS.KEYS.SHOW_WELCOME);
+    return value ?? SETTINGS.DEFAULTS.SHOW_WELCOME;
+  } catch (error) {
+    throw new Error(`Failed to get welcome screen preference: ${error}`);
+  }
+}
+
+/** Set the welcome screen visibility preference */
+export async function setShowWelcome(show: boolean): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.SHOW_WELCOME, show);
+    await store.save();
+  } catch (error) {
+    throw new Error(`Failed to set welcome screen preference: ${error}`);
   }
 }
 
@@ -157,12 +159,29 @@ export async function setSkipVerify(skip: boolean): Promise<void> {
   }
 }
 
-// ============================================================================
-// Cache Settings
-// ============================================================================
+/** Get the force-offline preference: behave as if there's no connectivity */
+export async function getForceOffline(): Promise<boolean> {
+  try {
+    const store = await getStore();
+    const value = await store.get<boolean>(SETTINGS.KEYS.FORCE_OFFLINE);
+    return value ?? SETTINGS.DEFAULTS.FORCE_OFFLINE;
+  } catch (error) {
+    throw new Error(`Failed to get force offline preference: ${error}`);
+  }
+}
 
-// The Rust backend owns the canonical cache-size default; values here are
-// only fallbacks for when the backend cannot be reached.
+/** Set the force-offline preference: behave as if there's no connectivity */
+export async function setForceOffline(value: boolean): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.FORCE_OFFLINE, value);
+    await store.save();
+  } catch (error) {
+    throw new Error(`Failed to set force offline preference: ${error}`);
+  }
+}
+
+// Cache settings: backend owns the canonical defaults; values here are fallbacks when it's unreachable.
 
 /** Get the cache enabled preference */
 export async function getCacheEnabled(): Promise<boolean> {
@@ -175,10 +194,7 @@ export async function getCacheEnabled(): Promise<boolean> {
   }
 }
 
-/**
- * Set the cache enabled preference.
- * When enabled, downloaded images are kept for faster retry instead of deleted after flash.
- */
+/** Set cache enabled; when on, downloaded images are kept for faster retry instead of deleted after flash */
 export async function setCacheEnabled(enabled: boolean): Promise<void> {
   try {
     const store = await getStore();
@@ -189,9 +205,7 @@ export async function setCacheEnabled(enabled: boolean): Promise<void> {
   }
 }
 
-/**
- * Get the maximum cache size in bytes, falling back to the backend default when unset.
- */
+/** Get the maximum cache size in bytes, falling back to the backend default when unset */
 export async function getCacheMaxSize(): Promise<number> {
   try {
     const store = await getStore();
@@ -213,14 +227,7 @@ export async function setCacheMaxSize(size: number): Promise<void> {
   }
 }
 
-// ============================================================================
-// Armbian Board Detection Settings
-// ============================================================================
-
-/**
- * Get the Armbian board detection mode: "disabled" (off),
- * "modal" (confirm before auto-select), or "auto" (no confirmation).
- */
+/** Get the Armbian board detection mode: "disabled", "modal" (confirm before auto-select), or "auto" (no confirmation) */
 export async function getArmbianBoardDetection(): Promise<string> {
   try {
     const store = await getStore();
@@ -248,4 +255,63 @@ export async function setArmbianBoardDetection(mode: string): Promise<void> {
   } catch (error) {
     throw new Error(`Failed to set Armbian board detection preference: ${error}`);
   }
+}
+
+// Autoconfig profiles: named first-boot presets stored client-side and applied only on explicit selection.
+
+/** Notify open views (settings, flash) that the stored profile list changed */
+function emitProfilesChanged(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(EVENTS.PROFILES_CHANGED));
+  }
+}
+
+/** Get all stored autoconfig profiles, or an empty list when none exist */
+export async function getAutoconfigProfiles(): Promise<AutoconfigProfile[]> {
+  try {
+    const store = await getStore();
+    const value = await store.get<AutoconfigProfile[]>(SETTINGS.KEYS.AUTOCONFIG_PROFILES);
+    return value ?? [...SETTINGS.DEFAULTS.AUTOCONFIG_PROFILES];
+  } catch (error) {
+    throw new Error(`Failed to get autoconfig profiles: ${error}`);
+  }
+}
+
+/** Persist the full profile list and broadcast the change */
+export async function saveAutoconfigProfiles(list: AutoconfigProfile[]): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.AUTOCONFIG_PROFILES, list);
+    await store.save();
+    emitProfilesChanged();
+  } catch (error) {
+    throw new Error(`Failed to save autoconfig profiles: ${error}`);
+  }
+}
+
+/** Insert or update a profile by id, returning the updated list */
+export async function upsertAutoconfigProfile(p: AutoconfigProfile): Promise<AutoconfigProfile[]> {
+  const list = await getAutoconfigProfiles();
+  const index = list.findIndex(existing => existing.id === p.id);
+  if (index >= 0) {
+    list[index] = p;
+  } else {
+    list.push(p);
+  }
+  await saveAutoconfigProfiles(list);
+  return list;
+}
+
+/** Remove a profile by id, returning the updated list */
+export async function deleteAutoconfigProfile(id: string): Promise<AutoconfigProfile[]> {
+  const list = await getAutoconfigProfiles();
+  const next = list.filter(existing => existing.id !== id);
+  await saveAutoconfigProfiles(next);
+  return next;
+}
+
+/** Get a single profile by id, or null when not found */
+export async function getAutoconfigProfile(id: string): Promise<AutoconfigProfile | null> {
+  const list = await getAutoconfigProfiles();
+  return list.find(existing => existing.id === id) ?? null;
 }

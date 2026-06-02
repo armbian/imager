@@ -1,9 +1,5 @@
-//! QDL (Qualcomm Device Loader) module
-//!
-//! Provides QDL-based flashing for boards that use Qualcomm EDL
-//! (Emergency Download) mode instead of block-device writes.
-//! Uses the Sahara protocol to upload a firehose programmer,
-//! then the Firehose protocol to program partitions.
+//! QDL (Qualcomm Device Loader): flashing for boards using Qualcomm EDL (Emergency Download) mode instead of block-device
+//! writes. Uses the Sahara protocol to upload a firehose programmer, then the Firehose protocol to program partitions.
 
 pub mod detect;
 pub mod extract;

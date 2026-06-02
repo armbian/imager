@@ -1,5 +1,3 @@
-//! Image data models
-//!
 //! Types representing Armbian API responses, boards, images, and vendors.
 
 use serde::{Deserialize, Serialize};
@@ -155,6 +153,8 @@ pub struct ImageInfo {
     pub sha_url: Option<String>,
     /// Compressed image size in bytes
     pub file_size: u64,
+    /// Build date (ISO 8601, from the download's `updated_at`), when available
+    pub build_date: Option<String>,
     /// Stability level: "stable", "edge", "nightly"
     pub stability: String,
     /// Image format: "sd" (block), "qdl" (Qualcomm EDL), "rootfs", "qemu", "hyperv"

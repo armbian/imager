@@ -1,12 +1,9 @@
 import { useEffect, useCallback } from 'react';
-import { getBlockDevices } from './useTauri';
+import { getBlockDevices, getQdlDevices } from './useTauri';
 import { POLLING } from '../config';
 import type { BlockDevice } from '../types';
 
-/**
- * Hook to monitor if a selected device is still connected.
- * Clears the device selection if it's disconnected.
- */
+/** Monitor the selected device and clear it if it disconnects */
 export function useDeviceMonitor(
   selectedDevice: BlockDevice | null,
   onDeviceDisconnected: () => void,
@@ -16,6 +13,16 @@ export function useDeviceMonitor(
     if (!selectedDevice) return;
 
     try {
+      // QDL (Qualcomm EDL) targets are not block devices; check the QDL list
+      // instead, matching useFlashOperation's "gone when none present" semantics.
+      if (selectedDevice.path.startsWith('qdl://')) {
+        const qdlDevices = await getQdlDevices();
+        if (qdlDevices.length === 0) {
+          onDeviceDisconnected();
+        }
+        return;
+      }
+
       const devices = await getBlockDevices();
       const stillConnected = devices.some(d => d.path === selectedDevice.path);
 

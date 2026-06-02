@@ -1,8 +1,5 @@
-//! QDL device detection via USB enumeration
-//!
-//! Scans for Qualcomm devices in EDL mode (VID 0x05c6, PID 0x9008)
-//! using the nusb pure-Rust USB library. Cross-platform: Linux (usbfs),
-//! macOS (IOKit), Windows (WinUSB).
+//! QDL device detection: scans for Qualcomm EDL-mode devices (VID 0x05c6, PID 0x9008) via the nusb
+//! pure-Rust USB library. Cross-platform: Linux (usbfs), macOS (IOKit), Windows (WinUSB).
 
 use nusb::MaybeFuture;
 

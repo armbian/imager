@@ -1,8 +1,5 @@
-//! Image cache management module
-//!
-//! Handles persistent caching of downloaded Armbian images with
-//! configurable size limits and LRU eviction. All operations are
-//! guarded by a global Mutex.
+//! Persistent cache for downloaded Armbian images with size limits and LRU
+//! eviction. All operations are guarded by a global Mutex.
 
 use std::fs;
 use std::path::PathBuf;
@@ -12,13 +9,11 @@ use std::time::SystemTime;
 use filetime::FileTime;
 use once_cell::sync::Lazy;
 
-use crate::config;
-use crate::utils::{get_cache_dir, parse_armbian_filename, validate_cache_path};
+use crate::utils::{assets_dir, images_dir, parse_armbian_filename, validate_cache_path};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "cache";
 
-/// Re-export default max cache size from config
 pub use crate::config::cache::DEFAULT_MAX_SIZE;
 
 /// Serializes cache operations, e.g. eviction racing a download
@@ -34,7 +29,7 @@ struct CacheEntry {
 
 /// Get the image cache directory path
 pub fn get_images_cache_dir() -> PathBuf {
-    get_cache_dir(config::app::NAME).join("images")
+    images_dir()
 }
 
 /// Total size of all cached images in bytes (0 if the directory is missing)
@@ -46,40 +41,74 @@ pub fn calculate_cache_size() -> Result<u64, String> {
     calculate_cache_size_internal()
 }
 
-/// Internal implementation of calculate_cache_size without locking
-///
-/// Used by functions that already hold the cache lock.
-fn calculate_cache_size_internal() -> Result<u64, String> {
-    let cache_dir = get_images_cache_dir();
+/// Cache size split by category: flashable images vs assets (board/vendor
+/// photos and API JSON). `total` is the sum of the two.
+#[derive(serde::Serialize)]
+pub struct CacheBreakdown {
+    pub images: u64,
+    pub assets: u64,
+    pub total: u64,
+}
 
-    if !cache_dir.exists() {
-        log_debug!(MODULE, "Cache directory doesn't exist, size is 0");
-        return Ok(0);
+/// Cache size broken down into the flashable-image cache and the assets cache.
+pub fn calculate_cache_breakdown() -> Result<CacheBreakdown, String> {
+    let _lock = CACHE_LOCK
+        .lock()
+        .map_err(|e| format!("Failed to acquire cache lock: {}", e))?;
+
+    let images = recursive_dir_size(&images_dir());
+    let assets = recursive_dir_size(&assets_dir());
+
+    Ok(CacheBreakdown {
+        images,
+        assets,
+        total: images + assets,
+    })
+}
+
+/// Recursively sum the byte size of every file under `dir` (0 if absent).
+/// Unreadable entries are skipped rather than failing the whole walk.
+fn recursive_dir_size(dir: &PathBuf) -> u64 {
+    if !dir.exists() {
+        return 0;
     }
 
-    let entries = fs::read_dir(&cache_dir).map_err(|e| {
-        log_error!(MODULE, "Failed to read cache directory: {}", e);
-        format!("Failed to read cache directory: {}", e)
-    })?;
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(e) => {
+            log_warn!(MODULE, "Failed to read directory {}: {}", dir.display(), e);
+            return 0;
+        }
+    };
 
     let mut total_size: u64 = 0;
-    let mut file_count = 0;
 
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_file() {
+        if path.is_dir() {
+            total_size += recursive_dir_size(&path);
+        } else if path.is_file() {
             if let Ok(metadata) = fs::metadata(&path) {
                 total_size += metadata.len();
-                file_count += 1;
             }
         }
     }
 
+    total_size
+}
+
+/// Sum of the OS image cache and the assets cache. Caller must hold the cache lock.
+fn calculate_cache_size_internal() -> Result<u64, String> {
+    let images_size = recursive_dir_size(&images_dir());
+    let assets_size = recursive_dir_size(&assets_dir());
+    let total_size = images_size + assets_size;
+
     log_debug!(
         MODULE,
-        "Cache size: {} bytes ({} files)",
+        "Cache size: {} bytes (images: {}, assets: {})",
         total_size,
-        file_count
+        images_size,
+        assets_size
     );
 
     Ok(total_size)
@@ -115,7 +144,6 @@ fn get_cached_files_by_age_internal() -> Result<Vec<CacheEntry>, String> {
         }
     }
 
-    // Sort by modification time (oldest first for LRU eviction)
     files.sort_by_key(|a| a.modified);
 
     Ok(files)
@@ -170,44 +198,72 @@ pub fn evict_to_size(max_size: u64) -> Result<(), String> {
     Ok(())
 }
 
-/// Remove all files from the images cache directory
-pub fn clear_cache() -> Result<(), String> {
-    let _lock = CACHE_LOCK
-        .lock()
-        .map_err(|e| format!("Failed to acquire cache lock: {}", e))?;
+/// Recursively delete the contents of `dir`, leaving `dir` itself in place.
+/// Returns (removed_files, failed_files).
+fn clear_dir_contents(dir: &PathBuf) -> (u32, u32) {
+    let mut removed = 0;
+    let mut failed = 0;
 
-    let cache_dir = get_images_cache_dir();
-
-    if !cache_dir.exists() {
-        log_info!(MODULE, "Cache directory doesn't exist, nothing to clear");
-        return Ok(());
+    if !dir.exists() {
+        return (removed, failed);
     }
 
-    log_info!(MODULE, "Clearing cache directory: {}", cache_dir.display());
-
-    let entries = fs::read_dir(&cache_dir).map_err(|e| {
-        log_error!(MODULE, "Failed to read cache directory: {}", e);
-        format!("Failed to read cache directory: {}", e)
-    })?;
-
-    let mut removed_count = 0;
-    let mut failed_count = 0;
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(e) => {
+            log_warn!(MODULE, "Failed to read directory {}: {}", dir.display(), e);
+            return (removed, failed);
+        }
+    };
 
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_file() {
+        if path.is_dir() {
+            let (sub_removed, sub_failed) = clear_dir_contents(&path);
+            removed += sub_removed;
+            failed += sub_failed;
+            if let Err(e) = fs::remove_dir(&path) {
+                log_warn!(MODULE, "Failed to remove dir {}: {}", path.display(), e);
+            }
+        } else {
             match fs::remove_file(&path) {
                 Ok(()) => {
-                    removed_count += 1;
+                    removed += 1;
                     log_debug!(MODULE, "Removed: {}", path.display());
                 }
                 Err(e) => {
-                    failed_count += 1;
+                    failed += 1;
                     log_warn!(MODULE, "Failed to remove {}: {}", path.display(), e);
                 }
             }
         }
     }
+
+    (removed, failed)
+}
+
+/// Remove all cached data (OS images and assets). Leaves logs, transient flash
+/// dirs, and the settings store untouched.
+pub fn clear_cache() -> Result<(), String> {
+    let _lock = CACHE_LOCK
+        .lock()
+        .map_err(|e| format!("Failed to acquire cache lock: {}", e))?;
+
+    let images_dir = get_images_cache_dir();
+    let assets_dir = assets_dir();
+
+    log_info!(
+        MODULE,
+        "Clearing cache: images={}, assets={}",
+        images_dir.display(),
+        assets_dir.display()
+    );
+
+    let (img_removed, img_failed) = clear_dir_contents(&images_dir);
+    let (asset_removed, asset_failed) = clear_dir_contents(&assets_dir);
+
+    let removed_count = img_removed + asset_removed;
+    let failed_count = img_failed + asset_failed;
 
     log_info!(
         MODULE,
@@ -215,6 +271,13 @@ pub fn clear_cache() -> Result<(), String> {
         removed_count,
         failed_count
     );
+
+    // Drop picture_cache metadata so the next request reloads from empty disk.
+    if let Ok(handle) = tokio::runtime::Handle::try_current() {
+        handle.spawn(async {
+            crate::picture_cache::reset_meta().await;
+        });
+    }
 
     if failed_count > 0 {
         return Err(format!("Failed to remove {} cached files", failed_count));
@@ -239,7 +302,7 @@ pub fn get_cached_image(filename: &str) -> Option<PathBuf> {
     if cached_path.exists() && cached_path.is_file() {
         log_info!(MODULE, "Found cached image: {}", cached_path.display());
 
-        // Touch the file to update modification time (for LRU)
+        // Bump mtime so LRU treats this as recently used.
         if let Err(e) = update_file_mtime(&cached_path) {
             log_warn!(MODULE, "Failed to update mtime for cached file: {}", e);
         }
@@ -368,8 +431,8 @@ pub fn list_cached_images() -> Result<Vec<CachedImageInfo>, String> {
     Ok(images)
 }
 
-/// Delete one cached image by filename (validates against path traversal),
-/// returning the new total cache size
+/// Delete one cached image by filename (rejects path traversal), returning the
+/// new total cache size
 pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
     let _lock = CACHE_LOCK
         .lock()
@@ -378,7 +441,6 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
     let cache_dir = get_images_cache_dir();
     let file_path = cache_dir.join(filename);
 
-    // Security: validate filename doesn't contain path traversal
     if filename.contains("..") || filename.contains('/') || filename.contains('\\') {
         log_error!(
             MODULE,
@@ -388,7 +450,6 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
         return Err("Invalid filename".to_string());
     }
 
-    // Verify file exists and is within cache directory
     if !file_path.exists() {
         return Err(format!("File not found in cache: {}", filename));
     }
@@ -397,7 +458,7 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
         return Err(format!("Not a file: {}", filename));
     }
 
-    // Additional safety: canonicalize and verify within cache directory
+    // Confirm the canonical path is still inside the cache directory.
     if let Err(e) = validate_cache_path(&file_path) {
         log_error!(
             MODULE,
@@ -408,7 +469,6 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
         return Err(e);
     }
 
-    // Delete the file
     fs::remove_file(&file_path).map_err(|e| {
         log_error!(MODULE, "Failed to delete cached image {}: {}", filename, e);
         format!("Failed to delete image: {}", e)
@@ -416,7 +476,6 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
 
     log_info!(MODULE, "Deleted cached image: {}", filename);
 
-    // Return updated cache size
     calculate_cache_size_internal()
 }
 
@@ -426,14 +485,12 @@ mod tests {
 
     #[test]
     fn test_calculate_cache_size_empty() {
-        // For non-existent directory, should return 0
         let result = calculate_cache_size();
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_get_cached_files_by_age() {
-        // Acquire lock and test internal function
         let _lock = CACHE_LOCK.lock().unwrap();
         let result = get_cached_files_by_age_internal();
         assert!(result.is_ok());
@@ -441,7 +498,6 @@ mod tests {
 
     #[test]
     fn test_clear_cache_nonexistent() {
-        // Should succeed even if directory doesn't exist
         let result = clear_cache();
         assert!(result.is_ok());
     }

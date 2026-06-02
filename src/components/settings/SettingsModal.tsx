@@ -1,98 +1,109 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Settings, Terminal, HardDrive } from 'lucide-react';
+import { X, Settings, Terminal, HardDrive, FileCog, Sun, Info } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { AppearanceSection } from './AppearanceSection';
 import { PreferencesSection } from './PreferencesSection';
+import { AutoconfigSection } from './AutoconfigSection';
 import { StorageSection } from './StorageSection';
 import { DeveloperSection } from './DeveloperSection';
 import { AboutSection } from './AboutSection';
 
-type SettingsView = 'appearance' | 'preferences' | 'storage' | 'developer' | 'about';
+/** Identifier for each navigable settings section. */
+type SettingsView = 'appearance' | 'preferences' | 'profiles' | 'storage' | 'developer' | 'about';
+
+/** Declarative description of a single navigation entry. */
+interface NavItem {
+  /** Section this entry activates. */
+  id: SettingsView;
+  /** Lucide icon rendered in the nav rail. */
+  icon: LucideIcon;
+  /** i18n key for the nav label. */
+  labelKey: string;
+}
+
+/** Nav entries in display order. About uses `settings.appInfo` as label while AboutSection keeps the
+ * hard-coded "Armbian Imager" title — mismatch is intentional and preserved. */
+const NAV_ITEMS: readonly NavItem[] = [
+  { id: 'appearance', icon: Sun, labelKey: 'settings.appearance' },
+  { id: 'preferences', icon: Settings, labelKey: 'settings.preferences' },
+  { id: 'profiles', icon: FileCog, labelKey: 'settings.autoconfig.tab' },
+  { id: 'storage', icon: HardDrive, labelKey: 'settings.storage' },
+  { id: 'developer', icon: Terminal, labelKey: 'settings.developer' },
+  { id: 'about', icon: Info, labelKey: 'settings.appInfo' },
+];
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Settings modal: sidebar tabs (Appearance, Preferences, Storage, Developer, About) + content area
+/** Frosted-glass Settings island: nav rail + active section, mirroring `.split-nav`/`.split-main`. Portaled to `document.body` so the overlay
+ * escapes transformed/stacked ancestors and covers the window. `isOpen` controls visibility; `onClose` fires on overlay or close-button activation. */
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState<SettingsView>('appearance');
 
   if (!isOpen) return null;
 
-  return (
+  /** Renders the currently selected section component. */
+  const renderSection = () => {
+    switch (activeSection) {
+      case 'appearance':
+        return <AppearanceSection />;
+      case 'preferences':
+        return <PreferencesSection />;
+      case 'profiles':
+        return <AutoconfigSection />;
+      case 'storage':
+        return <StorageSection />;
+      case 'developer':
+        return <DeveloperSection />;
+      case 'about':
+        return <AboutSection />;
+    }
+  };
+
+  // Portal to <body> so the overlay escapes any transformed/stacked ancestor
+  // (e.g. the animated .split) and reliably covers the whole window, header included.
+  return createPortal(
     <div className="modal-overlay modal-entering" onClick={onClose}>
-      <div className="settings-modal settings-modal-entering" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="settings-modal-header">
-          <h2>{t('settings.title')}</h2>
+      <div
+        className="settings-shell"
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="settings-shell__header">
+          <h2 className="settings-shell__title">{t('settings.title')}</h2>
           <button className="modal-close" onClick={onClose}>
             <X size={20} />
           </button>
-        </div>
+        </header>
 
-        {/* Sidebar + Content */}
-        <div className="settings-modal-body">
-          {/* Sidebar */}
-          <div className="settings-sidebar">
-            <button
-              className={`settings-sidebar-item ${activeSection === 'appearance' ? 'active' : ''}`}
-              onClick={() => setActiveSection('appearance')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <span>{t('settings.appearance')}</span>
-            </button>
+        <div className="settings-shell__body">
+          <nav className="settings-nav">
+            {NAV_ITEMS.map(({ id, icon: Icon, labelKey }) => {
+              const isActive = activeSection === id;
+              return (
+                <button
+                  key={id}
+                  className={`settings-nav__item ${isActive ? 'settings-nav__item--active' : ''}`}
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={() => setActiveSection(id)}
+                >
+                  <Icon size={20} className="settings-nav__icon" />
+                  <span>{t(labelKey)}</span>
+                </button>
+              );
+            })}
+          </nav>
 
-            <button
-              className={`settings-sidebar-item ${activeSection === 'preferences' ? 'active' : ''}`}
-              onClick={() => setActiveSection('preferences')}
-            >
-              <Settings size={20} />
-              <span>{t('settings.preferences')}</span>
-            </button>
-
-            <button
-              className={`settings-sidebar-item ${activeSection === 'storage' ? 'active' : ''}`}
-              onClick={() => setActiveSection('storage')}
-            >
-              <HardDrive size={20} />
-              <span>{t('settings.storage')}</span>
-            </button>
-
-            <button
-              className={`settings-sidebar-item ${activeSection === 'developer' ? 'active' : ''}`}
-              onClick={() => setActiveSection('developer')}
-            >
-              <Terminal size={20} />
-              <span>{t('settings.developer')}</span>
-            </button>
-
-            <button
-              className={`settings-sidebar-item ${activeSection === 'about' ? 'active' : ''}`}
-              onClick={() => setActiveSection('about')}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                <path d="M12 16v-4M12 8h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <span>{t('settings.appInfo')}</span>
-            </button>
-          </div>
-
-          {/* Content Area */}
-          <div className="settings-content">
-            {activeSection === 'appearance' && <AppearanceSection />}
-            {activeSection === 'preferences' && <PreferencesSection />}
-            {activeSection === 'storage' && <StorageSection />}
-            {activeSection === 'developer' && <DeveloperSection />}
-            {activeSection === 'about' && <AboutSection />}
-          </div>
+          <div className="settings-shell__content">{renderSection()}</div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -1,7 +1,5 @@
-//! Decompression module
-//!
-//! Handles decompressing compressed image files (XZ, GZ, BZ2, ZST)
-//! using Rust native libraries with multi-threading support.
+//! Decompressing image files (XZ, GZ, BZ2, ZST) using native Rust libraries,
+//! with multi-threading for XZ.
 
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
@@ -35,7 +33,7 @@ pub fn decompress_with_rust_xz(
     output_path: &Path,
     state: &Arc<DownloadState>,
 ) -> Result<(), String> {
-    // Try multi-threaded decoder first (faster, but doesn't support multi-stream XZ)
+    // Multi-threaded decoder is faster but can't handle multi-stream XZ.
     let threads = get_recommended_threads();
     let input_file =
         File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
@@ -50,7 +48,7 @@ pub fn decompress_with_rust_xz(
             decompress_with_reader_mt(decoder, output_path, state, "xz")
         }
         Err(mt_err) => {
-            // Fallback to xz2 (liblzma) which handles multi-stream XZ natively
+            // Fall back to xz2 (liblzma), which handles multi-stream XZ natively.
             log_info!(
                 MODULE,
                 "Multi-threaded decoder failed ({}), using liblzma multi-stream decoder",
@@ -106,7 +104,8 @@ pub fn decompress_with_zstd(
     decompress_with_reader_mt(decoder, output_path, state, "zstd")
 }
 
-/// Generic decompression using any Read implementation (mut reference for multithreaded decoders)
+/// Generic decompression over any Read. Takes the decoder by value to support
+/// multi-threaded readers.
 fn decompress_with_reader_mt<R: Read>(
     mut decoder: R,
     output_path: &Path,
@@ -120,12 +119,12 @@ fn decompress_with_reader_mt<R: Read>(
         BufWriter::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, output_file);
     let mut buffer = vec![0u8; config::download::CHUNK_SIZE];
 
-    // Decompressed size is unknown, so track output bytes with total 0
+    // Decompressed size is unknown, so track output bytes against a total of 0.
     let operation_name = format!("Decompress ({})", format_name);
     let mut tracker = ProgressTracker::new(
         &operation_name,
         MODULE,
-        0, // Unknown total size for decompression
+        0,
         config::logging::DECOMPRESS_LOG_INTERVAL_MB,
     );
 
@@ -148,7 +147,6 @@ fn decompress_with_reader_mt<R: Read>(
             .write_all(&buffer[..bytes_read])
             .map_err(|e| format!("Failed to write decompressed data: {}", e))?;
 
-        // ProgressTracker handles logging automatically
         tracker.update(bytes_read as u64);
     }
 
@@ -156,14 +154,12 @@ fn decompress_with_reader_mt<R: Read>(
         .flush()
         .map_err(|e| format!("Failed to flush output: {}", e))?;
 
-    // Log final summary
     tracker.finish();
 
     Ok(())
 }
 
-/// Decompress a local file (for custom images)
-/// Returns the path to the decompressed file
+/// Decompress a local custom-image file, returning the decompressed path.
 pub fn decompress_local_file(
     input_path: &PathBuf,
     state: &Arc<DownloadState>,
@@ -173,27 +169,24 @@ pub fn decompress_local_file(
         .and_then(|n| n.to_str())
         .ok_or("Invalid filename")?;
 
-    // Extract base filename (remove compression extension)
     let base_filename = strip_compression_ext(filename);
 
-    // Generate unique filename with timestamp to handle concurrent operations
+    // Timestamp suffix keeps concurrent decompressions from colliding.
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| format!("Failed to get timestamp: {}", e))?
         .as_millis();
 
-    // Use base_filename directly (it already has the correct .img extension)
     let output_filename = format!("{}-{}", base_filename, timestamp);
 
-    // Output to cache directory instead of user's directory
-    let custom_cache_dir = crate::utils::get_cache_dir(config::app::NAME).join("custom-decompress");
+    // Decompress into the cache dir, not the user's directory.
+    let custom_cache_dir = crate::utils::custom_decompress_dir();
 
     std::fs::create_dir_all(&custom_cache_dir)
         .map_err(|e| format!("Failed to create cache directory: {}", e))?;
 
     let output_path = custom_cache_dir.join(&output_filename);
 
-    // Check if already decompressed
     if output_path.exists() {
         log_info!(
             MODULE,
@@ -205,7 +198,6 @@ pub fn decompress_local_file(
 
     state.is_decompressing.store(true, Ordering::SeqCst);
 
-    // Get input file size for progress indication
     if let Ok(metadata) = std::fs::metadata(input_path) {
         state.total_bytes.store(metadata.len(), Ordering::SeqCst);
     }
@@ -217,9 +209,7 @@ pub fn decompress_local_file(
         output_path.display()
     );
 
-    // Handle different compression formats
     let result = if filename.ends_with(".xz") {
-        // Use Rust lzma-rust2 library (multi-threaded) on all platforms
         log_info!(
             MODULE,
             "Decompressing XZ format with Rust lzma-rust2 (multi-threaded)"

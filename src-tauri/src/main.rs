@@ -1,11 +1,10 @@
-//! Armbian Imager - Flash Armbian OS images to SD cards and USB drives
-//!
-//! A cross-platform Tauri application for downloading and flashing
-//! Armbian images to removable media.
+//! Armbian Imager: cross-platform Tauri app for downloading and flashing
+//! Armbian OS images to SD cards and USB drives.
 
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod autoconfig;
 mod cache;
 mod commands;
 mod config;
@@ -25,14 +24,10 @@ use commands::AppState;
 use tauri::Manager;
 use tauri_plugin_store::StoreExt;
 
-use crate::utils::get_cache_dir;
+use crate::utils::custom_decompress_dir;
 
-/// Manage cached download images based on cache settings
-///
-/// If cache is disabled, clears all cached images.
-/// If cache is enabled, enforces the maximum cache size by evicting oldest files.
+/// Apply cache settings: clear all images when disabled, else evict to the size limit.
 fn manage_download_cache(app: &tauri::App) {
-    // Load cache settings from store
     let (cache_enabled, cache_max_size) = match app.store("settings.json") {
         Ok(store) => {
             let enabled = store
@@ -56,13 +51,11 @@ fn manage_download_cache(app: &tauri::App) {
     };
 
     if !cache_enabled {
-        // Cache disabled - clear all cached images
         log_info!("main", "Image cache disabled, clearing cache directory");
         if let Err(e) = cache::clear_cache() {
             log_warn!("main", "Failed to clear cache: {}", e);
         }
     } else {
-        // Cache enabled - enforce size limit
         log_info!(
             "main",
             "Image cache enabled with {} GB limit",
@@ -76,7 +69,7 @@ fn manage_download_cache(app: &tauri::App) {
 
 /// Clean up orphaned decompressed custom images from previous sessions
 fn cleanup_custom_decompress_cache() {
-    let custom_dir = get_cache_dir(config::app::NAME).join("custom-decompress");
+    let custom_dir = custom_decompress_dir();
 
     if custom_dir.exists() {
         if let Ok(entries) = std::fs::read_dir(&custom_dir) {
@@ -93,7 +86,6 @@ fn cleanup_custom_decompress_cache() {
             }
         }
 
-        // Remove empty directory
         let _ = std::fs::remove_dir(&custom_dir);
     }
 }
@@ -105,10 +97,8 @@ fn is_appimage() -> bool {
 }
 
 fn main() {
-    // Initialize logging system
     logging::init();
 
-    // Log startup info
     log_info!("main", "=== Armbian Imager Starting ===");
     log_info!("main", "Version: {}", env!("CARGO_PKG_VERSION"));
     log_info!(
@@ -125,11 +115,10 @@ fn main() {
         config::urls::BOARD_IMAGES_BASE
     );
 
-    // Remove legacy api-images.json cache from pre-migration format
+    // Drop the legacy pre-migration api-images.json cache.
     images::cleanup_legacy_cache();
 
-    // Clean up orphaned custom decompressed images from previous sessions
-    // (Cache management is done in setup with access to settings)
+    // Image cache management happens later in setup, where settings are available.
     cleanup_custom_decompress_cache();
 
     let mut builder = tauri::Builder::default()
@@ -189,31 +178,14 @@ fn main() {
             commands::update::get_github_release,
             commands::update::is_app_in_applications,
             paste::upload::upload_logs,
-            commands::settings::get_theme,
-            commands::settings::set_theme,
-            commands::settings::get_language,
-            commands::settings::set_language,
-            commands::settings::get_show_motd,
-            commands::settings::set_show_motd,
-            commands::settings::get_show_updater_modal,
-            commands::settings::set_show_updater_modal,
-            commands::settings::get_developer_mode,
-            commands::settings::set_developer_mode,
-            commands::settings::get_skip_verify,
-            commands::settings::set_skip_verify,
             commands::settings::get_logs,
             commands::settings::get_system_info,
             commands::settings::get_tauri_version,
-            commands::settings::get_cache_enabled,
-            commands::settings::set_cache_enabled,
-            commands::settings::get_cache_max_size,
-            commands::settings::set_cache_max_size,
             commands::settings::get_cache_size,
+            commands::settings::get_cache_breakdown,
             commands::settings::clear_cache,
             commands::settings::list_cached_images,
             commands::settings::delete_cached_image,
-            commands::settings::get_armbian_board_detection,
-            commands::settings::set_armbian_board_detection,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]
@@ -223,7 +195,7 @@ fn main() {
                 }
             }
 
-            // Initialize log level based on developer mode setting
+            // Raise the log level to DEBUG when developer mode is on.
             match app.store("settings.json") {
                 Ok(store) => {
                     let developer_mode = store
@@ -247,12 +219,9 @@ fn main() {
                 }
             }
 
-            // Manage download cache based on settings
             manage_download_cache(app);
 
-            // Spawn background asset cache tasks:
-            // 1. Refresh stale cached assets (conditional requests for >24h old entries)
-            // 2. Pre-populate cache with all board images and vendor logos
+            // Background asset cache: refresh stale entries, then pre-populate everything.
             tauri::async_runtime::spawn(async {
                 picture_cache::refresh_stale_assets().await;
                 picture_cache::prepopulate_assets().await;
