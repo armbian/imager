@@ -11,7 +11,7 @@ import { DeveloperSection } from './DeveloperSection';
 import { AboutSection } from './AboutSection';
 
 /** Identifier for each navigable settings section. */
-type SettingsView = 'appearance' | 'preferences' | 'profiles' | 'storage' | 'developer' | 'about';
+export type SettingsView = 'appearance' | 'preferences' | 'profiles' | 'storage' | 'developer' | 'about';
 
 /** Declarative description of a single navigation entry. */
 interface NavItem {
@@ -37,13 +37,15 @@ const NAV_ITEMS: readonly NavItem[] = [
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialView?: SettingsView;
+  startProfileCreation?: boolean;
 }
 
 /** Frosted-glass Settings island: nav rail + active section, mirroring `.split-nav`/`.split-main`. Portaled to `document.body` so the overlay
  * escapes transformed/stacked ancestors and covers the window. `isOpen` controls visibility; `onClose` fires on overlay or close-button activation. */
-export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, initialView = 'appearance', startProfileCreation = false }: SettingsModalProps) {
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState<SettingsView>('appearance');
+  const [activeSection, setActiveSection] = useState<SettingsView>(initialView);
 
   if (!isOpen) return null;
 
@@ -55,7 +57,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       case 'preferences':
         return <PreferencesSection />;
       case 'profiles':
-        return <AutoconfigSection />;
+        return <AutoconfigSection autoCreate={startProfileCreation} />;
       case 'storage':
         return <StorageSection />;
       case 'developer':

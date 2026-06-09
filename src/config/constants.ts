@@ -43,6 +43,7 @@ export const EVENTS = {
   SETTINGS_CHANGED: 'armbian-settings-changed',
   CACHE_IMAGE_REUSE: 'armbian-cache-image-reuse',
   PROFILES_CHANGED: 'armbian-autoconfig-profiles-changed',
+  OPEN_SETTINGS: 'armbian-open-settings',
 } as const;
 
 /** Storage key prefixes for sessionStorage/localStorage */

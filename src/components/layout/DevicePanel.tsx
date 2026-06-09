@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  RefreshCw, TriangleAlert, Shield, Usb, Lock, Cpu, ArrowRight, ChevronDown,
+  RefreshCw, TriangleAlert, Shield, Usb, Lock, Cpu, ArrowRight, ChevronDown, Plus,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText } from '../shared';
@@ -9,7 +9,7 @@ import { getBlockDevices, getQdlDevices } from '../../hooks/useTauri';
 import { getAutoconfigProfiles } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
-import { POLLING, UI } from '../../config';
+import { POLLING, UI, EVENTS } from '../../config';
 import { getDeviceColors } from '../../config/deviceColors';
 import { getDeviceType, devicesChanged, sortDevices, qdlToBlockDevice } from '../../utils/deviceUtils';
 
@@ -76,6 +76,14 @@ export function DevicePanel({
     setShowProfilePicker(false);
     window.dispatchEvent(
       new CustomEvent(AUTOCONFIG_PROFILE_SELECTED_EVENT, { detail: { id: id || null } })
+    );
+  }, []);
+
+  // Open Settings on the profiles tab with the new-profile editor already open.
+  const openProfileCreator = useCallback(() => {
+    setShowProfilePicker(false);
+    window.dispatchEvent(
+      new CustomEvent(EVENTS.OPEN_SETTINGS, { detail: { view: 'profiles', createProfile: true } })
     );
   }, []);
 
@@ -214,9 +222,7 @@ export function DevicePanel({
 
                     {showProfilePicker && (
                       <div className="device-summary__profilebody">
-                        {profiles.length === 0 ? (
-                          <p className="device-profile__empty">{t('flash.profile.emptyHint')}</p>
-                        ) : (
+                        {profiles.length > 0 && (
                           <div className="device-profile__select-wrap">
                             <select
                               className="device-profile__select"
@@ -234,6 +240,10 @@ export function DevicePanel({
                             <ChevronDown size={16} className="device-profile__select-chevron" />
                           </div>
                         )}
+                        <button type="button" className="device-profile__create" onClick={openProfileCreator}>
+                          <Plus size={14} strokeWidth={2.25} />
+                          {t('flash.profile.createNew')}
+                        </button>
                       </div>
                     )}
                   </li>

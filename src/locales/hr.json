@@ -52,7 +52,7 @@
     "profile": {
       "applyOptional": "Primijeni profil automatske konfiguracije (neobavezno)",
       "none": "Nijedan",
-      "emptyHint": "Profile stvorite u Postavkama.",
+      "createNew": "Stvori novi profil",
       "rowLabel": "Profil automatske konfiguracije"
     }
   },

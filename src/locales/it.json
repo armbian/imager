@@ -52,7 +52,7 @@
     "profile": {
       "applyOptional": "Applica un profilo di autoconfigurazione (facoltativo)",
       "none": "Nessuno",
-      "emptyHint": "Crea i profili nelle Impostazioni.",
+      "createNew": "Crea nuovo profilo",
       "rowLabel": "Profilo di autoconfigurazione"
     }
   },

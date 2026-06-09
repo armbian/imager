@@ -52,7 +52,7 @@
     "profile": {
       "applyOptional": "应用自动配置文件（可选）",
       "none": "无",
-      "emptyHint": "在“设置”中创建配置文件。",
+      "createNew": "新建配置文件",
       "rowLabel": "自动配置文件"
     }
   },

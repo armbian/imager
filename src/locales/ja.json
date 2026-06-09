@@ -52,7 +52,7 @@
     "profile": {
       "applyOptional": "自動構成プロファイルを適用（任意）",
       "none": "なし",
-      "emptyHint": "プロファイルは設定で作成できます。",
+      "createNew": "新しいプロファイルを作成",
       "rowLabel": "自動構成プロファイル"
     }
   },
