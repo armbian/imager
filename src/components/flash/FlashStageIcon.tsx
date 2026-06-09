@@ -86,27 +86,33 @@ export function getStageKey(stage: FlashStage): string {
   }
 }
 
-/** Maps a stage to its macro phase index (0=Download, 1=Prepare, 2=Write, 3=Verify, 4=all done). */
+/** Macro phases shown as progress dots: Download · Prepare · Write · Verify. */
+export type FlashPhase = 'download' | 'prepare' | 'write' | 'verify';
+
+/** Canonical phase order. */
 // eslint-disable-next-line react-refresh/only-export-components
-export function stageToPhase(stage: FlashStage): number {
+export const PHASE_ORDER: FlashPhase[] = ['download', 'prepare', 'write', 'verify'];
+
+/** Maps a stage to its macro phase, or null for stages without a dot (authorizing/complete/error). */
+// eslint-disable-next-line react-refresh/only-export-components
+export function stagePhase(stage: FlashStage): FlashPhase | null {
   switch (stage) {
-    case 'authorizing':
     case 'downloading':
     case 'verifying_sha':
-      return 0;
+      return 'download';
     case 'decompressing':
     case 'extracting':
-      return 1;
+      return 'prepare';
     case 'qdl_sahara':
     case 'qdl_firehose':
     case 'flashing':
-      return 2;
+      return 'write';
     case 'verifying':
-      return 3;
+      return 'verify';
+    case 'authorizing':
     case 'complete':
-      return 4;
     case 'error':
-      return 0;
+      return null;
   }
 }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageInfo, BlockDevice, AutoconfigConfig } from '../types';
-import type { FlashStage } from '../components/flash/FlashStageIcon';
+import { PHASE_ORDER, type FlashStage, type FlashPhase } from '../components/flash/FlashStageIcon';
 import {
   downloadImage,
   flashImage,
@@ -21,10 +21,11 @@ import {
   getQdlDevices,
   continueDownloadWithoutSha,
   cleanupFailedDownload,
+  listCachedImages,
 } from './useTauri';
 import { getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS } from '../config';
-import { getErrorMessage } from '../utils';
+import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
 import { isDeviceConnected } from '../utils/deviceUtils';
 import { isShaUnavailableError, translateQdlError } from '../utils/errorUtils';
 
@@ -38,6 +39,7 @@ interface UseFlashOperationProps {
 
 interface UseFlashOperationReturn {
   stage: FlashStage;
+  phases: FlashPhase[];
   progress: number;
   error: string | null;
   imagePath: string | null;
@@ -67,6 +69,15 @@ async function cleanupImageSafely(
 }
 
 
+function buildPhases(opts: { download: boolean; prepare: boolean; verify: boolean }): FlashPhase[] {
+  const phases: FlashPhase[] = [];
+  if (opts.download) phases.push('download');
+  if (opts.prepare) phases.push('prepare');
+  phases.push('write');
+  if (opts.verify) phases.push('verify');
+  return phases;
+}
+
 export function useFlashOperation({
   image,
   device,
@@ -77,6 +88,7 @@ export function useFlashOperation({
 
   // Operation state
   const [stage, setStage] = useState<FlashStage>('authorizing');
+  const [phases, setPhases] = useState<FlashPhase[]>(() => [...PHASE_ORDER]);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [imagePath, setImagePath] = useState<string | null>(null);
@@ -208,12 +220,14 @@ export function useFlashOperation({
     try {
       // QDL custom images (.tar) flash directly; extraction is internal
       if (isQdlMode) {
+        setPhases(buildPhases({ download: false, prepare: true, verify: false }));
         setImagePath(customPath);
         startFlash(customPath);
         return;
       }
 
       const needsDecompress = await checkNeedsDecompression(customPath);
+      setPhases(buildPhases({ download: false, prepare: needsDecompress, verify: !skipVerifyRef.current }));
 
       if (needsDecompress) {
         setStage('decompressing');
@@ -431,6 +445,26 @@ export function useFlashOperation({
       if (image.is_custom && image.custom_path) {
         await handleCustomImage(image.custom_path);
       } else {
+        // A cache hit returns the decompressed .img immediately, skipping download + prepare.
+        let cached = false;
+        if (!isQdlMode) {
+          try {
+            const key = armbianIdentityKey(image.direct_url);
+            if (key) {
+              const list = await listCachedImages();
+              cached = list.some((c) => armbianIdentityKey(c.filename) === key);
+            }
+          } catch {
+            cached = false;
+          }
+        }
+        setPhases(
+          buildPhases({
+            download: !cached,
+            prepare: isQdlMode || (!cached && isCompressedImage(image.direct_url)),
+            verify: !isQdlMode && !skipVerifyRef.current,
+          })
+        );
         startDownload();
       }
     } catch (err) {
@@ -482,9 +516,12 @@ export function useFlashOperation({
     if (imagePath) {
       // QDL: skip block-device authorization (USB access handled by OS)
       if (isQdlMode) {
+        setPhases(buildPhases({ download: false, prepare: true, verify: false }));
         startFlash(imagePath);
         return;
       }
+      // The image is already downloaded/decompressed: only write (and maybe verify) remain.
+      setPhases(buildPhases({ download: false, prepare: false, verify: !skipVerifyRef.current }));
       // Re-authorize before re-flashing the existing image
       setStage('authorizing');
       try {
@@ -536,6 +573,7 @@ export function useFlashOperation({
 
   return {
     stage,
+    phases,
     progress,
     error,
     imagePath,

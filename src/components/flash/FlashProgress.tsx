@@ -36,6 +36,7 @@ export function FlashProgress({
 
   const {
     stage,
+    phases,
     progress,
     error,
     showShaWarning,
@@ -149,7 +150,7 @@ export function FlashProgress({
                       style={isIndeterminate ? undefined : { width: `${progress}%` }}
                     />
                   </div>
-                  <FlashPhaseDots stage={stage} />
+                  <FlashPhaseDots stage={stage} phases={phases} />
                 </div>
               )}
 
