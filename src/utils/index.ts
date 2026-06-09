@@ -88,6 +88,15 @@ export interface ArmbianFilenameInfo {
   desktop: string | null;
 }
 
+/** Compression extensions an Armbian image can carry. */
+export const COMPRESSION_EXTS = ['.xz', '.gz', '.zst', '.bz2'] as const;
+
+/** True when a filename or URL ends with a known compression extension (i.e. a decompress step runs). */
+export function isCompressedImage(nameOrUrl: string): boolean {
+  const lower = nameOrUrl.toLowerCase();
+  return COMPRESSION_EXTS.some((ext) => lower.endsWith(ext));
+}
+
 /** Parse an Armbian image filename into structured metadata across three conventions: Standard
  * `Armbian_{version}_{board}_...`, Labeled `Armbian_{label}_{version}_{board}_...` (label when parts[1] non-numeric), Prefixed `Armbian-unofficial_{version}_{board}_...`. */
 export function parseArmbianFilename(filename: string): ArmbianFilenameInfo | null {
@@ -95,7 +104,7 @@ export function parseArmbianFilename(filename: string): ArmbianFilenameInfo | nu
 
   // Strip compression extensions, then .img
   let name = basename;
-  for (const ext of ['.xz', '.gz', '.zst', '.bz2']) {
+  for (const ext of COMPRESSION_EXTS) {
     if (name.endsWith(ext)) {
       name = name.slice(0, -ext.length);
       break;
