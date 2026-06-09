@@ -2097,6 +2097,7 @@
 }
 
 .board-card__name {
+  flex: 1;
   min-width: 0;
   font-size: 15px;
   font-weight: 700;
