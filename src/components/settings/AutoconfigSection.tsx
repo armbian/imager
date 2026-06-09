@@ -197,8 +197,12 @@ function SectionCard({
   );
 }
 
+interface AutoconfigSectionProps {
+  autoCreate?: boolean;
+}
+
 // Profiles tab: lists saved autoconfig profiles (master) and edits one (detail).
-export function AutoconfigSection() {
+export function AutoconfigSection({ autoCreate = false }: AutoconfigSectionProps) {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToasts();
 
@@ -229,6 +233,11 @@ export function AutoconfigSection() {
   useEffect(() => {
     loadProfiles();
   }, [loadProfiles]);
+
+  // Opened via the "create new profile" shortcut: jump straight into the editor.
+  useEffect(() => {
+    if (autoCreate) handleNew();
+  }, [autoCreate]);
 
   /** Opens the editor for a new, empty profile. */
   const handleNew = () => {

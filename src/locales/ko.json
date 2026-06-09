@@ -52,7 +52,7 @@
     "profile": {
       "applyOptional": "자동 구성 프로필 적용(선택 사항)",
       "none": "없음",
-      "emptyHint": "설정에서 프로필을 만들 수 있습니다.",
+      "createNew": "새 프로필 만들기",
       "rowLabel": "자동 구성 프로필"
     }
   },

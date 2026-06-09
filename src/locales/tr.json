@@ -52,7 +52,7 @@
     "profile": {
       "applyOptional": "Otomatik yapılandırma profili uygula (isteğe bağlı)",
       "none": "Yok",
-      "emptyHint": "Profilleri Ayarlar'da oluşturun.",
+      "createNew": "Yeni profil oluştur",
       "rowLabel": "Otomatik yapılandırma profili"
     }
   },

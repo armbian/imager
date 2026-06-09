@@ -52,7 +52,7 @@
     "profile": {
       "applyOptional": "Tillämpa en autokonfigurationsprofil (valfritt)",
       "none": "Ingen",
-      "emptyHint": "Skapa profiler i Inställningar.",
+      "createNew": "Skapa ny profil",
       "rowLabel": "Autokonfigurationsprofil"
     }
   },

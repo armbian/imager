@@ -1870,10 +1870,35 @@
   background: var(--bg-hover);
 }
 
-.device-profile__empty {
-  margin: 0;
+/* Invites the user to create a profile; opens Settings → Profiles editor. */
+.device-profile__create {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  padding: 8px 14px;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--accent);
   font-size: 12.5px;
-  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.device-profile__create svg {
+  flex-shrink: 0;
+}
+
+.device-profile__create:hover {
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.08);
+}
+
+.device-profile__select-wrap + .device-profile__create {
+  margin-top: 8px;
 }
 
 /* Custom select: native chrome stripped, our own chevron + themed focus ring. */

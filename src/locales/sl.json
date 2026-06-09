@@ -52,7 +52,7 @@
     "profile": {
       "applyOptional": "Uporabi profil samodejne nastavitve (neobvezno)",
       "none": "Brez",
-      "emptyHint": "Profile ustvarite v nastavitvah.",
+      "createNew": "Ustvari nov profil",
       "rowLabel": "Profil samodejne nastavitve"
     }
   },
