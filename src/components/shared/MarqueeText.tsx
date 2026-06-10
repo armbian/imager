@@ -14,51 +14,33 @@ export function MarqueeText({ text, maxWidth, className = '' }: MarqueeTextProps
   // No explicit cap → measure the real container width and react to layout changes.
   const responsive = maxWidth === undefined;
   const containerRef = useRef<HTMLSpanElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
   const [isOverflow, setIsOverflow] = useState(false);
-  const [scrollPercent, setScrollPercent] = useState(50);
+  const [shiftPx, setShiftPx] = useState(0);
 
   useEffect(() => {
+    let active = true;
+
     const checkOverflow = () => {
-      if (!containerRef.current) return;
+      const container = containerRef.current;
+      const measure = measureRef.current;
+      if (!active || !container || !measure) return;
 
-      const computedStyle = window.getComputedStyle(containerRef.current);
-
-      const measureSpan = document.createElement('span');
-      measureSpan.style.cssText = `
-        position: absolute;
-        visibility: hidden;
-        white-space: nowrap;
-        font-family: ${computedStyle.fontFamily};
-        font-size: ${computedStyle.fontSize};
-        font-weight: ${computedStyle.fontWeight};
-        letter-spacing: ${computedStyle.letterSpacing};
-        text-transform: ${computedStyle.textTransform};
-      `;
-      measureSpan.textContent = text;
-
-      let singleTextWidth = 0;
-      try {
-        document.body.appendChild(measureSpan);
-        singleTextWidth = measureSpan.offsetWidth;
-      } finally {
-        if (measureSpan.parentNode) {
-          measureSpan.parentNode.removeChild(measureSpan);
-        }
-      }
-
-      // Compare against the actual available width when responsive, else the cap.
-      const available = responsive ? containerRef.current.clientWidth : maxWidth;
-      const overflow = available > 0 && singleTextWidth > available;
+      // The hidden in-container span inherits the real rendered font, so its width
+      // is exact even across font swaps (a detached styled clone is not).
+      const textWidth = measure.offsetWidth;
+      const available = responsive ? container.clientWidth : maxWidth;
+      const overflow = available > 0 && textWidth > available + 2;
       setIsOverflow(overflow);
 
       if (overflow) {
-        const scrollDistance = singleTextWidth + UI.MARQUEE.SEPARATOR_WIDTH;
-        const totalWidth = scrollDistance * 2;
-        setScrollPercent((scrollDistance / totalWidth) * 100);
+        // Exact pixel shift: copy 2 lands where copy 1 started, so the loop is seamless.
+        setShiftPx(textWidth + UI.MARQUEE.SEPARATOR_WIDTH);
       }
     };
 
     const timer = setTimeout(checkOverflow, 50);
+    document.fonts?.ready.then(checkOverflow);
     window.addEventListener('resize', checkOverflow);
 
     // In responsive mode the column width can change without a window resize
@@ -70,6 +52,7 @@ export function MarqueeText({ text, maxWidth, className = '' }: MarqueeTextProps
     }
 
     return () => {
+      active = false;
       clearTimeout(timer);
       window.removeEventListener('resize', checkOverflow);
       observer?.disconnect();
@@ -83,12 +66,24 @@ export function MarqueeText({ text, maxWidth, className = '' }: MarqueeTextProps
       style={{ maxWidth: responsive ? '100%' : `${maxWidth}px` }}
       title={text}
     >
+      <span ref={measureRef} className="marquee-measure" aria-hidden="true">
+        {text}
+      </span>
       <span
         className="marquee-content"
-        style={isOverflow ? { '--scroll-percent': `-${scrollPercent}%` } as React.CSSProperties : undefined}
+        style={isOverflow ? { '--marquee-shift': `-${shiftPx}px` } as React.CSSProperties : undefined}
       >
         {text}
-        {isOverflow && <>&nbsp;{text}</>}
+        {isOverflow && (
+          <>
+            <span
+              className="marquee-spacer"
+              aria-hidden="true"
+              style={{ width: UI.MARQUEE.SEPARATOR_WIDTH }}
+            />
+            {text}
+          </>
+        )}
       </span>
     </span>
   );

@@ -957,17 +957,32 @@ button.list-item:disabled:hover {
 
 /* MARQUEE TEXT (Shared Component) */
 .marquee-container {
+  position: relative;
   display: inline-block;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
+/* Scroll must start at the text's beginning even inside centered parents. */
 .marquee-container.overflow {
   text-overflow: clip;
+  text-align: left;
+}
+
+/* In-flow hidden twin used to measure the true rendered text width. */
+.marquee-measure {
+  position: absolute;
+  visibility: hidden;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .marquee-container .marquee-content {
+  display: inline-block;
+}
+
+.marquee-spacer {
   display: inline-block;
 }
 
@@ -980,7 +995,7 @@ button.list-item:disabled:hover {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(var(--scroll-percent, -50%));
+    transform: translateX(var(--marquee-shift, -50%));
   }
 }
 
