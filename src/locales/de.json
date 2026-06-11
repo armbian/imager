@@ -125,6 +125,7 @@
     "decompressionFailed": "Entpacken fehlgeschlagen",
     "uploadFailed": "Hochladen fehlgeschlagen",
     "deviceDisconnected": "Gerät getrennt",
+    "writeFailed": "Das Schreiben auf das Gerät ist bei {{offset}} fehlgeschlagen. Das Gerät ist möglicherweise zu klein, defekt oder der Kartenleser wurde getrennt. Versuche eine andere Karte, einen anderen Leser oder Port.",
     "qdlDisconnected": "Das Gerät wurde während des Flashens getrennt. Verbinde es erneut im EDL-Modus und versuche es noch einmal.",
     "qdlCancelled": "Flashen abgebrochen.",
     "qdlPermissionDenied": "USB-Zugriff verweigert. Installiere unter Linux die udev-Regeln: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

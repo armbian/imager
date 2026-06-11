@@ -27,7 +27,7 @@ import { getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
 import { isDeviceConnected } from '../utils/deviceUtils';
-import { isShaUnavailableError, translateQdlError } from '../utils/errorUtils';
+import { isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
 
 interface UseFlashOperationProps {
   image: ImageInfo;
@@ -103,6 +103,11 @@ export function useFlashOperation({
   const flashWriteSeenRef = useRef<boolean>(false);
   const hasStartedRef = useRef<boolean>(false);
   const deviceDisconnectedRef = useRef<boolean>(false);
+  const userCancelledRef = useRef<boolean>(false);
+  // Precedence latch: a specific error (real write failure) beats the generic
+  // "device disconnected", never the reverse, regardless of which path fires first.
+  const shownErrorRef = useRef<null | 'generic' | 'specific'>(null);
+  const pendingCleanupRef = useRef<Promise<void> | null>(null);
   const skipVerifyRef = useRef<boolean>(false);
   // Keep the latest opt-in profile config for the event-driven flash flow.
   const autoconfigRef = useRef<AutoconfigConfig | null>(autoconfig ?? null);
@@ -144,6 +149,18 @@ export function useFlashOperation({
     }
   }, []);
 
+  /** Single exit into the error screen: never empty, honors the precedence latch. */
+  const failFlash = useCallback(
+    (message: string, specific = true) => {
+      if (shownErrorRef.current === 'specific') return;
+      if (shownErrorRef.current === 'generic' && !specific) return;
+      shownErrorRef.current = specific ? 'specific' : 'generic';
+      setError(message.trim() || t('error.flashFailed'));
+      setStage('error');
+    },
+    [t]
+  );
+
   /** Whether the current image uses QDL (Qualcomm EDL) flashing */
   const isQdlMode = image.format === 'qdl';
 
@@ -172,22 +189,26 @@ export function useFlashOperation({
 
   /** Handle device disconnection during operations */
   const handleDeviceDisconnectedInternal = useCallback(async () => {
+    if (deviceDisconnectedRef.current) return;
     deviceDisconnectedRef.current = true;
     setShowShaWarning(false);
-    try {
-      await cleanupFailedDownload();
-    } catch {
-      // Ignore cleanup errors
-    }
     clearIntervals();
-    try {
-      await cancelOperation();
-    } catch {
-      // Ignore
-    }
-    setError(t('error.deviceDisconnected'));
-    setStage('error');
-  }, [t, clearIntervals]);
+    // Error state first, synchronously: the UI must never wait on backend cleanup.
+    failFlash(t('error.deviceDisconnected'), false);
+    pendingCleanupRef.current = (async () => {
+      try {
+        await cancelOperation();
+      } catch {
+        // Ignore
+      }
+      try {
+        await cleanupFailedDownload();
+      } catch {
+        // Ignore cleanup errors
+      }
+    })();
+    await pendingCleanupRef.current;
+  }, [t, clearIntervals, failFlash]);
 
   // Monitor device connection during active operations.
   // QDL flash stages are excluded: the USB device is busy/resets during Sahara/Firehose (expected).
@@ -240,11 +261,9 @@ export function useFlashOperation({
         startFlash(customPath);
       }
     } catch (err) {
-      if (deviceDisconnectedRef.current) return;
-      if (!(await checkDeviceOrDisconnect())) return;
-
-      setError(getErrorMessage(err, t('error.decompressionFailed')));
-      setStage('error');
+      const raw = getErrorMessage(err, '');
+      if (deviceDisconnectedRef.current && /cancel/i.test(raw)) return;
+      failFlash(raw || t('error.decompressionFailed'));
     }
   }
 
@@ -278,8 +297,7 @@ export function useFlashOperation({
         }
 
         if (prog.error && !deviceDisconnectedRef.current) {
-          setError(prog.error);
-          setStage('error');
+          failFlash(prog.error);
           if (intervalRef.current) clearInterval(intervalRef.current);
         }
       } catch {
@@ -295,20 +313,17 @@ export function useFlashOperation({
       startFlash(path);
     } catch (err) {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      if (deviceDisconnectedRef.current) return;
 
       const errorMsg = getErrorMessage(err, String(err));
 
       // SHA fetch failed: show modal; the file is downloaded and kept
-      if (isShaUnavailableError(errorMsg)) {
+      if (!deviceDisconnectedRef.current && isShaUnavailableError(errorMsg)) {
         setShowShaWarning(true);
         return;
       }
 
-      if (!(await checkDeviceOrDisconnect())) return;
-
-      setError(getErrorMessage(err, t('error.downloadFailed')));
-      setStage('error');
+      if (deviceDisconnectedRef.current && /cancel/i.test(errorMsg)) return;
+      failFlash(errorMsg.trim() ? errorMsg : t('error.downloadFailed'));
     }
   }
 
@@ -362,8 +377,7 @@ export function useFlashOperation({
           }
         }
         if (prog.error && !deviceDisconnectedRef.current) {
-          setError(prog.error);
-          setStage('error');
+          failFlash(prog.error);
           if (intervalRef.current) clearInterval(intervalRef.current);
         }
       } catch {
@@ -390,12 +404,20 @@ export function useFlashOperation({
       }
     } catch (err) {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      if (deviceDisconnectedRef.current) return;
 
-      if (!(await checkDeviceOrDisconnect())) return;
+      const rawError = getErrorMessage(err, String(err));
+      // User-initiated cancel: handleCancel owns navigation/messaging.
+      if (userCancelledRef.current) return;
+      // Cancel-shaped rejection triggered by the disconnect handler's own cancelOperation:
+      // the generic disconnect message is already on screen and more truthful.
+      const causedByDisconnectCancel = deviceDisconnectedRef.current && /cancel/i.test(rawError);
+      if (!causedByDisconnectCancel) {
+        failFlash(translateFlashError(rawError, t));
+      }
 
-      // Increment failure count for cached (non-custom) images
-      if (!image.is_custom && !isQdlMode) {
+      // Increment failure count for cached (non-custom) images; skip on disconnect
+      // so a card pull doesn't burn down a good cached image.
+      if (!image.is_custom && !isQdlMode && !deviceDisconnectedRef.current) {
         const currentCount = getFlashFailureCount() + 1;
         setFlashFailureCount(currentCount);
 
@@ -410,12 +432,9 @@ export function useFlashOperation({
         }
       }
 
-      if (!isQdlMode) {
+      if (!isQdlMode && !deviceDisconnectedRef.current) {
         await cleanupImageSafely(path, image.is_custom);
       }
-      const rawError = getErrorMessage(err, String(err));
-      setError(translateQdlError(rawError, t));
-      setStage('error');
     }
   }
 
@@ -424,6 +443,8 @@ export function useFlashOperation({
     setStage('authorizing');
     setProgress(0);
     setError(null);
+    shownErrorRef.current = null;
+    userCancelledRef.current = false;
 
     try {
       try {
@@ -436,8 +457,7 @@ export function useFlashOperation({
       if (!isQdlMode) {
         const authorized = await requestWriteAuthorization(device.path);
         if (!authorized) {
-          setError(t('error.authCancelled'));
-          setStage('error');
+          failFlash(t('error.authCancelled'));
           return;
         }
       }
@@ -468,8 +488,7 @@ export function useFlashOperation({
         startDownload();
       }
     } catch (err) {
-      setError(getErrorMessage(err, t('error.authFailed')));
-      setStage('error');
+      failFlash(getErrorMessage(err, t('error.authFailed')));
     }
   }
 
@@ -491,6 +510,7 @@ export function useFlashOperation({
   // === Public action handlers ===
 
   const handleCancel = async () => {
+    userCancelledRef.current = true;
     try {
       await cancelOperation();
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -510,8 +530,20 @@ export function useFlashOperation({
   };
 
   const handleRetry = async () => {
+    // Let the disconnect handler's cancel/cleanup land before restarting,
+    // so a stale is_cancelled can't race the new flash's reset.
+    if (pendingCleanupRef.current) {
+      try {
+        await pendingCleanupRef.current;
+      } catch {
+        // Ignore
+      }
+      pendingCleanupRef.current = null;
+    }
     setError(null);
     deviceDisconnectedRef.current = false;
+    userCancelledRef.current = false;
+    shownErrorRef.current = null;
 
     if (imagePath) {
       // QDL: skip block-device authorization (USB access handled by OS)
@@ -527,14 +559,12 @@ export function useFlashOperation({
       try {
         const authorized = await requestWriteAuthorization(device.path);
         if (!authorized) {
-          setError(t('error.authCancelled'));
-          setStage('error');
+          failFlash(t('error.authCancelled'));
           return;
         }
         startFlash(imagePath);
       } catch (err) {
-        setError(getErrorMessage(err, t('error.authFailed')));
-        setStage('error');
+        failFlash(getErrorMessage(err, t('error.authFailed')));
       }
     } else {
       handleAuthorization();
@@ -559,9 +589,9 @@ export function useFlashOperation({
       setImagePath(path);
       startFlash(path);
     } catch (err) {
-      if (deviceDisconnectedRef.current) return;
-      setError(getErrorMessage(err, t('error.decompressionFailed')));
-      setStage('error');
+      const raw = getErrorMessage(err, '');
+      if (deviceDisconnectedRef.current && /cancel/i.test(raw)) return;
+      failFlash(raw || t('error.decompressionFailed'));
     }
   };
 

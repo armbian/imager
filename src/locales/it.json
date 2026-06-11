@@ -125,6 +125,7 @@
     "decompressionFailed": "Decompressione non riuscita",
     "uploadFailed": "Caricamento non riuscito",
     "deviceDisconnected": "Dispositivo disconnesso",
+    "writeFailed": "La scrittura sul dispositivo è fallita a {{offset}}. Il dispositivo potrebbe essere troppo piccolo, difettoso, oppure il lettore è stato scollegato. Prova un'altra scheda, lettore o porta.",
     "qdlDisconnected": "Dispositivo disconnesso durante la scrittura. Ricollegalo in modalità EDL e riprova.",
     "qdlCancelled": "Scrittura annullata.",
     "qdlPermissionDenied": "Accesso USB negato. Su Linux, installa le regole udev: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

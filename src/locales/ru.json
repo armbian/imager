@@ -125,6 +125,7 @@
     "decompressionFailed": "Ошибка распаковки",
     "uploadFailed": "Ошибка отправки",
     "deviceDisconnected": "Устройство отключено",
+    "writeFailed": "Запись на устройство не удалась на отметке {{offset}}. Возможно, устройство слишком маленькое, неисправно или картридер был отключён. Попробуйте другую карту, картридер или порт.",
     "qdlDisconnected": "Устройство отключено во время записи. Подключите его заново в режиме EDL и повторите попытку.",
     "qdlCancelled": "Запись отменена.",
     "qdlPermissionDenied": "Доступ к USB запрещён. В Linux установите правила udev: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

@@ -125,6 +125,7 @@
     "decompressionFailed": "압축 해제 실패",
     "uploadFailed": "업로드 실패",
     "deviceDisconnected": "장치 연결이 끊겼습니다",
+    "writeFailed": "{{offset}} 지점에서 장치 쓰기에 실패했습니다. 장치 용량이 부족하거나 고장났거나 리더기가 분리되었을 수 있습니다. 다른 카드, 리더기 또는 포트로 시도해 보세요.",
     "qdlDisconnected": "플래시 도중 장치 연결이 끊겼습니다. EDL 모드로 다시 연결한 뒤 시도하세요.",
     "qdlCancelled": "플래시를 취소했습니다.",
     "qdlPermissionDenied": "USB 접근이 거부되었습니다. Linux에서는 udev 규칙을 설치하세요: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

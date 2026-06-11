@@ -125,6 +125,7 @@
     "decompressionFailed": "Помилка розпакування",
     "uploadFailed": "Помилка завантаження",
     "deviceDisconnected": "Пристрій було від'єднано",
+    "writeFailed": "Запис на пристрій не вдався на позначці {{offset}}. Пристрій може бути замалим, несправним або кардрідер було від'єднано. Спробуйте іншу картку, кардрідер чи порт.",
     "qdlDisconnected": "Пристрій від'єднано під час прошивки. Підключіть знову в режимі EDL та повторіть.",
     "qdlCancelled": "Прошивку скасовано.",
     "qdlPermissionDenied": "Доступ до USB заборонено. У Linux встановіть правила udev: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

@@ -16,6 +16,8 @@ interface ErrorDisplayProps {
 
 export function ErrorDisplay({ error, onRetry, onCancel, compact = false }: ErrorDisplayProps) {
   const { t } = useTranslation();
+  // The screen must never be message-less, whatever upstream race produced an empty error.
+  const message = error.trim() || t('error.flashFailed');
   const [uploading, setUploading] = useState(false);
   const [pasteUrl, setPasteUrl] = useState<string | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function ErrorDisplay({ error, onRetry, onCancel, compact = false }: Erro
       <div className="error-display-compact">
         <div className="error-display-message">
           <CircleAlert size={18} />
-          <span>{error}</span>
+          <span>{message}</span>
         </div>
         <div className="error-display-actions">
           {onRetry && (
@@ -107,7 +109,7 @@ export function ErrorDisplay({ error, onRetry, onCancel, compact = false }: Erro
 
       <div className="error-screen__main">
         <h2 className="error-screen__title">{t('flash.failed')}</h2>
-        {error && <p className="error-screen__hint">{error}</p>}
+        <p className="error-screen__hint">{message}</p>
 
         {/* Remedy card: one surface; upload-logs row turns into the QR + share link. */}
         <div className="error-screen__card">

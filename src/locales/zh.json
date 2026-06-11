@@ -125,6 +125,7 @@
     "decompressionFailed": "解压失败",
     "uploadFailed": "上传失败",
     "deviceDisconnected": "设备已断开连接",
+    "writeFailed": "在 {{offset}} 处写入设备失败。设备可能容量不足、已损坏，或读卡器已断开。请尝试更换卡、读卡器或接口。",
     "qdlDisconnected": "烧录过程中设备断开连接。请在 EDL 模式下重新连接后重试。",
     "qdlCancelled": "烧录已取消。",
     "qdlPermissionDenied": "USB 访问被拒绝。在 Linux 上，请安装 udev 规则：echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

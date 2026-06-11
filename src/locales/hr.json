@@ -125,6 +125,7 @@
     "decompressionFailed": "Raspakiravanje nije uspjelo",
     "uploadFailed": "Slanje nije uspjelo",
     "deviceDisconnected": "Uređaj je isključen",
+    "writeFailed": "Zapisivanje na uređaj nije uspjelo pri {{offset}}. Uređaj je možda premalen, neispravan ili je čitač odspojen. Pokušajte s drugom karticom, čitačem ili priključkom.",
     "qdlDisconnected": "Uređaj je odspojen tijekom snimanja. Ponovno ga spojite u EDL načinu rada i pokušajte ponovno.",
     "qdlCancelled": "Snimanje je otkazano.",
     "qdlPermissionDenied": "USB pristup je odbijen. Na Linuxu instalirajte udev pravila: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

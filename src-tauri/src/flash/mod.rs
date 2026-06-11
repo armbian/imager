@@ -132,6 +132,19 @@ pub(crate) fn unmount_device(device_path: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Tagged device-write failure; the frontend maps `[WRITE_FAILED:<offset>]` to a translated message.
+pub(crate) fn write_failed_err(offset: u64, e: impl std::fmt::Display) -> String {
+    format!("[WRITE_FAILED:{}] {}", offset, e)
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub(crate) fn fsync_checked(fd: i32, written: u64) -> Result<(), String> {
+    if unsafe { libc::fsync(fd) } != 0 {
+        return Err(write_failed_err(written, std::io::Error::last_os_error()));
+    }
+    Ok(())
+}
+
 /// Write `total` zero bytes in `chunk_size` chunks, shared by the platform
 /// quick_erase routines (which keep their own seek/sync).
 #[cfg(any(target_os = "linux", target_os = "macos"))]

@@ -125,6 +125,7 @@
     "decompressionFailed": "Rozpakowywanie nie powiodło się",
     "uploadFailed": "Przesyłanie nie powiodło się",
     "deviceDisconnected": "Urządzenie zostało odłączone",
+    "writeFailed": "Zapis na urządzenie nie powiódł się przy {{offset}}. Urządzenie może być za małe, uszkodzone lub czytnik został odłączony. Spróbuj innej karty, czytnika lub portu.",
     "qdlDisconnected": "Urządzenie odłączone podczas zapisu. Podłącz je ponownie w trybie EDL i spróbuj jeszcze raz.",
     "qdlCancelled": "Zapis anulowany.",
     "qdlPermissionDenied": "Odmowa dostępu do USB. W systemie Linux zainstaluj reguły udev: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

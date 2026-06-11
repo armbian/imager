@@ -125,6 +125,7 @@
     "decompressionFailed": "Uitpakken mislukt",
     "uploadFailed": "Upload mislukt",
     "deviceDisconnected": "Apparaat is losgekoppeld",
+    "writeFailed": "Schrijven naar het apparaat is mislukt bij {{offset}}. Het apparaat is mogelijk te klein, defect, of de lezer is losgekoppeld. Probeer een andere kaart, lezer of poort.",
     "qdlDisconnected": "Apparaat losgekoppeld tijdens het flashen. Sluit opnieuw aan in EDL-modus en probeer het opnieuw.",
     "qdlCancelled": "Flash geannuleerd.",
     "qdlPermissionDenied": "USB-toegang geweigerd. Installeer op Linux udev-regels: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

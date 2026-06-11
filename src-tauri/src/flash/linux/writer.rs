@@ -158,15 +158,18 @@ pub async fn flash_image(
 
         if let Err(e) = device.write_all(&buffer[..bytes_read]) {
             log_error!(MODULE, "Write error at byte {}: {}", written, e);
-            return Err(format!("Failed to write at byte {}: {}", written, e));
+            return Err(crate::flash::write_failed_err(written, e));
         }
 
         written += bytes_read as u64;
         bytes_since_sync += bytes_read as u64;
 
         if bytes_since_sync >= config::logging::LINUX_SYNC_INTERVAL {
-            unsafe {
-                libc::fdatasync(device_fd);
+            // A failing card often surfaces only here, when buffered pages hit the device.
+            if unsafe { libc::fdatasync(device_fd) } != 0 {
+                let e = std::io::Error::last_os_error();
+                log_error!(MODULE, "fdatasync failed at byte {}: {}", written, e);
+                return Err(crate::flash::write_failed_err(written, e));
             }
             bytes_since_sync = 0;
             state.written_bytes.store(written, Ordering::SeqCst);
@@ -178,10 +181,10 @@ pub async fn flash_image(
     tracker.finish();
     log_debug!(MODULE, "Syncing...");
 
-    device.flush().ok();
-    unsafe {
-        libc::fsync(device_fd);
-    }
+    device
+        .flush()
+        .map_err(|e| crate::flash::write_failed_err(written, e))?;
+    crate::flash::fsync_checked(device_fd, written)?;
     sync_device(device_path);
 
     if verify {
@@ -222,7 +225,9 @@ fn quick_erase(device: &mut File) -> Result<(), String> {
 
     crate::flash::write_zeros(device, erase_size, chunk_size)?;
 
-    device.flush().ok();
+    device
+        .flush()
+        .map_err(|e| crate::flash::write_failed_err(0, e))?;
 
     // Rewind so the image write starts at offset 0.
     device

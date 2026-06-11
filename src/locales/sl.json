@@ -125,6 +125,7 @@
     "decompressionFailed": "Razširjanje ni uspelo",
     "uploadFailed": "Nalaganje ni uspelo",
     "deviceDisconnected": "Naprava je bila odklopljena",
+    "writeFailed": "Zapisovanje na napravo ni uspelo pri {{offset}}. Naprava je morda premajhna, okvarjena ali pa je bil čitalnik odklopljen. Poskusite z drugo kartico, čitalnikom ali vrati.",
     "qdlDisconnected": "Naprava odklopljena med zapisovanjem. Ponovno povežite v načinu EDL in poskusite znova.",
     "qdlCancelled": "Zapisovanje preklicano.",
     "qdlPermissionDenied": "Dostop do USB zavrnjen. V Linuxu namestite pravila udev: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

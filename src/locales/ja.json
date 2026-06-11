@@ -125,6 +125,7 @@
     "decompressionFailed": "展開に失敗しました",
     "uploadFailed": "アップロードに失敗しました",
     "deviceDisconnected": "デバイスが切断されました",
+    "writeFailed": "{{offset}} の位置でデバイスへの書き込みに失敗しました。デバイスの容量不足や故障、またはリーダーの切断が原因の可能性があります。別のカード・リーダー・ポートをお試しください。",
     "qdlDisconnected": "書き込み中にデバイスが切断されました。EDLモードで接続し直して、再試行してください。",
     "qdlCancelled": "書き込みをキャンセルしました。",
     "qdlPermissionDenied": "USBへのアクセスが拒否されました。Linuxでは次のudevルールをインストールしてください： echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

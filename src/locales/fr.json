@@ -125,6 +125,7 @@
     "decompressionFailed": "Échec de la décompression",
     "uploadFailed": "Échec du téléversement",
     "deviceDisconnected": "Appareil déconnecté",
+    "writeFailed": "L'écriture sur le périphérique a échoué à {{offset}}. Le périphérique est peut-être trop petit, défaillant, ou le lecteur a été déconnecté. Essayez une autre carte, un autre lecteur ou un autre port.",
     "qdlDisconnected": "Appareil déconnecté pendant le flash. Reconnectez-le en mode EDL et réessayez.",
     "qdlCancelled": "Flash annulé.",
     "qdlPermissionDenied": "Accès USB refusé. Sous Linux, installez les règles udev : echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",

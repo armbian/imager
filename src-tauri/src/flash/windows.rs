@@ -95,8 +95,13 @@ pub async fn flash_image(
         }
 
         device.write_all(&buffer[..bytes_read]).map_err(|e| {
-            log_error!(MODULE, "Failed to write to device: {}", e);
-            format!("Failed to write to device: {}", e)
+            log_error!(
+                MODULE,
+                "Failed to write to device at byte {}: {}",
+                written,
+                e
+            );
+            super::write_failed_err(written, e)
         })?;
 
         written += bytes_read as u64;
@@ -106,8 +111,10 @@ pub async fn flash_image(
     }
 
     log_debug!(MODULE, "Flushing write cache...");
-    device.flush().ok();
-    flush_device_buffers(&device)?;
+    device
+        .flush()
+        .map_err(|e| super::write_failed_err(written, e))?;
+    flush_device_buffers(&device).map_err(|e| super::write_failed_err(written, e))?;
 
     tracker.finish();
 

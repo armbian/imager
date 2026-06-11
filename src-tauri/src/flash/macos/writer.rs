@@ -209,10 +209,10 @@ pub fn quick_erase(device: &mut File, device_fd: i32) -> Result<(), String> {
 
     crate::flash::write_zeros(device, erase_size, chunk_size)?;
 
-    device.flush().ok();
-    unsafe {
-        libc::fsync(device_fd);
-    }
+    device
+        .flush()
+        .map_err(|e| crate::flash::write_failed_err(0, e))?;
+    crate::flash::fsync_checked(device_fd, 0)?;
 
     // Rewind so the image write starts at offset 0.
     unsafe {
@@ -351,10 +351,7 @@ async fn do_flash_work(
                 image_size,
                 e
             );
-            return Err(format!(
-                "Failed to write to device at byte {}: {}",
-                written, e
-            ));
+            return Err(crate::flash::write_failed_err(written, e));
         }
 
         // Count real image bytes, not the sector padding.
@@ -367,10 +364,10 @@ async fn do_flash_work(
     tracker.finish();
     log_debug!(MODULE, "Syncing...");
 
-    device.flush().ok();
-    unsafe {
-        libc::fsync(device_fd);
-    }
+    device
+        .flush()
+        .map_err(|e| crate::flash::write_failed_err(written, e))?;
+    crate::flash::fsync_checked(device_fd, written)?;
     sync_device(device_path);
 
     // Verification reuses the same fd, so no extra auth prompt.
