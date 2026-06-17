@@ -24,11 +24,6 @@ import {
   renderPresetPreview,
 } from '../../config/autoconfig';
 
-/** Notifies the rest of the app (e.g. the flash profile picker) that profiles changed. */
-function notifyProfilesChanged(): void {
-  window.dispatchEvent(new Event(EVENTS.PROFILES_CHANGED));
-}
-
 /** Count fields that hold a real value (true booleans or non-empty strings). */
 function countSet(values: unknown[]): number {
   return values.filter((v) => v === true || (typeof v === 'string' && v.trim() !== '')).length;
@@ -199,10 +194,11 @@ function SectionCard({
 
 interface AutoconfigSectionProps {
   autoCreate?: boolean;
+  onSaved?: () => void;
 }
 
 // Profiles tab: lists saved autoconfig profiles (master) and edits one (detail).
-export function AutoconfigSection({ autoCreate = false }: AutoconfigSectionProps) {
+export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSectionProps) {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToasts();
 
@@ -269,13 +265,18 @@ export function AutoconfigSection({ autoCreate = false }: AutoconfigSectionProps
       return;
     }
     try {
+      const wasNew = isNew;
       const toSave: AutoconfigProfile = { ...draft, name, updatedAt: Date.now() };
       await upsertAutoconfigProfile(toSave);
       await loadProfiles();
-      notifyProfilesChanged();
-      showSuccess(isNew ? t('settings.autoconfig.toastCreated') : t('settings.autoconfig.toastUpdated'));
+      showSuccess(wasNew ? t('settings.autoconfig.toastCreated') : t('settings.autoconfig.toastUpdated'));
       setDraft(null);
       setIsNew(false);
+      // Only a profile created from the flash flow's shortcut should auto-select in the picker.
+      if (autoCreate && wasNew) {
+        window.dispatchEvent(new CustomEvent(EVENTS.AUTOCONFIG_PROFILE_CREATED, { detail: { id: toSave.id } }));
+      }
+      onSaved?.();
     } catch (error) {
       console.error('Failed to save autoconfig profile:', error);
       showError(t('settings.autoconfig.toastError'));
@@ -288,7 +289,6 @@ export function AutoconfigSection({ autoCreate = false }: AutoconfigSectionProps
     try {
       await deleteAutoconfigProfile(pendingDelete.id);
       await loadProfiles();
-      notifyProfilesChanged();
       showSuccess(t('settings.autoconfig.toastDeleted'));
     } catch (error) {
       console.error('Failed to delete autoconfig profile:', error);

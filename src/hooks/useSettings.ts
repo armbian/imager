@@ -2,7 +2,7 @@
 
 import { load } from '@tauri-apps/plugin-store';
 import { CACHE, EVENTS, SETTINGS } from '../config';
-import type { AutoconfigProfile } from '../types';
+import type { AutoconfigProfile, AutoconfigProfilesChangedDetail } from '../types';
 let storeInstance: Awaited<ReturnType<typeof load>> | null = null;
 let storePromise: Promise<Awaited<ReturnType<typeof load>>> | null = null;
 
@@ -259,10 +259,10 @@ export async function setArmbianBoardDetection(mode: string): Promise<void> {
 
 // Autoconfig profiles: named first-boot presets stored client-side and applied only on explicit selection.
 
-/** Notify open views (settings, flash) that the stored profile list changed */
-function emitProfilesChanged(): void {
+/** Notify open views (settings, flash) which profile changed and how */
+function emitProfilesChanged(detail: AutoconfigProfilesChangedDetail): void {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(EVENTS.PROFILES_CHANGED));
+    window.dispatchEvent(new CustomEvent(EVENTS.PROFILES_CHANGED, { detail }));
   }
 }
 
@@ -277,13 +277,12 @@ export async function getAutoconfigProfiles(): Promise<AutoconfigProfile[]> {
   }
 }
 
-/** Persist the full profile list and broadcast the change */
+/** Persist the full profile list (callers broadcast the specific change) */
 export async function saveAutoconfigProfiles(list: AutoconfigProfile[]): Promise<void> {
   try {
     const store = await getStore();
     await store.set(SETTINGS.KEYS.AUTOCONFIG_PROFILES, list);
     await store.save();
-    emitProfilesChanged();
   } catch (error) {
     throw new Error(`Failed to save autoconfig profiles: ${error}`);
   }
@@ -299,6 +298,7 @@ export async function upsertAutoconfigProfile(p: AutoconfigProfile): Promise<Aut
     list.push(p);
   }
   await saveAutoconfigProfiles(list);
+  emitProfilesChanged({ id: p.id, action: index >= 0 ? 'updated' : 'created' });
   return list;
 }
 
@@ -307,6 +307,7 @@ export async function deleteAutoconfigProfile(id: string): Promise<AutoconfigPro
   const list = await getAutoconfigProfiles();
   const next = list.filter(existing => existing.id !== id);
   await saveAutoconfigProfiles(next);
+  emitProfilesChanged({ id, action: 'deleted' });
   return next;
 }
 

@@ -57,7 +57,8 @@ export function SettingsModal({ isOpen, onClose, initialView = 'appearance', sta
       case 'preferences':
         return <PreferencesSection />;
       case 'profiles':
-        return <AutoconfigSection autoCreate={startProfileCreation} />;
+        // Launched from the flash flow: return there once the profile is saved.
+        return <AutoconfigSection autoCreate={startProfileCreation} onSaved={startProfileCreation ? onClose : undefined} />;
       case 'storage':
         return <StorageSection />;
       case 'developer':
