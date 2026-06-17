@@ -211,3 +211,11 @@ export interface AutoconfigProfile {
   updatedAt: number;
   config: AutoconfigConfig;
 }
+
+export type AutoconfigProfileChangeAction = 'created' | 'updated' | 'deleted';
+
+/** Detail carried by the EVENTS.PROFILES_CHANGED CustomEvent */
+export interface AutoconfigProfilesChangedDetail {
+  id: string;
+  action: AutoconfigProfileChangeAction;
+}

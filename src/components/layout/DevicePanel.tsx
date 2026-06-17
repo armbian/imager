@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText } from '../shared';
-import type { BlockDevice, AutoconfigProfile } from '../../types';
+import type { BlockDevice, AutoconfigProfile, AutoconfigProfilesChangedDetail } from '../../types';
 import { getBlockDevices, getQdlDevices } from '../../hooks/useTauri';
 import { getAutoconfigProfiles } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
@@ -57,17 +57,14 @@ export function DevicePanel({
   const showAutoconfig = supportsAutoconfig;
 
   // Opt-in autoconfig profile picker (flash-time only, Armbian images).
-  const [profiles, setProfiles] = useState<AutoconfigProfile[]>([]);
   const [showProfilePicker, setShowProfilePicker] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState('');
 
-  // Load profiles when the confirm view is visible (Armbian images only).
-  useEffect(() => {
-    if (!selectedDevice || !showAutoconfig) return;
-    getAutoconfigProfiles()
-      .then(setProfiles)
-      .catch(() => setProfiles([]));
-  }, [selectedDevice, showAutoconfig]);
+  const { data: profilesData, reload: reloadProfiles } = useAsyncData<AutoconfigProfile[]>(
+    () => (showAutoconfig ? getAutoconfigProfiles() : Promise.resolve([])),
+    [showAutoconfig]
+  );
+  const profiles = profilesData ?? [];
 
   // Notify App of the opt-in selection; default "" means no profile (unchanged behaviour).
   const handleProfileChange = useCallback((id: string) => {
@@ -78,6 +75,30 @@ export function DevicePanel({
       new CustomEvent(AUTOCONFIG_PROFILE_SELECTED_EVENT, { detail: { id: id || null } })
     );
   }, []);
+
+  // Keep the picker in sync with profile create/edit/delete done in Settings, without re-mounting.
+  useEffect(() => {
+    if (!showAutoconfig) return;
+    const onProfilesChanged = (e: Event) => {
+      const detail = (e as CustomEvent<AutoconfigProfilesChangedDetail>).detail;
+      reloadProfiles();
+      if (detail?.action === 'deleted' && detail.id === selectedProfileId) {
+        handleProfileChange('');
+      }
+    };
+    window.addEventListener(EVENTS.PROFILES_CHANGED, onProfilesChanged);
+    return () => window.removeEventListener(EVENTS.PROFILES_CHANGED, onProfilesChanged);
+  }, [showAutoconfig, selectedProfileId, reloadProfiles, handleProfileChange]);
+
+  // Auto-select only a profile created from this panel's "Create new" shortcut.
+  useEffect(() => {
+    const onCreated = (e: Event) => {
+      const id = (e as CustomEvent<{ id: string }>).detail?.id;
+      if (id) handleProfileChange(id);
+    };
+    window.addEventListener(EVENTS.AUTOCONFIG_PROFILE_CREATED, onCreated);
+    return () => window.removeEventListener(EVENTS.AUTOCONFIG_PROFILE_CREATED, onCreated);
+  }, [handleProfileChange]);
 
   // Open Settings on the profiles tab with the new-profile editor already open.
   const openProfileCreator = useCallback(() => {
