@@ -1,10 +1,11 @@
 import { useState, useEffect, type ReactNode, type ComponentType } from 'react';
-import { Factory, Cpu, Database, HardDrive, FolderOpen, Archive, Check, ArrowRight, Lock, WifiOff } from 'lucide-react';
+import { Factory, Cpu, Database, HardDrive, Usb, FolderOpen, Archive, Check, ArrowRight, Lock, WifiOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { IMAGE_VARIANT } from '../../config';
 import { isDetectedBoard, formatImageIdentity } from '../../utils';
 import type { BoardInfo, ImageInfo, BlockDevice, Manufacturer } from '../../types';
+import { deriveFlashMethod, isEdlImage } from '../../types';
 import { MarqueeText, MotdTip, BoardImage, UpdateEntry } from '../shared';
 import { ManufacturerPanel } from './ManufacturerPanel';
 import { BoardPanel } from './BoardPanel';
@@ -101,6 +102,16 @@ function osTitle(image: ImageInfo, t: (key: string) => string): ReactNode {
 }
 function osMeta(image: ImageInfo, t: (key: string) => string): ReactNode {
   return formatImageIdentity(image, t).meta;
+}
+
+/** Last step is a USB "device" (icon + wording) for EDL/QDL images, a "storage" drive otherwise. */
+function deviceStepMeta(
+  image: ImageInfo | null,
+  t: (key: string) => string
+): { icon: ComponentType<{ size?: number }>; label: string; cta: string } {
+  return image && isEdlImage(image)
+    ? { icon: Usb, label: t('home.device'), cta: t('home.chooseDevice') }
+    : { icon: HardDrive, label: t('home.storage'), cta: t('home.chooseStorage') };
 }
 
 /** Step sidebar + focus panel that highlights the active step and previews the board. */
@@ -239,6 +250,7 @@ export function HomePage({
     <MarqueeText text={selectedDevice.model || selectedDevice.name} className="val-text" />
   ) : undefined;
   const deviceMeta = selectedDevice ? selectedDevice.size_formatted : null;
+  const dStep = deviceStepMeta(selectedImage, t);
 
   // Upstream selections shown in the inline storage confirm summary.
   const deviceSummary = [
@@ -250,7 +262,8 @@ export function HomePage({
   // Inline storage panel; it picks list vs. confirm view from `selectedDevice`.
   const renderDevicePanel = () => (
     <DevicePanel
-      flashMethod={selectedImage?.format}
+      flashMethod={selectedImage ? deriveFlashMethod(selectedImage) : undefined}
+      boardSlug={selectedBoard?.slug}
       summary={deviceSummary}
       boardImage={boardImage}
       selectedDevice={selectedDevice}
@@ -316,9 +329,9 @@ export function HomePage({
       {
         key: 'device',
         index: 2,
-        icon: HardDrive,
-        label: t('home.storage'),
-        cta: t('home.chooseStorage'),
+        icon: dStep.icon,
+        label: dStep.label,
+        cta: dStep.cta,
         value: deviceValue,
         meta: deviceMeta,
         state: selectedDevice ? 'done' : 'active',
@@ -380,9 +393,9 @@ export function HomePage({
       {
         key: 'device',
         index: 4,
-        icon: HardDrive,
-        label: t('home.storage'),
-        cta: t('home.chooseStorage'),
+        icon: dStep.icon,
+        label: dStep.label,
+        cta: dStep.cta,
         value: deviceValue,
         meta: deviceMeta,
         state: selectedDevice ? 'done' : 'active',
@@ -452,9 +465,9 @@ export function HomePage({
     {
       key: 'device',
       index: 4,
-      icon: HardDrive,
-      label: t('home.storage'),
-      cta: t('home.chooseStorage'),
+      icon: dStep.icon,
+      label: dStep.label,
+      cta: dStep.cta,
       value: deviceValue,
       meta: deviceMeta,
       state: !selectedImage ? 'locked' : selectedDevice ? 'done' : 'active',

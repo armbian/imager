@@ -8,6 +8,8 @@
     "chooseBoard": "Choose board",
     "chooseOs": "Choose OS",
     "chooseStorage": "Choose storage",
+    "device": "Device",
+    "chooseDevice": "Choose device",
     "welcomeHeading": "Welcome to Armbian Imager",
     "welcomeIntro": "Pick your board and an image. We'll download it, write it to your SD card or USB drive, and verify it for you.",
     "startNow": "Start now",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Hide system drives",
     "locked": "Locked",
     "qdlNotFound": "No EDL device found. Put your board in EDL mode and connect via USB.",
-    "qdlInstructions": "Place the jumper on the JCTL pins, then connect the USB-C cable."
+    "qdlInstructions": "Place the jumper on the JCTL pins, then connect the USB-C cable.",
+    "qdlInstructionsButton": "Hold the EDL button while powering on, then connect the USB cable."
   },
   "header": {
     "stepManufacturer": "Manufacturer",
     "stepBoard": "Board",
     "stepOs": "OS",
     "stepStorage": "Storage",
+    "stepDevice": "Device",
     "stepImage": "Image",
     "resetTooltip": "Start over",
     "stepTooltip": "Change {{step}}"

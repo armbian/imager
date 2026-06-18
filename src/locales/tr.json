@@ -8,6 +8,8 @@
     "chooseBoard": "Kart seç",
     "chooseOs": "İşletim sistemi seç",
     "chooseStorage": "Depolama seç",
+    "device": "Cihaz",
+    "chooseDevice": "Cihaz seç",
     "welcomeHeading": "Armbian Imager'a hoş geldiniz",
     "welcomeIntro": "Kartınızı ve bir imajı seçin. İndirme, SD karta ya da USB sürücüye yazma ve doğrulama işini biz hallederiz.",
     "startNow": "Hemen başla",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Sistem sürücülerini gizle",
     "locked": "Kilitli",
     "qdlNotFound": "EDL cihazı bulunamadı. Kartınızı EDL moduna alın ve USB ile bağlayın.",
-    "qdlInstructions": "JCTL pinlerine jumper yerleştirin, ardından USB-C kablosunu bağlayın."
+    "qdlInstructions": "JCTL pinlerine jumper yerleştirin, ardından USB-C kablosunu bağlayın.",
+    "qdlInstructionsButton": "Açılışta EDL düğmesini basılı tutun, ardından USB kablosunu bağlayın."
   },
   "header": {
     "stepManufacturer": "Üretici",
     "stepBoard": "Kart",
     "stepOs": "İS",
     "stepStorage": "Depolama",
+    "stepDevice": "Cihaz",
     "stepImage": "İmaj",
     "resetTooltip": "Yeniden başla",
     "stepTooltip": "{{step}} değiştir"

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import armbianLogoWhite from '../../assets/armbian-logo-white.png';
 import armbianLogoBlack from '../../assets/armbian-logo-black.png';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer } from '../../types';
+import { isEdlImage } from '../../types';
 import { UpdateModal } from '../shared';
 import { SettingsButton } from '../settings';
 
@@ -45,16 +46,19 @@ export function Header({
   // Detected-board images show all 4 steps; generic .img files show 2.
   const hasDetectedBoard = selectedBoard && selectedBoard.slug !== 'custom' && selectedBoard.slug !== 'cached';
   const isGenericCustom = isCustomImage && !hasDetectedBoard;
+  // EDL targets are USB devices in download mode, not storage drives.
+  const isEdl = !!selectedImage && isEdlImage(selectedImage);
+  const targetLabel = t(isEdl ? 'header.stepDevice' : 'header.stepStorage');
   const steps = isGenericCustom
     ? [
         { key: 'image' as SelectionStep, label: t('header.stepImage'), completed: !!selectedImage },
-        { key: 'device' as SelectionStep, label: t('header.stepStorage'), completed: !!selectedDevice },
+        { key: 'device' as SelectionStep, label: targetLabel, completed: !!selectedDevice },
       ]
     : [
         { key: 'manufacturer' as SelectionStep, label: t('header.stepManufacturer'), completed: !!selectedManufacturer },
         { key: 'board' as SelectionStep, label: t('header.stepBoard'), completed: !!selectedBoard },
         { key: 'image' as SelectionStep, label: t('header.stepOs'), completed: !!selectedImage },
-        { key: 'device' as SelectionStep, label: t('header.stepStorage'), completed: !!selectedDevice },
+        { key: 'device' as SelectionStep, label: targetLabel, completed: !!selectedDevice },
       ];
 
   function handleLogoClick() {

@@ -8,6 +8,8 @@
     "chooseBoard": "Välj kort",
     "chooseOs": "Välj operativsystem",
     "chooseStorage": "Välj lagring",
+    "device": "Enhet",
+    "chooseDevice": "Välj enhet",
     "welcomeHeading": "Välkommen till Armbian Imager",
     "welcomeIntro": "Välj ditt kort och en avbildning. Vi laddar ner den, skriver den till ditt SD-kort eller USB-minne och kontrollerar den åt dig.",
     "startNow": "Kom igång",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Dölj systemenheter",
     "locked": "Låst",
     "qdlNotFound": "Ingen EDL-enhet hittades. Sätt ditt kort i EDL-läge och anslut via USB.",
-    "qdlInstructions": "Placera bygeln på JCTL-pinnarna och anslut sedan USB-C-kabeln."
+    "qdlInstructions": "Placera bygeln på JCTL-pinnarna och anslut sedan USB-C-kabeln.",
+    "qdlInstructionsButton": "Håll EDL-knappen intryckt vid start och anslut sedan USB-kabeln."
   },
   "header": {
     "stepManufacturer": "Tillverkare",
     "stepBoard": "Kort",
     "stepOs": "OS",
     "stepStorage": "Lagring",
+    "stepDevice": "Enhet",
     "stepImage": "Avbildning",
     "resetTooltip": "Börja om",
     "stepTooltip": "Ändra {{step}}"

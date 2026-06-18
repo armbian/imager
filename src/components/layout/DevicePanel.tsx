@@ -4,12 +4,13 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText } from '../shared';
-import type { BlockDevice, AutoconfigProfile, AutoconfigProfilesChangedDetail } from '../../types';
-import { getBlockDevices, getQdlDevices } from '../../hooks/useTauri';
+import type { BlockDevice, AutoconfigProfile, AutoconfigProfilesChangedDetail, FlashMethod } from '../../types';
+import { isEdlMethod } from '../../types';
+import { getBlockDevices, getQdlDevices, getQdlEdlEntry } from '../../hooks/useTauri';
 import { getAutoconfigProfiles } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
-import { POLLING, UI, EVENTS } from '../../config';
+import { POLLING, UI, EVENTS, qdlInstructionsKey } from '../../config';
 import { getDeviceColors } from '../../config/deviceColors';
 import { getDeviceType, devicesChanged, sortDevices, qdlToBlockDevice } from '../../utils/deviceUtils';
 
@@ -25,8 +26,10 @@ interface DevicePanelProps {
   onCancel: () => void;
   /** The picked device; when set, the panel shows the confirm summary. */
   selectedDevice: BlockDevice | null;
-  /** Flash method for the selected image ("block" or "qdl"). */
-  flashMethod?: string;
+  /** Flash method for the selected image ("block", "qdl", or "qdl-ufs"). */
+  flashMethod?: FlashMethod;
+  /** Selected board slug, used to pick the right EDL-entry hint (button vs jumper). */
+  boardSlug?: string;
   /** Upstream selections (manufacturer/board/OS) shown in the confirm summary. */
   summary?: { label: string; value: string }[];
   /** Cached board photo shown at the top of the confirm summary. */
@@ -42,6 +45,7 @@ export function DevicePanel({
   onCancel,
   selectedDevice,
   flashMethod,
+  boardSlug,
   summary = [],
   boardImage,
   supportsAutoconfig = true,
@@ -52,7 +56,14 @@ export function DevicePanel({
   const prevDevicesRef = useRef<BlockDevice[] | null>(null);
   const [devices, setDevices] = useState<BlockDevice[]>([]);
 
-  const isQdlMode = flashMethod === 'qdl';
+  // Both QDL (TAR) and UFS images flash over EDL, so they share device detection (getQdlDevices).
+  const isQdlMode = isEdlMethod(flashMethod);
+
+  // EDL-entry method (button vs jumper) comes from the backend board registry.
+  const { data: edlEntry } = useAsyncData<string | null>(
+    () => (isQdlMode && boardSlug ? getQdlEdlEntry(boardSlug) : Promise.resolve(null)),
+    [isQdlMode, boardSlug]
+  );
   // Autoconfig profiles apply to Armbian images (both sd/.img.xz and QDL); hidden for generic custom images.
   const showAutoconfig = supportsAutoconfig;
 
@@ -206,7 +217,7 @@ export function DevicePanel({
                 ))}
                 {/* Target device as a label/value row, consistent with the rows above. */}
                 <li className="device-summary__target">
-                  <span className="device-summary__label">{t('home.storage')}</span>
+                  <span className="device-summary__label">{t(isQdlMode ? 'home.device' : 'home.storage')}</span>
                   <span className="device-summary__targetinfo">
                     <MarqueeText
                       text={selectedDevice.model || selectedDevice.name}
@@ -338,7 +349,7 @@ export function DevicePanel({
               <span className="device-empty__icon">{isQdlMode ? <Cpu size={30} /> : <Usb size={30} />}</span>
               <p className="device-empty__title">{isQdlMode ? t('device.qdlNotFound') : t('modal.noDevices')}</p>
               <p className="device-empty__hint">
-                {isQdlMode ? t('device.qdlInstructions') : t('modal.insertDevice')}
+                {isQdlMode ? t(qdlInstructionsKey(edlEntry)) : t('modal.insertDevice')}
               </p>
               {refreshButton}
             </div>

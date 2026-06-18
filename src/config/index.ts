@@ -52,3 +52,4 @@ export {
 // Image filters
 export { isTrunkImage, IMAGE_FILTER_PREDICATES, FILTER_BUTTONS, categoryOf } from './imageFilters';
 export type { OsCategory } from './imageFilters';
+export { qdlInstructionsKey } from './qdlBoards';

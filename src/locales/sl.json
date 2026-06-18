@@ -8,6 +8,8 @@
     "chooseBoard": "Izberi ploščo",
     "chooseOs": "Izberi OS",
     "chooseStorage": "Izberi shrambo",
+    "device": "Naprava",
+    "chooseDevice": "Izberi napravo",
     "welcomeHeading": "Dobrodošli v Armbian Imager",
     "welcomeIntro": "Izberite ploščo in sliko. Mi jo prenesemo, zapišemo na kartico SD ali pogon USB in preverimo namesto vas.",
     "startNow": "Začni zdaj",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Skrij sistemske pogone",
     "locked": "Zaklenjeno",
     "qdlNotFound": "Naprava EDL ni bila najdena. Vključite ploščo v način EDL in jo povežite prek USB.",
-    "qdlInstructions": "Namestite mostiček na pine JCTL, nato priključite kabel USB-C."
+    "qdlInstructions": "Namestite mostiček na pine JCTL, nato priključite kabel USB-C.",
+    "qdlInstructionsButton": "Med vklopom držite gumb EDL, nato priključite kabel USB."
   },
   "header": {
     "stepManufacturer": "Proizvajalec",
     "stepBoard": "Plošča",
     "stepOs": "OS",
     "stepStorage": "Shramba",
+    "stepDevice": "Naprava",
     "stepImage": "Slika",
     "resetTooltip": "Začni znova",
     "stepTooltip": "Spremeni {{step}}"

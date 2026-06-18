@@ -8,6 +8,8 @@
     "chooseBoard": "Escolher placa",
     "chooseOs": "Escolher SO",
     "chooseStorage": "Escolher armazenamento",
+    "device": "Dispositivo",
+    "chooseDevice": "Escolher dispositivo",
     "welcomeHeading": "Bem-vindo ao Armbian Imager",
     "welcomeIntro": "Escolha a sua placa e uma imagem. Nós tratamos de a transferir, gravar no seu cartão SD ou unidade USB e verificá-la.",
     "startNow": "Começar agora",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Ocultar unidades do sistema",
     "locked": "Bloqueado",
     "qdlNotFound": "Nenhum dispositivo EDL encontrado. Coloque a placa em modo EDL e ligue por USB.",
-    "qdlInstructions": "Coloque o jumper nos pinos JCTL e ligue o cabo USB-C."
+    "qdlInstructions": "Coloque o jumper nos pinos JCTL e ligue o cabo USB-C.",
+    "qdlInstructionsButton": "Mantém o botão EDL premido ao ligar e liga o cabo USB."
   },
   "header": {
     "stepManufacturer": "Fabricante",
     "stepBoard": "Placa",
     "stepOs": "SO",
     "stepStorage": "Armazenamento",
+    "stepDevice": "Dispositivo",
     "stepImage": "Imagem",
     "resetTooltip": "Reiniciar",
     "stepTooltip": "Alterar {{step}}"

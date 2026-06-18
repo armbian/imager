@@ -229,7 +229,24 @@ export async function flashQdlImage(
   return invoke('flash_qdl_image', { tarPath, serial, autoconfig });
 }
 
+/** Flash a decompressed UFS .img to an EDL device via a raw Firehose write; the loader is
+ * resolved from `soc`, then `boardSlug` (the API leaves `soc` null for these boards). */
+export async function flashQdlUfsImage(
+  imagePath: string,
+  soc: string,
+  boardSlug: string,
+  serial?: string,
+  autoconfig?: AutoconfigConfig | null
+): Promise<void> {
+  return invoke('flash_qdl_ufs_image', { imagePath, soc, boardSlug, serial, autoconfig });
+}
+
 /** Check whether a TAR file is a QDL flash archive (has rawprogram0.xml + firehose ELF) */
 export async function checkIsQdlImage(imagePath: string): Promise<boolean> {
   return invoke('check_is_qdl_image', { imagePath });
+}
+
+/** EDL-entry method ("button" or "jumper") for a board, or null when unknown */
+export async function getQdlEdlEntry(boardSlug: string): Promise<string | null> {
+  return invoke('get_qdl_edl_entry', { boardSlug });
 }

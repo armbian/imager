@@ -8,6 +8,8 @@
     "chooseBoard": "Choisir une carte",
     "chooseOs": "Choisir un OS",
     "chooseStorage": "Choisir un stockage",
+    "device": "Appareil",
+    "chooseDevice": "Choisir un appareil",
     "welcomeHeading": "Bienvenue dans Armbian Imager",
     "welcomeIntro": "Choisissez votre carte et une image. On s'occupe de la télécharger, de l'écrire sur votre carte SD ou clé USB et de la vérifier.",
     "startNow": "Commencer",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Masquer les disques système",
     "locked": "Verrouillé",
     "qdlNotFound": "Aucun appareil EDL trouvé. Mettez votre carte en mode EDL et connectez-la en USB.",
-    "qdlInstructions": "Placez le cavalier sur les broches JCTL, puis connectez le câble USB-C."
+    "qdlInstructions": "Placez le cavalier sur les broches JCTL, puis connectez le câble USB-C.",
+    "qdlInstructionsButton": "Maintenez le bouton EDL enfoncé à la mise sous tension, puis branchez le câble USB."
   },
   "header": {
     "stepManufacturer": "Fabricant",
     "stepBoard": "Carte",
     "stepOs": "OS",
     "stepStorage": "Stockage",
+    "stepDevice": "Appareil",
     "stepImage": "Image",
     "resetTooltip": "Recommencer",
     "stepTooltip": "Modifier {{step}}"

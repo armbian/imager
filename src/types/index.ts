@@ -41,6 +41,8 @@ export interface ImageInfo {
   stability: string;
   /** Image format: "sd" (block), "qdl" (Qualcomm EDL), "rootfs", "qemu", "hyperv" */
   format: string;
+  /** Storage target ("ufs" = raw Firehose write to internal UFS via QDL), else null. */
+  storage?: string | null;
   /** Companion files (bootloaders, firmware, etc.) */
   companions: CompanionInfo[];
   /** Display variant files for multi-panel devices */
@@ -48,6 +50,33 @@ export interface ImageInfo {
   // Custom image fields
   is_custom?: boolean;
   custom_path?: string;
+}
+
+/** How an image is written: raw block (dd), QDL TAR (Firehose rawprogram), or QDL UFS (raw Firehose write). */
+export const FLASH_METHOD = {
+  BLOCK: 'block',
+  QDL: 'qdl',
+  QDL_UFS: 'qdl-ufs',
+} as const;
+
+export type FlashMethod = (typeof FLASH_METHOD)[keyof typeof FLASH_METHOD];
+
+/** Single source of truth for the write path of an image. UFS is detected by the
+ *  storage field (the API ships it as format "sd"), QDL TAR by the "qdl" format. */
+export function deriveFlashMethod(image: Pick<ImageInfo, 'format' | 'storage'>): FlashMethod {
+  if (image.storage?.toLowerCase() === 'ufs') return FLASH_METHOD.QDL_UFS;
+  if (image.format === 'qdl') return FLASH_METHOD.QDL;
+  return FLASH_METHOD.BLOCK;
+}
+
+/** A flash method targets a Qualcomm EDL device (QDL TAR or raw UFS) rather than a block device. */
+export function isEdlMethod(method: FlashMethod | null | undefined): boolean {
+  return !!method && method !== FLASH_METHOD.BLOCK;
+}
+
+/** Whether an image flashes over EDL; the EDL-aware counterpart of a plain block write. */
+export function isEdlImage(image: Pick<ImageInfo, 'format' | 'storage'>): boolean {
+  return isEdlMethod(deriveFlashMethod(image));
 }
 
 /** Companion file info (bootloader, fip, recovery, etc.) */

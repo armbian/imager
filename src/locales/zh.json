@@ -8,6 +8,8 @@
     "chooseBoard": "选择开发板",
     "chooseOs": "选择系统",
     "chooseStorage": "选择存储设备",
+    "device": "设备",
+    "chooseDevice": "选择设备",
     "welcomeHeading": "欢迎使用 Armbian Imager",
     "welcomeIntro": "选好开发板和镜像就行，剩下的下载、写入 SD 卡或 U 盘以及校验都交给我们。",
     "startNow": "立即开始",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "隐藏系统磁盘",
     "locked": "已锁定",
     "qdlNotFound": "未找到 EDL 设备。请将开发板切换到 EDL 模式，并通过 USB 连接。",
-    "qdlInstructions": "在 JCTL 引脚上装好跳线帽，然后接入 USB-C 数据线。"
+    "qdlInstructions": "在 JCTL 引脚上装好跳线帽，然后接入 USB-C 数据线。",
+    "qdlInstructionsButton": "开机时按住 EDL 按钮，然后接入 USB 数据线。"
   },
   "header": {
     "stepManufacturer": "制造商",
     "stepBoard": "开发板",
     "stepOs": "系统",
     "stepStorage": "存储设备",
+    "stepDevice": "设备",
     "stepImage": "镜像",
     "resetTooltip": "重新开始",
     "stepTooltip": "更改{{step}}"

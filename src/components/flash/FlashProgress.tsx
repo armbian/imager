@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { HardDrive, Disc, FileImage } from 'lucide-react';
+import { HardDrive, Usb, Disc, FileImage } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { BoardInfo, ImageInfo, BlockDevice, AutoconfigConfig } from '../../types';
+import { isEdlImage } from '../../types';
 import { getOsName } from '../../assets/os-logos';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
@@ -45,7 +46,7 @@ export function FlashProgress({
     handleBack,
     handleShaWarningConfirm,
     handleShaWarningCancel,
-  } = useFlashOperation({ image, device, autoconfig, onBack });
+  } = useFlashOperation({ image, device, soc: board.soc, boardSlug: board.slug, autoconfig, onBack });
 
   useEffect(() => {
     getCachedBoardImage(board.slug)
@@ -67,6 +68,7 @@ export function FlashProgress({
   const isError = stage === 'error';
   const isComplete = stage === 'complete';
   const isCustomIcon = image.is_custom && board.slug === 'custom';
+  const isEdl = isEdlImage(image);
 
   // Glow brightness tracks progress; indeterminate stages sit at mid-glow.
   const glowProgress = isComplete ? 100 : isIndeterminate ? 50 : progress;
@@ -124,7 +126,7 @@ export function FlashProgress({
                   <MarqueeText text={getImageDisplayText()} className="os-badge-text" />
                 </div>
                 <div className="flash-device-row">
-                  <HardDrive size={16} />
+                  {isEdl ? <Usb size={16} /> : <HardDrive size={16} />}
                   <MarqueeText text={device.model || device.name} className="flash-device-name" />
                   {device.size_formatted && <span className="flash-device-size">{device.size_formatted}</span>}
                 </div>
@@ -156,7 +158,7 @@ export function FlashProgress({
 
               {isComplete && (
                 <p className="flash-success-hint">
-                  {image.format === 'qdl'
+                  {isEdl
                     ? t('flash.successHintQdl')
                     : image.is_custom
                       ? t('flash.successHintCustom')

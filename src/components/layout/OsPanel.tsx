@@ -208,6 +208,12 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
                 {kernelBadge?.label ?? image.kernel_branch}{image.kernel_version ? ` ${image.kernel_version}` : ''}
               </span>
             )}
+            {image.storage?.toLowerCase() === 'ufs' && (
+              <span className="dl-card__kernel">
+                <span className="dl-dot" style={{ background: '#f59e0b' }} />
+                UFS
+              </span>
+            )}
             <span className="dl-card__footright">
               {isCached(image) && <CachedBadge label={t('modal.cachedTooltip')} light />}
               {!!image.file_size && (
@@ -260,6 +266,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
                   label={`${kernelBadge.label}${image.kernel_version ? ` ${image.kernel_version}` : ''}`}
                 />
               )}
+              {image.storage?.toLowerCase() === 'ufs' && <SoftBadge color="#f59e0b" label="UFS" />}
             </div>
             <div className="os-card__footright">
               {isCached(image) && <CachedBadge label={t('modal.cachedTooltip')} />}

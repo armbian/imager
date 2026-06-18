@@ -8,6 +8,8 @@
     "chooseBoard": "Odaberite ploču",
     "chooseOs": "Odaberite OS",
     "chooseStorage": "Odaberite pohranu",
+    "device": "Uređaj",
+    "chooseDevice": "Odaberite uređaj",
     "welcomeHeading": "Dobro došli u Armbian Imager",
     "welcomeIntro": "Odaberite ploču i sliku. Mi ćemo je preuzeti, zapisati na vašu SD karticu ili USB pogon i provjeriti.",
     "startNow": "Započnite",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Sakrij sistemske diskove",
     "locked": "Zaključano",
     "qdlNotFound": "EDL uređaj nije pronađen. Postavite ploču u EDL način rada i spojite je putem USB-a.",
-    "qdlInstructions": "Postavite jumper na JCTL pinove, zatim spojite USB-C kabel."
+    "qdlInstructions": "Postavite jumper na JCTL pinove, zatim spojite USB-C kabel.",
+    "qdlInstructionsButton": "Držite tipku EDL pri uključivanju, zatim spojite USB kabel."
   },
   "header": {
     "stepManufacturer": "Proizvođač",
     "stepBoard": "Ploča",
     "stepOs": "OS",
     "stepStorage": "Pohrana",
+    "stepDevice": "Uređaj",
     "stepImage": "Slika",
     "resetTooltip": "Počni ispočetka",
     "stepTooltip": "Promijeni {{step}}"

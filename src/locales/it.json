@@ -8,6 +8,8 @@
     "chooseBoard": "Scegli la scheda",
     "chooseOs": "Scegli il sistema operativo",
     "chooseStorage": "Scegli l'archiviazione",
+    "device": "Dispositivo",
+    "chooseDevice": "Scegli il dispositivo",
     "welcomeHeading": "Benvenuto in Armbian Imager",
     "welcomeIntro": "Scegli la scheda e l'immagine. Pensiamo noi a scaricarla, scriverla sulla tua scheda SD o chiavetta USB e verificarla.",
     "startNow": "Inizia ora",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Nascondi dischi di sistema",
     "locked": "Bloccato",
     "qdlNotFound": "Nessun dispositivo EDL trovato. Metti la scheda in modalità EDL e collegala via USB.",
-    "qdlInstructions": "Posiziona il jumper sui pin JCTL, poi collega il cavo USB-C."
+    "qdlInstructions": "Posiziona il jumper sui pin JCTL, poi collega il cavo USB-C.",
+    "qdlInstructionsButton": "Tieni premuto il pulsante EDL all'accensione, poi collega il cavo USB."
   },
   "header": {
     "stepManufacturer": "Produttore",
     "stepBoard": "Scheda",
     "stepOs": "SO",
     "stepStorage": "Archiviazione",
+    "stepDevice": "Dispositivo",
     "stepImage": "Immagine",
     "resetTooltip": "Ricomincia",
     "stepTooltip": "Cambia {{step}}"

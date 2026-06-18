@@ -8,6 +8,8 @@
     "chooseBoard": "보드 선택",
     "chooseOs": "OS 선택",
     "chooseStorage": "저장 장치 선택",
+    "device": "장치",
+    "chooseDevice": "장치 선택",
     "welcomeHeading": "Armbian Imager에 오신 것을 환영합니다",
     "welcomeIntro": "보드와 이미지를 고르기만 하세요. 다운로드부터 SD 카드나 USB 드라이브 기록, 검사까지 저희가 알아서 처리합니다.",
     "startNow": "지금 시작",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "시스템 드라이브 숨기기",
     "locked": "잠김",
     "qdlNotFound": "EDL 장치를 찾을 수 없습니다. 보드를 EDL 모드로 전환한 뒤 USB로 연결하세요.",
-    "qdlInstructions": "JCTL 핀에 점퍼를 끼운 다음 USB-C 케이블을 연결하세요."
+    "qdlInstructions": "JCTL 핀에 점퍼를 끼운 다음 USB-C 케이블을 연결하세요.",
+    "qdlInstructionsButton": "전원을 켤 때 EDL 버튼을 누른 채로 USB 케이블을 연결하세요."
   },
   "header": {
     "stepManufacturer": "제조사",
     "stepBoard": "보드",
     "stepOs": "OS",
     "stepStorage": "저장 장치",
+    "stepDevice": "장치",
     "stepImage": "이미지",
     "resetTooltip": "처음부터 다시",
     "stepTooltip": "{{step}} 변경"

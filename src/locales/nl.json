@@ -8,6 +8,8 @@
     "chooseBoard": "Kies board",
     "chooseOs": "Kies OS",
     "chooseStorage": "Kies opslag",
+    "device": "Apparaat",
+    "chooseDevice": "Kies apparaat",
     "welcomeHeading": "Welkom bij Armbian Imager",
     "welcomeIntro": "Kies je board en een image. Wij downloaden het, schrijven het naar je SD-kaart of USB-stick en controleren het voor je.",
     "startNow": "Nu beginnen",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Systeemstations verbergen",
     "locked": "Vergrendeld",
     "qdlNotFound": "Geen EDL-apparaat gevonden. Zet je board in EDL-modus en sluit het aan via USB.",
-    "qdlInstructions": "Plaats de jumper op de JCTL-pinnen en sluit de USB-C-kabel aan."
+    "qdlInstructions": "Plaats de jumper op de JCTL-pinnen en sluit de USB-C-kabel aan.",
+    "qdlInstructionsButton": "Houd de EDL-knop ingedrukt bij het inschakelen en sluit dan de USB-kabel aan."
   },
   "header": {
     "stepManufacturer": "Fabrikant",
     "stepBoard": "Board",
     "stepOs": "OS",
     "stepStorage": "Opslag",
+    "stepDevice": "Apparaat",
     "stepImage": "Image",
     "resetTooltip": "Opnieuw beginnen",
     "stepTooltip": "{{step}} wijzigen"

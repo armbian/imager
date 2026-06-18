@@ -8,6 +8,8 @@
     "chooseBoard": "Wybierz płytkę",
     "chooseOs": "Wybierz OS",
     "chooseStorage": "Wybierz pamięć",
+    "device": "Urządzenie",
+    "chooseDevice": "Wybierz urządzenie",
     "welcomeHeading": "Witamy w Armbian Imager",
     "welcomeIntro": "Wybierz płytkę i obraz. My pobierzemy go, zapiszemy na karcie SD lub dysku USB i sprawdzimy za Ciebie.",
     "startNow": "Rozpocznij teraz",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Ukryj dyski systemowe",
     "locked": "Zablokowane",
     "qdlNotFound": "Nie znaleziono urządzenia EDL. Przełącz płytkę w tryb EDL i podłącz przez USB.",
-    "qdlInstructions": "Umieść zworkę na pinach JCTL, a następnie podłącz kabel USB-C."
+    "qdlInstructions": "Umieść zworkę na pinach JCTL, a następnie podłącz kabel USB-C.",
+    "qdlInstructionsButton": "Przytrzymaj przycisk EDL podczas włączania, a następnie podłącz kabel USB."
   },
   "header": {
     "stepManufacturer": "Producent",
     "stepBoard": "Płytka",
     "stepOs": "OS",
     "stepStorage": "Pamięć",
+    "stepDevice": "Urządzenie",
     "stepImage": "Obraz",
     "resetTooltip": "Zacznij od nowa",
     "stepTooltip": "Zmień {{step}}"

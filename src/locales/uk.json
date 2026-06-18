@@ -8,6 +8,8 @@
     "chooseBoard": "Обрати плату",
     "chooseOs": "Обрати ОС",
     "chooseStorage": "Обрати сховище",
+    "device": "Пристрій",
+    "chooseDevice": "Обрати пристрій",
     "welcomeHeading": "Ласкаво просимо до Armbian Imager",
     "welcomeIntro": "Виберіть плату та образ. Ми самі завантажимо його, запишемо на SD-картку чи USB-накопичувач і перевіримо.",
     "startNow": "Почати",
@@ -97,13 +99,15 @@
     "hideSystemDevices": "Приховати системні диски",
     "locked": "Заблоковано",
     "qdlNotFound": "Пристрій EDL не знайдено. Переведіть плату в режим EDL та підключіть через USB.",
-    "qdlInstructions": "Встановіть перемичку на контакти JCTL, потім підключіть кабель USB-C."
+    "qdlInstructions": "Встановіть перемичку на контакти JCTL, потім підключіть кабель USB-C.",
+    "qdlInstructionsButton": "Утримуйте кнопку EDL під час увімкнення, потім підключіть кабель USB."
   },
   "header": {
     "stepManufacturer": "Виробник",
     "stepBoard": "Плата",
     "stepOs": "ОС",
     "stepStorage": "Сховище",
+    "stepDevice": "Пристрій",
     "stepImage": "Образ",
     "resetTooltip": "Почати спочатку",
     "stepTooltip": "Змінити {{step}}"

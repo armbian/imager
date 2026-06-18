@@ -3,11 +3,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageInfo, BlockDevice, AutoconfigConfig } from '../types';
+import { FLASH_METHOD, deriveFlashMethod, isEdlMethod } from '../types';
 import { PHASE_ORDER, type FlashStage, type FlashPhase } from '../components/flash/FlashStageIcon';
 import {
   downloadImage,
   flashImage,
   flashQdlImage,
+  flashQdlUfsImage,
   getDownloadProgress,
   getFlashProgress,
   cancelOperation,
@@ -32,6 +34,10 @@ import { isShaUnavailableError, translateFlashError } from '../utils/errorUtils'
 interface UseFlashOperationProps {
   image: ImageInfo;
   device: BlockDevice;
+  /** Board SoC, used to select the firehose loader for UFS (QDL) flashing. */
+  soc?: string;
+  /** Board slug, the fallback loader key when the API leaves `soc` null. */
+  boardSlug?: string;
   /** Opt-in autoconfig profile config written into the image on first boot; null when none. */
   autoconfig?: AutoconfigConfig | null;
   onBack: () => void;
@@ -81,6 +87,8 @@ function buildPhases(opts: { download: boolean; prepare: boolean; verify: boolea
 export function useFlashOperation({
   image,
   device,
+  soc,
+  boardSlug,
   autoconfig,
   onBack,
 }: UseFlashOperationProps): UseFlashOperationReturn {
@@ -161,13 +169,18 @@ export function useFlashOperation({
     [t]
   );
 
-  /** Whether the current image uses QDL (Qualcomm EDL) flashing */
-  const isQdlMode = image.format === 'qdl';
+  // Write path: TAR-based QDL ('qdl'), raw UFS over QDL ('qdl-ufs'), or block dd.
+  const flashMethod = deriveFlashMethod(image);
+  // isQdlMode == the TAR path specifically (extract + rawprogram, no download cleanup).
+  const isQdlMode = flashMethod === FLASH_METHOD.QDL;
+  const isUfsMode = flashMethod === FLASH_METHOD.QDL_UFS;
+  // Both flash an EDL device, so they share device handling, auth skip, and no block verify.
+  const isEdlFlash = isEdlMethod(flashMethod);
 
   /** Check the device is connected; trigger the disconnect handler and return false if not */
   const checkDeviceOrDisconnect = useCallback(async (): Promise<boolean> => {
     try {
-      if (isQdlMode) {
+      if (isEdlFlash) {
         const qdlDevices = await getQdlDevices();
         if (qdlDevices.length === 0) {
           await handleDeviceDisconnectedInternal();
@@ -185,7 +198,7 @@ export function useFlashOperation({
     }
     return true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [device.path, isQdlMode]);
+  }, [device.path, isEdlFlash]);
 
   /** Handle device disconnection during operations */
   const handleDeviceDisconnectedInternal = useCallback(async () => {
@@ -213,7 +226,7 @@ export function useFlashOperation({
   // Monitor device connection during active operations.
   // QDL flash stages are excluded: the USB device is busy/resets during Sahara/Firehose (expected).
   useEffect(() => {
-    const activeStages: FlashStage[] = isQdlMode
+    const activeStages: FlashStage[] = isEdlFlash
       ? ['downloading', 'verifying_sha', 'decompressing']
       : ['downloading', 'verifying_sha', 'decompressing',
          'flashing', 'verifying'];
@@ -234,7 +247,7 @@ export function useFlashOperation({
         deviceMonitorRef.current = null;
       }
     };
-  }, [stage, device.path, isQdlMode, handleDeviceDisconnectedInternal, checkDeviceOrDisconnect]);
+  }, [stage, device.path, isEdlFlash, handleDeviceDisconnectedInternal, checkDeviceOrDisconnect]);
 
   /** Handle custom image flow (decompress if needed, then flash) */
   async function handleCustomImage(customPath: string) {
@@ -339,7 +352,7 @@ export function useFlashOperation({
         const prog = await getFlashProgress();
 
         if (prog.is_qdl_mode && prog.qdl_stage) {
-          if (prog.qdl_stage === 'sahara' || prog.qdl_stage === 'connecting' || prog.qdl_stage === 'configuring') {
+          if (prog.qdl_stage === 'sahara' || prog.qdl_stage === 'connecting' || prog.qdl_stage === 'configuring' || prog.qdl_stage === 'provisioning') {
             setStage('qdl_sahara');
           } else if (prog.qdl_stage.startsWith('partition:') || prog.qdl_stage === 'firehose' || prog.qdl_stage === 'patching') {
             setStage('qdl_firehose');
@@ -386,12 +399,20 @@ export function useFlashOperation({
     }, POLLING.FLASH_PROGRESS);
 
     try {
-      if (isQdlMode) {
+      // Pass autoconfig only when a profile was selected (else undefined = unchanged)
+      if (isUfsMode) {
+        // UFS path: decompressed .img → Sahara → raw Firehose write to UFS
+        await flashQdlUfsImage(
+          path,
+          soc ?? '',
+          boardSlug ?? '',
+          undefined,
+          autoconfigRef.current ?? undefined
+        );
+      } else if (isQdlMode) {
         // QDL path: TAR archive → extract → Sahara → Firehose
-        // Pass autoconfig only when a profile was selected (else undefined = unchanged)
         await flashQdlImage(path, undefined, autoconfigRef.current ?? undefined);
       } else {
-        // Pass autoconfig only when a profile was selected (else undefined = unchanged)
         await flashImage(path, device.path, !skipVerifyRef.current, autoconfigRef.current ?? undefined);
       }
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -453,8 +474,8 @@ export function useFlashOperation({
         skipVerifyRef.current = false;
       }
 
-      // QDL skips block-device authorization (USB access handled by OS)
-      if (!isQdlMode) {
+      // EDL (QDL/UFS) skips block-device authorization (USB access handled by OS)
+      if (!isEdlFlash) {
         const authorized = await requestWriteAuthorization(device.path);
         if (!authorized) {
           failFlash(t('error.authCancelled'));
@@ -482,7 +503,7 @@ export function useFlashOperation({
           buildPhases({
             download: !cached,
             prepare: isQdlMode || (!cached && isCompressedImage(image.direct_url)),
-            verify: !isQdlMode && !skipVerifyRef.current,
+            verify: !isEdlFlash && !skipVerifyRef.current,
           })
         );
         startDownload();
@@ -514,8 +535,8 @@ export function useFlashOperation({
     try {
       await cancelOperation();
       if (intervalRef.current) clearInterval(intervalRef.current);
-      // QDL: stay put so the blocking flash command can detect cancel and clean up
-      if (isQdlMode) {
+      // EDL: stay put so the blocking flash command can detect cancel and clean up
+      if (isEdlFlash) {
         setStage('authorizing');
         setProgress(0);
         setError(t('flash.cancel'));
@@ -546,9 +567,10 @@ export function useFlashOperation({
     shownErrorRef.current = null;
 
     if (imagePath) {
-      // QDL: skip block-device authorization (USB access handled by OS)
-      if (isQdlMode) {
-        setPhases(buildPhases({ download: false, prepare: true, verify: false }));
+      // EDL: skip block-device authorization (USB access handled by OS). The TAR path
+      // re-extracts (prepare), but a UFS .img is already decompressed and ready.
+      if (isEdlFlash) {
+        setPhases(buildPhases({ download: false, prepare: isQdlMode, verify: false }));
         startFlash(imagePath);
         return;
       }
