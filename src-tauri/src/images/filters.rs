@@ -29,19 +29,11 @@ fn is_flashable_format(format: &str) -> bool {
     matches!(format, "sd" | "block" | "qdl")
 }
 
-/// UFS images are raw provisioning images (no GPT) for QDL/firehose, not a block
-/// device — writing one to an SD card yields a non-booting card. Drop until QDL UFS lands.
-fn is_writable_storage(storage: Option<&str>) -> bool {
-    !matches!(storage, Some(s) if s.eq_ignore_ascii_case("ufs"))
-}
-
 /// Map a list of API images to frontend-facing ImageInfo, sorted by promoted first then release
 pub fn map_images(api_images: Vec<ApiImage>) -> Vec<ImageInfo> {
     let mut images: Vec<ImageInfo> = api_images
         .iter()
-        .filter(|api| {
-            is_flashable_format(&api.format) && is_writable_storage(api.storage.as_deref())
-        })
+        .filter(|api| is_flashable_format(&api.format))
         .map(map_image)
         .collect();
 
@@ -72,6 +64,7 @@ fn map_image(api: &ApiImage) -> ImageInfo {
         build_date: api.download.updated_at.clone(),
         stability: api.stability.clone(),
         format: api.format.clone(),
+        storage: api.storage.clone(),
         companions: api
             .companions
             .iter()
