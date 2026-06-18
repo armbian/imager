@@ -28,6 +28,9 @@ pub mod urls {
 
     /// Base URL for vendor logos (api.armbian.com/api/v1/images/vendors/{size}/{slug}.png)
     pub const VENDOR_IMAGES_BASE: &str = "https://api.armbian.com/api/v1/images/vendors/480/";
+
+    /// Base URL for QDL firehose loaders, by SoC family ({base}{family}/prog_firehose_ddr.elf).
+    pub const QCOMBIN_LOADER_BASE: &str = "https://raw.githubusercontent.com/armbian/qcombin/main/";
 }
 
 /// Download and decompression settings

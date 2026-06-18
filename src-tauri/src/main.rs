@@ -162,6 +162,8 @@ fn main() {
             commands::progress::get_flash_progress,
             commands::qdl_operations::get_qdl_devices,
             commands::qdl_operations::flash_qdl_image,
+            commands::qdl_operations::flash_qdl_ufs_image,
+            commands::qdl_operations::get_qdl_edl_entry,
             commands::custom_image::select_custom_image,
             commands::custom_image::check_needs_decompression,
             commands::custom_image::decompress_custom_image,

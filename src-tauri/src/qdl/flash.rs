@@ -11,14 +11,17 @@ use indexmap::IndexMap;
 use qdl::parsers::{firehose_parser_ack_nak, firehose_parser_configure_response};
 use qdl::sahara::{sahara_run, SaharaMode};
 use qdl::types::{
-    FirehoseConfiguration, FirehoseResetMode, FirehoseStorageType, QdlBackend, QdlChan, QdlDevice,
+    FirehoseConfiguration, FirehoseResetMode, QdlBackend, QdlChan, QdlDevice, QdlReadWrite,
 };
 use qdl::{
     firehose_configure, firehose_patch, firehose_program_storage, firehose_read, firehose_reset,
-    setup_target_device,
+    firehose_write_getack, setup_target_device,
 };
 use xmltree::{Element, XMLNode};
 
+use super::extract::FIREHOSE_ELF;
+use super::provision::ProvisionSource;
+use super::QdlStorage;
 use crate::flash::FlashState;
 use crate::{log_info, log_warn};
 
@@ -32,117 +35,9 @@ pub fn qdl_flash(
 ) -> Result<(), String> {
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
-    // --- Stage 1: Connect to EDL device ---
-    update_qdl_stage(&state, "connecting");
-    log_info!("qdl::flash", "Connecting to EDL device...");
-
-    let rw_channel = setup_target_device(QdlBackend::Usb, serial, None).map_err(|e| {
-        let msg = e.to_string();
-        if msg.contains("errno 13")
-            || msg.contains("Permission denied")
-            || msg.contains("Access denied")
-        {
-            "[QDL_PERMISSION_DENIED]".to_string()
-        } else {
-            format!("[QDL_CONNECTION_FAILED] {}", msg)
-        }
-    })?;
-
-    let mut device = QdlDevice {
-        rw: rw_channel,
-        fh_cfg: FirehoseConfiguration {
-            storage_type: FirehoseStorageType::Emmc,
-            storage_sector_size: 512,
-            bypass_storage: false,
-            backend: QdlBackend::Usb,
-            skip_firehose_log: true,
-            verbose_firehose: false,
-            ..Default::default()
-        },
-        reset_on_drop: false,
-    };
-
-    log_info!("qdl::flash", "Connected to EDL device");
-
-    // --- Stage 2: Sahara handshake and firehose programmer upload ---
-    check_cancelled(&state)?;
-    update_qdl_stage(&state, "sahara");
-    log_info!("qdl::flash", "Starting Sahara handshake...");
-
-    // Step 2a: Read chip serial number (initiates the Sahara HELLO exchange)
-    let sn = sahara_run(
-        &mut device,
-        SaharaMode::Command,
-        Some(qdl::sahara::SaharaCmdModeCmd::ReadSerialNum),
-        &mut [],
-        vec![],
-        false,
-    )
-    .map_err(|e| {
-        format!(
-            "Sahara handshake failed: {}. Ensure the device is in EDL mode.",
-            e
-        )
-    })?;
-
-    if sn.len() >= 4 {
-        let serial = u32::from_le_bytes([sn[0], sn[1], sn[2], sn[3]]);
-        log_info!("qdl::flash", "Chip serial number: {:#x}", serial);
-    }
-
-    // Step 2b: Read OEM key hash (best effort, result unused).
-    let _ = sahara_run(
-        &mut device,
-        SaharaMode::Command,
-        Some(qdl::sahara::SaharaCmdModeCmd::ReadOemKeyHash),
-        &mut [],
-        vec![],
-        false,
-    );
-
-    // Step 2c: Upload firehose programmer
-    log_info!("qdl::flash", "Uploading firehose programmer...");
-
-    let elf_path = flash_dir.join("prog_firehose_ddr.elf");
-    let elf_data =
-        fs::read(&elf_path).map_err(|e| format!("Failed to read firehose programmer: {}", e))?;
-
-    sahara_run(
-        &mut device,
-        SaharaMode::WaitingForImage,
-        None,
-        &mut [elf_data],
-        vec![],
-        false,
-    )
-    .map_err(|e| {
-        format!(
-            "Sahara upload failed: {}. The firehose programmer may be incompatible.",
-            e
-        )
-    })?;
-
-    log_info!("qdl::flash", "Firehose programmer uploaded successfully");
-
-    // Once the programmer is up, dropping the device should reset it.
-    device.reset_on_drop = true;
-
-    // --- Stage 3: Configure Firehose ---
-    check_cancelled(&state)?;
-    update_qdl_stage(&state, "configuring");
-    log_info!("qdl::flash", "Configuring Firehose protocol...");
-
-    firehose_read(&mut device, firehose_parser_ack_nak)
-        .map_err(|e| format!("Failed to read firehose welcome: {}", e))?;
-
-    firehose_configure(&mut device, false)
-        .map_err(|e| format!("Firehose configuration failed: {}", e))?;
-
-    // Configure response may renegotiate buffer sizes.
-    firehose_read(&mut device, firehose_parser_configure_response)
-        .map_err(|e| format!("Firehose configure handshake failed: {}", e))?;
-
-    log_info!("qdl::flash", "Firehose configured successfully");
+    // Connect, upload the firehose programmer, and configure Firehose (eMMC defaults).
+    let elf_path = flash_dir.join(FIREHOSE_ELF);
+    let mut device = connect_and_configure(serial, &elf_path, QdlStorage::Emmc, &state)?;
 
     // --- Autoconfig injection (still within the "configuring" stage) ---
     // Inject first-boot preset into the extracted ext4 rootfs blob IN PLACE before Firehose reads it.
@@ -183,6 +78,278 @@ pub fn qdl_flash(
     log_info!("qdl::flash", "QDL flash completed successfully");
 
     Ok(())
+}
+
+/// Flash a whole `.img` to UFS via one raw Firehose write to LUN 0 sector 0
+/// (`edl-ng --memory ufs write-sector 0 <img>` equivalent).
+pub fn qdl_flash_ufs(
+    image_path: &Path,
+    elf_path: &Path,
+    serial: Option<String>,
+    autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
+    provision: ProvisionSource,
+    state: Arc<FlashState>,
+) -> Result<(), String> {
+    state.qdl.is_active.store(true, Ordering::SeqCst);
+
+    let mut device = connect_and_configure(serial, elf_path, QdlStorage::Ufs, &state)?;
+
+    // Inject before Firehose reads the image; detect.rs handles the 4096-byte UFS sectors.
+    if let Some(cfg) = autoconfig.as_ref() {
+        check_cancelled(&state)?;
+        crate::autoconfig::inject_into_image(image_path, cfg)
+            .map_err(|e| format!("[QDL_AUTOCONFIG_FAILED] {}", e))?;
+    }
+
+    check_cancelled(&state)?;
+    update_qdl_stage(&state, "firehose");
+
+    let sector_size = QdlStorage::Ufs.sector_size();
+    let img_len = fs::metadata(image_path)
+        .map_err(|e| format!("Failed to stat image: {}", e))?
+        .len();
+    let num_sectors = raw_num_sectors(img_len, sector_size);
+    let total_bytes = num_sectors as u64 * sector_size as u64;
+    state.qdl.partitions_total.store(1, Ordering::SeqCst);
+    state.total_bytes.store(total_bytes, Ordering::SeqCst);
+    {
+        let mut stage = state.qdl.stage.lock().unwrap_or_else(|p| p.into_inner());
+        *stage = "partition:system".to_string();
+    }
+
+    log_info!(
+        "qdl::flash",
+        "Writing {} bytes ({} sectors) to UFS...",
+        img_len,
+        num_sectors
+    );
+
+    if let Err(e) = write_ufs_image(&mut device, image_path, num_sectors, &state) {
+        // A program NAK on UFS means the module has no LUN 0 (a brand-new, unprovisioned module):
+        // provision it in-session, then retry the write once.
+        if e.contains("NAKed") {
+            match provision {
+                ProvisionSource::Ready(prov) => {
+                    check_cancelled(&state)?;
+                    update_qdl_stage(&state, "provisioning");
+                    provision_ufs(&mut device, &prov)?;
+                    check_cancelled(&state)?;
+                    update_qdl_stage(&state, "firehose");
+                    state.written_bytes.store(0, Ordering::SeqCst);
+                    write_ufs_image(&mut device, image_path, num_sectors, &state).map_err(|e| {
+                        format!("Failed to write UFS image after provisioning: {e}")
+                    })?;
+                }
+                ProvisionSource::Absent => {
+                    return Err(format!("Failed to write UFS image: {e} The UFS module is likely unprovisioned (no LUN 0); provision it before flashing."));
+                }
+                ProvisionSource::Unavailable(reason) => {
+                    return Err(format!("Failed to write UFS image: {e} The module looks unprovisioned and auto-provisioning could not run: {reason}"));
+                }
+            }
+        } else {
+            return Err(format!("Failed to write UFS image: {e}"));
+        }
+    }
+
+    state.qdl.partitions_written.store(1, Ordering::SeqCst);
+    state.written_bytes.store(total_bytes, Ordering::SeqCst);
+
+    update_qdl_stage(&state, "resetting");
+    log_info!("qdl::flash", "Resetting device...");
+    device.reset_on_drop = false;
+    firehose_reset(&mut device, &FirehoseResetMode::Reset, 0)
+        .map_err(|e| {
+            log_warn!("qdl::flash", "Device reset failed (non-fatal): {}", e);
+        })
+        .ok();
+
+    update_qdl_stage(&state, "complete");
+    log_info!("qdl::flash", "QDL UFS flash completed successfully");
+    Ok(())
+}
+
+/// Sectors needed to hold `len` bytes, rounding the final partial sector up.
+fn raw_num_sectors(len: u64, sector: usize) -> usize {
+    len.div_ceil(sector as u64) as usize
+}
+
+/// Stream `image_path` to UFS LUN 0 sector 0. Returns the raw qdlrs error string on failure
+/// so the caller can branch on a `<program>` NAK (unprovisioned module).
+fn write_ufs_image(
+    device: &mut QdlDevice<dyn QdlReadWrite>,
+    image_path: &Path,
+    num_sectors: usize,
+    state: &Arc<FlashState>,
+) -> Result<(), String> {
+    let file = fs::File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+    let progress_state = state.clone();
+    let mut reader = ProgressReader::new(file, state.clone(), move |bytes_transferred| {
+        progress_state
+            .written_bytes
+            .store(bytes_transferred, Ordering::SeqCst);
+    });
+    firehose_program_storage(device, &mut reader, "system", num_sectors, 0, 0, "0")
+        .map_err(|e| e.to_string())
+}
+
+/// Provision a blank UFS module in the current session from the qcombin `<ufs>` descriptor.
+/// Configures with SkipStorageInit (a blank module has no LUN to init), sends each `<ufs>`
+/// command, then re-initialises storage so the new LUN 0 is writable.
+fn provision_ufs(device: &mut QdlDevice<dyn QdlReadWrite>, xml_path: &Path) -> Result<(), String> {
+    let commands = super::provision::parse_ufs_commands(xml_path)?;
+    log_info!(
+        "qdl::flash",
+        "Provisioning UFS ({} commands) from {}",
+        commands.len(),
+        xml_path.display()
+    );
+
+    firehose_configure(device, true).map_err(|e| format!("Provision configure failed: {e}"))?;
+    firehose_read(device, firehose_parser_ack_nak)
+        .map_err(|e| format!("Provision configure handshake failed: {e}"))?;
+
+    for cmd in &commands {
+        let mut packet = build_ufs_packet(cmd);
+        firehose_write_getack(
+            device,
+            &mut packet,
+            "send UFS provisioning command".to_string(),
+        )
+        .map_err(|e| format!("UFS provisioning command failed: {e}"))?;
+    }
+
+    firehose_configure(device, false)
+        .map_err(|e| format!("Post-provision configure failed: {e}"))?;
+    firehose_read(device, firehose_parser_ack_nak)
+        .map_err(|e| format!("Post-provision configure handshake failed: {e}"))?;
+
+    log_info!("qdl::flash", "UFS provisioning complete");
+    Ok(())
+}
+
+/// Serialise one `<ufs>` command into a Firehose `<data>` packet.
+fn build_ufs_packet(attrs: &[(String, String)]) -> Vec<u8> {
+    let mut s = String::from("<?xml version=\"1.0\" ?>\n<data>\n  <ufs");
+    for (k, v) in attrs {
+        s.push(' ');
+        s.push_str(k);
+        s.push_str("=\"");
+        s.push_str(v);
+        s.push('"');
+    }
+    s.push_str(" />\n</data>");
+    s.into_bytes()
+}
+
+/// Connect, upload the firehose programmer from `elf_path`, and configure Firehose for `storage`.
+fn connect_and_configure(
+    serial: Option<String>,
+    elf_path: &Path,
+    storage: QdlStorage,
+    state: &Arc<FlashState>,
+) -> Result<QdlDevice<dyn QdlReadWrite>, String> {
+    update_qdl_stage(state, "connecting");
+    log_info!("qdl::flash", "Connecting to EDL device...");
+
+    let rw_channel = setup_target_device(QdlBackend::Usb, serial, None).map_err(|e| {
+        let msg = e.to_string();
+        if msg.contains("errno 13")
+            || msg.contains("Permission denied")
+            || msg.contains("Access denied")
+        {
+            "[QDL_PERMISSION_DENIED]".to_string()
+        } else {
+            format!("[QDL_CONNECTION_FAILED] {}", msg)
+        }
+    })?;
+
+    let mut device = QdlDevice {
+        rw: rw_channel,
+        fh_cfg: FirehoseConfiguration {
+            storage_type: storage.firehose_type(),
+            storage_sector_size: storage.sector_size(),
+            bypass_storage: false,
+            backend: QdlBackend::Usb,
+            skip_firehose_log: true,
+            verbose_firehose: false,
+            ..Default::default()
+        },
+        reset_on_drop: false,
+    };
+    log_info!("qdl::flash", "Connected to EDL device");
+
+    check_cancelled(state)?;
+    update_qdl_stage(state, "sahara");
+    log_info!("qdl::flash", "Starting Sahara handshake...");
+
+    // Reading the chip serial number initiates the Sahara HELLO exchange.
+    let sn = sahara_run(
+        &mut device,
+        SaharaMode::Command,
+        Some(qdl::sahara::SaharaCmdModeCmd::ReadSerialNum),
+        &mut [],
+        vec![],
+        false,
+    )
+    .map_err(|e| {
+        format!(
+            "Sahara handshake failed: {}. Ensure the device is in EDL mode.",
+            e
+        )
+    })?;
+    if sn.len() >= 4 {
+        log_info!(
+            "qdl::flash",
+            "Chip serial number: {:#x}",
+            u32::from_le_bytes([sn[0], sn[1], sn[2], sn[3]])
+        );
+    }
+
+    // OEM key hash (best effort, result unused).
+    let _ = sahara_run(
+        &mut device,
+        SaharaMode::Command,
+        Some(qdl::sahara::SaharaCmdModeCmd::ReadOemKeyHash),
+        &mut [],
+        vec![],
+        false,
+    );
+
+    log_info!("qdl::flash", "Uploading firehose programmer...");
+    let elf_data =
+        fs::read(elf_path).map_err(|e| format!("Failed to read firehose programmer: {}", e))?;
+    sahara_run(
+        &mut device,
+        SaharaMode::WaitingForImage,
+        None,
+        &mut [elf_data],
+        vec![],
+        false,
+    )
+    .map_err(|e| {
+        format!(
+            "Sahara upload failed: {}. The firehose programmer may be incompatible.",
+            e
+        )
+    })?;
+    log_info!("qdl::flash", "Firehose programmer uploaded successfully");
+
+    // Once the programmer is up, dropping the device should reset it.
+    device.reset_on_drop = true;
+
+    check_cancelled(state)?;
+    update_qdl_stage(state, "configuring");
+    log_info!("qdl::flash", "Configuring Firehose protocol...");
+    firehose_read(&mut device, firehose_parser_ack_nak)
+        .map_err(|e| format!("Failed to read firehose welcome: {}", e))?;
+    firehose_configure(&mut device, false)
+        .map_err(|e| format!("Firehose configuration failed: {}", e))?;
+    firehose_read(&mut device, firehose_parser_configure_response)
+        .map_err(|e| format!("Firehose configure handshake failed: {}", e))?;
+    log_info!("qdl::flash", "Firehose configured successfully");
+
+    Ok(device)
 }
 
 /// Offset of the ext4 superblock magic within a bare ext4 image, and its value.
@@ -667,5 +834,19 @@ impl<R: Read, F: FnMut(u64)> Read for ProgressReader<R, F> {
         self.bytes_transferred += buf.len() as u64;
         (self.on_progress)(self.bytes_transferred);
         Ok(n)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn raw_num_sectors_rounds_up() {
+        assert_eq!(raw_num_sectors(0, 4096), 0);
+        assert_eq!(raw_num_sectors(4096, 4096), 1);
+        assert_eq!(raw_num_sectors(4097, 4096), 2);
+        assert_eq!(raw_num_sectors(8192, 4096), 2);
+        assert_eq!(raw_num_sectors(512, 512), 1);
     }
 }

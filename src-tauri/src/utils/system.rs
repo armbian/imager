@@ -64,6 +64,11 @@ pub fn qdl_temp_dir() -> PathBuf {
     app_cache_dir().join("qdl-temp")
 }
 
+/// Directory caching downloaded QDL firehose loaders, keyed by SoC family.
+pub fn loaders_dir() -> PathBuf {
+    app_cache_dir().join("loaders")
+}
+
 /// Directory holding session log files.
 pub fn logs_dir() -> PathBuf {
     app_cache_dir().join("logs")

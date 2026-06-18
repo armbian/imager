@@ -286,6 +286,8 @@ mod tests {
         assert!(!render_preset(&c).contains("PRESET_NET_WIFI_SSID"));
 
         c.apply_network = Some(true);
+        // Wi-Fi credentials are only emitted when Wi-Fi is enabled.
+        c.wifi_enabled = Some(true);
         let out = render_preset(&c);
         assert!(out.contains("PRESET_NET_CHANGE_DEFAULTS=\"1\"\n"));
         assert!(out.contains("PRESET_NET_WIFI_SSID=\"home\"\n"));
@@ -294,6 +296,10 @@ mod tests {
     #[test]
     fn lang_flag_uses_y_n() {
         let mut c = empty();
+        // Localization keys are only emitted once a full first user is defined.
+        c.user_name = Some("u".to_string());
+        c.user_password = Some("p".to_string());
+        c.user_real_name = Some("User".to_string());
         c.lang_based_on_location = Some(true);
         assert!(render_preset(&c).contains("SET_LANG_BASED_ON_LOCATION=\"y\"\n"));
         c.lang_based_on_location = Some(false);
