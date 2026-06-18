@@ -159,6 +159,8 @@ pub struct ImageInfo {
     pub stability: String,
     /// Image format: "sd" (block), "qdl" (Qualcomm EDL), "rootfs", "qemu", "hyperv"
     pub format: String,
+    /// Storage target ("ufs" = raw Firehose write to internal UFS via QDL), else None.
+    pub storage: Option<String>,
     /// Companion files (bootloaders, firmware, etc.)
     #[serde(default)]
     pub companions: Vec<CompanionInfo>,
