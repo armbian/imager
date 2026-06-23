@@ -442,9 +442,13 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             let (model, is_removable, bus_type) = query_device_properties(disk_number)?;
             let drive_letters = get_drive_letters_for_disk(disk_number);
 
-            let is_system = drive_letters
+            let has_c_drive = drive_letters
                 .as_ref()
                 .map_or(false, |letters| letters.iter().any(|l| l == "C:"));
+
+            // Internal fixed disks are system; USB stays selectable; C: always wins.
+            let is_internal = !is_removable && bus_type.as_deref() != Some("USB");
+            let is_system = is_internal || has_c_drive;
 
             let name = match &drive_letters {
                 Some(letters) => format!("Disk {} ({})", disk_number, letters.join(", ")),

@@ -26,6 +26,7 @@
     "cachedImages": "Immagini in cache"
   },
   "flash": {
+    "systemDeviceWarning": "Scriverci può distruggere il sistema operativo in uso.",
     "downloading": "Download dell'immagine...",
     "verifyingSha": "Verifica del download...",
     "decompressing": "Decompressione dell'immagine...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}h fa",
       "daysAgo": "{{count}}g fa"
     },
+    "devices": "Dispositivi",
+    "allowSystemDevices": "Consenti dischi di sistema",
+    "allowSystemDevicesDescription": "Rischioso: puoi sovrascrivere il sistema operativo in uso.",
     "armbian": {
       "title": "Armbian",
       "label": "Rileva la scheda automaticamente",
@@ -239,6 +243,8 @@
       "mode_auto": "Silenzioso"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Impostazione dischi di sistema aggiornata",
+      "allowSystemDevicesError": "Impossibile aggiornare l'impostazione dischi di sistema",
       "motdUpdated": "Impostazione suggerimenti aggiornata",
       "motdError": "Impossibile aggiornare l'impostazione dei suggerimenti",
       "welcomeUpdated": "Impostazione schermata di benvenuto aggiornata",

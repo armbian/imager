@@ -26,6 +26,7 @@
     "cachedImages": "Кешовані образи"
   },
   "flash": {
+    "systemDeviceWarning": "Запис може знищити запущену ОС.",
     "downloading": "Завантаження образу...",
     "verifyingSha": "Перевірка цілісності завантаження...",
     "decompressing": "Розпакування образу...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}год тому",
       "daysAgo": "{{count}}д тому"
     },
+    "devices": "Пристрої",
+    "allowSystemDevices": "Дозволити системні диски",
+    "allowSystemDevicesDescription": "Ризиковано: можна перезаписати запущену ОС.",
     "armbian": {
       "title": "Armbian",
       "label": "Автовизначення плати",
@@ -239,6 +243,8 @@
       "mode_auto": "Автоматичний"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Налаштування системних дисків оновлено",
+      "allowSystemDevicesError": "Не вдалося оновити налаштування системних дисків",
       "motdUpdated": "Налаштування підказок оновлено",
       "motdError": "Не вдалося оновити налаштування підказок",
       "welcomeUpdated": "Налаштування вітального екрана оновлено",

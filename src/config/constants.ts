@@ -69,6 +69,7 @@ export const SETTINGS = {
     CACHE_MAX_SIZE: 'cache_max_size',
     ARMBIAN_BOARD_DETECTION: 'armbian_board_detection',
     AUTOCONFIG_PROFILES: 'autoconfig_profiles',
+    ALLOW_SYSTEM_DEVICES: 'allow_system_devices',
   },
   DEFAULTS: {
     THEME: 'auto',
@@ -82,6 +83,7 @@ export const SETTINGS = {
     CACHE_ENABLED: true,
     ARMBIAN_BOARD_DETECTION: 'modal',
     AUTOCONFIG_PROFILES: [] as [],
+    ALLOW_SYSTEM_DEVICES: false,
   },
   ARMBIAN_DETECTION_MODES: {
     DISABLED: 'disabled',

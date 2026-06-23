@@ -26,6 +26,7 @@
     "cachedImages": "Obrazy w pamięci podręcznej"
   },
   "flash": {
+    "systemDeviceWarning": "Zapis może zniszczyć uruchomiony system.",
     "downloading": "Pobieranie obrazu...",
     "verifyingSha": "Weryfikowanie pobranego pliku...",
     "decompressing": "Rozpakowywanie obrazu...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}h temu",
       "daysAgo": "{{count}}d temu"
     },
+    "devices": "Urządzenia",
+    "allowSystemDevices": "Zezwalaj na dyski systemowe",
+    "allowSystemDevicesDescription": "Ryzykowne: możesz nadpisać uruchomiony system.",
     "armbian": {
       "title": "Armbian",
       "label": "Automatyczne wykrywanie płytki",
@@ -239,6 +243,8 @@
       "mode_auto": "Ciche"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Zaktualizowano ustawienie dysków systemowych",
+      "allowSystemDevicesError": "Nie udało się zaktualizować ustawienia dysków systemowych",
       "motdUpdated": "Ustawienie porad zaktualizowane",
       "motdError": "Nie udało się zaktualizować ustawienia porad",
       "welcomeUpdated": "Ustawienie ekranu powitalnego zaktualizowane",

@@ -26,6 +26,7 @@
     "cachedImages": "Imágenes en caché"
   },
   "flash": {
+    "systemDeviceWarning": "Grabarla puede destruir el sistema operativo en uso.",
     "downloading": "Descargando imagen...",
     "verifyingSha": "Verificando integridad de la descarga...",
     "decompressing": "Descomprimiendo imagen...",
@@ -230,6 +231,9 @@
       "hoursAgo": "hace {{count}}h",
       "daysAgo": "hace {{count}}d"
     },
+    "devices": "Dispositivos",
+    "allowSystemDevices": "Permitir unidades del sistema",
+    "allowSystemDevicesDescription": "Arriesgado: puedes sobrescribir el sistema operativo en uso.",
     "armbian": {
       "title": "Armbian",
       "label": "Detectar placa automáticamente",
@@ -239,6 +243,8 @@
       "mode_auto": "Silencioso"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Ajuste de unidades del sistema actualizado",
+      "allowSystemDevicesError": "No se pudo actualizar el ajuste de unidades del sistema",
       "motdUpdated": "Configuración de consejos actualizada",
       "motdError": "Error al actualizar la configuración de consejos",
       "welcomeUpdated": "Configuración de pantalla de bienvenida actualizada",

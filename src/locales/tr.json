@@ -26,6 +26,7 @@
     "cachedImages": "Önbellekteki imajlar"
   },
   "flash": {
+    "systemDeviceWarning": "Yazmak çalışan işletim sistemini yok edebilir.",
     "downloading": "İmaj indiriliyor...",
     "verifyingSha": "İndirme bütünlüğü doğrulanıyor...",
     "decompressing": "İmaj açılıyor...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}sa önce",
       "daysAgo": "{{count}}g önce"
     },
+    "devices": "Aygıtlar",
+    "allowSystemDevices": "Sistem sürücülerine izin ver",
+    "allowSystemDevicesDescription": "Riskli: çalışan işletim sistemini üzerine yazabilirsiniz.",
     "armbian": {
       "title": "Armbian",
       "label": "Kartı otomatik algıla",
@@ -239,6 +243,8 @@
       "mode_auto": "Sessiz"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Sistem sürücüleri ayarı güncellendi",
+      "allowSystemDevicesError": "Sistem sürücüleri ayarı güncellenemedi",
       "motdUpdated": "İpucu ayarı güncellendi",
       "motdError": "İpucu ayarı güncellenemedi",
       "welcomeUpdated": "Karşılama ekranı ayarı güncellendi",
