@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Archive, Trash2, Monitor, Terminal, Zap, RotateCcw, Package } from 'lucide-react';
+import { X, Archive, Trash2, Monitor, Terminal, Zap, RotateCcw, Package, HardDrive } from 'lucide-react';
 import { listCachedImages, deleteCachedImage, getBoards, getCachedBoardImage, logWarn } from '../../hooks/useTauri';
 import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
@@ -308,6 +308,8 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                       const desktopEnv = parsed?.desktop ? getDesktopEnv(parsed.desktop) : null;
                       const kernelType = parsed?.branch ? getKernelType(parsed.branch) : null;
                       const badgeConfig = kernelType ? KERNEL_BADGES[kernelType] : null;
+                      const isUfs = !!parsed?.kernel && parsed.kernel.toLowerCase().endsWith('-ufs');
+                      const kernelVersion = isUfs ? parsed!.kernel!.slice(0, -4) : parsed?.kernel ?? null;
                       // Split "26.2.0-trunk.904" → base headline + build suffix (shown in meta).
                       const { base: baseVersion, build } = splitArmbianVersion(parsed?.version ?? '');
 
@@ -378,9 +380,23 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                                 >
                                   <Zap size={11} />
                                   <span>{badgeConfig.label}</span>
-                                  {parsed?.kernel && (
-                                    <span style={{ opacity: 0.8, marginLeft: 1 }}>{parsed.kernel}</span>
+                                  {kernelVersion && (
+                                    <span style={{ opacity: 0.8, marginLeft: 1 }}>{kernelVersion}</span>
                                   )}
+                                </div>
+                              )}
+                              {isUfs && (
+                                <div
+                                  className="side-info-badge"
+                                  style={{
+                                    background: `linear-gradient(135deg, #f59e0b 0%, ${adjustBrightness('#f59e0b', -20)} 100%)`,
+                                    boxShadow: '0 2px 6px #f59e0b66',
+                                    border: 'none',
+                                    color: 'white',
+                                  }}
+                                >
+                                  <HardDrive size={11} />
+                                  <span>UFS</span>
                                 </div>
                               )}
                             </div>
