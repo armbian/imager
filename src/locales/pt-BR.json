@@ -26,6 +26,7 @@
     "cachedImages": "Imagens em cache"
   },
   "flash": {
+    "systemDeviceWarning": "Gravá-lo pode destruir o sistema operacional em execução.",
     "downloading": "Baixando imagem...",
     "verifyingSha": "Verificando o download...",
     "decompressing": "Descompactando imagem...",
@@ -230,6 +231,9 @@
       "hoursAgo": "há {{count}}h",
       "daysAgo": "há {{count}}d"
     },
+    "devices": "Dispositivos",
+    "allowSystemDevices": "Permitir discos do sistema",
+    "allowSystemDevicesDescription": "Arriscado: você pode sobrescrever o sistema operacional em execução.",
     "armbian": {
       "title": "Armbian",
       "label": "Detectar placa automaticamente",
@@ -239,6 +243,8 @@
       "mode_auto": "Silencioso"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Configuração de discos do sistema atualizada",
+      "allowSystemDevicesError": "Falha ao atualizar a configuração de discos do sistema",
       "motdUpdated": "Configuração de dicas atualizada",
       "motdError": "Falha ao atualizar configuração de dicas",
       "welcomeUpdated": "Configuração da tela de boas-vindas atualizada",

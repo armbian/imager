@@ -26,6 +26,7 @@
     "cachedImages": "캐시된 이미지"
   },
   "flash": {
+    "systemDeviceWarning": "기록하면 실행 중인 OS가 손상될 수 있습니다.",
     "downloading": "이미지 다운로드 중...",
     "verifyingSha": "다운로드 확인 중...",
     "decompressing": "이미지 압축 해제 중...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}시간 전",
       "daysAgo": "{{count}}일 전"
     },
+    "devices": "장치",
+    "allowSystemDevices": "시스템 드라이브 허용",
+    "allowSystemDevicesDescription": "위험: 실행 중인 OS를 덮어쓸 수 있습니다.",
     "armbian": {
       "title": "Armbian",
       "label": "보드 자동 감지",
@@ -239,6 +243,8 @@
       "mode_auto": "자동"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "시스템 드라이브 설정이 업데이트되었습니다",
+      "allowSystemDevicesError": "시스템 드라이브 설정을 업데이트하지 못했습니다",
       "motdUpdated": "팁 설정을 업데이트했습니다",
       "motdError": "팁 설정을 업데이트하지 못했습니다",
       "welcomeUpdated": "시작 화면 설정을 업데이트했습니다",

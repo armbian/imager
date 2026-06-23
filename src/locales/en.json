@@ -26,6 +26,7 @@
     "cachedImages": "Cached Images"
   },
   "flash": {
+    "systemDeviceWarning": "Flashing this can destroy the running OS.",
     "downloading": "Downloading image...",
     "verifyingSha": "Verifying the download...",
     "decompressing": "Decompressing image...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}h ago",
       "daysAgo": "{{count}}d ago"
     },
+    "devices": "Devices",
+    "allowSystemDevices": "Allow system drives",
+    "allowSystemDevicesDescription": "Risky: you can overwrite the running OS.",
     "armbian": {
       "title": "Armbian",
       "label": "Auto-detect board",
@@ -239,6 +243,8 @@
       "mode_auto": "Silent"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "System drives setting updated",
+      "allowSystemDevicesError": "Failed to update system drives setting",
       "motdUpdated": "Tips setting updated",
       "motdError": "Failed to update tips setting",
       "welcomeUpdated": "Welcome screen setting updated",

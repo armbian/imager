@@ -26,6 +26,7 @@
     "cachedImages": "Кэшированные образы"
   },
   "flash": {
+    "systemDeviceWarning": "Запись может уничтожить работающую ОС.",
     "downloading": "Загрузка образа...",
     "verifyingSha": "Проверка загрузки...",
     "decompressing": "Распаковка образа...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}ч назад",
       "daysAgo": "{{count}}д назад"
     },
+    "devices": "Устройства",
+    "allowSystemDevices": "Разрешить системные диски",
+    "allowSystemDevicesDescription": "Рискованно: можно перезаписать работающую ОС.",
     "armbian": {
       "title": "Armbian",
       "label": "Автоопределение платы",
@@ -239,6 +243,8 @@
       "mode_auto": "Тихий"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Настройка системных дисков обновлена",
+      "allowSystemDevicesError": "Не удалось обновить настройку системных дисков",
       "motdUpdated": "Настройка подсказок обновлена",
       "motdError": "Не удалось обновить настройку подсказок",
       "welcomeUpdated": "Настройка экрана приветствия обновлена",

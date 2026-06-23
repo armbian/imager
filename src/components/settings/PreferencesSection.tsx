@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Lightbulb, Download, ShieldOff, Cpu, Sparkles, WifiOff } from 'lucide-react';
+import { Lightbulb, Download, ShieldOff, Cpu, Sparkles, WifiOff, ShieldAlert } from 'lucide-react';
 import {
   getShowMotd,
   setShowMotd,
@@ -12,6 +12,8 @@ import {
   setSkipVerify,
   getForceOffline,
   setForceOffline,
+  getAllowSystemDevices,
+  setAllowSystemDevices,
   getArmbianBoardDetection,
   setArmbianBoardDetection,
 } from '../../hooks/useSettings';
@@ -32,6 +34,7 @@ export function PreferencesSection() {
     showWelcome: boolean;
     skipVerify: boolean;
     forceOffline: boolean;
+    allowSystemDevices: boolean;
     armbianDetection: string;
     isArmbian: boolean;
   }>({
@@ -40,6 +43,7 @@ export function PreferencesSection() {
     showWelcome: getShowWelcome,
     skipVerify: getSkipVerify,
     forceOffline: getForceOffline,
+    allowSystemDevices: getAllowSystemDevices,
     armbianDetection: getArmbianBoardDetection,
     isArmbian: async () => {
       const info = await getSystemInfo();
@@ -57,6 +61,7 @@ export function PreferencesSection() {
   const [showWelcome, setShowWelcomeState] = useState<boolean>(true);
   const [skipVerify, setSkipVerifyState] = useState<boolean>(false);
   const [forceOffline, setForceOfflineState] = useState<boolean>(false);
+  const [allowSystemDevices, setAllowSystemDevicesState] = useState<boolean>(false);
   const [armbianDetection, setArmbianDetection] = useState<string>('disabled');
   const [isToggling, setIsToggling] = useState<boolean>(false);
   const [initialized, setInitialized] = useState(false);
@@ -69,6 +74,7 @@ export function PreferencesSection() {
     if (settingsGroup.showWelcome !== undefined) setShowWelcomeState(settingsGroup.showWelcome);
     if (settingsGroup.skipVerify !== undefined) setSkipVerifyState(settingsGroup.skipVerify);
     if (settingsGroup.forceOffline !== undefined) setForceOfflineState(settingsGroup.forceOffline);
+    if (settingsGroup.allowSystemDevices !== undefined) setAllowSystemDevicesState(settingsGroup.allowSystemDevices);
     if (settingsGroup.armbianDetection !== undefined) setArmbianDetection(settingsGroup.armbianDetection);
     setInitialized(true);
   }, [loaded, settingsGroup]);
@@ -154,6 +160,28 @@ export function PreferencesSection() {
       console.error('Failed to set force offline preference:', error);
       setForceOfflineState(previousValue);
       showError(t('settings.toast.forceOfflineError'));
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  /** Toggles allow-system-devices optimistically, rolling back on failure; guarded by isToggling. */
+  const handleToggleAllowSystemDevices = async () => {
+    if (isToggling) return;
+
+    const previousValue = allowSystemDevices;
+    const newValue = !allowSystemDevices;
+    setAllowSystemDevicesState(newValue);
+    setIsToggling(true);
+
+    try {
+      await setAllowSystemDevices(newValue);
+      window.dispatchEvent(new Event(EVENTS.SETTINGS_CHANGED));
+      showSuccess(t('settings.toast.allowSystemDevicesUpdated'));
+    } catch (error) {
+      console.error('Failed to set allow system devices preference:', error);
+      setAllowSystemDevicesState(previousValue);
+      showError(t('settings.toast.allowSystemDevicesError'));
     } finally {
       setIsToggling(false);
     }
@@ -310,6 +338,34 @@ export function PreferencesSection() {
                 onChange={handleToggleForceOffline}
                 disabled={isToggling}
                 aria-label={t('settings.forceOffline')}
+              />
+              <span className="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Devices: unlock internal/system drives for flashing */}
+      <div className="settings-group">
+        <h4 className="settings-group__title">{t('settings.devices')}</h4>
+        <div className="settings-group__card">
+          <div className="settings-row">
+            <div className="settings-row__main">
+              <div className="settings-row__icon">
+                <ShieldAlert size={18} />
+              </div>
+              <div className="settings-row__text">
+                <div className="settings-row__label">{t('settings.allowSystemDevices')}</div>
+                <div className="settings-row__desc">{t('settings.allowSystemDevicesDescription')}</div>
+              </div>
+            </div>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={allowSystemDevices}
+                onChange={handleToggleAllowSystemDevices}
+                disabled={isToggling}
+                aria-label={t('settings.allowSystemDevices')}
               />
               <span className="toggle-slider"></span>
             </label>

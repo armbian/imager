@@ -26,6 +26,7 @@
     "cachedImages": "Imagens em cache"
   },
   "flash": {
+    "systemDeviceWarning": "Gravá-lo pode destruir o sistema operativo em execução.",
     "downloading": "A transferir imagem...",
     "verifyingSha": "A verificar a transferência...",
     "decompressing": "A descomprimir imagem...",
@@ -230,6 +231,9 @@
       "hoursAgo": "há {{count}}h",
       "daysAgo": "há {{count}}d"
     },
+    "devices": "Dispositivos",
+    "allowSystemDevices": "Permitir discos do sistema",
+    "allowSystemDevicesDescription": "Arriscado: pode substituir o sistema operativo em execução.",
     "armbian": {
       "title": "Armbian",
       "label": "Detetar placa automaticamente",
@@ -239,6 +243,8 @@
       "mode_auto": "Silencioso"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Definição de discos do sistema atualizada",
+      "allowSystemDevicesError": "Falha ao atualizar a definição de discos do sistema",
       "motdUpdated": "Definição de dicas atualizada",
       "motdError": "Falha ao atualizar a definição de dicas",
       "welcomeUpdated": "Definição do ecrã de boas-vindas atualizada",

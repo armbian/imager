@@ -26,6 +26,7 @@
     "cachedImages": "缓存镜像"
   },
   "flash": {
+    "systemDeviceWarning": "写入可能会破坏正在运行的操作系统。",
     "downloading": "正在下载镜像……",
     "verifyingSha": "正在校验下载内容……",
     "decompressing": "正在解压镜像……",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}} 小时前",
       "daysAgo": "{{count}} 天前"
     },
+    "devices": "设备",
+    "allowSystemDevices": "允许系统磁盘",
+    "allowSystemDevicesDescription": "有风险：可能覆盖正在运行的操作系统。",
     "armbian": {
       "title": "Armbian",
       "label": "自动检测开发板",
@@ -239,6 +243,8 @@
       "mode_auto": "静默"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "系统磁盘设置已更新",
+      "allowSystemDevicesError": "更新系统磁盘设置失败",
       "motdUpdated": "提示设置已更新",
       "motdError": "更新提示设置失败",
       "welcomeUpdated": "欢迎界面设置已更新",

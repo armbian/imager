@@ -26,6 +26,7 @@
     "cachedImages": "キャッシュ済みイメージ"
   },
   "flash": {
+    "systemDeviceWarning": "書き込むと実行中のOSが破壊される可能性があります。",
     "downloading": "イメージをダウンロードしています...",
     "verifyingSha": "ダウンロードを検証しています...",
     "decompressing": "イメージを展開しています...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}時間前",
       "daysAgo": "{{count}}日前"
     },
+    "devices": "デバイス",
+    "allowSystemDevices": "システムドライブを許可",
+    "allowSystemDevicesDescription": "危険：実行中のOSを上書きする可能性があります。",
     "armbian": {
       "title": "Armbian",
       "label": "ボードを自動検出",
@@ -239,6 +243,8 @@
       "mode_auto": "サイレント"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "システムドライブ設定を更新しました",
+      "allowSystemDevicesError": "システムドライブ設定の更新に失敗しました",
       "motdUpdated": "ヒントの設定を更新しました",
       "motdError": "ヒントの設定の更新に失敗しました",
       "welcomeUpdated": "ようこそ画面の設定を更新しました",

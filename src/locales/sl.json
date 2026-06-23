@@ -26,6 +26,7 @@
     "cachedImages": "Predpomnjene slike"
   },
   "flash": {
+    "systemDeviceWarning": "Zapisovanje lahko uniči delujoči operacijski sistem.",
     "downloading": "Prenašanje slike...",
     "verifyingSha": "Preverjanje celovitosti prenosa...",
     "decompressing": "Razširjanje slike...",
@@ -230,6 +231,9 @@
       "hoursAgo": "pred {{count}}h",
       "daysAgo": "pred {{count}}d"
     },
+    "devices": "Naprave",
+    "allowSystemDevices": "Dovoli sistemske diske",
+    "allowSystemDevicesDescription": "Tvegano: lahko prepišeš delujoči operacijski sistem.",
     "armbian": {
       "title": "Armbian",
       "label": "Samodejna zaznava plošče",
@@ -239,6 +243,8 @@
       "mode_auto": "Samodejno"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Nastavitev sistemskih diskov posodobljena",
+      "allowSystemDevicesError": "Posodobitev nastavitve sistemskih diskov ni uspela",
       "motdUpdated": "Nastavitev nasvetov posodobljena",
       "motdError": "Nastavitve nasvetov ni bilo mogoče posodobiti",
       "welcomeUpdated": "Nastavitev pozdravnega zaslona posodobljena",

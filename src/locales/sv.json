@@ -26,6 +26,7 @@
     "cachedImages": "Cachade avbildningar"
   },
   "flash": {
+    "systemDeviceWarning": "Att skriva till den kan förstöra operativsystemet som körs.",
     "downloading": "Laddar ner avbildning...",
     "verifyingSha": "Verifierar nedladdningen...",
     "decompressing": "Packar upp avbildning...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}} tim sedan",
       "daysAgo": "{{count}} dgr sedan"
     },
+    "devices": "Enheter",
+    "allowSystemDevices": "Tillåt systemdiskar",
+    "allowSystemDevicesDescription": "Riskabelt: du kan skriva över operativsystemet som körs.",
     "armbian": {
       "title": "Armbian",
       "label": "Identifiera kort automatiskt",
@@ -239,6 +243,8 @@
       "mode_auto": "Tyst"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Inställning för systemdiskar uppdaterad",
+      "allowSystemDevicesError": "Det gick inte att uppdatera inställningen för systemdiskar",
       "motdUpdated": "Tipsinställning uppdaterad",
       "motdError": "Det gick inte att uppdatera tipsinställningen",
       "welcomeUpdated": "Inställning för välkomstskärm uppdaterad",

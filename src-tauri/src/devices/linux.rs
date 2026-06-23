@@ -27,7 +27,7 @@ fn is_device_read_only(device_name: &str) -> bool {
 pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
     // JSON output parses reliably even when model names contain spaces.
     let output = Command::new("lsblk")
-        .args(["-dpJo", "NAME,SIZE,MODEL,RM,TRAN", "-b"])
+        .args(["-dpJo", "NAME,SIZE,MODEL,RM,HOTPLUG,TRAN", "-b"])
         .output()
         .map_err(|e| {
             log_error!("devices", "Failed to run lsblk: {}", e);
@@ -74,8 +74,8 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
 
         let dev_name = path.strip_prefix("/dev/").unwrap_or(path);
 
-        // Flag rather than drop system disks, matching the macOS behavior.
-        let is_system = system_disks
+        // The disk backing the running root/boot mounts is always treated as system.
+        let is_running_system = system_disks
             .iter()
             .any(|sys| sys.starts_with(dev_name) || dev_name.starts_with(sys));
 
@@ -99,6 +99,14 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
             _ => false,
         };
 
+        // Fallback signal for the unknown-bus case below.
+        let is_hotplug = match &dev["hotplug"] {
+            serde_json::Value::Bool(b) => *b,
+            serde_json::Value::String(s) => s == "1",
+            serde_json::Value::Number(n) => n.as_u64() == Some(1),
+            _ => false,
+        };
+
         // Prefer the TRAN field, then infer the bus from the device path.
         let tran = dev["tran"].as_str().unwrap_or("");
         let bus_type = normalize_bus_type(tran).or_else(|| {
@@ -110,6 +118,13 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
                 None
             }
         });
+
+        // Internal buses are system; USB/SD stay selectable; the running OS disk always wins.
+        let is_system = match bus_type.as_deref() {
+            Some("USB") | Some("SD") => false,
+            Some(_) => true,
+            None => !(is_removable || is_hotplug),
+        } || is_running_system;
 
         let is_read_only = is_device_read_only(dev_name);
 

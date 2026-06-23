@@ -7,7 +7,7 @@ import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText } fro
 import type { BlockDevice, AutoconfigProfile, AutoconfigProfilesChangedDetail, FlashMethod } from '../../types';
 import { isEdlMethod } from '../../types';
 import { getBlockDevices, getQdlDevices, getQdlEdlEntry } from '../../hooks/useTauri';
-import { getAutoconfigProfiles } from '../../hooks/useSettings';
+import { getAutoconfigProfiles, getAllowSystemDevices } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { POLLING, UI, EVENTS, qdlInstructionsKey } from '../../config';
@@ -52,6 +52,17 @@ export function DevicePanel({
 }: DevicePanelProps) {
   const { t } = useTranslation();
   const [showSystemDevices, setShowSystemDevices] = useState(false);
+  // Persistent opt-in to show and flash internal/system disks at the user's own risk.
+  const [allowSystemDevices, setAllowSystemDevices] = useState(false);
+
+  useEffect(() => {
+    const load = () => {
+      getAllowSystemDevices().then(setAllowSystemDevices).catch(() => {});
+    };
+    load();
+    window.addEventListener(EVENTS.SETTINGS_CHANGED, load);
+    return () => window.removeEventListener(EVENTS.SETTINGS_CHANGED, load);
+  }, []);
 
   const prevDevicesRef = useRef<BlockDevice[] | null>(null);
   const [devices, setDevices] = useState<BlockDevice[]>([]);
@@ -135,11 +146,12 @@ export function DevicePanel({
     return (devices && devices.length > 0) || !loading;
   }, [devices, loading]);
 
-  // Filter and sort devices based on the showSystemDevices toggle.
+  // System disks are shown when unlocked via settings, or peeked via the local toggle.
+  const showSystem = allowSystemDevices || showSystemDevices;
   const filteredDevices = useMemo(() => {
-    const filtered = showSystemDevices ? devices : devices.filter((d) => !d.is_system);
+    const filtered = showSystem ? devices : devices.filter((d) => !d.is_system);
     return sortDevices(filtered);
-  }, [devices, showSystemDevices]);
+  }, [devices, showSystem]);
 
   const { showSkeleton } = useSkeletonLoading(loading, devicesReady);
 
@@ -179,7 +191,7 @@ export function DevicePanel({
   }, [selectedDevice, pollDevices]);
 
   function handleDeviceClick(device: BlockDevice) {
-    if (device.is_system || device.is_read_only) return;
+    if (device.is_read_only || (device.is_system && !allowSystemDevices)) return;
     onSelect(device);
   }
 
@@ -230,6 +242,13 @@ export function DevicePanel({
                     </span>
                   </span>
                 </li>
+                {/* System/internal target: contextual danger row tied to the storage above. */}
+                {selectedDevice.is_system && (
+                  <li className="device-summary__syswarn">
+                    <TriangleAlert size={15} />
+                    <span>{t('flash.systemDeviceWarning')}</span>
+                  </li>
+                )}
                 {/* Opt-in autoconfig profile, integrated as the final summary row (Armbian images only). */}
                 {showAutoconfig && (
                   <li className="device-summary__profile">
@@ -311,7 +330,7 @@ export function DevicePanel({
           </span>
           <span className="device-alert__text">{t('flash.dataWarning')}</span>
 
-          {!isQdlMode && (
+          {!isQdlMode && !allowSystemDevices && (
             <button
               type="button"
               onClick={() => setShowSystemDevices(!showSystemDevices)}
@@ -362,7 +381,12 @@ export function DevicePanel({
                   const deviceType = getDeviceType(device);
                   const badge = getDeviceBadge(deviceType, t);
                   const colors = getDeviceColors(deviceType);
-                  const isDisabled = device.is_system || device.is_read_only;
+                  const isDisabled = device.is_read_only || (device.is_system && !allowSystemDevices);
+                  // Unlocked system disk: show its real drive glyph, not the lock (it is selectable).
+                  const iconType =
+                    device.is_system && allowSystemDevices
+                      ? getDeviceType({ ...device, is_system: false })
+                      : deviceType;
 
                   return (
                     <button
@@ -376,7 +400,7 @@ export function DevicePanel({
                         className="device-card__icon"
                         style={{ backgroundColor: colors.background, color: colors.text }}
                       >
-                        <DeviceIcon type={deviceType} size={22} />
+                        <DeviceIcon type={iconType} size={22} />
                       </span>
                       <span className="device-card__info">
                         <span className="device-card__name">

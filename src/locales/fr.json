@@ -26,6 +26,7 @@
     "cachedImages": "Images en cache"
   },
   "flash": {
+    "systemDeviceWarning": "L'écrire peut détruire le système d'exploitation en cours.",
     "downloading": "Téléchargement de l'image...",
     "verifyingSha": "Vérification de l'intégrité du téléchargement...",
     "decompressing": "Décompression de l'image...",
@@ -230,6 +231,9 @@
       "hoursAgo": "il y a {{count}}h",
       "daysAgo": "il y a {{count}}j"
     },
+    "devices": "Périphériques",
+    "allowSystemDevices": "Autoriser les disques système",
+    "allowSystemDevicesDescription": "Risqué : peut écraser le système d'exploitation en cours d'exécution.",
     "armbian": {
       "title": "Armbian",
       "label": "Détecter la carte automatiquement",
@@ -239,6 +243,8 @@
       "mode_auto": "Silencieux"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Réglage des disques système mis à jour",
+      "allowSystemDevicesError": "Échec de la mise à jour du réglage des disques système",
       "motdUpdated": "Paramètre des conseils mis à jour",
       "motdError": "Échec de la mise à jour du paramètre des conseils",
       "welcomeUpdated": "Paramètre de l'écran d'accueil mis à jour",

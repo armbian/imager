@@ -26,6 +26,7 @@
     "cachedImages": "Zwischengespeicherte Images"
   },
   "flash": {
+    "systemDeviceWarning": "Das Beschreiben kann das laufende Betriebssystem zerstören.",
     "downloading": "Image wird heruntergeladen...",
     "verifyingSha": "Download wird überprüft...",
     "decompressing": "Image wird entpackt...",
@@ -230,6 +231,9 @@
       "hoursAgo": "vor {{count}}h",
       "daysAgo": "vor {{count}}d"
     },
+    "devices": "Geräte",
+    "allowSystemDevices": "Systemlaufwerke zulassen",
+    "allowSystemDevicesDescription": "Riskant: das laufende Betriebssystem kann überschrieben werden.",
     "armbian": {
       "title": "Armbian",
       "label": "Board automatisch erkennen",
@@ -239,6 +243,8 @@
       "mode_auto": "Automatisch"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Einstellung für Systemlaufwerke aktualisiert",
+      "allowSystemDevicesError": "Einstellung für Systemlaufwerke konnte nicht aktualisiert werden",
       "motdUpdated": "Tipps-Einstellung aktualisiert",
       "motdError": "Tipps-Einstellung konnte nicht aktualisiert werden",
       "welcomeUpdated": "Einstellung für Willkommensbildschirm aktualisiert",

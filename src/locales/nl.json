@@ -26,6 +26,7 @@
     "cachedImages": "Gecachte images"
   },
   "flash": {
+    "systemDeviceWarning": "Schrijven kan het draaiende besturingssysteem vernietigen.",
     "downloading": "Image downloaden...",
     "verifyingSha": "Download controleren...",
     "decompressing": "Image uitpakken...",
@@ -230,6 +231,9 @@
       "hoursAgo": "{{count}}u geleden",
       "daysAgo": "{{count}}d geleden"
     },
+    "devices": "Apparaten",
+    "allowSystemDevices": "Systeemschijven toestaan",
+    "allowSystemDevicesDescription": "Riskant: je kunt het draaiende besturingssysteem overschrijven.",
     "armbian": {
       "title": "Armbian",
       "label": "Board automatisch detecteren",
@@ -239,6 +243,8 @@
       "mode_auto": "Stil"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Instelling voor systeemschijven bijgewerkt",
+      "allowSystemDevicesError": "Bijwerken van instelling voor systeemschijven mislukt",
       "motdUpdated": "Tips-instelling bijgewerkt",
       "motdError": "Kan tips-instelling niet bijwerken",
       "welcomeUpdated": "Instelling welkomstscherm bijgewerkt",

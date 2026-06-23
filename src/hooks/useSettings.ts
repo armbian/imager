@@ -181,6 +181,28 @@ export async function setForceOffline(value: boolean): Promise<void> {
   }
 }
 
+/** Get the allow-system-devices preference: show and allow flashing internal/system disks */
+export async function getAllowSystemDevices(): Promise<boolean> {
+  try {
+    const store = await getStore();
+    const value = await store.get<boolean>(SETTINGS.KEYS.ALLOW_SYSTEM_DEVICES);
+    return value ?? SETTINGS.DEFAULTS.ALLOW_SYSTEM_DEVICES;
+  } catch (error) {
+    throw new Error(`Failed to get allow system devices preference: ${error}`);
+  }
+}
+
+/** Set the allow-system-devices preference: show and allow flashing internal/system disks */
+export async function setAllowSystemDevices(value: boolean): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.ALLOW_SYSTEM_DEVICES, value);
+    await store.save();
+  } catch (error) {
+    throw new Error(`Failed to set allow system devices preference: ${error}`);
+  }
+}
+
 // Cache settings: backend owns the canonical defaults; values here are fallbacks when it's unreachable.
 
 /** Get the cache enabled preference */

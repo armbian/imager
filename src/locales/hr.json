@@ -26,6 +26,7 @@
     "cachedImages": "Predmemorirane slike"
   },
   "flash": {
+    "systemDeviceWarning": "Zapisivanje može uništiti pokrenuti operativni sustav.",
     "downloading": "Preuzimanje slike...",
     "verifyingSha": "Provjera preuzimanja...",
     "decompressing": "Raspakiravanje slike...",
@@ -230,6 +231,9 @@
       "hoursAgo": "prije {{count}}h",
       "daysAgo": "prije {{count}}d"
     },
+    "devices": "Uređaji",
+    "allowSystemDevices": "Dopusti sistemske diskove",
+    "allowSystemDevicesDescription": "Rizično: možeš prebrisati pokrenuti operativni sustav.",
     "armbian": {
       "title": "Armbian",
       "label": "Automatsko otkrivanje ploče",
@@ -239,6 +243,8 @@
       "mode_auto": "Tiho"
     },
     "toast": {
+      "allowSystemDevicesUpdated": "Postavka sistemskih diskova ažurirana",
+      "allowSystemDevicesError": "Ažuriranje postavke sistemskih diskova nije uspjelo",
       "motdUpdated": "Postavka savjeta je ažurirana",
       "motdError": "Ažuriranje postavke savjeta nije uspjelo",
       "welcomeUpdated": "Postavka početnog zaslona je ažurirana",
