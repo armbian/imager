@@ -7,12 +7,8 @@ use xmltree::{Element, XMLNode};
 
 use crate::config;
 use crate::log_info;
-use crate::qdl::loader::resolve_family;
+use crate::qdl::registry::ResolvedQdl;
 use crate::utils::{fetch_to_file, loaders_dir};
-
-fn provision_rel_path(board_slug: &str) -> Option<&'static str> {
-    crate::qdl::boards::find(board_slug).and_then(|b| b.provision_rel)
-}
 
 /// Where a board's UFS provisioning descriptor stands: ready, not declared, or expected but unreachable.
 pub enum ProvisionSource {
@@ -24,40 +20,49 @@ pub enum ProvisionSource {
 }
 
 /// Locate the board's UFS provisioning XML, downloading it to the cache on first use.
-pub async fn ensure_provision_xml(soc: &str, board_slug: &str) -> ProvisionSource {
-    let (Some(family), Some(rel)) = (
-        resolve_family(soc, board_slug),
-        provision_rel_path(board_slug),
-    ) else {
+pub async fn ensure_provision_xml(resolved: &ResolvedQdl) -> ProvisionSource {
+    let Some(rel) = resolved.provision_rel.as_deref() else {
         return ProvisionSource::Absent;
     };
-    match fetch_provision_xml(family, rel).await {
+    match fetch_provision_xml(&resolved.family, rel, resolved.provision_sha256.as_deref()).await {
         Ok(path) => ProvisionSource::Ready(path),
         Err(e) => ProvisionSource::Unavailable(e),
     }
 }
 
-async fn fetch_provision_xml(family: &str, rel: &str) -> Result<PathBuf, String> {
+async fn fetch_provision_xml(
+    family: &str,
+    rel: &str,
+    expected_sha: Option<&str>,
+) -> Result<PathBuf, String> {
     let path = loaders_dir().join(family).join(rel);
-    if path.exists() {
-        log_info!(
-            "qdl::provision",
-            "Using cached provision XML: {}",
-            path.display()
-        );
-        return Ok(path);
+    // Cache hit only if the on-disk copy still matches the API's current digest, so an
+    // updated descriptor on the server re-downloads instead of serving a stale file.
+    if let Ok(bytes) = std::fs::read(&path) {
+        if validate_provision_bytes(&bytes, expected_sha).is_ok() {
+            log_info!(
+                "qdl::provision",
+                "Using cached provision XML: {}",
+                path.display()
+            );
+            return Ok(path);
+        }
     }
-    let url = format!("{}{}/{}", config::urls::QCOMBIN_LOADER_BASE, family, rel);
+    let url = format!("{}{}/{}", config::urls::qdl_blob_base(), family, rel);
     log_info!("qdl::provision", "Downloading provision XML: {}", url);
-    fetch_to_file(&url, &path, validate_provision_bytes).await?;
+    let expected = expected_sha.map(str::to_string);
+    fetch_to_file(&url, &path, move |bytes| {
+        validate_provision_bytes(bytes, expected.as_deref())
+    })
+    .await?;
     Ok(path)
 }
 
-fn validate_provision_bytes(bytes: &[u8]) -> Result<(), String> {
+fn validate_provision_bytes(bytes: &[u8], expected_sha: Option<&str>) -> Result<(), String> {
     if !bytes.windows(5).any(|w| w == b"<ufs ") {
         return Err("Downloaded provision XML has no <ufs> commands".to_string());
     }
-    Ok(())
+    crate::qdl::registry::verify_digest(bytes, expected_sha)
 }
 
 /// Parse the `<ufs>` elements (in document order) into per-command attribute lists.
@@ -79,18 +84,4 @@ pub fn parse_ufs_commands(path: &std::path::Path) -> Result<Vec<Vec<(String, Str
         return Err("Provision XML contains no <ufs> commands".to_string());
     }
     Ok(commands)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn resolves_provision_path_by_slug() {
-        assert_eq!(
-            provision_rel_path("radxa-dragon-q6a"),
-            Some("radxa-dragon-q6a/provision_ufs31_lun0_only.xml")
-        );
-        assert_eq!(provision_rel_path("orangepi-5"), None);
-    }
 }

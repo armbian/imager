@@ -72,6 +72,8 @@
     "searchBoard": "보드 검색...",
     "noManufacturers": "제조사를 찾을 수 없습니다",
     "noBoards": "보드를 찾을 수 없습니다",
+    "boardUpdateRequired": "업데이트 필요",
+    "boardUpdateRequiredHint": "이 보드는 이 버전의 Armbian Imager에서 지원되지 않습니다. 업데이트하세요.",
     "noImages": "이미지를 찾을 수 없습니다",
     "noDevices": "장치를 찾을 수 없습니다",
     "promoted": "추천",

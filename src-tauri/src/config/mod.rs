@@ -14,11 +14,18 @@ pub mod app {
 
 /// API endpoints and URLs
 pub mod urls {
-    /// Armbian REST API base URL
-    pub const API_BASE: &str = "https://api.armbian.com/api/v1";
+    const API_BASE_DEFAULT: &str = "https://api.armbian.com/api/v1";
+
+    /// Armbian REST API base. Overridable at runtime via `ARMBIAN_API_BASE` so a
+    /// dev/test build can be pointed at a local API without a rebuild.
+    pub fn api_base() -> String {
+        std::env::var("ARMBIAN_API_BASE").unwrap_or_else(|_| API_BASE_DEFAULT.to_string())
+    }
 
     /// Health check endpoint (no auth required)
-    pub const HEALTH: &str = "https://api.armbian.com/api/v1/health";
+    pub fn health() -> String {
+        format!("{}/health", api_base())
+    }
 
     /// Base URL for board images (api.armbian.com/api/v1/images/boards/{size}/{slug}.png)
     pub const BOARD_IMAGES_BASE: &str = "https://api.armbian.com/api/v1/images/boards/";
@@ -29,8 +36,11 @@ pub mod urls {
     /// Base URL for vendor logos (api.armbian.com/api/v1/images/vendors/{size}/{slug}.png)
     pub const VENDOR_IMAGES_BASE: &str = "https://api.armbian.com/api/v1/images/vendors/480/";
 
-    /// Base URL for QDL firehose loaders, by SoC family ({base}{family}/prog_firehose_ddr.elf).
-    pub const QCOMBIN_LOADER_BASE: &str = "https://raw.githubusercontent.com/armbian/qcombin/main/";
+    /// Base URL for QDL firehose loaders / provisioning XML, served by the API blob
+    /// proxy ({base}{family}/{path}). Follows `api_base` so it routes locally in dev.
+    pub fn qdl_blob_base() -> String {
+        format!("{}/qdl/blob/", api_base())
+    }
 }
 
 /// Download and decompression settings

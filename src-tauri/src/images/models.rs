@@ -39,6 +39,22 @@ pub struct ApiBoardSummary {
     pub soc: Option<String>,
     pub architecture: Option<String>,
     pub summary: Option<String>,
+    #[serde(default)]
+    pub qdl: Option<ApiQdl>,
+}
+
+/// QDL/EDL flashing metadata served on a board. Absent for non-QDL boards. The
+/// `*_sha256` digests are computed by the API over the cached loader/provision
+/// blobs so the imager can verify them after download.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApiQdl {
+    pub family: String,
+    pub storage: String,
+    pub loader_rel: Option<String>,
+    pub provision_rel: Option<String>,
+    pub edl_entry: String,
+    pub loader_sha256: Option<String>,
+    pub provision_sha256: Option<String>,
 }
 
 // ─── API types: Images ───────────────────────────────────────────────────────
@@ -133,6 +149,18 @@ pub struct BoardInfo {
     pub architecture: Option<String>,
     /// Short board description
     pub summary: Option<String>,
+    /// Slim QDL/EDL support info for the UI gate; absent for non-QDL boards.
+    pub qdl: Option<BoardQdlInfo>,
+}
+
+/// QDL facts exposed to the frontend. Loader/provision blobs and digests stay
+/// backend-side; the UI only needs to know whether this build can flash the board.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BoardQdlInfo {
+    /// True when this build has a write path for the board's QDL `storage`.
+    pub supported: bool,
+    /// EDL entry hint ("button"/"jumper") for the on-screen instructions.
+    pub edl_entry: String,
 }
 
 /// Processed image information for the UI

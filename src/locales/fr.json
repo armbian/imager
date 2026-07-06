@@ -72,6 +72,8 @@
     "searchBoard": "Rechercher des cartes...",
     "noManufacturers": "Aucun fabricant trouvé",
     "noBoards": "Aucune carte trouvée",
+    "boardUpdateRequired": "Mise à jour requise",
+    "boardUpdateRequiredHint": "Cette carte n'est pas prise en charge par cette version d'Armbian Imager. Veuillez mettre à jour.",
     "noImages": "Aucune image trouvée",
     "noDevices": "Aucun périphérique trouvé",
     "promoted": "Recommandé",

@@ -72,6 +72,8 @@
     "searchBoard": "Boards suchen...",
     "noManufacturers": "Keine Hersteller gefunden",
     "noBoards": "Keine Boards gefunden",
+    "boardUpdateRequired": "Update erforderlich",
+    "boardUpdateRequiredHint": "Dieses Board wird von dieser Version von Armbian Imager nicht unterstützt. Bitte aktualisieren.",
     "noImages": "Keine Images gefunden",
     "noDevices": "Keine Geräte gefunden",
     "promoted": "Empfohlen",

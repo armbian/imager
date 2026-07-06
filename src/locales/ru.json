@@ -72,6 +72,8 @@
     "searchBoard": "Поиск плат...",
     "noManufacturers": "Производители не найдены",
     "noBoards": "Платы не найдены",
+    "boardUpdateRequired": "Требуется обновление",
+    "boardUpdateRequiredHint": "Эта плата не поддерживается этой версией Armbian Imager. Обновите приложение.",
     "noImages": "Образы не найдены",
     "noDevices": "Устройства не найдены",
     "promoted": "Рекомендуется",

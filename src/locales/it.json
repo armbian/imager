@@ -72,6 +72,8 @@
     "searchBoard": "Cerca schede...",
     "noManufacturers": "Nessun produttore trovato",
     "noBoards": "Nessuna scheda trovata",
+    "boardUpdateRequired": "Aggiornamento richiesto",
+    "boardUpdateRequiredHint": "Questa scheda non è supportata da questa versione di Armbian Imager. Aggiorna l'app.",
     "noImages": "Nessuna immagine trovata",
     "noDevices": "Nessun dispositivo trovato",
     "promoted": "Consigliato",

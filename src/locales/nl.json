@@ -72,6 +72,8 @@
     "searchBoard": "Zoek boards...",
     "noManufacturers": "Geen fabrikanten gevonden",
     "noBoards": "Geen boards gevonden",
+    "boardUpdateRequired": "Update vereist",
+    "boardUpdateRequiredHint": "Dit board wordt niet ondersteund door deze versie van Armbian Imager. Werk de app bij.",
     "noImages": "Geen images gevonden",
     "noDevices": "Geen apparaten gevonden",
     "promoted": "Aanbevolen",

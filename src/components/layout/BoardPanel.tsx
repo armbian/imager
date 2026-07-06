@@ -105,14 +105,19 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
               const displayName = stripVendorPrefix(board.name, vendorName);
               const showVendor = !!vendorName;
               const img = board.slug in boardImages ? boardImages[board.slug] : undefined;
+              // A QDL board whose storage this build has no write path for can't be
+              // flashed here; block it at selection instead of failing mid-flash.
+              const needsUpdate = !!board.qdl && !board.qdl.supported;
 
               return (
                 <button
                   key={board.slug}
                   type="button"
-                  className="board-card board-card--enter"
+                  className={`board-card board-card--enter${needsUpdate ? ' board-card--locked' : ''}`}
                   style={{ animationDelay: staggerDelay(index) }}
                   onClick={() => onSelect(board)}
+                  disabled={needsUpdate}
+                  title={needsUpdate ? t('modal.boardUpdateRequiredHint') : undefined}
                 >
                   <div className="board-card__img">
                     {img === undefined ? (
@@ -120,7 +125,10 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
                     ) : (
                       <BoardImage src={img} alt={board.name} />
                     )}
-                    {tierLabel && <span className={`bp-tier is-${tier}`}>{tierLabel}</span>}
+                    {tierLabel && !needsUpdate && (
+                      <span className={`bp-tier is-${tier}`}>{tierLabel}</span>
+                    )}
+                    {needsUpdate && <span className="bp-lock">{t('modal.boardUpdateRequired')}</span>}
                   </div>
                   <div className="board-card__info">
                     {showVendor && <span className="board-card__vendor">{vendorName}</span>}

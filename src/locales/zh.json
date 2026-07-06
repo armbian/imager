@@ -72,6 +72,8 @@
     "searchBoard": "搜索开发板……",
     "noManufacturers": "未找到制造商",
     "noBoards": "未找到开发板",
+    "boardUpdateRequired": "需要更新",
+    "boardUpdateRequiredHint": "此版本的 Armbian Imager 不支持此开发板。请更新。",
     "noImages": "未找到镜像",
     "noDevices": "未找到设备",
     "promoted": "推荐",

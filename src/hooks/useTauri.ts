@@ -245,8 +245,3 @@ export async function flashQdlUfsImage(
 export async function checkIsQdlImage(imagePath: string): Promise<boolean> {
   return invoke('check_is_qdl_image', { imagePath });
 }
-
-/** EDL-entry method ("button" or "jumper") for a board, or null when unknown */
-export async function getQdlEdlEntry(boardSlug: string): Promise<string | null> {
-  return invoke('get_qdl_edl_entry', { boardSlug });
-}

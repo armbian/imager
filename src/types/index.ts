@@ -18,6 +18,16 @@ export interface BoardInfo {
   architecture?: string;
   /** Short board description */
   summary?: string;
+  /** QDL/EDL flashing metadata, present only for Qualcomm EDL boards */
+  qdl?: BoardQdl | null;
+}
+
+/** Slim QDL support info served with a board; `supported` drives the UI gate. */
+export interface BoardQdl {
+  /** Whether this build has a write path for the board's QDL storage. */
+  supported: boolean;
+  /** EDL-entry hint ("button"/"jumper") for the on-screen QDL instructions. */
+  edl_entry: string;
 }
 
 export interface ImageInfo {

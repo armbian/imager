@@ -199,7 +199,7 @@ fn open_url_windows(url: &str) -> Result<(), String> {
 #[tauri::command]
 pub async fn check_connectivity() -> bool {
     match CONNECTIVITY_CLIENT
-        .get(crate::config::urls::HEALTH)
+        .get(crate::config::urls::health())
         .send()
         .await
     {

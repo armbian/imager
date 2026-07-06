@@ -1,11 +1,12 @@
 //! Fetches and caches the Qualcomm firehose loader (`prog_firehose_ddr.elf`) for a
 //! board's SoC family from the armbian/qcombin repo, used to flash QDL/EDL devices.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::config;
 use crate::log_info;
 use crate::qdl::extract::FIREHOSE_ELF;
+use crate::qdl::registry::ResolvedQdl;
 use crate::utils::{fetch_to_file, loaders_dir};
 
 const MIN_LOADER_SIZE: u64 = 64 * 1024;
@@ -32,35 +33,37 @@ pub fn family_for_soc(soc: &str) -> Option<&'static str> {
         .map(|(_, family)| *family)
 }
 
-pub fn resolve_family(soc: &str, board_slug: &str) -> Option<&'static str> {
-    family_for_soc(soc)
-        .or_else(|| super::boards::find(board_slug).and_then(|b| family_for_soc(b.soc)))
-}
+/// Ensure the board's firehose loader is cached locally, downloading it from the
+/// API blob proxy on a miss and verifying the API-supplied SHA-256.
+pub async fn ensure_loader(resolved: &ResolvedQdl) -> Result<PathBuf, String> {
+    let loader_name = resolved.loader_rel.as_deref().unwrap_or(FIREHOSE_ELF);
+    let path = loaders_dir().join(&resolved.family).join(loader_name);
+    let expected = resolved.loader_sha256.clone();
 
-/// Ensure the board's firehose loader is cached locally, downloading from qcombin on a miss.
-pub async fn ensure_loader(soc: &str, board_slug: &str) -> Result<PathBuf, String> {
-    let family = resolve_family(soc, board_slug).ok_or_else(|| {
-        format!("No QDL firehose loader known for SoC '{soc}' / board '{board_slug}'")
-    })?;
-
-    let path = loaders_dir().join(family).join(FIREHOSE_ELF);
-    if path.exists() && validate_loader(&path).is_ok() {
-        log_info!(
-            "qdl::loader",
-            "Using cached firehose loader: {}",
-            path.display()
-        );
-        return Ok(path);
+    // Cache hit only if the on-disk copy still matches the API's current digest, so an
+    // updated loader on the server re-downloads instead of serving a stale file.
+    if let Ok(bytes) = std::fs::read(&path) {
+        if validate_loader_bytes(&bytes, expected.as_deref()).is_ok() {
+            log_info!(
+                "qdl::loader",
+                "Using cached firehose loader: {}",
+                path.display()
+            );
+            return Ok(path);
+        }
     }
 
     let url = format!(
         "{}{}/{}",
-        config::urls::QCOMBIN_LOADER_BASE,
-        family,
-        FIREHOSE_ELF
+        config::urls::qdl_blob_base(),
+        resolved.family,
+        loader_name
     );
     log_info!("qdl::loader", "Downloading firehose loader: {}", url);
-    fetch_to_file(&url, &path, validate_loader_bytes).await?;
+    fetch_to_file(&url, &path, move |bytes| {
+        validate_loader_bytes(bytes, expected.as_deref())
+    })
+    .await?;
     log_info!(
         "qdl::loader",
         "Cached firehose loader at {}",
@@ -69,25 +72,8 @@ pub async fn ensure_loader(soc: &str, board_slug: &str) -> Result<PathBuf, Strin
     Ok(path)
 }
 
-/// Validate an on-disk loader: ELF magic + a plausible minimum size.
-fn validate_loader(path: &Path) -> Result<(), String> {
-    use std::io::Read;
-    let len = std::fs::metadata(path).map_err(|e| e.to_string())?.len();
-    if len < MIN_LOADER_SIZE {
-        return Err(format!("loader too small ({len} bytes)"));
-    }
-    let mut head = [0u8; 4];
-    std::fs::File::open(path)
-        .and_then(|mut f| f.read_exact(&mut head))
-        .map_err(|e| e.to_string())?;
-    if &head != ELF_MAGIC {
-        return Err("not an ELF file".into());
-    }
-    Ok(())
-}
-
-/// Validate freshly downloaded loader bytes before installing them.
-fn validate_loader_bytes(bytes: &[u8]) -> Result<(), String> {
+/// Validate loader bytes: ELF magic + a plausible minimum size + optional digest.
+fn validate_loader_bytes(bytes: &[u8], expected_sha: Option<&str>) -> Result<(), String> {
     if (bytes.len() as u64) < MIN_LOADER_SIZE {
         return Err(format!(
             "downloaded loader too small ({} bytes)",
@@ -97,7 +83,7 @@ fn validate_loader_bytes(bytes: &[u8]) -> Result<(), String> {
     if !bytes.starts_with(ELF_MAGIC) {
         return Err("downloaded loader is not an ELF file".into());
     }
-    Ok(())
+    crate::qdl::registry::verify_digest(bytes, expected_sha)
 }
 
 #[cfg(test)]
@@ -112,12 +98,5 @@ mod tests {
         assert_eq!(family_for_soc("QRB2210"), Some("Agatti"));
         assert_eq!(family_for_soc("rk3588"), None);
         assert_eq!(family_for_soc(""), None);
-    }
-
-    #[test]
-    fn resolves_family_from_board_slug_when_soc_missing() {
-        assert_eq!(resolve_family("", "radxa-dragon-q6a"), Some("Kodiak"));
-        assert_eq!(resolve_family("QCS6490", ""), Some("Kodiak"));
-        assert_eq!(resolve_family("", "orangepi-5"), None);
     }
 }

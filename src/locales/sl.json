@@ -72,6 +72,8 @@
     "searchBoard": "Išči plošče...",
     "noManufacturers": "Proizvajalcev ni mogoče najti",
     "noBoards": "Plošč ni mogoče najti",
+    "boardUpdateRequired": "Potrebna posodobitev",
+    "boardUpdateRequiredHint": "Ta plošča ni podprta v tej različici Armbian Imagerja. Posodobite aplikacijo.",
     "noImages": "Slik ni mogoče najti",
     "noDevices": "Naprav ni mogoče najti",
     "promoted": "Priporočeno",

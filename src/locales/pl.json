@@ -72,6 +72,8 @@
     "searchBoard": "Szukaj płytek...",
     "noManufacturers": "Nie znaleziono producentów",
     "noBoards": "Nie znaleziono płytek",
+    "boardUpdateRequired": "Wymagana aktualizacja",
+    "boardUpdateRequiredHint": "Ta płytka nie jest obsługiwana przez tę wersję Armbian Imager. Zaktualizuj aplikację.",
     "noImages": "Nie znaleziono obrazów",
     "noDevices": "Nie znaleziono urządzeń",
     "promoted": "Polecane",

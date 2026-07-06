@@ -72,6 +72,8 @@
     "searchBoard": "Pretraži ploče...",
     "noManufacturers": "Nema pronađenih proizvođača",
     "noBoards": "Nema pronađenih ploča",
+    "boardUpdateRequired": "Potrebna nadogradnja",
+    "boardUpdateRequiredHint": "Ova ploča nije podržana u ovoj verziji Armbian Imagera. Ažurirajte aplikaciju.",
     "noImages": "Nema pronađenih slika",
     "noDevices": "Nema pronađenih uređaja",
     "promoted": "Preporučeno",

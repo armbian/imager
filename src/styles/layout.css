@@ -2115,6 +2115,30 @@
   box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
 }
 
+.bp-lock {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: #f59e0b;
+  color: #000;
+}
+
+.board-card--locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.board-card--locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .board-card__info {
   flex: 1;
   display: flex;

@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText } from '../shared';
 import type { BlockDevice, AutoconfigProfile, AutoconfigProfilesChangedDetail, FlashMethod } from '../../types';
 import { isEdlMethod } from '../../types';
-import { getBlockDevices, getQdlDevices, getQdlEdlEntry } from '../../hooks/useTauri';
+import { getBlockDevices, getQdlDevices } from '../../hooks/useTauri';
 import { getAutoconfigProfiles, getAllowSystemDevices } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
@@ -28,8 +28,8 @@ interface DevicePanelProps {
   selectedDevice: BlockDevice | null;
   /** Flash method for the selected image ("block", "qdl", or "qdl-ufs"). */
   flashMethod?: FlashMethod;
-  /** Selected board slug, used to pick the right EDL-entry hint (button vs jumper). */
-  boardSlug?: string;
+  /** EDL-entry hint ("button"/"jumper") for the selected board, drives the QDL instructions. */
+  edlEntry?: string | null;
   /** Upstream selections (manufacturer/board/OS) shown in the confirm summary. */
   summary?: { label: string; value: string }[];
   /** Cached board photo shown at the top of the confirm summary. */
@@ -45,7 +45,7 @@ export function DevicePanel({
   onCancel,
   selectedDevice,
   flashMethod,
-  boardSlug,
+  edlEntry,
   summary = [],
   boardImage,
   supportsAutoconfig = true,
@@ -70,11 +70,6 @@ export function DevicePanel({
   // Both QDL (TAR) and UFS images flash over EDL, so they share device detection (getQdlDevices).
   const isQdlMode = isEdlMethod(flashMethod);
 
-  // EDL-entry method (button vs jumper) comes from the backend board registry.
-  const { data: edlEntry } = useAsyncData<string | null>(
-    () => (isQdlMode && boardSlug ? getQdlEdlEntry(boardSlug) : Promise.resolve(null)),
-    [isQdlMode, boardSlug]
-  );
   // Autoconfig profiles apply to Armbian images (both sd/.img.xz and QDL); hidden for generic custom images.
   const showAutoconfig = supportsAutoconfig;
 

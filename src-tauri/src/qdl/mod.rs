@@ -7,6 +7,7 @@ pub mod extract;
 pub mod flash;
 pub mod loader;
 pub mod provision;
+pub mod registry;
 
 use serde::{Deserialize, Serialize};
 
@@ -27,6 +28,16 @@ pub enum QdlStorage {
 }
 
 impl QdlStorage {
+    /// Parse the API/bundle `storage` string into a backend we can write. Unknown
+    /// values yield `None`.
+    pub fn from_storage_str(s: &str) -> Option<Self> {
+        match s {
+            "ufs" => Some(QdlStorage::Ufs),
+            "emmc" => Some(QdlStorage::Emmc),
+            _ => None,
+        }
+    }
+
     pub fn sector_size(self) -> usize {
         match self {
             QdlStorage::Emmc => SECTOR_SIZE_EMMC,
@@ -40,6 +51,15 @@ impl QdlStorage {
             QdlStorage::Ufs => qdl::types::FirehoseStorageType::Ufs,
         }
     }
+}
+
+/// True when this build has a working QDL write path for the given `storage`.
+/// The flash pipeline is generic (Sahara + Firehose, blobs fetched from the API),
+/// so the only thing that gates a board is its storage backend: each needs a
+/// sector size and write path we implement explicitly. An unmapped value has no
+/// write path, so unknown => unsupported.
+pub fn qdl_storage_supported(storage: &str) -> bool {
+    QdlStorage::from_storage_str(storage).is_some()
 }
 
 /// Represents a Qualcomm device in EDL mode detected via USB

@@ -72,6 +72,8 @@
     "searchBoard": "Sök kort...",
     "noManufacturers": "Inga tillverkare hittades",
     "noBoards": "Inga kort hittades",
+    "boardUpdateRequired": "Uppdatering krävs",
+    "boardUpdateRequiredHint": "Det här kortet stöds inte av den här versionen av Armbian Imager. Uppdatera appen.",
     "noImages": "Inga avbildningar hittades",
     "noDevices": "Inga enheter hittades",
     "promoted": "Rekommenderad",

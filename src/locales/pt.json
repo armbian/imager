@@ -72,6 +72,8 @@
     "searchBoard": "Procurar placas...",
     "noManufacturers": "Nenhum fabricante encontrado",
     "noBoards": "Nenhuma placa encontrada",
+    "boardUpdateRequired": "Atualização necessária",
+    "boardUpdateRequiredHint": "Esta placa não é suportada por esta versão do Armbian Imager. Atualize a aplicação.",
     "noImages": "Nenhuma imagem encontrada",
     "noDevices": "Nenhum dispositivo encontrado",
     "promoted": "Recomendado",

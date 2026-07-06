@@ -5,7 +5,7 @@ mod filters;
 mod models;
 
 pub use filters::{map_board, map_images};
-pub use models::{ApiBoardSummary, ApiImage, ApiVendor, BoardInfo, ImageInfo};
+pub use models::{ApiBoardSummary, ApiImage, ApiQdl, ApiVendor, BoardInfo, ImageInfo};
 
 use models::ApiResponse;
 
@@ -99,6 +99,22 @@ async fn load_cache(name: &str) -> Result<String, String> {
     Ok(data)
 }
 
+/// Fetch a single board's QDL block from the API detail endpoint. Returns None
+/// when the board has no QDL metadata or on any network/parse error, so the
+/// caller falls back to the bundled registry.
+pub async fn fetch_board_qdl(slug: &str) -> Option<ApiQdl> {
+    let url = format!("{}/boards/{}", config::urls::api_base(), slug);
+    let response = API_CLIENT
+        .get(&url)
+        .send()
+        .await
+        .ok()?
+        .error_for_status()
+        .ok()?;
+    let parsed: models::ApiResponse<ApiBoardSummary> = response.json().await.ok()?;
+    parsed.data.qdl
+}
+
 /// Delete the pre-migration API cache file.
 pub fn cleanup_legacy_cache() {
     let legacy_path = assets_dir().join("api-images.json");
@@ -120,7 +136,7 @@ pub async fn fetch_boards() -> Result<Vec<ApiBoardSummary>, String> {
     log_debug!(
         "images",
         "Fetching boards from {}/boards",
-        config::urls::API_BASE
+        config::urls::api_base()
     );
 
     match fetch_boards_from_api().await {
@@ -144,7 +160,7 @@ pub async fn fetch_boards() -> Result<Vec<ApiBoardSummary>, String> {
 /// Fetch boards from the remote API, paginating until an empty page or the
 /// `MAX_PAGES` cap (both guard against a bad `meta.total` looping forever).
 async fn fetch_boards_from_api() -> Result<Vec<ApiBoardSummary>, String> {
-    let url_base = format!("{}/boards", config::urls::API_BASE);
+    let url_base = format!("{}/boards", config::urls::api_base());
     let mut all_boards = Vec::new();
     let mut page: u32 = 1;
     let limit: u32 = 500;
@@ -258,7 +274,7 @@ async fn fetch_images_from_api(
     branch: Option<&str>,
     promoted: Option<bool>,
 ) -> Result<Vec<ApiImage>, String> {
-    let url = format!("{}/boards/{}/images", config::urls::API_BASE, slug);
+    let url = format!("{}/boards/{}/images", config::urls::api_base(), slug);
 
     let mut params: Vec<(&str, String)> = Vec::new();
     if let Some(v) = variant {
@@ -301,7 +317,7 @@ pub async fn fetch_vendors() -> Result<Vec<ApiVendor>, String> {
     log_debug!(
         "images",
         "Fetching vendors from {}/vendors",
-        config::urls::API_BASE
+        config::urls::api_base()
     );
 
     match fetch_vendors_from_api().await {
@@ -324,7 +340,7 @@ pub async fn fetch_vendors() -> Result<Vec<ApiVendor>, String> {
 
 /// Fetch vendors directly from the remote API
 async fn fetch_vendors_from_api() -> Result<Vec<ApiVendor>, String> {
-    let url = format!("{}/vendors", config::urls::API_BASE);
+    let url = format!("{}/vendors", config::urls::api_base());
 
     let response: ApiResponse<Vec<ApiVendor>> = API_CLIENT
         .get(&url)

@@ -93,15 +93,27 @@ pub async fn flash_qdl_ufs_image(
     let flash_state = state.flash_state.clone();
     flash_state.reset();
 
-    let loader_path = qdl::loader::ensure_loader(&soc, &board_slug)
-        .await
-        .map_err(|e| {
-            log_error!("qdl_operations", "Firehose loader unavailable: {}", e);
-            e
-        })?;
+    // Resolve the board's QDL facts from the API (bundled fallback), then fetch the
+    // loader and provisioning descriptor from the API blob proxy with digest checks.
+    let resolved = qdl::registry::resolve(&board_slug).await.ok_or_else(|| {
+        let msg = format!("No QDL metadata for board '{board_slug}' (SoC hint '{soc}')");
+        log_error!("qdl_operations", "{}", msg);
+        format!("[QDL_ERROR] {msg}")
+    })?;
+
+    if resolved.storage != qdl::QdlStorage::Ufs {
+        return Err(format!(
+            "[QDL_ERROR] Board '{board_slug}' is not a UFS QDL target"
+        ));
+    }
+
+    let loader_path = qdl::loader::ensure_loader(&resolved).await.map_err(|e| {
+        log_error!("qdl_operations", "Firehose loader unavailable: {}", e);
+        e
+    })?;
 
     // Provisioning descriptor for setting up a brand-new (unprovisioned) module.
-    let provision = qdl::provision::ensure_provision_xml(&soc, &board_slug).await;
+    let provision = qdl::provision::ensure_provision_xml(&resolved).await;
     if let qdl::provision::ProvisionSource::Unavailable(reason) = &provision {
         log_warn!("qdl_operations", "Provision XML unavailable: {}", reason);
     }
@@ -135,10 +147,4 @@ pub async fn flash_qdl_ufs_image(
         Err(e) => log_error!("qdl_operations", "QDL UFS flash failed: {}", e),
     }
     result
-}
-
-/// EDL-entry method ("button" or "jumper") for a board's on-screen hint, or null if unknown.
-#[tauri::command]
-pub async fn get_qdl_edl_entry(board_slug: String) -> Option<String> {
-    qdl::boards::find(&board_slug).map(|b| b.edl_entry.as_str().to_string())
 }

@@ -72,6 +72,8 @@
     "searchBoard": "Kart ara...",
     "noManufacturers": "Üretici bulunamadı",
     "noBoards": "Kart bulunamadı",
+    "boardUpdateRequired": "Güncelleme gerekli",
+    "boardUpdateRequiredHint": "Bu kart bu Armbian Imager sürümü tarafından desteklenmiyor. Lütfen güncelleyin.",
     "noImages": "İmaj bulunamadı",
     "noDevices": "Cihaz bulunamadı",
     "promoted": "Önerilen",

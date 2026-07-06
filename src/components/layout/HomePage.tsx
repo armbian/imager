@@ -263,7 +263,7 @@ export function HomePage({
   const renderDevicePanel = () => (
     <DevicePanel
       flashMethod={selectedImage ? deriveFlashMethod(selectedImage) : undefined}
-      boardSlug={selectedBoard?.slug}
+      edlEntry={selectedBoard?.qdl?.edl_entry ?? null}
       summary={deviceSummary}
       boardImage={boardImage}
       selectedDevice={selectedDevice}

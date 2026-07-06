@@ -2,8 +2,10 @@
 //! pre-processed data, so no extraction or deduplication is needed.
 
 use super::models::{
-    ApiBoardSummary, ApiImage, BoardInfo, CompanionInfo, DisplayVariantInfo, ImageInfo,
+    ApiBoardSummary, ApiImage, BoardInfo, BoardQdlInfo, CompanionInfo, DisplayVariantInfo,
+    ImageInfo,
 };
+use crate::qdl::qdl_storage_supported;
 
 /// Map an API board summary to a frontend-facing BoardInfo
 pub fn map_board(api: &ApiBoardSummary) -> BoardInfo {
@@ -19,6 +21,10 @@ pub fn map_board(api: &ApiBoardSummary) -> BoardInfo {
         soc: api.soc.clone(),
         architecture: api.architecture.clone(),
         summary: api.summary.clone(),
+        qdl: api.qdl.as_ref().map(|q| BoardQdlInfo {
+            supported: qdl_storage_supported(&q.storage),
+            edl_entry: q.edl_entry.clone(),
+        }),
     }
 }
 
