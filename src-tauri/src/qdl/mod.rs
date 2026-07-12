@@ -20,6 +20,9 @@ pub const EDL_PID: u16 = 0x9008;
 pub const SECTOR_SIZE_EMMC: usize = 512;
 pub const SECTOR_SIZE_UFS: usize = 4096;
 
+/// Filename variant markers identifying a UFS build (vs the SD variant of the same board).
+pub const UFS_MARKERS: [&str; 2] = ["-ufs", "_ufs"];
+
 /// Storage backend for a QDL flash, mapping to its Firehose storage type and sector size.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QdlStorage {
