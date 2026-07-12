@@ -183,6 +183,14 @@ export interface CustomImageInfo {
   size: number;
 }
 
+/** One-shot classification of a picked custom image (board + QDL TAR + UFS build slug) */
+export interface CustomImageClassification {
+  board: BoardInfo | null;
+  is_qdl: boolean;
+  /** Board slug when the file is a UFS build of a UFS-capable QDL board, else null */
+  ufs_board_slug: string | null;
+}
+
 /** Cached image metadata from the backend cache directory */
 export interface CachedImageInfo {
   filename: string;

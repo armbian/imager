@@ -171,51 +171,55 @@ pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), 
     Ok(())
 }
 
-/// Check whether a custom image is a QDL archive (TAR containing rawprogram0.xml
-/// and prog_firehose_ddr.elf). Non-TAR files like .img return false, not an error.
-#[tauri::command]
-pub async fn check_is_qdl_image(image_path: String) -> Result<bool, String> {
-    let path = PathBuf::from(&image_path);
+/// Whether a file is a QDL TAR archive (needs both rawprogram0.xml and prog_firehose_ddr.elf,
+/// so a plain .tar.gz rootfs doesn't count). Non-TAR files return false.
+fn is_qdl_image_path(image_path: &str) -> bool {
+    let path = PathBuf::from(image_path);
     let filename = path
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("")
         .to_lowercase();
 
-    // Plain .tar: cheap to inspect every entry.
-    if filename.ends_with(".tar") {
-        log_debug!(
-            "custom_image",
-            "Checking plain TAR for QDL structure: {}",
-            image_path
-        );
-        let reader = match open_tar_reader(&path) {
-            Ok(r) => r,
-            Err(_) => return Ok(false),
+    if filename.ends_with(".tar") || filename.contains(".tar.") {
+        return match open_tar_reader(&path) {
+            Ok(reader) => check_tar_for_qdl(reader),
+            Err(_) => false,
         };
-        let has_qdl = check_tar_for_qdl(reader);
-        log_debug!("custom_image", "Archive has QDL structure: {}", has_qdl);
-        return Ok(has_qdl);
     }
 
-    // Compressed TAR: QDL requires BOTH rawprogram0.xml and prog_firehose_ddr.elf, so scan entries
-    // rather than sniff a flash/ dir or disk-sdcard.img name (a generic .tar.gz rootfs is NOT QDL).
-    if filename.contains(".tar.") {
-        log_debug!(
-            "custom_image",
-            "Checking compressed TAR for QDL structure: {}",
-            image_path
-        );
-        let reader = match open_tar_reader(&path) {
-            Ok(r) => r,
-            Err(_) => return Ok(false),
-        };
-        let has_qdl = check_tar_for_qdl(reader);
-        log_debug!("custom_image", "QDL structure detected: {}", has_qdl);
-        return Ok(has_qdl);
-    }
+    false
+}
 
-    Ok(false)
+/// One-shot classification of a picked image: matched board, whether it's a QDL TAR, and the
+/// slug for a UFS build. Lets the frontend read the file once instead of three round-trips.
+#[derive(Debug, Serialize)]
+pub struct CustomImageClassification {
+    pub board: Option<BoardInfo>,
+    pub is_qdl: bool,
+    pub ufs_board_slug: Option<String>,
+}
+
+#[tauri::command]
+pub async fn classify_custom_image(
+    path: String,
+    state: State<'_, AppState>,
+) -> Result<CustomImageClassification, String> {
+    let filename = std::path::Path::new(&path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(&path);
+
+    // Board detection is best-effort (may hit the API); a failure must not sink the rest.
+    let board = match_board_from_filename(filename, &state)
+        .await
+        .unwrap_or(None);
+
+    Ok(CustomImageClassification {
+        board,
+        is_qdl: is_qdl_image_path(&path),
+        ufs_board_slug: crate::qdl::boards::ufs_board_slug_for_filename(filename),
+    })
 }
 
 /// Scan a TAR archive reader for QDL-required files
@@ -261,13 +265,22 @@ pub async fn detect_board_from_filename(
     filename: String,
     state: State<'_, AppState>,
 ) -> Result<Option<BoardInfo>, String> {
+    match_board_from_filename(&filename, &state).await
+}
+
+/// Shared board-matching core: parse the filename, normalize the slug, and match the API list
+/// (loaded on first use). Reused by `detect_board_from_filename` and `classify_custom_image`.
+async fn match_board_from_filename(
+    filename: &str,
+    state: &AppState,
+) -> Result<Option<BoardInfo>, String> {
     log_debug!(
         "custom_image",
         "Starting board detection from filename: {}",
         filename
     );
 
-    let path = PathBuf::from(&filename);
+    let path = PathBuf::from(filename);
     let filename_only = path
         .file_name()
         .and_then(|n| n.to_str())

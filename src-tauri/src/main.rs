@@ -168,7 +168,7 @@ fn main() {
             commands::custom_image::decompress_custom_image,
             commands::custom_image::delete_decompressed_custom_image,
             commands::custom_image::detect_board_from_filename,
-            commands::custom_image::check_is_qdl_image,
+            commands::custom_image::classify_custom_image,
             commands::system::open_url,
             commands::system::get_system_locale,
             commands::system::log_from_frontend,

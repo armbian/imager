@@ -4,7 +4,7 @@ import { Header, HomePage, WelcomePage } from './components/layout';
 import { ArmbianBoardModal } from './components/modals';
 import { FlashProgress } from './components/flash';
 import { CacheManagerModal } from './components/settings';
-import { selectCustomImage, detectBoardFromFilename, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getCachedBoardImage, checkNeedsDecompression, decompressCustomImage, checkIsQdlImage } from './hooks/useTauri';
+import { selectCustomImage, detectBoardFromFilename, classifyCustomImage, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getCachedBoardImage, checkNeedsDecompression, decompressCustomImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import { useConnectivity } from './hooks/useConnectivity';
 import { ToastProvider, useToasts } from './hooks/useToasts';
@@ -370,28 +370,23 @@ function AppContent() {
     try {
       const result = await selectCustomImage();
       if (result) {
-        let detectedBoard: BoardInfo | null = null;
-        try {
-          detectedBoard = await detectBoardFromFilename(result.name);
-          if (detectedBoard) {
-            logInfo('app', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
-          }
-        } catch (err) {
-          // Ignore detection errors, fall back to generic
-          logWarn('app', `Failed to detect board from filename: ${err}`);
+        // One backend call classifies the picked file: matched board, QDL TAR, and UFS build slug.
+        const { board: detectedBoard, is_qdl: isQdl, ufs_board_slug: ufsBoardSlug } =
+          await classifyCustomImage(result.path).catch(() => ({
+            board: null,
+            is_qdl: false,
+            ufs_board_slug: null,
+          }));
+        if (detectedBoard) {
+          logInfo('app', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
         }
-
-        // QDL (Qualcomm EDL) TAR archives flash differently than block images
-        let flashMethod = 'block';
-        try {
-          const isQdl = await checkIsQdlImage(result.path);
-          if (isQdl) {
-            flashMethod = 'qdl';
-            logInfo('app', `Custom image detected as QDL archive: ${result.name}`);
-          }
-        } catch {
-          // Default to block on detection failure
+        if (isQdl) {
+          logInfo('app', `Custom image detected as QDL archive: ${result.name}`);
         }
+        if (ufsBoardSlug) {
+          logInfo('app', `Custom image detected as UFS: ${result.name} (board ${ufsBoardSlug})`);
+        }
+        const flashMethod = isQdl ? 'qdl' : 'block';
 
         const customImage: ImageInfo = {
           release: 'Custom',
@@ -407,6 +402,7 @@ function AppContent() {
           file_size: result.size,
           stability: 'stable',
           format: flashMethod,
+          storage: ufsBoardSlug ? 'ufs' : null,
           companions: [],
           display_variants: [],
           is_custom: true,
@@ -415,9 +411,9 @@ function AppContent() {
 
         resetSelectionsFrom('manufacturer');
 
-        // Use detected board if found, otherwise a generic custom board
-        const displayBoard = detectedBoard || {
-          slug: SLUGS.CUSTOM,
+        // API-matched board, else a generic one carrying the UFS registry slug (backend resolves the rest).
+        const displayBoard: BoardInfo = detectedBoard ?? {
+          slug: ufsBoardSlug ?? SLUGS.CUSTOM,
           name: t('custom.customImage'),
           vendor: SLUGS.CUSTOM,
           vendor_name: 'Custom',

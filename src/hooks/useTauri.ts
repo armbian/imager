@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, CustomImageClassification, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
   return invoke('get_boards');
@@ -86,6 +86,11 @@ export async function deleteDecompressedCustomImage(imagePath: string): Promise<
 /** Detect board info from an Armbian image filename, or null if no match */
 export async function detectBoardFromFilename(filename: string): Promise<BoardInfo | null> {
   return invoke('detect_board_from_filename', { filename });
+}
+
+/** Classify a picked custom image in one call: matched board, QDL TAR flag, and UFS build slug */
+export async function classifyCustomImage(path: string): Promise<CustomImageClassification> {
+  return invoke('classify_custom_image', { path });
 }
 
 // Re-export CustomImageInfo for backward compatibility
@@ -239,9 +244,4 @@ export async function flashQdlUfsImage(
   autoconfig?: AutoconfigConfig | null
 ): Promise<void> {
   return invoke('flash_qdl_ufs_image', { imagePath, soc, boardSlug, serial, autoconfig });
-}
-
-/** Check whether a TAR file is a QDL flash archive (has rawprogram0.xml + firehose ELF) */
-export async function checkIsQdlImage(imagePath: string): Promise<boolean> {
-  return invoke('check_is_qdl_image', { imagePath });
 }
