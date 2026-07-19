@@ -47,6 +47,7 @@
     "successHint": "Twoja karta SD jest gotowa! Możesz ją bezpiecznie wyjąć i włożyć do urządzenia {{boardName}}.",
     "successHintCustom": "Twoja karta SD jest gotowa! Możesz ją bezpiecznie wyjąć.",
     "successHintQdl": "Zapis zakończony! Urządzenie jest gotowe do uruchomienia.",
+    "successHintVerifySkipped": "Sprawdzanie przerwane: zapis nie został zweryfikowany.",
     "noShaTitle": "Brak sumy kontrolnej",
     "noShaMessage": "Ten obraz nie ma sumy kontrolnej SHA, więc nie można zweryfikować zapisanych danych. Zapis i tak będzie kontynuowany.",
     "extracting": "Wyodrębnianie archiwum...",

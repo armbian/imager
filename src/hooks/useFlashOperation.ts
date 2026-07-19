@@ -50,6 +50,7 @@ interface UseFlashOperationReturn {
   error: string | null;
   imagePath: string | null;
   showShaWarning: boolean;
+  verifyAborted: boolean;
   handleCancel: () => Promise<void>;
   handleRetry: () => Promise<void>;
   handleBack: () => Promise<void>;
@@ -101,6 +102,7 @@ export function useFlashOperation({
   const [error, setError] = useState<string | null>(null);
   const [imagePath, setImagePath] = useState<string | null>(null);
   const [showShaWarning, setShowShaWarning] = useState(false);
+  const [verifyAborted, setVerifyAborted] = useState(false);
 
   // Refs for lifecycle management
   const intervalRef = useRef<number | null>(null);
@@ -535,6 +537,16 @@ export function useFlashOperation({
     try {
       await cancelOperation();
       if (intervalRef.current) clearInterval(intervalRef.current);
+      // Verify only starts once the write is flushed and fsynced, so the device already
+      // holds the full image; cancelling here drops the read-back check, not the flash.
+      if (stage === 'verifying') {
+        setVerifyAborted(true);
+        setStage('complete');
+        setProgress(100);
+        setFlashFailureCount(0);
+        await cleanupImageSafely(imagePath, image.is_custom);
+        return;
+      }
       // EDL: stay put so the blocking flash command can detect cancel and clean up
       if (isEdlFlash) {
         setStage('authorizing');
@@ -562,6 +574,7 @@ export function useFlashOperation({
       pendingCleanupRef.current = null;
     }
     setError(null);
+    setVerifyAborted(false);
     deviceDisconnectedRef.current = false;
     userCancelledRef.current = false;
     shownErrorRef.current = null;
@@ -630,6 +643,7 @@ export function useFlashOperation({
     error,
     imagePath,
     showShaWarning,
+    verifyAborted,
     handleCancel,
     handleRetry,
     handleBack,

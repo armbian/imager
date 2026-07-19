@@ -541,7 +541,8 @@
 
   /* Completion: reveal the check + text instantly, no pop/glow/stagger. */
   .flash-progress__head.is-done .stage-icon,
-  .flash-progress .flash-success-hint {
+  .flash-progress .flash-success-hint,
+  .flash-progress .flash-success-caveat {
     animation: none;
     filter: none;
   }
@@ -613,6 +614,21 @@
   font-size: 14px;
   margin: 16px 0 0 0;
   line-height: 1.5;
+}
+
+.flash-success-caveat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.flash-success-caveat svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
 }
 
 .error-message {
@@ -785,6 +801,10 @@
 }
 .flash-progress .flash-success-hint {
   animation: flashWordIn var(--dur-medium) var(--ease-out-expo) 0.18s both;
+}
+
+.flash-progress .flash-success-caveat {
+  animation: flashWordIn var(--dur-medium) var(--ease-out-expo) 0.26s both;
 }
 
 @keyframes flashCheckPop {

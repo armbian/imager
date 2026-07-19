@@ -47,6 +47,7 @@
     "successHint": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen en in je {{boardName}} plaatsen.",
     "successHintCustom": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen.",
     "successHintQdl": "Flash voltooid! Het apparaat is klaar om op te starten.",
+    "successHintVerifySkipped": "Controle afgebroken: het schrijven is niet gecontroleerd.",
     "noShaTitle": "Geen checksum beschikbaar",
     "noShaMessage": "Dit image heeft geen SHA-checksum, dus de geschreven data kan niet worden geverifieerd. Het flashen gaat toch door.",
     "extracting": "Archief uitpakken...",

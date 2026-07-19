@@ -47,6 +47,7 @@
     "successHint": "SD kartınız hazır! Cihazı güvenle çıkarabilir ve {{boardName}} cihazınıza takabilirsiniz.",
     "successHintCustom": "SD kartınız hazır! Cihazı güvenle çıkarabilirsiniz.",
     "successHintQdl": "Yazma tamamlandı! Cihaz önyüklemeye hazır.",
+    "successHintVerifySkipped": "Doğrulama durduruldu: yazma denetlenmedi.",
     "noShaTitle": "Sağlama toplamı yok",
     "noShaMessage": "Bu imajın SHA sağlama toplamı yok, bu nedenle yazılan veriler doğrulanamaz. Yazma işlemi yine de sürecek.",
     "extracting": "Arşiv çıkarılıyor...",

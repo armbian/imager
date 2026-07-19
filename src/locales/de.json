@@ -47,6 +47,7 @@
     "successHint": "Deine SD-Karte ist fertig! Du kannst sie jetzt sicher entfernen und in dein {{boardName}} einsetzen.",
     "successHintCustom": "Deine SD-Karte ist fertig! Du kannst sie jetzt sicher entfernen.",
     "successHintQdl": "Flash abgeschlossen! Das Gerät ist startbereit.",
+    "successHintVerifySkipped": "Prüfung abgebrochen: Der Schreibvorgang wurde nicht kontrolliert.",
     "noShaTitle": "Keine Prüfsumme verfügbar",
     "noShaMessage": "Für dieses Image gibt es keine SHA-Prüfsumme, daher lassen sich die geschriebenen Daten nicht überprüfen. Das Flashen wird trotzdem fortgesetzt.",
     "extracting": "Archiv wird entpackt...",

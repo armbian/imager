@@ -47,6 +47,7 @@
     "successHint": "La tua scheda SD è pronta! Puoi rimuoverla in sicurezza e inserirla nella tua {{boardName}}.",
     "successHintCustom": "La tua scheda SD è pronta! Puoi rimuoverla in sicurezza.",
     "successHintQdl": "Scrittura completata! Il dispositivo è pronto per l'avvio.",
+    "successHintVerifySkipped": "Verifica interrotta: la scrittura non è stata controllata.",
     "noShaTitle": "Nessun checksum disponibile",
     "noShaMessage": "Questa immagine non ha un checksum SHA, quindi non è possibile verificare i dati scritti. La scrittura proseguirà comunque.",
     "extracting": "Estrazione dell'archivio...",

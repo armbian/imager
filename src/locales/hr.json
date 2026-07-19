@@ -47,6 +47,7 @@
     "successHint": "Vaša SD kartica je spremna! Možete je sigurno izvaditi i umetnuti u {{boardName}}.",
     "successHintCustom": "Vaša SD kartica je spremna! Možete je sigurno izvaditi.",
     "successHintQdl": "Snimanje je dovršeno! Uređaj je spreman za pokretanje.",
+    "successHintVerifySkipped": "Provjera je prekinuta: zapisivanje nije provjereno.",
     "noShaTitle": "Kontrolna suma nije dostupna",
     "noShaMessage": "Ova slika nema SHA kontrolnu sumu, pa se zapisani podaci ne mogu provjeriti. Snimanje će se svejedno nastaviti.",
     "extracting": "Raspakiravanje arhive...",

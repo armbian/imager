@@ -47,6 +47,7 @@
     "successHint": "SD 卡已就绪！您可以安全地取出，并插入您的 {{boardName}}。",
     "successHintCustom": "SD 卡已就绪！您可以安全地将其取出。",
     "successHintQdl": "烧录完成！设备已可正常启动。",
+    "successHintVerifySkipped": "校验已中断，未对写入内容进行检查。",
     "noShaTitle": "没有可用的校验和",
     "noShaMessage": "此镜像没有 SHA 校验和，因此无法校验已写入的数据。烧录仍会继续。",
     "extracting": "正在提取归档文件……",

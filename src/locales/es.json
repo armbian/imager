@@ -47,6 +47,7 @@
     "successHint": "¡Tu tarjeta SD está lista! Puedes retirarla con seguridad e insertarla en tu {{boardName}}.",
     "successHintCustom": "¡Tu tarjeta SD está lista! Puedes retirarla con seguridad.",
     "successHintQdl": "¡Escritura completada! El dispositivo está listo para arrancar.",
+    "successHintVerifySkipped": "Verificación interrumpida: la escritura no se comprobó.",
     "noShaTitle": "No hay suma de verificación",
     "noShaMessage": "Esta imagen no tiene suma de verificación SHA, así que no se pueden comprobar los datos escritos. La escritura continuará de todos modos.",
     "extracting": "Extrayendo archivo...",

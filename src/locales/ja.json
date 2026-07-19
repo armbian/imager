@@ -47,6 +47,7 @@
     "successHint": "SDカードの準備ができました！安全に取り外して、{{boardName}}に挿入できます。",
     "successHintCustom": "SDカードの準備ができました！安全に取り外せます。",
     "successHintQdl": "書き込みが完了しました！デバイスは起動できる状態です。",
+    "successHintVerifySkipped": "確認を中断したため、書き込み内容は検証されていません。",
     "noShaTitle": "チェックサムがありません",
     "noShaMessage": "このイメージにはSHAチェックサムがないため、書き込んだデータを検証できません。このまま書き込みを続行します。",
     "extracting": "アーカイブを展開しています...",

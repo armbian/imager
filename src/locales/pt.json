@@ -47,6 +47,7 @@
     "successHint": "O seu cartão SD está pronto! Pode remover o dispositivo em segurança e inseri-lo no seu {{boardName}}.",
     "successHintCustom": "O seu cartão SD está pronto! Pode remover o dispositivo em segurança.",
     "successHintQdl": "Gravação concluída! O dispositivo está pronto para arrancar.",
+    "successHintVerifySkipped": "Verificação interrompida: a gravação não foi conferida.",
     "noShaTitle": "Sem checksum disponível",
     "noShaMessage": "Esta imagem não tem checksum SHA, por isso não é possível verificar os dados gravados. A gravação prossegue mesmo assim.",
     "extracting": "A extrair o arquivo...",

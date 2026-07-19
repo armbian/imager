@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HardDrive, Usb, Disc, FileImage } from 'lucide-react';
+import { HardDrive, Usb, Disc, FileImage, ShieldOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { BoardInfo, ImageInfo, BlockDevice, AutoconfigConfig } from '../../types';
 import { isEdlImage } from '../../types';
@@ -41,6 +41,7 @@ export function FlashProgress({
     progress,
     error,
     showShaWarning,
+    verifyAborted,
     handleCancel,
     handleRetry,
     handleBack,
@@ -157,13 +158,21 @@ export function FlashProgress({
               )}
 
               {isComplete && (
-                <p className="flash-success-hint">
-                  {isEdl
-                    ? t('flash.successHintQdl')
-                    : image.is_custom
-                      ? t('flash.successHintCustom')
-                      : t('flash.successHint', { boardName: board.name })}
-                </p>
+                <>
+                  <p className="flash-success-hint">
+                    {isEdl
+                      ? t('flash.successHintQdl')
+                      : image.is_custom
+                        ? t('flash.successHintCustom')
+                        : t('flash.successHint', { boardName: board.name })}
+                  </p>
+                  {verifyAborted && (
+                    <p className="flash-success-caveat">
+                      <ShieldOff size={15} aria-hidden="true" />
+                      {t('flash.successHintVerifySkipped')}
+                    </p>
+                  )}
+                </>
               )}
             </div>
 

@@ -47,6 +47,7 @@
     "successHint": "Votre carte SD est prête ! Vous pouvez la retirer en toute sécurité et l'insérer dans votre {{boardName}}.",
     "successHintCustom": "Votre carte SD est prête ! Vous pouvez la retirer en toute sécurité.",
     "successHintQdl": "Flash terminé ! L'appareil est prêt à démarrer.",
+    "successHintVerifySkipped": "Vérification interrompue : l'écriture n'a pas été contrôlée.",
     "noShaTitle": "Aucune somme de contrôle disponible",
     "noShaMessage": "Cette image n'a pas de somme de contrôle SHA, les données écrites ne peuvent donc pas être vérifiées. Le flash se poursuivra malgré tout.",
     "extracting": "Extraction de l'archive...",

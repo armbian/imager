@@ -47,6 +47,7 @@
     "successHint": "Your SD card is ready! You can safely remove it and insert it into your {{boardName}}.",
     "successHintCustom": "Your SD card is ready! You can safely remove it.",
     "successHintQdl": "Flash complete! The device is ready to boot.",
+    "successHintVerifySkipped": "Verification stopped, so the write wasn't checked.",
     "noShaTitle": "No checksum available",
     "noShaMessage": "This image has no SHA checksum, so the written data can't be verified. Flashing will continue anyway.",
     "extracting": "Extracting archive...",

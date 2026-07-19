@@ -47,6 +47,7 @@
     "successHint": "Ditt SD-kort är klart! Du kan ta ut det och sätta in det i din {{boardName}}.",
     "successHintCustom": "Ditt SD-kort är klart! Du kan ta ut det när du vill.",
     "successHintQdl": "Flashningen är klar! Enheten är redo att starta.",
+    "successHintVerifySkipped": "Kontrollen avbröts: skrivningen kontrollerades inte.",
     "noShaTitle": "Ingen kontrollsumma tillgänglig",
     "noShaMessage": "Den här avbildningen saknar SHA-kontrollsumma, så den skrivna datan kan inte verifieras. Flashningen fortsätter ändå.",
     "extracting": "Extraherar arkiv...",
