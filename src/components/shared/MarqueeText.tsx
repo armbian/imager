@@ -28,9 +28,11 @@ export function MarqueeText({ text, maxWidth, className = '' }: MarqueeTextProps
 
       // The hidden in-container span inherits the real rendered font, so its width
       // is exact even across font swaps (a detached styled clone is not).
-      const textWidth = measure.offsetWidth;
-      const available = responsive ? container.clientWidth : maxWidth;
-      const overflow = available > 0 && textWidth > available + 2;
+      // Sub-pixel widths: offsetWidth/clientWidth round, and a 1px rounding gap under
+      // the old 2px tolerance left the text clipped by CSS with the scroll never starting.
+      const textWidth = measure.getBoundingClientRect().width;
+      const available = responsive ? container.getBoundingClientRect().width : maxWidth;
+      const overflow = available > 0 && textWidth > available + 0.5;
       setIsOverflow(overflow);
 
       if (overflow) {

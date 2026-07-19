@@ -157,8 +157,9 @@
   min-width: 0;
 }
 
-/* Both badges share one fixed height + padding so they always match.
-   min-width:0 lets them shrink below content width when the row is tight. */
+/* Both badges share one fixed height + padding so they always match. Each sizes to its
+   text but can never pass half the row, so a long name cannot starve the other badge.
+   A hard 50/50 split was tried instead and left short labels floating in empty pills. */
 .os-badge,
 .flash-device-row {
   height: 36px;
@@ -166,6 +167,7 @@
   box-sizing: border-box;
   flex: 0 1 auto;
   min-width: 0;
+  max-width: calc(50% - 4px);
 }
 
 .os-badge {
@@ -210,9 +212,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* Absorb the badge's shrink so the logo stays fixed and the text scrolls. */
-  flex: 1 1 0;
-  min-width: 0;
+  /* Absorb the badge's shrink so the logo stays fixed and the text scrolls.
+     The floor keeps the label from collapsing to 0 and killing the marquee. */
+  flex: 1 1 auto;
+  min-width: 3.5em;
 }
 
 .flash-device-row {
@@ -222,7 +225,6 @@
   background: rgba(var(--accent-rgb), 0.08);
   border: 1px solid rgba(var(--accent-rgb), 0.2);
   border-radius: var(--radius-2xl);
-  width: fit-content;
 }
 
 .flash-device-row svg {
@@ -237,9 +239,10 @@
   font-weight: 600;
   font-size: 13px;
   white-space: nowrap;
-  /* Absorb the badge's shrink so the icon/size stay fixed and the name scrolls. */
-  flex: 1 1 0;
-  min-width: 0;
+  /* Absorb the badge's shrink so the icon/size stay fixed and the name scrolls.
+     The floor keeps the name from collapsing to 0 and killing the marquee. */
+  flex: 1 1 auto;
+  min-width: 3.5em;
 }
 
 .flash-device-size {
