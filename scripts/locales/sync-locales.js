@@ -35,7 +35,9 @@ const LANGUAGE_NAMES = {
   'uk': 'Ukrainian',
   'hr': 'Croatian',
   'sv': 'Swedish',
-  'zh': 'Chinese (Simplified)'
+  'zh': 'Chinese (Simplified)',
+  'el': 'Greek',
+  'sr': 'Serbian (Cyrillic script)'
 };
 
 // All supported locale files
