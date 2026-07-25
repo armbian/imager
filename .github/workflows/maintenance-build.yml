@@ -95,6 +95,11 @@ jobs:
       - name: Build Tauri app
         run: cargo tauri build --bundles deb,appimage
 
+      # See scripts/build/appimage-unbundle-wayland.sh — bundled libwayland aborts
+      # EGL init on the user's Wayland session (issue #67).
+      - name: Un-bundle libwayland from AppImage (#67)
+        run: ./scripts/build/appimage-unbundle-wayland.sh
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -159,6 +164,11 @@ jobs:
 
       - name: Build Tauri app
         run: cargo tauri build --bundles deb,appimage
+
+      # See scripts/build/appimage-unbundle-wayland.sh — bundled libwayland aborts
+      # EGL init on the user's Wayland session (issue #67).
+      - name: Un-bundle libwayland from AppImage (#67)
+        run: ./scripts/build/appimage-unbundle-wayland.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
