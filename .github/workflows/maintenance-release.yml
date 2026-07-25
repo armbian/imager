@@ -208,6 +208,13 @@ jobs:
       - name: Build Tauri app
         run: cargo tauri build --bundles "${{ matrix.type.bundles }}"
 
+      # linuxdeploy bundles libwebkit2gtk's transitive libwayland-* into the AppImage;
+      # those are older than the user's Mesa and abort EGL init on Wayland (issue #67).
+      # The script strips them, repacks, and re-signs the updater artifact.
+      - name: Un-bundle libwayland from AppImage (#67)
+        if: ${{ matrix.type.name == 'appimage' }}
+        run: ./scripts/build/appimage-unbundle-wayland.sh
+
       - name: Upload artifacts to GitHub Release
         uses: ncipollo/release-action@v1
         with:

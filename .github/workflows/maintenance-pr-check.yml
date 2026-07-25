@@ -248,6 +248,13 @@ jobs:
       - name: Build application
         run: cargo tauri build --bundles ${{ matrix.bundles }}
 
+      # See scripts/build/appimage-unbundle-wayland.sh — bundled libwayland aborts
+      # EGL init on the user's Wayland session (issue #67). Keeps the AppImage that
+      # reviewers download from this PR usable on modern distros.
+      - name: Un-bundle libwayland from AppImage (#67)
+        if: runner.os == 'Linux'
+        run: ./scripts/build/appimage-unbundle-wayland.sh
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
