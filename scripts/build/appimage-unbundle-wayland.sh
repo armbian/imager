@@ -54,8 +54,10 @@ for APP in "${APPIMAGES[@]}"; do
     EXTRACT_DIR="$WORK_DIR/extract"
     rm -rf "$EXTRACT_DIR"
     mkdir -p "$EXTRACT_DIR"
-    # The AppImage runtime extracts itself; no FUSE needed on the runner.
-    (cd "$EXTRACT_DIR" && "$(realpath "$APP")" --appimage-extract >/dev/null)
+    # Resolve before the cd: realpath inside the subshell would run in $EXTRACT_DIR
+    # and fail to find the relative $APP. The AppImage self-extracts, no FUSE needed.
+    APP_ABS="$(realpath "$APP")"
+    (cd "$EXTRACT_DIR" && "$APP_ABS" --appimage-extract >/dev/null)
 
     # Path-tolerant, and a no-op if a future linuxdeploy stops bundling these.
     find "$EXTRACT_DIR/squashfs-root" -type f \( \
