@@ -66,7 +66,16 @@ impl Ext4 {
             create = true;
         }
 
-        self.generic_open(path, &mut parent_inode_num, create, filetype.bits(), &mut 0)
+        let inode = self.generic_open(path, &mut parent_inode_num, create, filetype.bits(), &mut 0)?;
+
+        if iflags & O_TRUNC != 0 {
+            let mut inode_ref = self.get_inode_ref(inode);
+            if inode_ref.inode.size() > 0 {
+                self.truncate_inode(&mut inode_ref, 0)?;
+            }
+        }
+
+        Ok(inode)
     }
 
     /// Create a new directory at the specified path.
