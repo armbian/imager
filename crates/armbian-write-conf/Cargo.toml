@@ -12,4 +12,5 @@ mbrman = "0"
 ext4-view = { version = "0.9", features = ["std"] }
 
 [dev-dependencies]
+mkext4 = "0.0.3"
 tempfile = "3"
