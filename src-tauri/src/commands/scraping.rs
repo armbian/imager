@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Asset caching: serves board images and vendor logos from the local picture
 //! cache as base64 data URIs, downloading from the Armbian API on first access.
 

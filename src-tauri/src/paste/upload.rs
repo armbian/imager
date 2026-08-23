@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Log upload to paste.armbian.com, a Hastebin instance accepting raw text via POST.
 
 use std::fs;

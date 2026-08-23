@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Reusable progress tracker with speed calculation for download, flash,
 //! verification, SHA256, and decompression operations.
 

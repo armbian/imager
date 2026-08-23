@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Lightbulb, Download, ShieldOff, Cpu, Sparkles, WifiOff, ShieldAlert } from 'lucide-react';

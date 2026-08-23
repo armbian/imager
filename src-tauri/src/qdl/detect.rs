@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! QDL device detection: scans for Qualcomm EDL-mode devices (VID 0x05c6, PID 0x9008) via the nusb
 //! pure-Rust USB library. Cross-platform: Linux (usbfs), macOS (IOKit), Windows (WinUSB).
 

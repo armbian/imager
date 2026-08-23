@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Fetches and caches the Qualcomm firehose loader (`prog_firehose_ddr.elf`) for a
 //! board's SoC family from the armbian/qcombin repo, used to flash QDL/EDL devices.
 

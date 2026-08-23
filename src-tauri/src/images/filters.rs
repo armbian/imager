@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Map API response types into frontend-facing types. The REST API returns
 //! pre-processed data, so no extraction or deduplication is needed.
 

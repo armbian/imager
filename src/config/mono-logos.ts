@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 /**
  * Monochrome (single-path, transparent-cutout) logo set used across the app for OS/app marks:
  * the OsPanel split cards force them to a white silhouette over the distro gradient, while the

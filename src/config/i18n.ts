@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Supported-language config. To add one: drop src/locales/{code}.json and add an entry below.
 
 // Twemoji flag SVGs from the maintained @twemoji/svg package; Vite bundles only these

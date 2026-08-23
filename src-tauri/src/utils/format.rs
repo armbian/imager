@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Formatting helpers for human-readable output and Armbian filename parsing.
 
 pub const MB: u64 = 1024 * 1024;

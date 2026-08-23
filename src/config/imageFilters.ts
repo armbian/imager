@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 /** Image filtering predicates and filter button definitions shared by image selection UIs */
 
 import { Star, Shield, RefreshCw, AppWindow, Box } from 'lucide-react';

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Windows-specific flash implementation. Requires Administrator for raw disk access.
 
 use super::FlashState;

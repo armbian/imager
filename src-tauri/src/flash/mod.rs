@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Platform-specific image flashing: privilege escalation + raw device writing.
 //! macOS uses authopen (Touch ID), Linux uses pkexec, Windows needs Administrator.
 

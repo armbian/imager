@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Structured, formatted logging to the app's log directory, with timestamps
 //! and log level indicators.
 

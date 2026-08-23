@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Load several settings together on mount with shared error handling
 
 import { useEffect, useState } from 'react';

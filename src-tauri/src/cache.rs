@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Persistent cache for downloaded Armbian images with size limits and LRU
 //! eviction. All operations are guarded by a global Mutex.
 

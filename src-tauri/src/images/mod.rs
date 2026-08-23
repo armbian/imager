@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Fetching board, image, and vendor data from the Armbian REST API, with
 //! on-disk caching of responses for offline use.
 

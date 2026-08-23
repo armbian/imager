@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Parse the backend's tagged error strings (e.g. [SHA_UNAVAILABLE]) and map them to i18n keys
 
 import { formatBytes } from './index';

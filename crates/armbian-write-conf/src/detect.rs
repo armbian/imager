@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Armbian and Armbian Imager contributors
+
 //! Partition-scheme detection and ext4 rootfs location for RAW disk images.
 
 use std::fs::File;

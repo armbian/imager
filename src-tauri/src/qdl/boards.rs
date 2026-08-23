@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Bundled fallback registry of per-board QDL/EDL facts, used when the Armbian API
 //! carries no `qdl` block for a board (offline, older API). The API is the primary source.
 

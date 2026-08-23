@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 /** Distro-based theming helpers: gradients, accent colour and per-card CSS variables. */
 
 import type { CSSProperties } from 'react';

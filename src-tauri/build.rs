@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 fn main() {
     // Extract Tauri version from Cargo.toml and expose it as a compile-time env var
     println!("cargo:rustc-env=TAURI_VERSION={}", tauri_version());

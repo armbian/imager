@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Poll backend connectivity every 30s; starts optimistic (online) until the first check.
 // When the force_offline setting is enabled, the hook reports offline regardless of real connectivity.
 

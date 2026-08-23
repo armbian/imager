@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 /** Parse a hex color (#rgb or #rrggbb) into its red/green/blue components. */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   let value = hex.replace('#', '');

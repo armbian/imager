@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Settings persistence (theme, language, cache, etc.) via the Tauri Store plugin.
 
 use crate::log_info;

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 
 /** Default upper bound, sized to avoid loading too many heavy cards (board
