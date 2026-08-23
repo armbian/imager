@@ -37,6 +37,13 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
+    "license": "GPL-2.0-or-later",
+    "copyright": "Copyright (c) 2025-2026 Armbian and Armbian Imager contributors",
+    "homepage": "https://github.com/armbian/imager",
+    "publisher": "Armbian",
+    "resources": {
+      "../LICENSE": "LICENSE"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -78,7 +85,23 @@
     },
     "linux": {
       "appimage": {
-        "bundleMediaFramework": false
+        "bundleMediaFramework": false,
+        "files": {
+          "/usr/share/doc/armbian-imager/copyright": "packaging/copyright",
+          "/usr/share/doc/armbian-imager/LICENSE": "../LICENSE"
+        }
+      },
+      "deb": {
+        "section": "utils",
+        "files": {
+          "/usr/share/doc/armbian-imager/copyright": "packaging/copyright"
+        }
+      },
+      "rpm": {
+        "files": {
+          "/usr/share/doc/armbian-imager/copyright": "packaging/copyright",
+          "/usr/share/licenses/armbian-imager/LICENSE": "../LICENSE"
+        }
       }
     }
   },
