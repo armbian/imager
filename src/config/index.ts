@@ -17,9 +17,11 @@ export {
 // Badge configuration
 export {
   DESKTOP_BADGES,
+  VARIANT_BADGES,
   KERNEL_BADGES,
   DESKTOP_ENVIRONMENTS,
   getDesktopEnv,
+  getVariantBadge,
   getKernelType,
   adjustBrightness,
   type BadgeConfig,

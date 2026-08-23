@@ -3,7 +3,7 @@
 
 import { COLORS, UI, SLUGS, SUPPORT_TIER_ORDER } from '../config';
 import { getImageVariantLabel, getOsInfo } from '../config/os-info';
-import { getDesktopEnv, DESKTOP_BADGES, getKernelType, KERNEL_BADGES } from '../config/badges';
+import { getVariantBadge, getKernelType, KERNEL_BADGES } from '../config/badges';
 import type { ImageInfo } from '../types';
 
 // Re-export color helpers from the dedicated color module
@@ -203,9 +203,7 @@ export function formatImageIdentity(
     const parsed = parseArmbianFilename(image.distro_release || '');
     if (parsed?.version) {
       const version = splitArmbianVersion(parsed.version).base;
-      const desktopEnv = parsed.desktop ? getDesktopEnv(parsed.desktop) : null;
-      const variant =
-        desktopEnv && DESKTOP_BADGES[desktopEnv] ? DESKTOP_BADGES[desktopEnv].label : t('modal.minimal');
+      const variant = getVariantBadge(parsed.desktop)?.label ?? t('modal.minimal');
       const os = parsed.distro ? getOsInfo(parsed.distro)?.name ?? null : null;
       return {
         title: `Armbian ${version} ${variant}`.replace(/\s+/g, ' ').trim(),
