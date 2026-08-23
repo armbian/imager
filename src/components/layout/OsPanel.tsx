@@ -16,7 +16,7 @@ import {
   isTrunkImage, IMAGE_FILTER_PREDICATES, FILTER_BUTTONS, categoryOf, type OsCategory,
 } from '../../config';
 import { getMonoLogo } from '../../config/mono-logos';
-import { formatFileSize, hexToRgba, staggerDelay, splitArmbianVersion, formatDate, armbianIdentityKey } from '../../utils';
+import { formatFileSize, hexToRgba, staggerDelay, splitArmbianVersion, formatDate, armbianIdentityKey, formatKernelLabel } from '../../utils';
 import { distroGradient, distroBlock, distroVars } from '../../utils/distroTheme';
 import { ErrorDisplay, ConfirmationDialog } from '../shared';
 import type { BoardInfo, ImageInfo, ImageFilterType, CachedImageInfo } from '../../types';
@@ -208,7 +208,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
             {(kernelBadge || image.kernel_branch) && (
               <span className="dl-card__kernel">
                 <span className="dl-dot" style={{ background: kernelBadge?.color ?? '#10b981' }} />
-                {kernelBadge?.label ?? image.kernel_branch}{image.kernel_version ? ` ${image.kernel_version}` : ''}
+                {formatKernelLabel(image)}
               </span>
             )}
             {image.storage?.toLowerCase() === 'ufs' && (
@@ -266,7 +266,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
               {kernelBadge && (
                 <SoftBadge
                   color={kernelBadge.color}
-                  label={`${kernelBadge.label}${image.kernel_version ? ` ${image.kernel_version}` : ''}`}
+                  label={formatKernelLabel(image) ?? kernelBadge.label}
                 />
               )}
               {image.storage?.toLowerCase() === 'ufs' && <SoftBadge color="#f59e0b" label="UFS" />}

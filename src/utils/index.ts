@@ -3,7 +3,7 @@
 
 import { COLORS, UI, SLUGS, SUPPORT_TIER_ORDER } from '../config';
 import { getImageVariantLabel, getOsInfo } from '../config/os-info';
-import { getDesktopEnv, DESKTOP_BADGES } from '../config/badges';
+import { getDesktopEnv, DESKTOP_BADGES, getKernelType, KERNEL_BADGES } from '../config/badges';
 import type { ImageInfo } from '../types';
 
 // Re-export color helpers from the dedicated color module
@@ -224,6 +224,13 @@ export function formatImageIdentity(
     title: `Armbian ${version} ${getImageVariantLabel(image, t)}`.replace(/\s+/g, ' ').trim(),
     meta: meta || null,
   };
+}
+
+/** Kernel branch label plus version, e.g. "Current 6.12.35"; null when the image carries neither. */
+export function formatKernelLabel(image: ImageInfo): string | null {
+  const type = getKernelType(image.kernel_branch);
+  const label = type ? KERNEL_BADGES[type].label : image.kernel_branch;
+  return `${label ?? ''} ${image.kernel_version ?? ''}`.trim() || null;
 }
 
 /** Extract a message from an unknown error value, using `fallback` if none found */
