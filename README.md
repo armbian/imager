@@ -80,6 +80,14 @@ This is possible thanks to [SignPath Foundation](https://signpath.org?utm_source
 
 Setup, build instructions, and project layout live in [DEVELOPMENT.md](DEVELOPMENT.md).
 
+## License
+
+Armbian Imager is distributed under the GNU General Public License, either version 2 or (at your option) any later version. Version 2 is the floor, so the terms stay compatible with the [Armbian build framework](https://github.com/armbian/build).
+
+SPDX-License-Identifier: `GPL-2.0-or-later`
+
+The full text is in [LICENSE](LICENSE). A few bundled components keep their own terms: the `armbian-write-conf` crate and its vendored `armbian-ext4fs` fork are `MIT`, and the language flag graphics from [Twemoji](https://github.com/jdecked/twemoji) are `CC-BY-4.0`. Per-file details are in [`src-tauri/packaging/copyright`](src-tauri/packaging/copyright).
+
 ---
 
 <p align="center">

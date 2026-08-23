@@ -5,6 +5,9 @@ description = "Armbian Imager - Flash Armbian OS images to SD cards and USB driv
 authors = ["Armbian", "SuperKali <hello@superkali.me>"]
 edition = "2021"
 rust-version = "1.85.0"
+license = "GPL-2.0-or-later"
+homepage = "https://github.com/armbian/imager"
+repository = "https://github.com/armbian/imager"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

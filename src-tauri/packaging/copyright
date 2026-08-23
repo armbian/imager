@@ -1,0 +1,64 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: armbian-imager
+Upstream-Contact: Armbian <https://github.com/armbian/imager/issues>
+Source: https://github.com/armbian/imager
+
+Files: *
+Copyright: 2025-2026 Armbian and Armbian Imager contributors
+License: GPL-2.0-or-later
+
+Files: crates/armbian-write-conf/*
+Copyright: 2026 Armbian and Armbian Imager contributors
+License: MIT
+
+Files: crates/armbian-write-conf/vendor/armbian-ext4fs/*
+Copyright: 2024 yuoo655 <lenuulan@gmail.com>
+Comment: Vendored fork of ext4_rs v1.3.3, https://github.com/yuoo655/ext4_rs
+License: MIT
+
+Files: src/config/i18n.ts
+Copyright: Twitter, Inc and other contributors
+Comment: The language flag graphics imported here come from Twemoji
+ (https://github.com/jdecked/twemoji) via the @twemoji/svg package and are
+ bundled into the application. Only the graphics are covered by this entry.
+License: CC-BY-4.0
+
+License: GPL-2.0-or-later
+ This program is free software; you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the Free Software
+ Foundation; either version 2 of the License, or (at your option) any later
+ version.
+ .
+ This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ .
+ On Debian systems the full text of the GNU General Public License version 2 can
+ be found in /usr/share/common-licenses/GPL-2.
+
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+ the Software without restriction, including without limitation the rights to
+ use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ the Software, and to permit persons to whom the Software is furnished to do so,
+ subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+License: CC-BY-4.0
+ This work is licensed under the Creative Commons Attribution 4.0 International
+ License. You are free to share and adapt the material for any purpose, including
+ commercially, provided that you give appropriate credit, provide a link to the
+ license, and indicate if changes were made.
+ .
+ The full text of the license is available at
+ https://creativecommons.org/licenses/by/4.0/legalcode.

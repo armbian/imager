@@ -3,6 +3,7 @@
   "private": true,
   "version": "2.0.0",
   "description": "Flash Armbian OS images to SD cards and USB drives",
+  "license": "GPL-2.0-or-later",
   "author": "Armbian",
   "maintainers": [
     "SuperKali <hello@superkali.me>"
