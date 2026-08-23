@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 //! Resolves a board's QDL facts from the Armbian API (the served `qdl` block),
 //! falling back to the bundled default registry when the API has no metadata

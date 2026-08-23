@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 //! Linux device writer. Uses UDisks2 (polkit auth) so the app can run as a
 //! normal user, falling back to a direct open when UDisks2 is unavailable.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 //! Partition-scheme detection and ext4 rootfs location for RAW disk images.
 

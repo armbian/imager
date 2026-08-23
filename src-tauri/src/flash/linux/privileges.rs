@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 //! Linux privilege management. UDisks2/polkit prompts when the device is opened,
 //! so the app can run as a normal user.

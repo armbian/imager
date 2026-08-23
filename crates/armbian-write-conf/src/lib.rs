@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 //! Write a config file into a RAW disk image's ext4 rootfs in userspace (no mount/privileges), then validate.
 //! Parses partition scheme (GPT/MBR), locates the Linux ext4 rootfs, writes via `armbian-ext4fs`, re-validates read-only with `ext4-view`.

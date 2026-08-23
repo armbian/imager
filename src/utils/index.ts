@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 import { COLORS, UI, SLUGS, SUPPORT_TIER_ORDER } from '../config';
 import { getImageVariantLabel, getOsInfo } from '../config/os-info';

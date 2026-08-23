@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 //! Centralized hard-coded values, URLs, and configuration options.
 //! Allows dead_code: some consts are only referenced under platform cfg blocks.

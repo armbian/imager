@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 //! Local disk cache for board images and vendor logos with ETag-based conditional refresh.
 //! Cache-first: serve local immediately, refresh stale entries in the background.

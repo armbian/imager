@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 //! Armbian first-boot autoconfig: render a preset (mirrors client-side AutoconfigConfig) and inject it.
 //! [`inject_into_image`] writes it to `/root/.not_logged_in_yet` in the image's ext4 rootfs, consumed on first boot. See https://docs.armbian.com/User-Guide_Autoconfig/.
