@@ -6,7 +6,7 @@ import { Factory, Cpu, Database, HardDrive, Usb, FolderOpen, Archive, Check, Arr
 import { useTranslation } from 'react-i18next';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { IMAGE_VARIANT } from '../../config';
-import { isDetectedBoard, formatImageIdentity } from '../../utils';
+import { isDetectedBoard, formatImageIdentity, formatKernelLabel } from '../../utils';
 import type { BoardInfo, ImageInfo, BlockDevice, Manufacturer } from '../../types';
 import { deriveFlashMethod, isEdlImage } from '../../types';
 import { MarqueeText, MotdTip, BoardImage, UpdateEntry } from '../shared';
@@ -259,8 +259,12 @@ export function HomePage({
   const deviceSummary = [
     selectedManufacturer && { label: t('home.manufacturer'), value: selectedManufacturer.name },
     selectedBoard && { label: t('home.board'), value: selectedBoard.name },
-    selectedImage && { label: t('home.operatingSystem'), value: osLabelText(selectedImage, t) },
-  ].filter(Boolean) as { label: string; value: string }[];
+    selectedImage && {
+      label: t('home.operatingSystem'),
+      value: osLabelText(selectedImage, t),
+      sub: formatKernelLabel(selectedImage),
+    },
+  ].filter(Boolean) as { label: string; value: string; sub?: string | null }[];
 
   // Inline storage panel; it picks list vs. confirm view from `selectedDevice`.
   const renderDevicePanel = () => (

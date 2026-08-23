@@ -34,7 +34,7 @@ interface DevicePanelProps {
   /** EDL-entry hint ("button"/"jumper") for the selected board, drives the QDL instructions. */
   edlEntry?: string | null;
   /** Upstream selections (manufacturer/board/OS) shown in the confirm summary. */
-  summary?: { label: string; value: string }[];
+  summary?: { label: string; value: string; sub?: string | null }[];
   /** Cached board photo shown at the top of the confirm summary. */
   boardImage?: string | null;
   /** Whether autoconfig profiles apply (Armbian images only; hidden for generic custom images). */
@@ -221,8 +221,11 @@ export function DevicePanel({
                 {summary.map((row) => (
                   <li key={row.label} className="device-summary__row">
                     <span className="device-summary__label">{row.label}</span>
-                    {/* Long values (e.g. custom image filenames) auto-scroll instead of truncating. */}
-                    <MarqueeText text={row.value} className="device-summary__value" maxWidth={340} />
+                    <span className="device-summary__valueinfo">
+                      {/* Long values (e.g. custom image filenames) auto-scroll instead of truncating. */}
+                      <MarqueeText text={row.value} className="device-summary__value" maxWidth={340} />
+                      {row.sub && <span className="device-summary__sub">{row.sub}</span>}
+                    </span>
                   </li>
                 ))}
                 {/* Target device as a label/value row, consistent with the rows above. */}
