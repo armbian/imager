@@ -19,7 +19,7 @@ import { EVENTS } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
-import { getDesktopEnv, getKernelType, DESKTOP_BADGES, KERNEL_BADGES, adjustBrightness } from '../../config/badges';
+import { getDesktopEnv, getVariantBadge, getKernelType, KERNEL_BADGES, adjustBrightness } from '../../config/badges';
 import type { CachedImageInfo, BoardInfo } from '../../types';
 
 interface CacheManagerModalProps {
@@ -309,6 +309,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                       const osInfo = parsed?.distro ? getOsInfo(parsed.distro) : null;
                       const monoLogo = getMonoLogo(parsed?.distro ?? '', parsed?.desktop);
                       const desktopEnv = parsed?.desktop ? getDesktopEnv(parsed.desktop) : null;
+                      const variantBadge = getVariantBadge(parsed?.desktop);
                       const kernelType = parsed?.branch ? getKernelType(parsed.branch) : null;
                       const badgeConfig = kernelType ? KERNEL_BADGES[kernelType] : null;
                       const isUfs = !!parsed?.kernel && parsed.kernel.toLowerCase().endsWith('-ufs');
@@ -344,7 +345,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                             </div>
 
                             <div className="image-info-side-panel">
-                              {desktopEnv && DESKTOP_BADGES[desktopEnv] ? (
+                              {desktopEnv && variantBadge ? (
                                 <div
                                   className="side-info-badge"
                                   style={{
@@ -355,7 +356,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                                   }}
                                 >
                                   <Monitor size={11} />
-                                  <span>{DESKTOP_BADGES[desktopEnv].label}</span>
+                                  <span>{variantBadge.label}</span>
                                 </div>
                               ) : (
                                 <div
@@ -368,7 +369,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                                   }}
                                 >
                                   <Terminal size={11} />
-                                  <span>CLI</span>
+                                  <span>{variantBadge?.label ?? 'CLI'}</span>
                                 </div>
                               )}
                               {badgeConfig && (

@@ -5,7 +5,7 @@
 /** OS/Distro information configuration */
 
 import type { ImageInfo } from '../types';
-import { getDesktopEnv, DESKTOP_BADGES } from './badges';
+import { getVariantBadge } from './badges';
 
 export interface OsInfoConfig {
   name: string;
@@ -77,8 +77,5 @@ export function getImageVariantLabel(image: ImageInfo, t: (key: string) => strin
   const appInfo = getAppInfo(image.preinstalled_application);
   if (appInfo) return appInfo.badge ?? appInfo.name;
 
-  const desktopEnv = getDesktopEnv(image.image_variant);
-  if (desktopEnv && DESKTOP_BADGES[desktopEnv]) return DESKTOP_BADGES[desktopEnv].label;
-
-  return t('modal.minimal');
+  return getVariantBadge(image.image_variant)?.label ?? t('modal.minimal');
 }

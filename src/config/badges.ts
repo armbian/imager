@@ -14,6 +14,7 @@ export interface BadgeConfig {
 /** Desktop environment badges */
 export const DESKTOP_BADGES: Record<string, BadgeConfig> = {
   'gnome': { label: 'GNOME', color: '#4a86cf' },
+  'kde-neon': { label: 'KDE Neon', color: '#2eb398' },
   'kde': { label: 'KDE', color: '#1d99f3' },
   'xfce': { label: 'XFCE', color: '#2284f2' },
   'cinnamon': { label: 'Cinnamon', color: '#dc682e' },
@@ -23,6 +24,12 @@ export const DESKTOP_BADGES: Record<string, BadgeConfig> = {
   'lxqt': { label: 'LXQt', color: '#0192d3' },
   'i3': { label: 'i3WM', color: '#1a8cff' },
   'sway': { label: 'Sway', color: '#68b0d8' },
+  'bianbu': { label: 'Bianbu', color: PALETTE.CYAN },
+};
+
+/** Variants that are not desktop environments; kept apart so they stay out of the desktop filter. */
+export const VARIANT_BADGES: Record<string, BadgeConfig> = {
+  'server': { label: 'Server', color: PALETTE.SLATE },
 };
 
 /** Kernel type badges */
@@ -39,11 +46,28 @@ export const KERNEL_BADGES: Record<string, BadgeConfig> = {
 /** Desktop environment keys, used for filtering */
 export const DESKTOP_ENVIRONMENTS = Object.keys(DESKTOP_BADGES);
 
+// Longest key first, so 'kde-neon' wins over the 'kde' substring it contains.
+const BY_SPECIFICITY = (keys: string[]) => [...keys].sort((a, b) => b.length - a.length);
+const DESKTOP_MATCH = BY_SPECIFICITY(DESKTOP_ENVIRONMENTS);
+const VARIANT_MATCH = BY_SPECIFICITY(Object.keys(VARIANT_BADGES));
+
 /** Get the desktop environment from a variant string */
 export function getDesktopEnv(variant: string): string | null {
   const v = variant.toLowerCase();
-  for (const key of DESKTOP_ENVIRONMENTS) {
+  for (const key of DESKTOP_MATCH) {
     if (v.includes(key)) return key;
+  }
+  return null;
+}
+
+/** Badge for an image variant: a desktop environment first, then the non-desktop variants. */
+export function getVariantBadge(variant: string | null | undefined): BadgeConfig | null {
+  if (!variant) return null;
+  const desktop = getDesktopEnv(variant);
+  if (desktop) return DESKTOP_BADGES[desktop];
+  const v = variant.toLowerCase();
+  for (const key of VARIANT_MATCH) {
+    if (v.includes(key)) return VARIANT_BADGES[key];
   }
   return null;
 }
