@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Drives the full flash lifecycle: authorize, download, decompress, flash, verify, cleanup
 
 import { useState, useEffect, useRef, useCallback } from 'react';

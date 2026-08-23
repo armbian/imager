@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 import { stagePhase, PHASE_ORDER, type FlashPhase, type FlashStage } from './FlashStageIcon';
 
 /** Active dot index for the current stage within the planned phases. */

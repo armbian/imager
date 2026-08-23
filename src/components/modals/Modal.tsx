@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 import { type ReactNode, useEffect, useCallback } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';

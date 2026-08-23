@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Selection and processing of user-provided custom images.
 
 use serde::{Deserialize, Serialize};

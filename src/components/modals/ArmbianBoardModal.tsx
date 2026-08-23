@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Modal shown on an Armbian host to confirm auto-selecting the detected board
 
 import { useCallback, useEffect } from 'react';

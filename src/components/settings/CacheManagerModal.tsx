@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Cache manager sub-modal: master-detail (boards in left rail, selected board's cached images on right).
 // Frozen `cache-*` vocabulary; glass restyle lives in settings.css.
 

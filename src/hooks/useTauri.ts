@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 import { invoke } from '@tauri-apps/api/core';
 import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, CustomImageClassification, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig } from '../types';
 

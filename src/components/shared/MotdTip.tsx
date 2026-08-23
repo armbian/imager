@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Lightbulb, ExternalLink } from 'lucide-react';
 import { openUrl } from '../../hooks/useTauri';

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Persistent settings access via the Tauri Store plugin (no backend commands)
 
 import { load } from '@tauri-apps/plugin-store';

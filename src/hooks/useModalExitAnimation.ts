@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Consistent modal exit animation with double-trigger guard and pre/post-close callbacks
 
 import { useState, useCallback, useRef } from 'react';

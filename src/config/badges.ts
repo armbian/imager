@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 /** Badge configuration for desktop environments and kernel types */
 
 import { PALETTE } from './constants';

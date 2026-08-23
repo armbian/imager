@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! QDL (Qualcomm Device Loader): flashing for boards using Qualcomm EDL (Emergency Download) mode instead of block-device
 //! writes. Uses the Sahara protocol to upload a firehose programmer, then the Firehose protocol to program partitions.
 

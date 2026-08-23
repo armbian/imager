@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Support tier badges (Platinum, Standard, Community, EOS, TV Box, WIP)
 
 import { Crown, Shield, Users, Clock, Tv, Wrench } from 'lucide-react';

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 import { OS_INFO } from '../../config/os-info';
 
 /** Resolve a human-readable OS name from a distro release string. */

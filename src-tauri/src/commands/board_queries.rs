@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Board and image queries: fetch and filter board/image data from the Armbian REST API.
 
 use std::collections::HashSet;

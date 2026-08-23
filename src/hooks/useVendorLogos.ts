@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { BoardInfo } from '../types';
 import { getCachedVendorLogo } from './useTauri';

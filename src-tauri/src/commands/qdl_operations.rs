@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Tauri command handlers for QDL (Qualcomm EDL) device detection and flashing.
 
 use std::path::PathBuf;

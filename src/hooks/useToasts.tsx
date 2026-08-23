@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 // Global toast system via React Context: one shared container, accessed through useToasts()
 
 import { createContext, useContext, useState, useCallback } from 'react';

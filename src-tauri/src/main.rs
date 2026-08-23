@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+
 //! Armbian Imager: cross-platform Tauri app for downloading and flashing
 //! Armbian OS images to SD cards and USB drives.
 
