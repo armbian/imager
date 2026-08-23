@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 //! TAR archive extraction for QDL images. Archives contain flash/prog_firehose_ddr.elf (Sahara programmer),
 //! flash/rawprogram0.xml (partition instructions), flash/patch0.xml (post-flash patches), and partition images.

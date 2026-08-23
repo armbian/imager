@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 //! Decompressing image files (XZ, GZ, BZ2, ZST) using native Rust libraries,
 //! with multi-threading for XZ.

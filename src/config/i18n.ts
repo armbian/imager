@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
+// Copyright (c) 2026 Ricardo Pardini, ricardo@pardini.net
 
 // Supported-language config. To add one: drop src/locales/{code}.json and add an entry below.
 

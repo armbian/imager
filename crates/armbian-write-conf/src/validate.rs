@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 //! Read-only validation of an ext4 rootfs after a write, using ext4-view (verifies inode + block-group-descriptor
 //! checksums on access), so reading the dest file back and walking the whole tree acts as an e2fsck proxy.

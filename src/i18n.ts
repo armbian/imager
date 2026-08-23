@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Copyright (c) 2025-2026 Armbian and Armbian Imager contributors
+// Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
+// Copyright (c) 2025 Igor Pecovnik, igor@armbian.com
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';

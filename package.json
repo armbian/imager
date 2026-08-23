@@ -6,7 +6,7 @@
   "license": "GPL-2.0-or-later",
   "author": "Armbian",
   "maintainers": [
-    "SuperKali <hello@superkali.me>"
+    "Daniele Briguglio <superkali@armbian.com>"
   ],
   "type": "module",
   "engines": {
