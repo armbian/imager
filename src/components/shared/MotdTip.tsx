@@ -101,7 +101,8 @@ export function MotdTip() {
 
   return (
     <button className="rail-tip" onClick={handleClick} title={tip.message}>
-      <span className="rail-tip__node">
+      {/* key on the message too: remounting replays the finite halo on each rotation */}
+      <span key={`node-${tip.message}`} className="rail-tip__node">
         <Lightbulb size={12} />
       </span>
       {/* key on the message so it re-fades each rotation */}
