@@ -73,6 +73,7 @@ export const SETTINGS = {
     ARMBIAN_BOARD_DETECTION: 'armbian_board_detection',
     AUTOCONFIG_PROFILES: 'autoconfig_profiles',
     ALLOW_SYSTEM_DEVICES: 'allow_system_devices',
+    REDUCED_MOTION: 'reduced_motion',
   },
   DEFAULTS: {
     THEME: 'auto',
@@ -87,6 +88,13 @@ export const SETTINGS = {
     ARMBIAN_BOARD_DETECTION: 'modal',
     AUTOCONFIG_PROFILES: [] as [],
     ALLOW_SYSTEM_DEVICES: false,
+    REDUCED_MOTION: 'auto',
+  },
+  /** Motion preference: follow the OS, or force animations on/off regardless. */
+  MOTION_MODES: {
+    AUTO: 'auto',
+    REDUCE: 'reduce',
+    FULL: 'full',
   },
   ARMBIAN_DETECTION_MODES: {
     DISABLED: 'disabled',

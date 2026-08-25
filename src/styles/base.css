@@ -17,6 +17,49 @@ textarea,
   -webkit-user-select: text;
 }
 
+/* Motion: the OS preference decides unless the in-app setting overrides it in
+   either direction. Kept as one shared rule so a new animation is covered by
+   default instead of needing its own guard. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion="false"]) *,
+  :root:not([data-reduced-motion="false"]) *::before,
+  :root:not([data-reduced-motion="false"]) *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:root[data-reduced-motion="true"] *,
+:root[data-reduced-motion="true"] *::before,
+:root[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Zeroing the duration only makes the card lifts instant, and they still move
+   under the pointer. Reduced motion has to stop the movement itself. The hover
+   shadow stays, so the card still answers without shifting. A blanket
+   transform: none would break layout transforms such as the centred pager. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion="false"]) .mfr-card:hover,
+  :root:not([data-reduced-motion="false"]) .board-card:hover,
+  :root:not([data-reduced-motion="false"]) .os-card:hover,
+  :root:not([data-reduced-motion="false"]) .dl-card:hover {
+    transform: none;
+  }
+}
+
+:root[data-reduced-motion="true"] .mfr-card:hover,
+:root[data-reduced-motion="true"] .board-card:hover,
+:root[data-reduced-motion="true"] .os-card:hover,
+:root[data-reduced-motion="true"] .dl-card:hover {
+  transform: none;
+}
+
 html, body, #root {
   height: 100%;
 }

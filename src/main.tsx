@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { initI18n } from './i18n';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { MotionProvider } from './contexts/MotionContext';
 
 // Tag the platform so the layout can reserve space for the overlay traffic lights (macOS)
 if (navigator.userAgent.includes('Mac')) {
@@ -22,7 +23,9 @@ initI18n().then(() => {
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <ThemeProvider>
-        <App />
+        <MotionProvider>
+          <App />
+        </MotionProvider>
       </ThemeProvider>
     </React.StrictMode>
   );
