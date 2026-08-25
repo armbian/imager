@@ -152,6 +152,12 @@
   letter-spacing: 0.5px;
 }
 
+.settings-group__hint {
+  margin: -4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
 /* A single translucent surface holding hairline-divided rows */
 .settings-group__card {
   background:

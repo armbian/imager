@@ -52,6 +52,27 @@ export async function setTheme(theme: string): Promise<void> {
   }
 }
 
+/** Get the motion preference ('auto', 'reduce' or 'full') */
+export async function getReducedMotion(): Promise<string> {
+  try {
+    const store = await getStore();
+    return (await store.get<string>(SETTINGS.KEYS.REDUCED_MOTION)) || SETTINGS.DEFAULTS.REDUCED_MOTION;
+  } catch (error) {
+    throw new Error(`Failed to get motion preference: ${error}`);
+  }
+}
+
+/** Set the motion preference ('auto', 'reduce' or 'full') */
+export async function setReducedMotion(mode: string): Promise<void> {
+  try {
+    const store = await getStore();
+    await store.set(SETTINGS.KEYS.REDUCED_MOTION, mode);
+    await store.save();
+  } catch (error) {
+    throw new Error(`Failed to set motion preference: ${error}`);
+  }
+}
+
 /** Get the MOTD visibility preference */
 export async function getShowMotd(): Promise<boolean> {
   try {

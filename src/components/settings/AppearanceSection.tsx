@@ -3,9 +3,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Monitor, Moon, Search, Sun } from 'lucide-react';
+import { Check, Gauge, Monitor, Moon, Search, Sparkles, Sun } from 'lucide-react';
 import { load } from '@tauri-apps/plugin-store';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useMotion, type MotionMode } from '../../contexts/MotionContext';
 import { changeLanguage as i18nChangeLanguage, getCurrentLanguage } from '../../i18n';
 import { SUPPORTED_LANGUAGES, flagUrl } from '../../config/i18n';
 
@@ -26,11 +27,19 @@ const THEME_OPTIONS: ThemeOption[] = [
   { value: 'auto', Icon: Monitor, labelKey: 'settings.themeAuto' },
 ];
 
+/** Motion options; reusing the theme card layout keeps the two selectors consistent. */
+const MOTION_OPTIONS: { value: MotionMode; Icon: typeof Sun; labelKey: string }[] = [
+  { value: 'full', Icon: Sparkles, labelKey: 'settings.motionFull' },
+  { value: 'reduce', Icon: Gauge, labelKey: 'settings.motionReduce' },
+  { value: 'auto', Icon: Monitor, labelKey: 'settings.motionAuto' },
+];
+
 /** Appearance settings: theme cards + searchable language grid. Defaults language to "auto"
  * when none saved; flags are bundled twemoji SVGs (no runtime CDN or emoji-font dependency). */
 export function AppearanceSection() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const { motion, setMotion } = useMotion();
   const [currentLanguage, setCurrentLanguage] = useState<string>(getCurrentLanguage());
   const [initialized, setInitialized] = useState(false);
   const [search, setSearch] = useState('');
@@ -88,6 +97,26 @@ export function AppearanceSection() {
               className={`theme-seg__card ${theme === value ? 'theme-seg__card--active' : ''}`}
               aria-pressed={theme === value}
               onClick={() => setTheme(value)}
+            >
+              <Icon size={28} className="theme-seg__icon" />
+              <span className="theme-seg__label">{t(labelKey)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <h4 className="settings-group__title">{t('settings.chooseMotion')}</h4>
+        <p className="settings-group__hint">{t('settings.motionHint')}</p>
+
+        <div className="theme-seg" role="group" aria-label={t('settings.chooseMotion')}>
+          {MOTION_OPTIONS.map(({ value, Icon, labelKey }) => (
+            <button
+              key={value}
+              type="button"
+              className={`theme-seg__card ${motion === value ? 'theme-seg__card--active' : ''}`}
+              aria-pressed={motion === value}
+              onClick={() => setMotion(value)}
             >
               <Icon size={28} className="theme-seg__icon" />
               <span className="theme-seg__label">{t(labelKey)}</span>
