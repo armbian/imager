@@ -1452,6 +1452,7 @@ button.list-item:disabled:hover {
 
 /* Dashed accent ring, distinct from the solid step badges */
 .rail-tip__node {
+  position: relative;
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -1461,12 +1462,25 @@ button.list-item:disabled:hover {
   color: var(--accent);
   background: rgba(var(--accent-rgb), 0.08);
   border: 1.5px dashed rgba(var(--accent-rgb), 0.6);
-  animation: railTipGlow 3s ease-in-out infinite;
+}
+
+/* The halo is a static shadow on a pseudo-element and only its opacity animates:
+   box-shadow is not compositable, so animating it repainted this node every frame,
+   and the node sits inside the blurred sidebar, which then had to recompute its
+   backdrop. Two cycles per message instead of forever, replayed by the React key. */
+.rail-tip__node::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.08);
+  opacity: 0;
+  animation: railTipGlow 3s ease-in-out 2;
 }
 
 @keyframes railTipGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0); }
-  50% { box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.08); }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 .rail-tip__msg {
