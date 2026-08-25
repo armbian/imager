@@ -8,6 +8,15 @@
   -webkit-user-select: none;
 }
 
+/* Form controls must stay editable: on WebKit before Safari 16 an inherited
+   user-select: none stops text fields taking a caret (WebKit bug 118009). */
+input,
+textarea,
+[contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 html, body, #root {
   height: 100%;
 }
