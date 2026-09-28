@@ -10,7 +10,7 @@ import {
   Terminal, ShieldAlert, UserCircle, Info,
 } from 'lucide-react';
 import type { AutoconfigConfig, AutoconfigProfile } from '../../types';
-import { isHttpUrl } from '../../utils';
+import { isHttpUrl, staticIpErrors } from '../../utils';
 import {
   getAutoconfigProfiles,
   upsertAutoconfigProfile,
@@ -314,6 +314,9 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     // Locale/timezone are applied by Armbian only during first-user creation,
     // so they stay locked until the first user is fully defined (name + password + full name).
     const hasUser = !!(c.userName?.trim() && c.userPassword?.trim() && c.userRealName?.trim());
+    // A bad static address (e.g. the subnet's broadcast .255) leaves a headless board unreachable, so flag it here.
+    const ipErr = c.useStaticIp ? staticIpErrors(c.staticIp, c.staticMask, c.staticGateway, c.staticDns) : {};
+    const ipErrText = (key?: string) => (key ? t(`settings.autoconfig.${key}`) : undefined);
     // Counts mirror what render actually emits: hidden/locked sub-fields don't count.
     const netCount = c.applyNetwork
       ? countSet([
@@ -419,17 +422,17 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
               />
               {c.useStaticIp && (
                 <div className="ac-grid">
-                  <Field label={t('settings.autoconfig.staticIp')}>
-                    <TextInput icon={MapPin} value={c.staticIp} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_IP} onChange={(v) => setConfig('staticIp', v)} />
+                  <Field label={t('settings.autoconfig.staticIp')} error={ipErrText(ipErr.ip)}>
+                    <TextInput icon={MapPin} value={c.staticIp} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_IP} invalid={!!ipErr.ip} onChange={(v) => setConfig('staticIp', v)} />
                   </Field>
-                  <Field label={t('settings.autoconfig.staticMask')}>
-                    <TextInput icon={MapPin} value={c.staticMask} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_MASK} onChange={(v) => setConfig('staticMask', v)} />
+                  <Field label={t('settings.autoconfig.staticMask')} error={ipErrText(ipErr.mask)}>
+                    <TextInput icon={MapPin} value={c.staticMask} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_MASK} invalid={!!ipErr.mask} onChange={(v) => setConfig('staticMask', v)} />
                   </Field>
-                  <Field label={t('settings.autoconfig.staticGateway')}>
-                    <TextInput icon={Router} value={c.staticGateway} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_GATEWAY} onChange={(v) => setConfig('staticGateway', v)} />
+                  <Field label={t('settings.autoconfig.staticGateway')} error={ipErrText(ipErr.gateway)}>
+                    <TextInput icon={Router} value={c.staticGateway} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_GATEWAY} invalid={!!ipErr.gateway} onChange={(v) => setConfig('staticGateway', v)} />
                   </Field>
-                  <Field label={t('settings.autoconfig.staticDns')}>
-                    <TextInput icon={Server} value={c.staticDns} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_DNS} onChange={(v) => setConfig('staticDns', v)} />
+                  <Field label={t('settings.autoconfig.staticDns')} error={ipErrText(ipErr.dns)}>
+                    <TextInput icon={Server} value={c.staticDns} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_DNS} invalid={!!ipErr.dns} onChange={(v) => setConfig('staticDns', v)} />
                   </Field>
                 </div>
               )}
