@@ -144,6 +144,9 @@ export function renderPresetPreview(c: AutoconfigConfig, revealSecrets = false):
 
   push('PRESET_CONFIGURATION', c.remoteConfigUrl);
 
+  // Any preset declines first login's "Connect via wireless?" prompt, which nobody answers on a headless board.
+  if (lines.length > 0) lines.push('PRESET_CONNECT_WIRELESS="n"');
+
   return { content: lines.join('\n'), count: lines.length };
 }
 
