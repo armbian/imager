@@ -176,6 +176,14 @@ pub fn render_preset(config: &AutoconfigConfig) -> String {
     // Advanced.
     push_str(&mut out, "PRESET_CONFIGURATION", &config.remote_config_url);
 
+    // First login runs unattended on the autologin console. Without an internet
+    // connection it would otherwise stop at "Connect via wireless? [Y/n]", which on
+    // a headless board nobody answers, so any preset declines it (wifi, if wanted,
+    // comes from the PRESET_NET_* keys above).
+    if !out.is_empty() {
+        out.push_str("PRESET_CONNECT_WIRELESS=\"n\"\n");
+    }
+
     out
 }
 
@@ -329,5 +337,12 @@ mod tests {
         let mut c = empty();
         c.locale = Some(String::new());
         assert_eq!(render_preset(&c), "");
+    }
+
+    #[test]
+    fn any_preset_declines_wireless_prompt() {
+        let mut c = empty();
+        c.root_password = Some("secret".to_string());
+        assert!(render_preset(&c).ends_with("PRESET_CONNECT_WIRELESS=\"n\"\n"));
     }
 }
