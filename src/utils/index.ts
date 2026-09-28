@@ -187,6 +187,65 @@ export function isHttpUrl(value: string): boolean {
   }
 }
 
+/** Parse a dotted-quad IPv4 address to its 32-bit value, or null when malformed. */
+function parseIpv4(value: string): number | null {
+  const parts = value.trim().split('.');
+  if (parts.length !== 4) return null;
+  let n = 0;
+  for (const part of parts) {
+    if (!/^\d{1,3}$/.test(part) || Number(part) > 255) return null;
+    n = n * 256 + Number(part);
+  }
+  return n;
+}
+
+/** Prefix length of a contiguous dotted-quad netmask (255.255.255.0 -> 24), or null when not a netmask. */
+function netmaskPrefix(value: string): number | null {
+  const n = parseIpv4(value);
+  if (n === null) return null;
+  const bits = n.toString(2).padStart(32, '0');
+  if (!/^1*0*$/.test(bits)) return null;
+  const firstZero = bits.indexOf('0');
+  return firstZero === -1 ? 32 : firstZero;
+}
+
+/** Per-field i18n key (under settings.autoconfig) for an invalid static IP setting; absent fields are fine. */
+export interface StaticIpErrors {
+  ip?: string;
+  mask?: string;
+  gateway?: string;
+  dns?: string;
+}
+
+/** Validate the static IP fields as a whole: well-formed values, a usable host address (not the subnet's network or
+ * broadcast address) and a gateway inside that subnet. Empty fields are not flagged. */
+export function staticIpErrors(ip?: string, mask?: string, gateway?: string, dns?: string): StaticIpErrors {
+  const errors: StaticIpErrors = {};
+  const addr = ip ? parseIpv4(ip) : null;
+  const prefix = mask ? netmaskPrefix(mask) : null;
+  if (ip && addr === null) errors.ip = 'ipInvalid';
+  if (mask && prefix === null) errors.mask = 'maskInvalid';
+
+  // Arithmetic, not bitwise: JS bitwise ops are signed 32-bit and break above 127.x.x.x.
+  const size = prefix === null ? 0 : 2 ** (32 - prefix);
+  if (addr !== null && prefix !== null && prefix <= 30) {
+    const host = addr % size;
+    if (host === 0 || host === size - 1) errors.ip = 'ipNotHost';
+  }
+
+  if (gateway) {
+    const gw = parseIpv4(gateway);
+    if (gw === null) errors.gateway = 'gatewayInvalid';
+    else if (addr !== null && prefix !== null) {
+      if (Math.floor(gw / size) !== Math.floor(addr / size)) errors.gateway = 'gatewayOutsideSubnet';
+      else if (gw === addr) errors.gateway = 'gatewaySameAsIp';
+    }
+  }
+
+  if (dns && dns.split(/[\s,]+/).filter(Boolean).some((d) => parseIpv4(d) === null)) errors.dns = 'dnsInvalid';
+  return errors;
+}
+
 /** Strip a leading vendor name from a board name so a vendor kicker and the name don't repeat it. */
 export function stripVendorPrefix(name: string, vendorName: string): string {
   if (!vendorName || !name.toLowerCase().startsWith(vendorName.toLowerCase())) return name;
