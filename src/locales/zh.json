@@ -220,6 +220,7 @@
       "maxSize": "最大缓存容量",
       "maxSizeDescription": "达到容量上限后，自动删除最早的镜像",
       "noCachedImages": "暂无缓存数据",
+      "loadError": "无法读取镜像缓存",
       "clear": "清除缓存",
       "clearButton": "释放空间",
       "clearDescription": "删除所有缓存数据以释放空间",

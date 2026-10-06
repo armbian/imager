@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Copy, Check } from 'lucide-react';
 import Ansi from 'ansi-to-html';
 import { getLogs } from '../../hooks/useTauri';
-import { getErrorMessage, stripAnsiCodes } from '../../utils';
+import { useAsyncData } from '../../hooks/useAsyncData';
+import { stripAnsiCodes } from '../../utils';
+import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { TIMING } from '../../config';
 
 interface LogsModalProps {
@@ -19,32 +21,11 @@ interface LogsModalProps {
  * renders via dangerouslySetInnerHTML+escapeXML, copy strips ANSI and reverts after TIMING.COPIED_NOTIFICATION; no exit animation, no Escape handler (intentional), overlay click closes. */
 export function LogsModal({ isOpen, onClose }: LogsModalProps) {
   const { t } = useTranslation();
-  const [logs, setLogs] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
-
-  // Fetch logs lazily each time the modal is opened.
-  useEffect(() => {
-    if (isOpen) {
-      loadLogs();
-    }
-  }, [isOpen]);
-
-  /** Loads the current session logs from the Rust backend. */
-  const loadLogs = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const logContent = await getLogs();
-      setLogs(logContent);
-    } catch (err) {
-      setError(getErrorMessage(err, 'Failed to load logs'));
-      console.error('Failed to load logs:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: logs, loading, error, reload } = useAsyncData(() => getLogs(), [isOpen], {
+    immediate: isOpen,
+    resetOnReload: true,
+  });
 
   /** Copies the logs to the clipboard as plain text, flashing a confirmation. */
   const handleCopyLogs = async () => {
@@ -72,12 +53,12 @@ export function LogsModal({ isOpen, onClose }: LogsModalProps) {
 
   /** Renders body per load state: loading line, error line, or the terminal panel with its floating copy pill. */
   const renderBody = () => {
-    if (loading) {
-      return <div className="logs-loading">{t('modal.loading')}</div>;
+    if (error) {
+      return <ErrorDisplay error={error} onRetry={reload} compact />;
     }
 
-    if (error) {
-      return <div className="logs-error">{error}</div>;
+    if (loading || logs === null) {
+      return <div className="logs-loading">{t('modal.loading')}</div>;
     }
 
     return (

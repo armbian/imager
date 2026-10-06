@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getVersion } from '@tauri-apps/api/app';
 import { open } from '@tauri-apps/plugin-shell';
@@ -18,6 +17,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { getTauriVersion, getSystemInfo } from '../../hooks/useTauri';
+import { useAsyncData } from '../../hooks/useAsyncData';
+import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { LINKS } from '../../config/constants';
 import armbianLogo from '../../../src-tauri/icons/icon.png';
 
@@ -73,33 +74,22 @@ function LinkButton({ icon: Icon, text, onClick }: LinkButtonProps) {
   );
 }
 
-/** About tab: branding hero, env info cards (app/Tauri version, platform, arch), and external links. Metadata is
- * fetched in parallel on mount; failures are log-only (cards stay empty). */
+/** About tab: branding hero, env info cards (app/Tauri version, platform, arch), and external links. */
 export function AboutSection() {
   const { t } = useTranslation();
-  const [appVersion, setAppVersion] = useState<string>('');
-  const [platform, setPlatform] = useState<string>('');
-  const [arch, setArch] = useState<string>('');
-  const [tauriVersion, setTauriVersion] = useState<string>('');
 
-  // Load app, Tauri and system metadata in parallel; log-only on failure.
-  useEffect(() => {
-    const loadAppInfo = async () => {
-      try {
-        const [version, tauriVer, systemInfo] = await Promise.all([
-          getVersion(),
-          getTauriVersion(),
-          getSystemInfo(),
-        ]);
-        setAppVersion(version);
-        setTauriVersion(tauriVer);
-        setPlatform(formatPlatformName(systemInfo.platform));
-        setArch(systemInfo.arch);
-      } catch (error) {
-        console.error('Failed to load app info:', error);
-      }
+  const { data: appInfo, error, reload } = useAsyncData(async () => {
+    const [appVersion, tauriVersion, systemInfo] = await Promise.all([
+      getVersion(),
+      getTauriVersion(),
+      getSystemInfo(),
+    ]);
+    return {
+      appVersion: `v${appVersion}`,
+      tauriVersion: `v${tauriVersion}`,
+      platform: formatPlatformName(systemInfo.platform),
+      arch: systemInfo.arch,
     };
-    loadAppInfo();
   }, []);
 
   /** Opens an external URL in the user's default browser via the shell. */
@@ -116,13 +106,16 @@ export function AboutSection() {
         <p className="about-description">{t('settings.appDescription')}</p>
       </div>
 
-      {/* Environment metadata as a grid of glass info cards. */}
-      <div className="about-info-cards">
-        <InfoCard icon={Tag} label={t('settings.version')} value={`v${appVersion}`} />
-        <InfoCard icon={Monitor} label={t('settings.platform')} value={platform} />
-        <InfoCard icon={Cpu} label={t('settings.arch')} value={arch} />
-        <InfoCard icon={Box} label={t('settings.tauriVersion')} value={`v${tauriVersion}`} />
-      </div>
+      {error ? (
+        <ErrorDisplay error={error} onRetry={reload} compact />
+      ) : (
+        <div className="about-info-cards">
+          <InfoCard icon={Tag} label={t('settings.version')} value={appInfo?.appVersion ?? ''} />
+          <InfoCard icon={Monitor} label={t('settings.platform')} value={appInfo?.platform ?? ''} />
+          <InfoCard icon={Cpu} label={t('settings.arch')} value={appInfo?.arch ?? ''} />
+          <InfoCard icon={Box} label={t('settings.tauriVersion')} value={appInfo?.tauriVersion ?? ''} />
+        </div>
+      )}
 
       {/* External resource links as a grid of glass list rows. */}
       <div className="about-links">

@@ -38,6 +38,7 @@ export const CACHE = {
     { value: 50 * 1024 * 1024 * 1024, label: '50 GB' },
     { value: 100 * 1024 * 1024 * 1024, label: '100 GB' },
   ],
+  EMPTY_BREAKDOWN: { images: 0, assets: 0, total: 0 },
 } as const;
 
 /** Custom DOM events for inter-component communication */

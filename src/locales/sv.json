@@ -220,6 +220,7 @@
       "maxSize": "Maximal cachestorlek",
       "maxSizeDescription": "Tar automatiskt bort de äldsta avbildningarna när storleksgränsen nås",
       "noCachedImages": "Inga cachade data",
+      "loadError": "Det gick inte att läsa avbildningscachen",
       "clear": "Rensa cache",
       "clearButton": "Frigör utrymme",
       "clearDescription": "Tar bort alla cachade data för att frigöra utrymme",

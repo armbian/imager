@@ -220,6 +220,7 @@
       "maxSize": "최대 캐시 크기",
       "maxSizeDescription": "크기 제한에 도달하면 가장 오래된 이미지를 자동으로 삭제합니다",
       "noCachedImages": "캐시된 데이터가 없습니다",
+      "loadError": "이미지 캐시를 읽지 못했습니다",
       "clear": "캐시 비우기",
       "clearButton": "공간 확보",
       "clearDescription": "캐시된 모든 데이터를 삭제하여 공간을 확보합니다",

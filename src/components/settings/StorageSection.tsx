@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HardDrive, Database, Trash2, FolderOpen, ChevronRight } from 'lucide-react';
 import {
@@ -13,9 +13,11 @@ import {
 import { getCacheBreakdown, clearCache } from '../../hooks/useTauri';
 import type { CacheBreakdown } from '../../types';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
+import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { CacheManagerModal } from './CacheManagerModal';
 import { useToasts } from '../../hooks/useToasts';
 import { useSettingsGroup } from '../../hooks/useSettingsGroup';
+import { useAsyncData } from '../../hooks/useAsyncData';
 import { CACHE, EVENTS } from '../../config';
 import { formatBytes } from '../../utils';
 
@@ -45,31 +47,19 @@ export function StorageSection() {
     setInitialized(true);
   }, [settingsGroup]);
 
-  const [breakdown, setBreakdown] = useState<CacheBreakdown>({ images: 0, assets: 0, total: 0 });
+  const {
+    data: breakdownData,
+    loading: isLoadingCacheSize,
+    error: breakdownError,
+    reload: loadCacheSize,
+  } = useAsyncData<CacheBreakdown>(() => getCacheBreakdown(), []);
+  const breakdown = breakdownData ?? CACHE.EMPTY_BREAKDOWN;
   const [isClearing, setIsClearing] = useState<boolean>(false);
-  const [isLoadingCacheSize, setIsLoadingCacheSize] = useState<boolean>(true);
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
   const [cacheManagerOpen, setCacheManagerOpen] = useState<boolean>(false);
 
   // Total cache size in bytes, derived from the per-category breakdown
   const currentCacheSize = breakdown.total;
-
-  /** Load the per-category cache breakdown (images vs assets) from backend */
-  const loadCacheSize = useCallback(async () => {
-    try {
-      setIsLoadingCacheSize(true);
-      const result = await getCacheBreakdown();
-      setBreakdown(result);
-    } catch (error) {
-      console.error('Failed to load cache breakdown:', error);
-    } finally {
-      setIsLoadingCacheSize(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadCacheSize();
-  }, [loadCacheSize]);
 
   const handleToggleCacheEnabled = async () => {
     try {
@@ -111,7 +101,7 @@ export function StorageSection() {
     try {
       setIsClearing(true);
       await clearCache();
-      setBreakdown({ images: 0, assets: 0, total: 0 });
+      loadCacheSize();
       showSuccess(t('settings.toast.cacheClearSuccess'));
     } catch {
       showError(t('settings.toast.cacheClearError'));
@@ -153,43 +143,49 @@ export function StorageSection() {
         <div className="settings-group">
           <h4 className="settings-group__title">{t('settings.cache.usageTitle')}</h4>
           <div className="storage-usage">
-          <div className="storage-usage__head">
-            <span className="storage-usage__value">
-              {isLoadingCacheSize
-                ? t('modal.loading')
-                : currentCacheSize === 0
-                  ? t('settings.cache.noCachedImages')
-                  : formatBytes(currentCacheSize)}
-            </span>
-            <span className="storage-usage__limit">{limitLabel}</span>
-          </div>
-          <div className={`storage-usage__track${cacheEnabled ? '' : ' storage-usage__track--muted'}`}>
-            <div
-              className="storage-usage__fill storage-usage__fill--images"
-              style={{ width: `${imagesPercent}%` }}
-            />
-            <div
-              className="storage-usage__fill storage-usage__fill--assets"
-              style={{ width: `${assetsPercent}%` }}
-            />
-          </div>
-          {currentCacheSize > 0 && (
-            <div className="storage-usage__legend">
-              <span className="storage-legend">
-                <span className="storage-legend__dot storage-legend__dot--images" />
-                <span className="storage-legend__label">{t('settings.cache.legendImages')}</span>
-                <span className="storage-legend__value">{formatBytes(breakdown.images)}</span>
-              </span>
-              <span className="storage-legend">
-                <span className="storage-legend__dot storage-legend__dot--assets" />
-                <span className="storage-legend__label">{t('settings.cache.legendData')}</span>
-                <span className="storage-legend__value">{formatBytes(breakdown.assets)}</span>
-              </span>
-            </div>
-          )}
-          <div className="storage-usage__hint">
-            {t('settings.cache.maxSizeDescription')}
-          </div>
+            {breakdownError ? (
+              <ErrorDisplay error={breakdownError} onRetry={loadCacheSize} compact />
+            ) : (
+              <>
+                <div className="storage-usage__head">
+                  <span className="storage-usage__value">
+                    {isLoadingCacheSize
+                      ? t('modal.loading')
+                      : currentCacheSize === 0
+                        ? t('settings.cache.noCachedImages')
+                        : formatBytes(currentCacheSize)}
+                  </span>
+                  <span className="storage-usage__limit">{limitLabel}</span>
+                </div>
+                <div className={`storage-usage__track${cacheEnabled ? '' : ' storage-usage__track--muted'}`}>
+                  <div
+                    className="storage-usage__fill storage-usage__fill--images"
+                    style={{ width: `${imagesPercent}%` }}
+                  />
+                  <div
+                    className="storage-usage__fill storage-usage__fill--assets"
+                    style={{ width: `${assetsPercent}%` }}
+                  />
+                </div>
+                {currentCacheSize > 0 && (
+                  <div className="storage-usage__legend">
+                    <span className="storage-legend">
+                      <span className="storage-legend__dot storage-legend__dot--images" />
+                      <span className="storage-legend__label">{t('settings.cache.legendImages')}</span>
+                      <span className="storage-legend__value">{formatBytes(breakdown.images)}</span>
+                    </span>
+                    <span className="storage-legend">
+                      <span className="storage-legend__dot storage-legend__dot--assets" />
+                      <span className="storage-legend__label">{t('settings.cache.legendData')}</span>
+                      <span className="storage-legend__value">{formatBytes(breakdown.assets)}</span>
+                    </span>
+                  </div>
+                )}
+                <div className="storage-usage__hint">
+                  {t('settings.cache.maxSizeDescription')}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -268,7 +264,7 @@ export function StorageSection() {
               <button
                 className="btn btn-secondary btn-sm"
                 onClick={handleClearCacheClick}
-                disabled={isClearing || currentCacheSize === 0}
+                disabled={isClearing || (!breakdownError && currentCacheSize === 0)}
                 aria-label={t('settings.cache.clear')}
               >
                 {isClearing ? t('modal.loading') : t('settings.cache.clearButton')}

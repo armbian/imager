@@ -220,6 +220,7 @@
       "maxSize": "Maksimalna veličina predmemorije",
       "maxSizeDescription": "Automatski uklanja najstarije slike kada se dosegne ograničenje veličine",
       "noCachedImages": "Nema predmemoriranih podataka",
+      "loadError": "Predmemoriju slika nije moguće pročitati",
       "clear": "Očisti predmemoriju",
       "clearButton": "Oslobodi prostor",
       "clearDescription": "Ukloni sve predmemorirane podatke kako bi se oslobodio prostor",

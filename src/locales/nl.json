@@ -220,6 +220,7 @@
       "maxSize": "Maximale cachegrootte",
       "maxSizeDescription": "Verwijdert automatisch de oudste images zodra de groottelimiet is bereikt",
       "noCachedImages": "Geen gecachte gegevens",
+      "loadError": "Kan de image-cache niet lezen",
       "clear": "Cache wissen",
       "clearButton": "Ruimte vrijmaken",
       "clearDescription": "Verwijder alle gecachte gegevens om ruimte vrij te maken",

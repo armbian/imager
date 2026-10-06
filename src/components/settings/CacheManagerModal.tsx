@@ -11,10 +11,11 @@ import { X, Archive, Trash2, Monitor, Terminal, Zap, RotateCcw, Package, HardDri
 import { listCachedImages, deleteCachedImage, getBoards, getCachedBoardImage, logWarn } from '../../hooks/useTauri';
 import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
+import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { BoardBadges } from '../shared/BoardBadges';
 import { BoardImage } from '../shared/BoardImage';
 import { useToasts } from '../../hooks/useToasts';
-import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion } from '../../utils';
+import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage } from '../../utils';
 import { EVENTS } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getMonoLogo } from '../../config/mono-logos';
@@ -45,6 +46,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
   const [allBoards, setAllBoards] = useState<BoardInfo[]>([]);
   const [boardImageUrls, setBoardImageUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   // Master-detail: which board group is shown in the right panel (null = derive first).
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CachedImageInfo | null>(null);
@@ -63,56 +65,53 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, handleClose]);
 
-  /** Load cached images, board data, and preload thumbnails */
-  useEffect(() => {
-    if (!isOpen) return;
+  const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
+    try {
+      // Cached images are local, so they load offline too.
+      const images = await listCachedImages();
+      setCachedImages(images);
 
-    const loadData = async () => {
+      // Board data only adds badges and full names; offline falls back to filename metadata.
       try {
-        // Load cached images first (always local, works offline)
-        const images = await listCachedImages();
-        setCachedImages(images);
-
-        // Board data is optional, used for badges and full names.
-        // When offline, we gracefully degrade to filename-based metadata.
-        try {
-          const boards = await getBoards();
-          setAllBoards(boards);
-        } catch {
-          setAllBoards([]);
-        }
-
-        // Load cached board images (base64 data URIs) in parallel
-        const slugs = new Set(
-          images.map((img) => img.board_slug).filter(Boolean) as string[]
-        );
-        const results = await Promise.all(
-          Array.from(slugs).map(async (slug) => {
-            try {
-              const dataUri = await getCachedBoardImage(slug);
-              if (dataUri) return { slug, url: dataUri };
-            } catch { /* fallback to default image */ }
-            return null;
-          })
-        );
-        const urls: Record<string, string> = {};
-        for (const r of results) {
-          if (r) urls[r.slug] = r.url;
-        }
-        setBoardImageUrls(urls);
-
-        // Fresh view starts with no explicit selection (derived to first group).
-        setSelectedKey(null);
-      } catch (err) {
-        logWarn('cache-manager', `Failed to load cache data: ${err}`);
-      } finally {
-        setLoading(false);
+        const boards = await getBoards();
+        setAllBoards(boards);
+      } catch {
+        setAllBoards([]);
       }
-    };
 
-    loadData();
-  }, [isOpen]);
+      const slugs = new Set(
+        images.map((img) => img.board_slug).filter(Boolean) as string[]
+      );
+      const results = await Promise.all(
+        Array.from(slugs).map(async (slug) => {
+          try {
+            const dataUri = await getCachedBoardImage(slug);
+            if (dataUri) return { slug, url: dataUri };
+          } catch { /* fallback to default image */ }
+          return null;
+        })
+      );
+      const urls: Record<string, string> = {};
+      for (const r of results) {
+        if (r) urls[r.slug] = r.url;
+      }
+      setBoardImageUrls(urls);
+
+      // Fresh view starts with no explicit selection (derived to first group).
+      setSelectedKey(null);
+    } catch (err) {
+      logWarn('cache-manager', `Failed to load cache data: ${err}`);
+      setLoadError(getErrorMessage(err, t('settings.cache.loadError')));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    if (isOpen) loadData();
+  }, [isOpen, loadData]);
 
   const boardGroups = useMemo((): BoardGroup[] => {
     const groupMap = new Map<string, CachedImageInfo[]>();
@@ -233,6 +232,8 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
           <div className="settings-shell__content cache-content">
             {loading ? (
               <div className="cache-loading">{t('modal.loading')}</div>
+            ) : loadError ? (
+              <ErrorDisplay error={loadError} onRetry={loadData} compact />
             ) : cachedImages.length === 0 ? (
               <div className="cache-empty-state">
                 <span className="cache-empty-state__disc">

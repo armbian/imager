@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { X, FileText, ExternalLink, Calendar, Loader2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getGithubRelease, openUrl } from '../../hooks/useTauri';
 import type { GitHubRelease } from '../../hooks/useTauri';
-import { getErrorMessage } from '../../utils';
+import { useAsyncData } from '../../hooks/useAsyncData';
+import { ErrorDisplay } from './ErrorDisplay';
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -17,40 +18,22 @@ interface ChangelogModalProps {
 // Modal displaying a GitHub release's notes and changelog
 export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps) {
   const { t } = useTranslation();
-  const [release, setRelease] = useState<GitHubRelease | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const fetchRelease = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const releaseData = await getGithubRelease(version);
-        setRelease(releaseData);
-      } catch (err) {
-        console.error('Failed to fetch release:', err);
-        setError(getErrorMessage(err, 'Failed to fetch changelog'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRelease();
-  }, [isOpen, version]);
+  const { data: release, loading, error, reload } = useAsyncData<GitHubRelease>(
+    () => getGithubRelease(version),
+    [isOpen, version],
+    { immediate: isOpen }
+  );
 
   // Unique @username mentions from the release body, sorted
+  const releaseBody = release?.body;
   const contributors = useMemo(() => {
-    if (!release?.body) return [];
+    if (!releaseBody) return [];
 
-    const mentions = release.body.match(/@([a-zA-Z0-9_-]+)/g);
+    const mentions = releaseBody.match(/@([a-zA-Z0-9_-]+)/g);
     if (!mentions) return [];
 
     return Array.from(new Set(mentions.map(m => m.substring(1)))).sort();
-  }, [release?.body]);
+  }, [releaseBody]);
 
   if (!isOpen) return null;
 
@@ -197,19 +180,17 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
         </div>
 
         <div className="changelog-modal-content">
-          {loading ? (
+          {error ? (
+            <div className="changelog-error">
+              <ErrorDisplay error={error} onRetry={reload} compact />
+              <p className="changelog-error-hint">{t('update.changelogErrorHint')}</p>
+            </div>
+          ) : loading || !release ? (
             <div className="changelog-loading">
               <Loader2 size={32} className="spinning" />
-              <p>{t('update.loadingChangelog', 'Loading changelog...')}</p>
+              <p>{t('update.loadingChangelog')}</p>
             </div>
-          ) : error ? (
-            <div className="changelog-error">
-              <p>{error}</p>
-              <p className="changelog-error-hint">
-                {t('update.changelogErrorHint', 'Make sure you have an internet connection and the version exists on GitHub.')}
-              </p>
-            </div>
-          ) : release ? (
+          ) : (
             <>
               <div className="changelog-info">
                 <h2 className="changelog-version">{release.name || release.tag_name}</h2>
@@ -261,7 +242,7 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
                 </div>
               )}
             </>
-          ) : null}
+          )}
         </div>
       </div>
     </div>

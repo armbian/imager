@@ -1861,18 +1861,13 @@
   outline-offset: 2px;
 }
 
-.logs-loading,
-.logs-error {
+.logs-loading {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   color: var(--text-secondary);
-}
-
-.logs-error {
-  color: var(--color-error);
 }
 
 /* SETTINGS BUTTON - glass (moved from layout.css) */

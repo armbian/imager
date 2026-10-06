@@ -220,6 +220,7 @@
       "maxSize": "Maksimum önbellek boyutu",
       "maxSizeDescription": "Boyut sınırına ulaşıldığında en eski imajları otomatik olarak siler",
       "noCachedImages": "Önbelleğe alınmış veri yok",
+      "loadError": "İmaj önbelleği okunamadı",
       "clear": "Önbelleği temizle",
       "clearButton": "Yer aç",
       "clearDescription": "Yer açmak için önbelleğe alınmış tüm verileri kaldırır",
