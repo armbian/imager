@@ -230,13 +230,13 @@ export async function getQdlDevices(): Promise<QdlDevice[]> {
   return invoke('get_qdl_devices');
 }
 
-/** Flash a QDL image (TAR archive) to a device in EDL mode; `serial` targets a specific device, `autoconfig` injects a profile */
+/** Flash a QDL image (TAR archive) to the EDL device at `devicePath` (QdlDevice.path); `autoconfig` injects a profile */
 export async function flashQdlImage(
   tarPath: string,
-  serial?: string,
+  devicePath: string,
   autoconfig?: AutoconfigConfig | null
 ): Promise<void> {
-  return invoke('flash_qdl_image', { tarPath, serial, autoconfig });
+  return invoke('flash_qdl_image', { tarPath, devicePath, autoconfig });
 }
 
 /** Flash a decompressed UFS .img to an EDL device via a raw Firehose write; the loader is
@@ -245,8 +245,8 @@ export async function flashQdlUfsImage(
   imagePath: string,
   soc: string,
   boardSlug: string,
-  serial?: string,
+  devicePath: string,
   autoconfig?: AutoconfigConfig | null
 ): Promise<void> {
-  return invoke('flash_qdl_ufs_image', { imagePath, soc, boardSlug, serial, autoconfig });
+  return invoke('flash_qdl_ufs_image', { imagePath, soc, boardSlug, devicePath, autoconfig });
 }

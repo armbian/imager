@@ -20,6 +20,15 @@ pub const QUALCOMM_VID: u16 = 0x05c6;
 /// USB Product ID for EDL (Emergency Download) mode
 pub const EDL_PID: u16 = 0x9008;
 
+/// USB Product ID for Qualcomm ramdump mode, which qdlrs also connects to
+pub const EDL_RAMDUMP_PID: u16 = 0x900e;
+
+/// Scheme of the device path identifying one EDL device (`qdl://<bus_id>/<address>`)
+pub const QDL_PATH_PREFIX: &str = "qdl://";
+
+pub const TAG_QDL_DEVICE_NOT_FOUND: &str = "[QDL_DEVICE_NOT_FOUND]";
+pub const TAG_QDL_MULTIPLE_DEVICES: &str = "[QDL_MULTIPLE_DEVICES]";
+
 pub const SECTOR_SIZE_EMMC: usize = 512;
 pub const SECTOR_SIZE_UFS: usize = 4096;
 
@@ -71,6 +80,8 @@ pub fn qdl_storage_supported(storage: &str) -> bool {
 /// Represents a Qualcomm device in EDL mode detected via USB
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QdlDevice {
+    /// Device path the frontend passes back to target this device
+    pub path: String,
     /// USB serial number (may be empty on some devices)
     pub serial: String,
     /// USB bus identifier (platform-specific format)

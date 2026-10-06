@@ -6,6 +6,7 @@
 use std::path::PathBuf;
 use tauri::State;
 
+use crate::flash::reject_simulated;
 use crate::qdl;
 use crate::qdl::QdlDevice;
 use crate::utils::qdl_temp_dir;
@@ -19,19 +20,42 @@ pub async fn get_qdl_devices() -> Result<Vec<QdlDevice>, String> {
     qdl::detect::get_qdl_devices()
 }
 
-/// Flash a QDL image (TAR archive) to a device in EDL mode. Pipeline: Extract TAR
-/// -> Connect USB -> Sahara -> Firehose -> Reset. `serial` optionally targets one device.
+/// Fail fast before extraction or downloads; the flash re-resolves right before connecting.
+fn check_edl_target(device_path: &str) -> Result<(), String> {
+    reject_simulated(device_path)
+        .and_then(|_| qdl::detect::resolve_edl_serial(device_path))
+        .map(|_| ())
+        .map_err(|e| {
+            log_error!(
+                "qdl_operations",
+                "Refusing EDL target {:?}: {}",
+                device_path,
+                e
+            );
+            e
+        })
+}
+
+/// Flash a QDL image (TAR archive) to the EDL device at `device_path` (`qdl://...` from
+/// `get_qdl_devices`). Pipeline: Extract TAR -> Connect USB -> Sahara -> Firehose -> Reset.
 #[tauri::command]
 pub async fn flash_qdl_image(
     tar_path: String,
-    serial: Option<String>,
+    device_path: String,
     autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    log_info!("qdl_operations", "Starting QDL flash: {}", tar_path);
+    log_info!(
+        "qdl_operations",
+        "Starting QDL flash: {} -> {}",
+        tar_path,
+        device_path
+    );
 
     let flash_state = state.flash_state.clone();
     flash_state.reset();
+
+    check_edl_target(&device_path)?;
 
     let tar_path = PathBuf::from(&tar_path);
     let extract_dir = qdl_temp_dir();
@@ -50,7 +74,7 @@ pub async fn flash_qdl_image(
     // qdlrs is synchronous, so run the flash off the async runtime.
     let flash_dir_clone = flash_dir.clone();
     let result = tokio::task::spawn_blocking(move || {
-        qdl::flash::qdl_flash(&flash_dir_clone, serial, autoconfig, flash_state)
+        qdl::flash::qdl_flash(&flash_dir_clone, &device_path, autoconfig, flash_state)
     })
     .await
     .map_err(|e| {
@@ -79,22 +103,29 @@ pub async fn flash_qdl_image(
     result
 }
 
-/// Flash a UFS image (a downloaded + decompressed `.img`) to a device in EDL mode via a
-/// single raw Firehose write. The loader is resolved from `soc`, then from `board_slug`,
+/// Flash a UFS image (a downloaded + decompressed `.img`) to the EDL device at `device_path`
+/// via a single raw Firehose write. The loader is resolved from `soc`, then from `board_slug`,
 /// since the Armbian API reports `soc` as null for these boards.
 #[tauri::command]
 pub async fn flash_qdl_ufs_image(
     image_path: String,
     soc: String,
     board_slug: String,
-    serial: Option<String>,
+    device_path: String,
     autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
-    log_info!("qdl_operations", "Starting QDL UFS flash: {}", image_path);
+    log_info!(
+        "qdl_operations",
+        "Starting QDL UFS flash: {} -> {}",
+        image_path,
+        device_path
+    );
 
     let flash_state = state.flash_state.clone();
     flash_state.reset();
+
+    check_edl_target(&device_path)?;
 
     // Resolve the board's QDL facts from the API (bundled fallback), then fetch the
     // loader and provisioning descriptor from the API blob proxy with digest checks.
@@ -127,7 +158,7 @@ pub async fn flash_qdl_ufs_image(
         qdl::flash::qdl_flash_ufs(
             &image_path,
             &loader_path,
-            serial,
+            &device_path,
             autoconfig,
             provision,
             flash_state,
