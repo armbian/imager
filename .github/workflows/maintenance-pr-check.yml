@@ -424,10 +424,10 @@ jobs:
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked || true
 
+      # Ignore list and unsound/yanked deny live in src-tauri/.cargo/audit.toml
       - name: Run cargo audit
         working-directory: src-tauri
         run: cargo audit
-        continue-on-error: true
 
   # ===========================================
   # Cleanup old workflow runs
