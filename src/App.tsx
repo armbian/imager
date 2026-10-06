@@ -13,9 +13,9 @@ import { useConnectivity } from './hooks/useConnectivity';
 import { ToastProvider, useToasts } from './hooks/useToasts';
 import { UpdateProvider } from './contexts/UpdateContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
-import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, SUPPORT_TIER, UI, SETTINGS, PLATFORM } from './config';
-import { IMAGE_FORMAT, IMAGE_STORAGE, IMAGE_STABILITY } from './types';
-import { DEFAULT_COLOR } from './utils';
+import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, PLATFORM } from './config';
+import { IMAGE_FORMAT, IMAGE_STORAGE } from './types';
+import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer } from './utils';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig } from './types';
 import './styles/index.css';
 
@@ -273,48 +273,27 @@ function AppContent() {
         // Continue with original path
       }
 
-      const cachedImage: ImageInfo = {
-        release: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CACHED],
-        distro_release: filename,
-        kernel_branch: '',
-        kernel_version: '',
-        image_variant: IMAGE_VARIANT.CACHED,
-        preinstalled_application: '',
-        promoted: false,
-        file_url: '',
-        direct_url: '',
-        sha_url: null,
-        file_size: size,
-        stability: IMAGE_STABILITY.STABLE,
+      const cachedImage = buildLocalImage({
+        variant: IMAGE_VARIANT.CACHED,
+        name: filename,
+        size,
+        path: imagePath,
         format: IMAGE_FORMAT.SD,
-        companions: [],
-        display_variants: [],
-        is_custom: true,
-        custom_path: imagePath,
-      };
+      });
 
       resetSelectionsFrom('board');
 
       // API-matched board, else fall back to cache metadata (boardSlug/boardName
       // parsed from the filename) since the API match fails when offline.
       const hasCacheMetadata = boardSlug && boardSlug !== SLUGS.CACHED;
-      const displayBoard = matchedBoard || {
+      const displayBoard = matchedBoard || buildLocalBoard({
         slug: boardSlug || SLUGS.CACHED,
         name: boardName || t('custom.customImage'),
         vendor: hasCacheMetadata ? SLUGS.DETECTED : SLUGS.CACHED,
-        vendor_name: hasCacheMetadata ? (boardName || VENDOR.UNKNOWN_NAME) : LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CACHED],
-        support_tier: SUPPORT_TIER.COMMUNITY,
-        image_count: 1,
-        has_desktop: false,
-        promoted: false,
-      };
-
-      setSelectedManufacturer({
-        id: displayBoard.vendor,
-        name: displayBoard.vendor_name,
-        color: DEFAULT_COLOR,
-        boardCount: 1,
+        vendorName: hasCacheMetadata ? (boardName || VENDOR.UNKNOWN_NAME) : LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CACHED],
       });
+
+      setSelectedManufacturer(localManufacturer(displayBoard));
       setSelectedBoard(displayBoard);
       setSelectedImage(cachedImage);
     };
@@ -391,47 +370,26 @@ function AppContent() {
         }
         const format = isQdl ? IMAGE_FORMAT.QDL : IMAGE_FORMAT.BLOCK;
 
-        const customImage: ImageInfo = {
-          release: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CUSTOM],
-          distro_release: result.name,
-          kernel_branch: '',
-          kernel_version: '',
-          image_variant: IMAGE_VARIANT.CUSTOM,
-          preinstalled_application: '',
-          promoted: false,
-          file_url: '',
-          direct_url: '',
-          sha_url: null,
-          file_size: result.size,
-          stability: IMAGE_STABILITY.STABLE,
+        const customImage = buildLocalImage({
+          variant: IMAGE_VARIANT.CUSTOM,
+          name: result.name,
+          size: result.size,
+          path: result.path,
           format,
           storage: ufsBoardSlug ? IMAGE_STORAGE.UFS : null,
-          companions: [],
-          display_variants: [],
-          is_custom: true,
-          custom_path: result.path,
-        };
+        });
 
         resetSelectionsFrom('manufacturer');
 
         // API-matched board, else a generic one carrying the UFS registry slug (backend resolves the rest).
-        const displayBoard: BoardInfo = detectedBoard ?? {
+        const displayBoard: BoardInfo = detectedBoard ?? buildLocalBoard({
           slug: ufsBoardSlug ?? SLUGS.CUSTOM,
           name: t('custom.customImage'),
           vendor: SLUGS.CUSTOM,
-          vendor_name: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CUSTOM],
-          support_tier: SUPPORT_TIER.COMMUNITY,
-          image_count: 1,
-          has_desktop: false,
-          promoted: false,
-        };
-
-        setSelectedManufacturer({
-          id: displayBoard.vendor,
-          name: displayBoard.vendor_name,
-          color: DEFAULT_COLOR,
-          boardCount: 1,
+          vendorName: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CUSTOM],
         });
+
+        setSelectedManufacturer(localManufacturer(displayBoard));
         setSelectedBoard(displayBoard);
         setSelectedImage(customImage);
         // A custom image bypasses the landing and enters the flow directly

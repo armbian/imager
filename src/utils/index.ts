@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { COLORS, UI, SLUGS, SUPPORT_TIER_ORDER } from '../config';
+import { COLORS, UI, SLUGS, SUPPORT_TIER, SUPPORT_TIER_ORDER, IMAGE_VARIANT, LOCAL_SOURCE_LABEL } from '../config';
 import { getImageVariantLabel, getOsInfo } from '../config/os-info';
 import { getVariantBadge, getKernelType, KERNEL_BADGES } from '../config/badges';
-import type { ImageInfo } from '../types';
+import { IMAGE_STABILITY, type ImageInfo, type BoardInfo, type Manufacturer } from '../types';
 
 // Re-export color helpers from the dedicated color module
 export { hexToRgb, hexToRgba, adjustBrightness, solidBadgeVars } from './color';
@@ -249,6 +249,63 @@ export function getErrorMessage(error: unknown, fallback: string = 'An error occ
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
   return fallback;
+}
+
+type LocalImageVariant = (typeof IMAGE_VARIANT)[keyof typeof IMAGE_VARIANT];
+
+/** Synthetic ImageInfo for a local (cached or custom) image file; `storage` is set only when given. */
+export function buildLocalImage({ variant, name, size, path, format, storage }: {
+  variant: LocalImageVariant;
+  name: string;
+  size: number;
+  path: string;
+  format: string;
+  storage?: string | null;
+}): ImageInfo {
+  return {
+    release: LOCAL_SOURCE_LABEL[variant],
+    distro_release: name,
+    kernel_branch: '',
+    kernel_version: '',
+    image_variant: variant,
+    preinstalled_application: '',
+    promoted: false,
+    file_url: '',
+    direct_url: '',
+    sha_url: null,
+    file_size: size,
+    stability: IMAGE_STABILITY.STABLE,
+    format,
+    ...(storage !== undefined && { storage }),
+    companions: [],
+    display_variants: [],
+    is_custom: true,
+    custom_path: path,
+  };
+}
+
+/** Synthetic board for a local image that matched no API board. */
+export function buildLocalBoard({ slug, name, vendor, vendorName }: {
+  slug: string;
+  name: string;
+  vendor: string;
+  vendorName: string;
+}): BoardInfo {
+  return {
+    slug,
+    name,
+    vendor,
+    vendor_name: vendorName,
+    support_tier: SUPPORT_TIER.COMMUNITY,
+    image_count: 1,
+    has_desktop: false,
+    promoted: false,
+  };
+}
+
+/** Single-board manufacturer entry for a local image selection. */
+export function localManufacturer(board: Pick<BoardInfo, 'vendor' | 'vendor_name'>): Manufacturer {
+  return { id: board.vendor, name: board.vendor_name, color: DEFAULT_COLOR, boardCount: 1 };
 }
 
 /** Board sort comparator: by support tier, then alphabetically. */
