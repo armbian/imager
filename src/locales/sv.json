@@ -142,7 +142,15 @@
     "qdlCancelled": "Flashningen avbröts.",
     "qdlPermissionDenied": "USB-åtkomst nekad. På Linux, installera udev-regler: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "Det gick inte att ansluta till EDL-enheten. Kontrollera att den är i EDL-läge och ansluten via USB.",
-    "qdlAutoconfigFailed": "Det gick inte att tillämpa autoconfig-profilen på QDL-avbildningen."
+    "qdlAutoconfigFailed": "Det gick inte att tillämpa autoconfig-profilen på QDL-avbildningen.",
+    "deviceInvalidPath": "Det går inte att skriva till den här enheten. Välj enheten igen.",
+    "deviceNotFound": "Den valda enheten är inte längre ansluten. Anslut den igen och välj den på nytt.",
+    "deviceChanged": "Den valda enheten har ändrats sedan du valde den. Välj den igen innan du skriver.",
+    "deviceReadOnly": "Enheten är skrivskyddad. Skjut kortets låsreglage till olåst läge och försök igen.",
+    "deviceSystemBlocked": "Det här är en systemdisk. Aktivera ”Tillåt systemdiskar” i inställningarna för att skriva till den.",
+    "deviceTooSmall": "Avbildningen behöver {{needed}} men enheten rymmer bara {{available}}. Använd en större enhet.",
+    "qdlDeviceNotFound": "Den valda EDL-enheten är inte längre ansluten. Anslut den igen i EDL-läge och välj den på nytt.",
+    "qdlMultipleDevices": "Flera EDL-enheter är anslutna och den valda går inte att identifiera. Anslut bara det kort du vill flasha."
   },
   "custom": {
     "customImage": "Egen avbildning",

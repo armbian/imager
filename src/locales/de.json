@@ -142,7 +142,15 @@
     "qdlCancelled": "Flashen abgebrochen.",
     "qdlPermissionDenied": "USB-Zugriff verweigert. Installiere unter Linux die udev-Regeln: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "Verbindung zum EDL-Gerät fehlgeschlagen. Stelle sicher, dass es im EDL-Modus ist und per USB verbunden ist.",
-    "qdlAutoconfigFailed": "Das Autoconfig-Profil konnte nicht auf das QDL-Image angewendet werden."
+    "qdlAutoconfigFailed": "Das Autoconfig-Profil konnte nicht auf das QDL-Image angewendet werden.",
+    "deviceInvalidPath": "Auf dieses Gerät kann nicht geschrieben werden. Wähle das Gerät erneut aus.",
+    "deviceNotFound": "Das ausgewählte Gerät ist nicht mehr verbunden. Verbinde es erneut und wähle es noch einmal aus.",
+    "deviceChanged": "Das ausgewählte Gerät hat sich seit der Auswahl geändert. Wähle es vor dem Schreiben erneut aus.",
+    "deviceReadOnly": "Das Gerät ist schreibgeschützt. Schiebe den Schreibschutzschalter der Karte auf entsperrt und versuche es erneut.",
+    "deviceSystemBlocked": "Dies ist ein Systemlaufwerk. Aktiviere „Systemlaufwerke zulassen“ in den Einstellungen, um darauf zu schreiben.",
+    "deviceTooSmall": "Das Image benötigt {{needed}}, das Gerät fasst aber nur {{available}}. Verwende ein größeres Gerät.",
+    "qdlDeviceNotFound": "Das ausgewählte EDL-Gerät ist nicht mehr verbunden. Verbinde es erneut im EDL-Modus und wähle es noch einmal aus.",
+    "qdlMultipleDevices": "Mehrere EDL-Geräte sind verbunden und das ausgewählte lässt sich nicht erkennen. Verbinde nur das Board, das du flashen möchtest."
   },
   "custom": {
     "customImage": "Benutzerdefiniertes Image",

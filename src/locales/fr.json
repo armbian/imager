@@ -142,7 +142,15 @@
     "qdlCancelled": "Flash annulé.",
     "qdlPermissionDenied": "Accès USB refusé. Sous Linux, installez les règles udev : echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "Impossible de se connecter à l'appareil EDL. Assurez-vous qu'il est en mode EDL et connecté en USB.",
-    "qdlAutoconfigFailed": "Impossible d'appliquer le profil de configuration automatique à l'image QDL."
+    "qdlAutoconfigFailed": "Impossible d'appliquer le profil de configuration automatique à l'image QDL.",
+    "deviceInvalidPath": "Impossible d'écrire sur ce périphérique. Sélectionnez-le à nouveau.",
+    "deviceNotFound": "Le périphérique sélectionné n'est plus connecté. Reconnectez-le et sélectionnez-le à nouveau.",
+    "deviceChanged": "Le périphérique sélectionné a changé depuis votre choix. Sélectionnez-le à nouveau avant d'écrire.",
+    "deviceReadOnly": "Le périphérique est protégé en écriture. Faites glisser le verrou de la carte en position déverrouillée et réessayez.",
+    "deviceSystemBlocked": "Il s'agit d'un disque système. Activez « Autoriser les disques système » dans les Réglages pour y écrire.",
+    "deviceTooSmall": "L'image nécessite {{needed}}, mais le périphérique n'a que {{available}}. Utilisez un périphérique plus grand.",
+    "qdlDeviceNotFound": "L'appareil EDL sélectionné n'est plus connecté. Reconnectez-le en mode EDL et sélectionnez-le à nouveau.",
+    "qdlMultipleDevices": "Plusieurs appareils EDL sont connectés et celui sélectionné ne peut pas être identifié. Connectez uniquement la carte que vous voulez flasher."
   },
   "custom": {
     "customImage": "Image personnalisée",

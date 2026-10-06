@@ -142,7 +142,15 @@
     "qdlCancelled": "Zapisovanje preklicano.",
     "qdlPermissionDenied": "Dostop do USB zavrnjen. V Linuxu namestite pravila udev: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "Povezava z napravo EDL ni uspela. Preverite, ali je naprava v načinu EDL in povezana prek USB.",
-    "qdlAutoconfigFailed": "Profila samodejne konfiguracije ni bilo mogoče uporabiti za sliko QDL."
+    "qdlAutoconfigFailed": "Profila samodejne konfiguracije ni bilo mogoče uporabiti za sliko QDL.",
+    "deviceInvalidPath": "Na to napravo ni mogoče pisati. Napravo izberite znova.",
+    "deviceNotFound": "Izbrana naprava ni več povezana. Ponovno jo povežite in znova izberite.",
+    "deviceChanged": "Izbrana naprava se je spremenila, odkar ste jo izbrali. Pred pisanjem jo izberite znova.",
+    "deviceReadOnly": "Naprava je zaščitena pred pisanjem. Drsnik za zaklep kartice potisnite v odklenjen položaj in poskusite znova.",
+    "deviceSystemBlocked": "To je sistemski disk. Za pisanje nanj v Nastavitvah vklopite „Dovoli sistemske diske“.",
+    "deviceTooSmall": "Slika potrebuje {{needed}}, naprava pa ima samo {{available}}. Uporabite večjo napravo.",
+    "qdlDeviceNotFound": "Izbrana naprava EDL ni več povezana. Ponovno jo povežite v načinu EDL in znova izberite.",
+    "qdlMultipleDevices": "Povezanih je več naprav EDL in izbrane ni mogoče prepoznati. Povežite samo ploščo, ki jo želite zapisati."
   },
   "custom": {
     "customImage": "Slika po meri",

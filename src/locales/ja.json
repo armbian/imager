@@ -142,7 +142,15 @@
     "qdlCancelled": "書き込みをキャンセルしました。",
     "qdlPermissionDenied": "USBへのアクセスが拒否されました。Linuxでは次のudevルールをインストールしてください： echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "EDLデバイスに接続できませんでした。EDLモードになっていて、USBで接続されていることを確認してください。",
-    "qdlAutoconfigFailed": "自動設定プロファイルをQDLイメージに適用できませんでした。"
+    "qdlAutoconfigFailed": "自動設定プロファイルをQDLイメージに適用できませんでした。",
+    "deviceInvalidPath": "このデバイスには書き込めません。デバイスを選択し直してください。",
+    "deviceNotFound": "選択したデバイスは接続されていません。接続し直してから、もう一度選択してください。",
+    "deviceChanged": "選択したデバイスが選択後に変更されました。書き込む前にもう一度選択してください。",
+    "deviceReadOnly": "デバイスが書き込み禁止になっています。カードのロックスイッチを解除側にスライドして、もう一度お試しください。",
+    "deviceSystemBlocked": "これはシステムドライブです。書き込むには、設定で「システムドライブを許可」をオンにしてください。",
+    "deviceTooSmall": "イメージには {{needed}} 必要ですが、デバイスの容量は {{available}} しかありません。より大きなデバイスを使用してください。",
+    "qdlDeviceNotFound": "選択したEDLデバイスは接続されていません。EDLモードで接続し直してから、もう一度選択してください。",
+    "qdlMultipleDevices": "複数のEDLデバイスが接続されており、選択したデバイスを特定できません。書き込みたいボードだけを接続してください。"
   },
   "custom": {
     "customImage": "カスタムイメージ",

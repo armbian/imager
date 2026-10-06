@@ -32,7 +32,7 @@ import { getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
 import { isDeviceConnected, qdlToBlockDevice } from '../utils/deviceUtils';
-import { isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
+import { isDeviceRefusalError, isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
 
 interface UseFlashOperationProps {
   image: ImageInfo;
@@ -441,9 +441,9 @@ export function useFlashOperation({
         failFlash(translateFlashError(rawError, t));
       }
 
-      // Increment failure count for cached (non-custom) images; skip on disconnect
-      // so a card pull doesn't burn down a good cached image.
-      if (!image.is_custom && !isQdlMode && !deviceDisconnectedRef.current) {
+      // Increment failure count for cached (non-custom) images; skip on disconnect or a device
+      // refusal (e.g. card too small) so neither burns down a good cached image.
+      if (!image.is_custom && !isQdlMode && !deviceDisconnectedRef.current && !isDeviceRefusalError(rawError)) {
         const currentCount = getFlashFailureCount() + 1;
         setFlashFailureCount(currentCount);
 
@@ -514,7 +514,7 @@ export function useFlashOperation({
         startDownload();
       }
     } catch (err) {
-      failFlash(getErrorMessage(err, t('error.authFailed')));
+      failFlash(translateFlashError(getErrorMessage(err, t('error.authFailed')), t));
     }
   }
 
@@ -602,7 +602,7 @@ export function useFlashOperation({
         }
         startFlash(imagePath);
       } catch (err) {
-        failFlash(getErrorMessage(err, t('error.authFailed')));
+        failFlash(translateFlashError(getErrorMessage(err, t('error.authFailed')), t));
       }
     } else {
       handleAuthorization();
