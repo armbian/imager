@@ -13,6 +13,12 @@ pub mod app {
 
     /// User agent for HTTP requests
     pub const USER_AGENT: &str = "Armbian-Imager/1.0";
+
+    /// Settings store shared with the frontend (tauri-plugin-store)
+    pub const SETTINGS_STORE: &str = "settings.json";
+
+    /// Settings key unlocking internal/system disks as flash targets
+    pub const SETTING_ALLOW_SYSTEM_DEVICES: &str = "allow_system_devices";
 }
 
 /// API endpoints and URLs
@@ -68,6 +74,15 @@ pub mod flash {
 
     /// Delay after unmount before writing (milliseconds)
     pub const UNMOUNT_DELAY_MS: u64 = 500;
+
+    /// Path prefix reserved for simulated devices; never a valid write target
+    pub const SIMULATED_DEVICE_PREFIX: &str = "devsim://";
+
+    /// Extra device scans when the selected target is missing (detection can miss a disk briefly)
+    pub const TARGET_RESCAN_RETRIES: u32 = 3;
+
+    /// Delay between those rescans (milliseconds)
+    pub const TARGET_RESCAN_INTERVAL_MS: u64 = 100;
 }
 
 /// Log file management settings

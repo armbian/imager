@@ -18,6 +18,9 @@ use std::process::Command;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use tokio::sync::Mutex;
 
+#[cfg(target_os = "windows")]
+use crate::devices::FlashTarget;
+
 /// QDL (Qualcomm EDL) progress state. Uses `std::sync::Mutex` because `qdl_flash`
 /// runs in `spawn_blocking`.
 pub struct QdlProgress {
@@ -98,8 +101,26 @@ pub use macos::request_authorization;
 /// Request authorization before flashing: Touch ID on macOS, pkexec re-launch
 /// on Linux when not root, no-op on Windows.
 #[cfg(target_os = "windows")]
-pub fn request_authorization(_device_path: &str) -> Result<bool, String> {
+pub fn request_authorization(target: &FlashTarget) -> Result<bool, String> {
+    reject_simulated(target.path())?;
     Ok(true)
+}
+
+pub(crate) fn is_simulated_path(path: &str) -> bool {
+    path.trim()
+        .to_ascii_lowercase()
+        .starts_with(crate::config::flash::SIMULATED_DEVICE_PREFIX)
+}
+
+/// Called again at every writer entry so a simulated path can never reach real device I/O.
+pub(crate) fn reject_simulated(path: &str) -> Result<(), String> {
+    if is_simulated_path(path) {
+        return Err(format!(
+            "{} simulated device path refused: {path:?}",
+            crate::devices::TAG_INVALID_PATH
+        ));
+    }
+    Ok(())
 }
 
 /// Unmount a device before flashing (platform-specific)
@@ -174,5 +195,41 @@ pub(crate) fn sync_device(_device_path: &str) {
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     {
         let _ = Command::new("sync").output();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reject_simulated_matches_any_case_and_padding() {
+        for path in [
+            "devsim://sd-32g",
+            "DEVSIM://sd-32g",
+            "DevSim://x",
+            "  devsim://x ",
+            "\tdevsim://x\n",
+            "devsim://",
+        ] {
+            assert!(reject_simulated(path).is_err(), "{path:?} was accepted");
+        }
+        assert!(reject_simulated("devsim://x")
+            .unwrap_err()
+            .starts_with(crate::devices::TAG_INVALID_PATH));
+    }
+
+    #[test]
+    fn reject_simulated_lets_real_paths_through() {
+        for path in [
+            "/dev/disk4",
+            "/dev/sdb",
+            r"\\.\PhysicalDrive1",
+            "qdl://1/5",
+            "",
+            "/dev/devsim",
+        ] {
+            assert!(reject_simulated(path).is_ok(), "{path:?} was refused");
+        }
     }
 }

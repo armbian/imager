@@ -32,8 +32,9 @@ export async function getBlockDevices(): Promise<BlockDevice[]> {
   return invoke('get_block_devices');
 }
 
-export async function requestWriteAuthorization(devicePath: string): Promise<boolean> {
-  return invoke('request_write_authorization', { devicePath });
+/** `expectedSize` is the size the user confirmed; the backend refuses if the device no longer matches. */
+export async function requestWriteAuthorization(devicePath: string, expectedSize: number): Promise<boolean> {
+  return invoke('request_write_authorization', { devicePath, expectedSize });
 }
 
 export async function downloadImage(fileUrl: string, shaUrl?: string | null): Promise<string> {
@@ -49,10 +50,11 @@ export async function getDownloadProgress(): Promise<DownloadProgress> {
 export async function flashImage(
   imagePath: string,
   devicePath: string,
+  expectedSize: number,
   verify: boolean = true,
   autoconfig?: AutoconfigConfig | null
 ): Promise<void> {
-  return invoke('flash_image', { imagePath, devicePath, verify, autoconfig });
+  return invoke('flash_image', { imagePath, devicePath, expectedSize, verify, autoconfig });
 }
 
 export async function getFlashProgress(): Promise<FlashProgress> {

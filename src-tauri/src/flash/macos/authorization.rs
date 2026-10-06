@@ -6,6 +6,8 @@
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
+use crate::devices::FlashTarget;
+use crate::flash::reject_simulated;
 use crate::{log_debug, log_error, log_info};
 
 use super::bindings::{
@@ -28,8 +30,9 @@ pub struct SavedAuthorization {
 pub static SAVED_AUTH: Lazy<Mutex<Option<SavedAuthorization>>> = Lazy::new(|| Mutex::new(None));
 
 /// Show the auth dialog up front (on Write click) so the prompt precedes the download.
-pub fn request_authorization(device_path: &str) -> Result<bool, String> {
-    let raw_device = device_path.replace("/dev/disk", "/dev/rdisk");
+pub fn request_authorization(target: &FlashTarget) -> Result<bool, String> {
+    reject_simulated(target.path())?;
+    let raw_device = target.path().replace("/dev/disk", "/dev/rdisk");
 
     unsafe {
         let right_name = format!("sys.openfile.readwrite.{}", raw_device);

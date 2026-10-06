@@ -3,8 +3,9 @@
 
 //! Windows-specific flash implementation. Requires Administrator for raw disk access.
 
-use super::FlashState;
+use super::{reject_simulated, FlashState};
 use crate::config;
+use crate::devices::{device_changed_error, FlashTarget};
 use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_debug, log_error, log_info, log_warn};
 use std::io::{Read, Write};
@@ -29,10 +30,12 @@ const FILE_FLAG_WRITE_THROUGH: u32 = 0x80000000;
 /// Flashes an image to a block device. Requires Administrator privileges.
 pub async fn flash_image(
     image_path: &PathBuf,
-    device_path: &str,
+    target: &FlashTarget,
     state: Arc<FlashState>,
     verify: bool,
 ) -> Result<(), String> {
+    reject_simulated(target.path())?;
+    let device_path = target.path();
     state.reset();
 
     log_info!(
@@ -68,6 +71,16 @@ pub async fn flash_image(
 
     log_debug!(MODULE, "Opening device for writing...");
     let mut device = open_device_for_write(device_path)?;
+
+    let opened_size = opened_device_size(&device).map_err(|e| {
+        log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
+        e
+    })?;
+    if opened_size != target.size() {
+        let e = device_changed_error(device_path, target.size(), opened_size);
+        log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
+        return Err(e);
+    }
 
     let chunk_size = config::flash::CHUNK_SIZE;
     let mut buffer = vec![0u8; chunk_size];
@@ -489,6 +502,38 @@ fn verify_with_sector_alignment(
 
     tracker.finish();
     Ok(())
+}
+
+/// Size of the opened disk, from the same IOCTL device detection uses.
+#[cfg(target_os = "windows")]
+fn opened_device_size(device: &std::fs::File) -> Result<u64, String> {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::Foundation::GetLastError;
+    use windows_sys::Win32::System::Ioctl::{DISK_GEOMETRY_EX, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX};
+    use windows_sys::Win32::System::IO::DeviceIoControl;
+
+    let mut buffer = [0u8; 256];
+    let mut bytes_returned: u32 = 0;
+
+    let result = unsafe {
+        DeviceIoControl(
+            device.as_raw_handle() as *mut _,
+            IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
+            std::ptr::null(),
+            0,
+            buffer.as_mut_ptr() as *mut _,
+            buffer.len() as u32,
+            &mut bytes_returned,
+            std::ptr::null_mut(),
+        )
+    };
+    if result == 0 {
+        let error_code = unsafe { GetLastError() };
+        return Err(format!("Failed to read device size: error {}", error_code));
+    }
+
+    let geometry = unsafe { std::ptr::read_unaligned(buffer.as_ptr() as *const DISK_GEOMETRY_EX) };
+    u64::try_from(geometry.DiskSize).map_err(|_| "Device reported a negative size".to_string())
 }
 
 /// Retrieves the physical sector size of the device.

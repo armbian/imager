@@ -10,23 +10,100 @@ use tauri_plugin_store::StoreExt;
 use armbian_write_conf::WriteConfError;
 
 use crate::autoconfig::AutoconfigConfig;
+use crate::config;
+use crate::devices::target::TAG_NOT_FOUND;
+use crate::devices::{get_block_devices, select_flash_target, FlashTarget, TargetRefusal};
 use crate::download::download_image as do_download;
-use crate::flash::{flash_image as do_flash, request_authorization};
+use crate::flash::{flash_image as do_flash, reject_simulated, request_authorization};
 use crate::utils::{app_cache_dir, images_dir, validate_cache_path};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 use super::state::AppState;
 
+/// The system-disk unlock; anything but an explicit `true` keeps system disks refused.
+pub(crate) fn allow_system_devices(app: &AppHandle) -> bool {
+    allow_system_from(
+        app.store(config::app::SETTINGS_STORE)
+            .map(|store| store.get(config::app::SETTING_ALLOW_SYSTEM_DEVICES)),
+    )
+}
+
+fn allow_system_from<E: std::fmt::Display>(setting: Result<Option<serde_json::Value>, E>) -> bool {
+    match setting {
+        Ok(value) => value.and_then(|v| v.as_bool()).unwrap_or(false),
+        Err(e) => {
+            log_warn!(
+                "operations",
+                "Settings store unavailable, system devices stay blocked: {}",
+                e
+            );
+            false
+        }
+    }
+}
+
+/// Validate a frontend device path against a fresh scan; only a missing device is rescanned.
+async fn resolve_flash_target(
+    app: &AppHandle,
+    device_path: &str,
+    expected_size: u64,
+) -> Result<FlashTarget, String> {
+    let refuse = |e: String| {
+        log_error!("operations", "Refusing target {:?}: {}", device_path, e);
+        e
+    };
+
+    reject_simulated(device_path).map_err(refuse)?;
+
+    let allow_system = allow_system_devices(app);
+    log_info!(
+        "operations",
+        "Validating target {:?} ({} bytes), allow_system_devices={}",
+        device_path,
+        expected_size,
+        allow_system
+    );
+
+    let mut rescans = 0;
+    loop {
+        let devices = get_block_devices()
+            .map_err(|e| refuse(format!("{TAG_NOT_FOUND} device scan failed: {e}")))?;
+        match select_flash_target(device_path, expected_size, &devices, allow_system) {
+            Ok(target) => return Ok(target),
+            Err(TargetRefusal::NotFound(_)) if rescans < config::flash::TARGET_RESCAN_RETRIES => {
+                rescans += 1;
+                log_debug!(
+                    "operations",
+                    "Target {:?} not in scan, rescan {}/{}",
+                    device_path,
+                    rescans,
+                    config::flash::TARGET_RESCAN_RETRIES
+                );
+                tokio::time::sleep(std::time::Duration::from_millis(
+                    config::flash::TARGET_RESCAN_INTERVAL_MS,
+                ))
+                .await;
+            }
+            Err(refusal) => return Err(refuse(refusal.into_message())),
+        }
+    }
+}
+
 /// Request write authorization before download (Touch ID on macOS, pkexec re-launch
 /// on Linux when not root). Returns false if the user cancels.
 #[tauri::command]
-pub async fn request_write_authorization(device_path: String) -> Result<bool, String> {
+pub async fn request_write_authorization(
+    device_path: String,
+    expected_size: u64,
+    app: AppHandle,
+) -> Result<bool, String> {
     log_info!(
         "operations",
         "Requesting write authorization for device: {}",
         device_path
     );
-    let result = request_authorization(&device_path);
+    let target = resolve_flash_target(&app, &device_path, expected_size).await?;
+    let result = request_authorization(&target);
     match &result {
         Ok(authorized) => {
             if *authorized {
@@ -91,10 +168,11 @@ pub async fn download_image(
 pub async fn flash_image(
     image_path: String,
     device_path: String,
+    expected_size: u64,
     verify: bool,
     autoconfig: Option<AutoconfigConfig>,
     state: State<'_, AppState>,
-    _app: AppHandle,
+    app: AppHandle,
 ) -> Result<(), String> {
     log_info!(
         "operations",
@@ -123,6 +201,8 @@ pub async fn flash_image(
     // reset it reads the previous flash's stale state (is_verifying=true, verified=100%) and latches onto it.
     flash_state.reset();
 
+    let target = resolve_flash_target(&app, &device_path, expected_size).await?;
+
     // With a profile selected, flash a temp copy with the preset injected so the
     // shared cached/decompressed image stays pristine.
     let (flash_path, temp_copy) = match autoconfig {
@@ -133,7 +213,7 @@ pub async fn flash_image(
         None => (path, None),
     };
 
-    let result = do_flash(&flash_path, &device_path, flash_state, verify).await;
+    let result = do_flash(&flash_path, &target, flash_state, verify).await;
 
     // Always remove the temp copy, regardless of flash outcome.
     if let Some(copy) = temp_copy {
@@ -251,7 +331,7 @@ pub async fn force_delete_cached_image(image_path: String) -> Result<(), String>
 pub async fn delete_downloaded_image(image_path: String, app: AppHandle) -> Result<(), String> {
     log_info!("operations", "Delete request for image: {}", image_path);
 
-    let cache_enabled = match app.store("settings.json") {
+    let cache_enabled = match app.store(config::app::SETTINGS_STORE) {
         Ok(store) => store
             .get("cache_enabled")
             .and_then(|v| v.as_bool())
@@ -328,4 +408,27 @@ pub async fn cleanup_failed_download(state: State<'_, AppState>) -> Result<(), S
     log_info!("operations", "Cleaning up failed download");
     crate::download::cleanup_pending_download(state.download_state.clone()).await;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::allow_system_from;
+    use serde_json::{json, Value};
+
+    fn setting(value: Option<Value>) -> Result<Option<Value>, String> {
+        Ok(value)
+    }
+
+    #[test]
+    fn allow_system_only_on_explicit_true() {
+        assert!(!allow_system_from::<String>(Err(
+            "store unavailable".to_string()
+        )));
+        assert!(!allow_system_from(setting(None)));
+        assert!(!allow_system_from(setting(Some(json!("true")))));
+        assert!(!allow_system_from(setting(Some(json!(1)))));
+        assert!(!allow_system_from(setting(Some(Value::Null))));
+        assert!(!allow_system_from(setting(Some(json!(false)))));
+        assert!(allow_system_from(setting(Some(json!(true)))));
+    }
 }
