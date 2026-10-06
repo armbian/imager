@@ -220,6 +220,7 @@
       "maxSize": "Tamanho máximo da cache",
       "maxSizeDescription": "Remove automaticamente as imagens mais antigas quando o limite de tamanho é atingido",
       "noCachedImages": "Sem dados em cache",
+      "loadError": "Não foi possível ler a cache de imagens",
       "clear": "Limpar cache",
       "clearButton": "Libertar espaço",
       "clearDescription": "Remove todos os dados em cache para libertar espaço",

@@ -220,6 +220,7 @@
       "maxSize": "Maksymalny rozmiar pamięci podręcznej",
       "maxSizeDescription": "Po osiągnięciu limitu rozmiaru najstarsze obrazy są usuwane automatycznie",
       "noCachedImages": "Brak danych w pamięci podręcznej",
+      "loadError": "Nie udało się odczytać pamięci podręcznej obrazów",
       "clear": "Wyczyść pamięć podręczną",
       "clearButton": "Zwolnij miejsce",
       "clearDescription": "Usuń wszystkie dane z pamięci podręcznej, aby zwolnić miejsce",

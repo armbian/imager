@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, Code, FileText } from 'lucide-react';
 import { getDeveloperMode, setDeveloperMode } from '../../hooks/useSettings';
-import { useSettingsGroup } from '../../hooks/useSettingsGroup';
+import { useAsyncData } from '../../hooks/useAsyncData';
+import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { LogsModal } from './LogsModal';
 import { EVENTS } from '../../config';
 
@@ -18,19 +19,13 @@ export function DeveloperSection() {
   const [isToggling, setIsToggling] = useState<boolean>(false);
   const [initialized, setInitialized] = useState(false);
 
-  const settingsGroup = useSettingsGroup<{
-    developerMode: boolean;
-  }>({
-    developerMode: getDeveloperMode,
-  });
+  const { data: savedDeveloperMode, error: loadError, reload } = useAsyncData(() => getDeveloperMode(), []);
 
-  // Sync local state once the persisted developer-mode value is read.
   useEffect(() => {
-    if (settingsGroup.developerMode !== undefined) {
-      setDeveloperModeState(settingsGroup.developerMode);
-      setInitialized(true);
-    }
-  }, [settingsGroup.developerMode]);
+    if (savedDeveloperMode === null) return;
+    setDeveloperModeState(savedDeveloperMode);
+    setInitialized(true);
+  }, [savedDeveloperMode]);
 
   /** Toggle developer mode with optimistic update and rollback on error */
   const handleToggleDeveloperMode = async () => {
@@ -53,8 +48,8 @@ export function DeveloperSection() {
     }
   };
 
-  // Gate rendering until the persisted setting has been loaded.
-  if (!initialized) return null;
+  // Toggles render only once loaded so they do not animate on mount.
+  if (!initialized && !loadError) return null;
 
   return (
     <div className="settings-section">
@@ -62,27 +57,30 @@ export function DeveloperSection() {
         <h3 className="settings-group__title">{t('settings.developer')}</h3>
 
         <div className="settings-group__card">
-          {/* Developer-mode toggle */}
-          <div className="settings-row">
-            <div className="settings-row__main">
-              <div className="settings-row__icon">
-                <Code />
+          {loadError && !initialized ? (
+            <ErrorDisplay error={loadError} onRetry={reload} compact />
+          ) : (
+            <div className="settings-row">
+              <div className="settings-row__main">
+                <div className="settings-row__icon">
+                  <Code />
+                </div>
+                <div className="settings-row__text">
+                  <div className="settings-row__label">{t('settings.developerMode')}</div>
+                  <div className="settings-row__desc">{t('settings.developerModeDescription')}</div>
+                </div>
               </div>
-              <div className="settings-row__text">
-                <div className="settings-row__label">{t('settings.developerMode')}</div>
-                <div className="settings-row__desc">{t('settings.developerModeDescription')}</div>
-              </div>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={developerMode}
+                  onChange={handleToggleDeveloperMode}
+                  disabled={isToggling}
+                />
+                <span className="toggle-slider"></span>
+              </label>
             </div>
-            <label className="toggle-switch">
-              <input
-                type="checkbox"
-                checked={developerMode}
-                onChange={handleToggleDeveloperMode}
-                disabled={isToggling}
-              />
-              <span className="toggle-slider"></span>
-            </label>
-          </div>
+          )}
 
           {/* Log viewer entry point */}
           <div

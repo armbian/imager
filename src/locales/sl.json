@@ -220,6 +220,7 @@
       "maxSize": "Največja velikost predpomnilnika",
       "maxSizeDescription": "Samodejno odstrani najstarejše slike, ko je omejitev presežena",
       "noCachedImages": "Ni predpomnjenih podatkov",
+      "loadError": "Predpomnilnika slik ni bilo mogoče prebrati",
       "clear": "Počisti predpomnilnik",
       "clearButton": "Sprosti prostor",
       "clearDescription": "Odstrani vse predpomnjene podatke za sprostitev prostora",

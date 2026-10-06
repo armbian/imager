@@ -220,6 +220,7 @@
       "maxSize": "キャッシュの最大サイズ",
       "maxSizeDescription": "サイズの上限に達すると、古いイメージから自動的に削除します",
       "noCachedImages": "キャッシュされたデータはありません",
+      "loadError": "イメージキャッシュを読み取れませんでした",
       "clear": "キャッシュをクリア",
       "clearButton": "空き容量を増やす",
       "clearDescription": "キャッシュされたすべてのデータを削除して空き容量を確保します",

@@ -220,6 +220,7 @@
       "maxSize": "Maximale Cache-Größe",
       "maxSizeDescription": "Entfernt automatisch die ältesten Images, sobald das Größenlimit erreicht ist",
       "noCachedImages": "Keine zwischengespeicherten Daten",
+      "loadError": "Der Image-Cache konnte nicht gelesen werden",
       "clear": "Cache leeren",
       "clearButton": "Speicher freigeben",
       "clearDescription": "Alle zwischengespeicherten Daten entfernen, um Speicherplatz freizugeben",
