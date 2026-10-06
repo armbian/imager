@@ -530,6 +530,11 @@ button.list-item:disabled:hover {
   flex-shrink: 0;
 }
 
+.side-info-badge__ver {
+  opacity: 0.8;
+  margin-left: 1px;
+}
+
 /* BADGES */
 .badge {
   font-size: 11px;
@@ -559,6 +564,13 @@ button.list-item:disabled:hover {
 }
 
 .badge-kernel {
+  color: white;
+}
+
+/* Gradient tinted per badge via --badge-from, --badge-to and --badge-glow (solidBadgeVars) */
+.badge-solid {
+  background: linear-gradient(135deg, var(--badge-from) 0%, var(--badge-to) 100%);
+  box-shadow: 0 2px 6px var(--badge-glow);
   color: white;
 }
 

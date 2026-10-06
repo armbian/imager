@@ -36,7 +36,7 @@ export const VARIANT_BADGES: Record<string, BadgeConfig> = {
 export const KERNEL_BADGES: Record<string, BadgeConfig> = {
   'current': { label: 'Current', color: PALETTE.GREEN },
   'edge': { label: 'Edge', color: PALETTE.RED },
-  'legacy': { label: 'Legacy', color: '#6b7280' },
+  'legacy': { label: 'Legacy', color: PALETTE.GRAY },
   'vendor': { label: 'Vendor', color: PALETTE.VIOLET },
   'collabora': { label: 'Collabora', color: PALETTE.AMBER },
   'sc8280xp': { label: 'SC8280XP', color: PALETTE.CYAN },
@@ -87,22 +87,4 @@ export function getKernelType(branch: string): string | null {
     if (b.includes(key)) return key;
   }
   return null;
-}
-
-/** Adjust a hex color's brightness by `percent` (-100 darkens to +100 lightens) */
-export function adjustBrightness(hex: string, percent: number): string {
-  const color = hex.replace('#', '');
-
-  const num = parseInt(color, 16);
-  const r = (num >> 16) & 0xFF;
-  const g = (num >> 8) & 0xFF;
-  const b = num & 0xFF;
-
-  // percent maps to a -255..+255 offset applied to each channel
-  const amt = Math.round(2.55 * percent);
-  const R = Math.max(0, Math.min(255, r + amt));
-  const G = Math.max(0, Math.min(255, g + amt));
-  const B = Math.max(0, Math.min(255, b + amt));
-
-  return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 }

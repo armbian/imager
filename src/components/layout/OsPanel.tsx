@@ -3,8 +3,8 @@
 
 import { useState, useMemo } from 'react';
 import {
-  Package, Layers, Star, RefreshCw, AppWindow, Box,
-  Download, ArrowRight, Monitor, Calendar, CircleCheck,
+  Package, Layers, Star, RefreshCw,
+  Download, ArrowRight, Calendar, CircleCheck,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getImagesForBoard, listCachedImages } from '../../hooks/useTauri';
@@ -12,8 +12,8 @@ import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import {
   getOsInfo, getAppInfo, getKernelType, getImageVariantLabel,
-  KERNEL_BADGES, STORAGE_BADGES, SUPPORT_TIER, UI,
-  isTrunkImage, IMAGE_FILTER_PREDICATES, FILTER_BUTTONS, categoryOf, type OsCategory,
+  KERNEL_BADGES, STORAGE_BADGES, SUPPORT_TIER, UI, COLORS, PALETTE,
+  isTrunkImage, IMAGE_FILTER_PREDICATES, FILTER_BUTTONS, OS_CATEGORY_GROUPS, IMAGE_STATUS_COLOR, PROMOTED_COLOR, categoryOf,
 } from '../../config';
 import { getMonoLogo } from '../../config/mono-logos';
 import { formatFileSize, hexToRgba, staggerDelay, splitArmbianVersion, formatDate, armbianIdentityKey, formatKernelLabel } from '../../utils';
@@ -162,8 +162,8 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
 
   /** Status label + dot color for a build's stability (used on recommended cards). */
   function statusOf(image: ImageInfo): { label: string; color: string } {
-    if (isTrunkImage(image)) return { label: t('modal.rolling'), color: '#3b82f6' };
-    return { label: t('modal.stable'), color: '#10b981' };
+    if (isTrunkImage(image)) return { label: t('modal.rolling'), color: IMAGE_STATUS_COLOR.ROLLING };
+    return { label: t('modal.stable'), color: IMAGE_STATUS_COLOR.STABLE };
   }
 
   /** Clean version: strip the "-trunk.NN" rolling suffix, keep the 26.x.y number. */
@@ -194,7 +194,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
         {monoLogo && <img className="dl-card__watermark" src={monoLogo} alt="" aria-hidden="true" />}
         <div className="dl-card__top">
           <div className="dl-card__logo">
-            {monoLogo ? <img src={monoLogo} alt={display?.name || distroName} /> : <Package size={28} color="#fff" />}
+            {monoLogo ? <img src={monoLogo} alt={display?.name || distroName} /> : <Package size={28} color={COLORS.ON_TILE} />}
           </div>
           <span className="dl-card__status">
             <span className="dl-dot" style={{ background: status.color }} />
@@ -209,7 +209,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
           <div className="dl-card__foot">
             {(kernelBadge || image.kernel_branch) && (
               <span className="dl-card__kernel">
-                <span className="dl-dot" style={{ background: kernelBadge?.color ?? '#10b981' }} />
+                <span className="dl-dot" style={{ background: kernelBadge?.color ?? PALETTE.GREEN }} />
                 {formatKernelLabel(image)}
               </span>
             )}
@@ -255,7 +255,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
       >
         <div className="os-card__side" style={{ background: distroBlock(distroName) }}>
           <div className="os-card__logo">
-            {monoLogo ? <img src={monoLogo} alt={display?.name || distroName} /> : <Package size={34} color="#fff" />}
+            {monoLogo ? <img src={monoLogo} alt={display?.name || distroName} /> : <Package size={34} color={COLORS.ON_TILE} />}
           </div>
         </div>
         <div className="os-card__body">
@@ -294,18 +294,12 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
     if (filterType !== 'all') {
       return <div className="os-rest-grid">{rest.map(renderOsCard)}</div>;
     }
-    const groups: Array<{ id: OsCategory; title: string; icon: typeof Layers; color: string }> = [
-      { id: 'desktop', title: t('modal.groupDesktop'), icon: Monitor, color: '#3b82f6' },
-      { id: 'minimal', title: t('modal.groupMinimal'), icon: Box, color: '#14b8a6' },
-      { id: 'apps', title: t('modal.groupApps'), icon: AppWindow, color: '#8b5cf6' },
-      { id: 'rolling', title: t('modal.groupRolling'), icon: RefreshCw, color: '#f59e0b' },
-    ];
-    return groups.map(({ id, title, icon, color }) => {
+    return OS_CATEGORY_GROUPS.map(({ id, titleKey, icon, color }) => {
       const items = rest.filter((img) => categoryOf(img) === id);
       if (items.length === 0) return null;
       return (
         <section key={id} className="os-section">
-          <SectionHeader icon={icon} title={title} color={color} count={items.length} date={formatBuildDate(items)} />
+          <SectionHeader icon={icon} title={t(titleKey)} color={color} count={items.length} date={formatBuildDate(items)} />
           <div className="os-rest-grid">{items.map(renderOsCard)}</div>
         </section>
       );
@@ -375,7 +369,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
         <div className="os-body">
           {recommended.length > 0 && (
             <section className="os-section">
-              <SectionHeader icon={Star} title={t('modal.promoted')} color="#f2651f" count={recommended.length} date={formatBuildDate(recommended)} />
+              <SectionHeader icon={Star} title={t('modal.promoted')} color={PROMOTED_COLOR} count={recommended.length} date={formatBuildDate(recommended)} />
               <div
                 className="os-rec-grid"
                 style={{ gridTemplateColumns: `repeat(${Math.min(recommended.length, UI.OS_REC_MAX_COLUMNS)}, minmax(0, 1fr))` }}

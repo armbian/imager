@@ -15,12 +15,12 @@ import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { BoardBadges } from '../shared/BoardBadges';
 import { BoardImage } from '../shared/BoardImage';
 import { useToasts } from '../../hooks/useToasts';
-import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage, splitUfsKernel } from '../../utils';
-import { EVENTS, UI } from '../../config';
+import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage, splitUfsKernel, solidBadgeVars } from '../../utils';
+import { EVENTS, UI, COLORS } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
-import { getDesktopEnv, getVariantBadge, getKernelType, KERNEL_BADGES, STORAGE_BADGES, CLI_BADGE, adjustBrightness } from '../../config/badges';
+import { getDesktopEnv, getVariantBadge, getKernelType, KERNEL_BADGES, STORAGE_BADGES, CLI_BADGE } from '../../config/badges';
 import { IMAGE_STORAGE, type CachedImageInfo, type BoardInfo } from '../../types';
 
 /** Group key for cached images whose board slug is unknown */
@@ -338,7 +338,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                                 alt={osInfo?.name || parsed?.distro || ''}
                               />
                             ) : (
-                              <Package size={28} color="#fff" />
+                              <Package size={28} color={COLORS.ON_TILE} />
                             )}
                           </div>
 
@@ -349,58 +349,32 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
 
                             <div className="image-info-side-panel">
                               {desktopEnv && variantBadge ? (
-                                <div
-                                  className="side-info-badge"
-                                  style={{
-                                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                    boxShadow: '0 2px 6px rgba(59, 130, 246, 0.4)',
-                                    border: 'none',
-                                    color: 'white',
-                                  }}
-                                >
+                                <div className="side-info-badge badge-desktop">
                                   <Monitor size={11} />
                                   <span>{variantBadge.label}</span>
                                 </div>
                               ) : (
-                                <div
-                                  className="side-info-badge"
-                                  style={{
-                                    background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
-                                    boxShadow: '0 2px 6px rgba(100, 116, 139, 0.3)',
-                                    border: 'none',
-                                    color: 'white',
-                                  }}
-                                >
+                                <div className="side-info-badge badge-cli">
                                   <Terminal size={11} />
                                   <span>{variantBadge?.label ?? CLI_BADGE.label}</span>
                                 </div>
                               )}
                               {badgeConfig && (
                                 <div
-                                  className="side-info-badge badge-kernel"
-                                  style={{
-                                    background: `linear-gradient(135deg, ${badgeConfig.color} 0%, ${adjustBrightness(badgeConfig.color, -20)} 100%)`,
-                                    boxShadow: `0 2px 6px ${badgeConfig.color}66`,
-                                    border: 'none',
-                                    color: 'white',
-                                  }}
+                                  className="side-info-badge badge-kernel badge-solid"
+                                  style={solidBadgeVars(badgeConfig.color)}
                                 >
                                   <Zap size={11} />
                                   <span>{badgeConfig.label}</span>
                                   {kernelVersion && (
-                                    <span style={{ opacity: 0.8, marginLeft: 1 }}>{kernelVersion}</span>
+                                    <span className="side-info-badge__ver">{kernelVersion}</span>
                                   )}
                                 </div>
                               )}
                               {isUfs && (
                                 <div
-                                  className="side-info-badge"
-                                  style={{
-                                    background: `linear-gradient(135deg, #f59e0b 0%, ${adjustBrightness('#f59e0b', -20)} 100%)`,
-                                    boxShadow: '0 2px 6px #f59e0b66',
-                                    border: 'none',
-                                    color: 'white',
-                                  }}
+                                  className="side-info-badge badge-solid"
+                                  style={solidBadgeVars(STORAGE_BADGES[IMAGE_STORAGE.UFS].color)}
                                 >
                                   <HardDrive size={11} />
                                   <span>{STORAGE_BADGES[IMAGE_STORAGE.UFS].label}</span>

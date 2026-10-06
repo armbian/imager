@@ -25,7 +25,6 @@ export {
   getDesktopEnv,
   getVariantBadge,
   getKernelType,
-  adjustBrightness,
   type BadgeConfig,
 } from './badges';
 
@@ -61,6 +60,14 @@ export {
 } from './supportTiers';
 
 // Image filters
-export { isTrunkImage, IMAGE_FILTER_PREDICATES, FILTER_BUTTONS, categoryOf } from './imageFilters';
+export {
+  isTrunkImage,
+  IMAGE_FILTER_PREDICATES,
+  FILTER_BUTTONS,
+  OS_CATEGORY_GROUPS,
+  IMAGE_STATUS_COLOR,
+  PROMOTED_COLOR,
+  categoryOf,
+} from './imageFilters';
 export type { OsCategory } from './imageFilters';
 export { qdlInstructionsKey } from './qdlBoards';
