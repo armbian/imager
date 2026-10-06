@@ -350,7 +350,7 @@
     "installNow": "Installa ora",
     "install": "Installa",
     "restartNow": "Riavvia ora",
-    "cancel": "Annulla",
+    "continueInBackground": "Continua in background",
     "retry": "Riprova",
     "readyMessage": "L'aggiornamento è stato scaricato. Riavvia l'app per completare l'installazione.",
     "errorMessage": "Impossibile scaricare l'aggiornamento. Riprova più tardi.",

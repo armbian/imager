@@ -350,7 +350,7 @@
     "installNow": "Namesti zdaj",
     "install": "Namesti",
     "restartNow": "Znova zaženi",
-    "cancel": "Prekliči",
+    "continueInBackground": "Nadaljuj v ozadju",
     "retry": "Poskusi znova",
     "readyMessage": "Posodobitev je prenesena. Znova zaženite aplikacijo za dokončanje namestitve.",
     "errorMessage": "Posodobitve ni bilo mogoče prenesti. Poskusite pozneje.",

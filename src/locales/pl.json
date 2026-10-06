@@ -350,7 +350,7 @@
     "installNow": "Zainstaluj teraz",
     "install": "Zainstaluj",
     "restartNow": "Uruchom ponownie",
-    "cancel": "Anuluj",
+    "continueInBackground": "Kontynuuj w tle",
     "retry": "Spróbuj ponownie",
     "readyMessage": "Aktualizacja została pobrana. Uruchom ponownie aplikację, aby zakończyć instalację.",
     "errorMessage": "Nie udało się pobrać aktualizacji. Spróbuj ponownie później.",

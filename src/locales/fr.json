@@ -350,7 +350,7 @@
     "installNow": "Installer maintenant",
     "install": "Installer",
     "restartNow": "Redémarrer maintenant",
-    "cancel": "Annuler",
+    "continueInBackground": "Continuer en arrière-plan",
     "retry": "Réessayer",
     "readyMessage": "La mise à jour a été téléchargée. Redémarrez l'application pour terminer l'installation.",
     "errorMessage": "Impossible de télécharger la mise à jour. Veuillez réessayer plus tard.",

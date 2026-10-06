@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Download, RefreshCw, CircleCheck, CircleAlert, X, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { relaunch } from '@tauri-apps/plugin-process';
@@ -25,18 +25,14 @@ export function UpdateModal() {
   const [error, setError] = useState<string | null>(null);
   const [showChangelog, setShowChangelog] = useState(false);
 
-  // Reset to the offer view each time the dialog reopens.
-  useEffect(() => {
-    if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reset dialog state on open
-      setState('available');
-      setError(null);
-      setProgress({ downloaded: 0, total: null });
-    }
-  }, [isOpen]);
+  const dismissError = () => {
+    setState('available');
+    setError(null);
+    close();
+  };
 
   const handleDownloadAndInstall = async () => {
-    if (!update) return;
+    if (!update || state === 'downloading') return;
 
     setState('downloading');
     setProgress({ downloaded: 0, total: null });
@@ -181,9 +177,10 @@ export function UpdateModal() {
             </>
           )}
 
+          {/* The updater cannot abort a download: hiding keeps it running and reopening shows its progress. */}
           {state === 'downloading' && (
             <button className="update-modal-btn secondary" onClick={close}>
-              {t('update.cancel')}
+              {t('update.continueInBackground')}
             </button>
           )}
 
@@ -196,7 +193,7 @@ export function UpdateModal() {
 
           {state === 'error' && (
             <>
-              <button className="update-modal-btn secondary" onClick={close}>
+              <button className="update-modal-btn secondary" onClick={dismissError}>
                 {t('update.later')}
               </button>
               <button className="update-modal-btn primary" onClick={handleDownloadAndInstall}>

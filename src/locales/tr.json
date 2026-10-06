@@ -350,7 +350,7 @@
     "installNow": "Şimdi yükle",
     "install": "Yükle",
     "restartNow": "Şimdi yeniden başlat",
-    "cancel": "İptal",
+    "continueInBackground": "Arka planda devam et",
     "retry": "Tekrar dene",
     "readyMessage": "Güncelleme indirildi. Kurulumu tamamlamak için uygulamayı yeniden başlatın.",
     "errorMessage": "Güncelleme indirilemedi. Lütfen daha sonra tekrar deneyin.",

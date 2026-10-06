@@ -350,7 +350,7 @@
     "installNow": "Installera nu",
     "install": "Installera",
     "restartNow": "Starta om nu",
-    "cancel": "Avbryt",
+    "continueInBackground": "Fortsätt i bakgrunden",
     "retry": "Försök igen",
     "readyMessage": "Uppdateringen är nedladdad. Starta om appen för att slutföra installationen.",
     "errorMessage": "Det gick inte att ladda ner uppdateringen. Försök igen senare.",

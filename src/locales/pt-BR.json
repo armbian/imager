@@ -350,7 +350,7 @@
     "installNow": "Instalar agora",
     "install": "Instalar",
     "restartNow": "Reiniciar agora",
-    "cancel": "Cancelar",
+    "continueInBackground": "Continuar em segundo plano",
     "retry": "Tentar novamente",
     "readyMessage": "A atualização foi baixada. Reinicie o aplicativo para concluir a instalação.",
     "errorMessage": "Não foi possível baixar a atualização. Tente novamente mais tarde.",
