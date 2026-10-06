@@ -78,8 +78,6 @@ export function UpdateModal() {
     }
   };
 
-  const formatBytes = (bytes: number): string => formatFileSize(bytes, '0 B', true);
-
   const getProgressPercentage = (): number => {
     if (!progress.total) return 0;
     return Math.round((progress.downloaded / progress.total) * 100);
@@ -142,11 +140,11 @@ export function UpdateModal() {
             <div className="update-progress-text">
               {progress.total ? (
                 <>
-                  {formatBytes(progress.downloaded)} / {formatBytes(progress.total)}
+                  {formatFileSize(progress.downloaded, '0 B', true)} / {formatFileSize(progress.total, '0 B', true)}
                   <span className="update-progress-percent">{getProgressPercentage()}%</span>
                 </>
               ) : (
-                formatBytes(progress.downloaded)
+                formatFileSize(progress.downloaded, '0 B', true)
               )}
             </div>
           </div>

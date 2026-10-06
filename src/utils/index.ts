@@ -173,10 +173,14 @@ export function splitArmbianVersion(version: string): { base: string; build: str
 }
 
 /** Format an ISO 8601 date as a short, locale-aware date (e.g. "29 May 2026"); undefined when unparseable. */
-export function formatDate(iso: string, locale?: string): string | undefined {
+export function formatDate(
+  iso: string,
+  locale?: string,
+  month: 'short' | 'long' = 'short'
+): string | undefined {
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return undefined;
-  return parsed.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
+  return parsed.toLocaleDateString(locale, { year: 'numeric', month, day: 'numeric' });
 }
 
 /** Strip ANSI escape sequences (terminal colour codes) from `text` so it copies/exports as plain text. */

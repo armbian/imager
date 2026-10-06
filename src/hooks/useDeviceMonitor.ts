@@ -2,7 +2,7 @@
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 import { useEffect, useCallback } from 'react';
-import { getBlockDevices, getQdlDevices } from './useTauri';
+import { isTargetConnected } from './useTauri';
 import { POLLING } from '../config';
 import type { BlockDevice } from '../types';
 import { isQdlDevicePath } from '../utils/deviceUtils';
@@ -17,20 +17,7 @@ export function useDeviceMonitor(
     if (!selectedDevice) return;
 
     try {
-      // QDL (Qualcomm EDL) targets are not block devices; check the QDL list
-      // instead, matching useFlashOperation's "gone when none present" semantics.
-      if (isQdlDevicePath(selectedDevice.path)) {
-        const qdlDevices = await getQdlDevices();
-        if (qdlDevices.length === 0) {
-          onDeviceDisconnected();
-        }
-        return;
-      }
-
-      const devices = await getBlockDevices();
-      const stillConnected = devices.some(d => d.path === selectedDevice.path);
-
-      if (!stillConnected) {
+      if (!(await isTargetConnected(selectedDevice, isQdlDevicePath(selectedDevice.path)))) {
         onDeviceDisconnected();
       }
     } catch {

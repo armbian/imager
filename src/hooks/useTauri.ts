@@ -2,6 +2,7 @@
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 import { invoke } from '@tauri-apps/api/core';
+import { qdlToBlockDevice, isDeviceConnected } from '../utils/deviceUtils';
 import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, CustomImageClassification, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
@@ -228,6 +229,25 @@ export async function getArmbianRelease(): Promise<ArmbianReleaseInfo | null> {
 /** Detect Qualcomm devices connected via USB in EDL (Emergency Download) mode */
 export async function getQdlDevices(): Promise<QdlDevice[]> {
   return invoke('get_qdl_devices');
+}
+
+/** Flash targets for the current write path: QDL (EDL) devices mapped onto BlockDevice, else block devices. */
+export async function getTargetDevices(edl: boolean): Promise<BlockDevice[]> {
+  if (edl) {
+    const qdlDevices = await getQdlDevices();
+    return qdlDevices.map(qdlToBlockDevice);
+  }
+  return getBlockDevices();
+}
+
+/** Whether the selected `device` is still attached, matched by path among EDL or block devices. */
+export async function isTargetConnected(device: BlockDevice, edl: boolean): Promise<boolean> {
+  if (edl) {
+    const qdlDevices = await getQdlDevices();
+    return isDeviceConnected(device.path, qdlDevices.map(qdlToBlockDevice));
+  }
+  const devices = await getBlockDevices();
+  return isDeviceConnected(device.path, devices);
 }
 
 /** Flash a QDL image (TAR archive) to the EDL device at `devicePath` (QdlDevice.path); `autoconfig` injects a profile */
