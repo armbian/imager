@@ -9,6 +9,7 @@ import type { GitHubRelease } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { ErrorDisplay } from './ErrorDisplay';
 import { formatDate } from '../../utils';
+import { LINKS } from '../../config';
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -220,11 +221,11 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
                       <button
                         key={username}
                         className="changelog-contributor"
-                        onClick={() => openUrl(`https://github.com/${username}`)}
+                        onClick={() => openUrl(`${LINKS.GITHUB}/${username}`)}
                         title={`@${username}`}
                       >
                         <img
-                          src={`https://github.com/${username}.png`}
+                          src={`${LINKS.GITHUB}/${username}.png`}
                           alt={`@${username}`}
                           className="changelog-contributor-avatar"
                           loading="lazy"
