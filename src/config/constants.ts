@@ -13,8 +13,13 @@ export const POLLING = {
 
 export type DeviceType = 'system' | 'sd' | 'usb' | 'sata' | 'sas' | 'nvme' | 'hdd';
 
+const GITHUB = 'https://github.com';
+const GITHUB_REPO = `${GITHUB}/armbian/imager`;
+
 export const LINKS = {
-  GITHUB_REPO: 'https://github.com/armbian/imager',
+  GITHUB,
+  GITHUB_REPO,
+  ISSUES: `${GITHUB_REPO}/issues`,
   DOCS: 'https://docs.armbian.com',
   FORUM: 'https://forum.armbian.com',
   MOTD: 'https://raw.githubusercontent.com/armbian/os/main/motd.json',

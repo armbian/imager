@@ -5,6 +5,20 @@
 
 import type { AutoconfigConfig, UserShell } from '../types';
 
+/** Example values shown as input placeholders in the profile editor */
+export const AUTOCONFIG_PLACEHOLDERS = {
+  WIFI_SSID: 'MyHomeWiFi',
+  STATIC_IP: '192.168.1.50',
+  STATIC_MASK: '255.255.255.0',
+  STATIC_GATEWAY: '192.168.1.1',
+  STATIC_DNS: '8.8.8.8, 1.1.1.1',
+  LOCALE: 'en_US.UTF-8',
+  SSH_KEYS_URL: 'https://github.com/username.keys',
+  USER_NAME: 'armbian',
+  USER_REAL_NAME: 'Armbian User',
+  REMOTE_CONFIG_URL: 'https://example.com/config.txt',
+} as const;
+
 /** Login shells offered for the first user. */
 export const USER_SHELLS: readonly UserShell[] = ['bash', 'zsh'];
 

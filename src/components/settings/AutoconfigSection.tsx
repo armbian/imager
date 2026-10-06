@@ -28,6 +28,7 @@ import {
   WIFI_COUNTRY_CODES,
   getTimezones,
   renderPresetPreview,
+  AUTOCONFIG_PLACEHOLDERS,
 } from '../../config/autoconfig';
 
 /** Count fields that hold a real value (true booleans or non-empty strings). */
@@ -389,7 +390,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
               {c.wifiEnabled && (
                 <div className="ac-grid">
                   <Field label={t('settings.autoconfig.wifiSsid')}>
-                    <TextInput icon={Wifi} value={c.wifiSsid} placeholder="MyHomeWiFi" onChange={(v) => setConfig('wifiSsid', v)} />
+                    <TextInput icon={Wifi} value={c.wifiSsid} placeholder={AUTOCONFIG_PLACEHOLDERS.WIFI_SSID} onChange={(v) => setConfig('wifiSsid', v)} />
                   </Field>
                   <Field label={t('settings.autoconfig.wifiKey')}>
                     <PasswordInput value={c.wifiKey} onChange={(v) => setConfig('wifiKey', v)} />
@@ -419,16 +420,16 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
               {c.useStaticIp && (
                 <div className="ac-grid">
                   <Field label={t('settings.autoconfig.staticIp')}>
-                    <TextInput icon={MapPin} value={c.staticIp} placeholder="192.168.1.50" onChange={(v) => setConfig('staticIp', v)} />
+                    <TextInput icon={MapPin} value={c.staticIp} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_IP} onChange={(v) => setConfig('staticIp', v)} />
                   </Field>
                   <Field label={t('settings.autoconfig.staticMask')}>
-                    <TextInput icon={MapPin} value={c.staticMask} placeholder="255.255.255.0" onChange={(v) => setConfig('staticMask', v)} />
+                    <TextInput icon={MapPin} value={c.staticMask} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_MASK} onChange={(v) => setConfig('staticMask', v)} />
                   </Field>
                   <Field label={t('settings.autoconfig.staticGateway')}>
-                    <TextInput icon={Router} value={c.staticGateway} placeholder="192.168.1.1" onChange={(v) => setConfig('staticGateway', v)} />
+                    <TextInput icon={Router} value={c.staticGateway} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_GATEWAY} onChange={(v) => setConfig('staticGateway', v)} />
                   </Field>
                   <Field label={t('settings.autoconfig.staticDns')}>
-                    <TextInput icon={Server} value={c.staticDns} placeholder="8.8.8.8, 1.1.1.1" onChange={(v) => setConfig('staticDns', v)} />
+                    <TextInput icon={Server} value={c.staticDns} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_DNS} onChange={(v) => setConfig('staticDns', v)} />
                   </Field>
                 </div>
               )}
@@ -447,7 +448,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
           )}
           <div className="ac-grid">
             <Field label={t('settings.autoconfig.locale')}>
-              <TextInput icon={Globe} value={c.locale} placeholder="en_US.UTF-8" list="ac-locales" disabled={!hasUser} onChange={(v) => setConfig('locale', v || undefined)} />
+              <TextInput icon={Globe} value={c.locale} placeholder={AUTOCONFIG_PLACEHOLDERS.LOCALE} list="ac-locales" disabled={!hasUser} onChange={(v) => setConfig('locale', v || undefined)} />
               <datalist id="ac-locales">
                 {COMMON_LOCALES.map((loc) => <option key={loc} value={loc} />)}
               </datalist>
@@ -482,7 +483,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
                 mono
                 value={c.rootKeyUrl}
                 invalid={!!c.rootKeyUrl && !isHttpUrl(c.rootKeyUrl)}
-                placeholder="https://github.com/username.keys"
+                placeholder={AUTOCONFIG_PLACEHOLDERS.SSH_KEYS_URL}
                 onChange={(v) => setConfig('rootKeyUrl', v)}
               />
             </Field>
@@ -492,13 +493,13 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
         <SectionCard icon={User} title={t('settings.autoconfig.groupUser')} count={userCount}>
           <div className="ac-grid">
             <Field label={t('settings.autoconfig.userName')}>
-              <TextInput icon={User} value={c.userName} placeholder="armbian" onChange={(v) => setConfig('userName', v)} />
+              <TextInput icon={User} value={c.userName} placeholder={AUTOCONFIG_PLACEHOLDERS.USER_NAME} onChange={(v) => setConfig('userName', v)} />
             </Field>
             <Field label={t('settings.autoconfig.userPassword')}>
               <PasswordInput value={c.userPassword} placeholder={t('settings.autoconfig.passwordHint')} onChange={(v) => setConfig('userPassword', v)} />
             </Field>
             <Field label={t('settings.autoconfig.userRealName')}>
-              <TextInput icon={UserCircle} value={c.userRealName} placeholder="Armbian User" onChange={(v) => setConfig('userRealName', v)} />
+              <TextInput icon={UserCircle} value={c.userRealName} placeholder={AUTOCONFIG_PLACEHOLDERS.USER_REAL_NAME} onChange={(v) => setConfig('userRealName', v)} />
             </Field>
             <Field
               label={t('settings.autoconfig.userKeyUrl')}
@@ -509,7 +510,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
                 mono
                 value={c.userKeyUrl}
                 invalid={!!c.userKeyUrl && !isHttpUrl(c.userKeyUrl)}
-                placeholder="https://github.com/username.keys"
+                placeholder={AUTOCONFIG_PLACEHOLDERS.SSH_KEYS_URL}
                 onChange={(v) => setConfig('userKeyUrl', v)}
               />
             </Field>
@@ -538,7 +539,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
               mono
               value={c.remoteConfigUrl}
               invalid={!!c.remoteConfigUrl && !isHttpUrl(c.remoteConfigUrl)}
-              placeholder="https://example.com/config.txt"
+              placeholder={AUTOCONFIG_PLACEHOLDERS.REMOTE_CONFIG_URL}
               onChange={(v) => setConfig('remoteConfigUrl', v)}
             />
           </Field>

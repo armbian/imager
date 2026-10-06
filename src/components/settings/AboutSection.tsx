@@ -124,7 +124,7 @@ export function AboutSection() {
           <LinkButton
             icon={CircleAlert}
             text={t('settings.reportIssue')}
-            onClick={() => openLink(`${LINKS.GITHUB_REPO}/issues`)}
+            onClick={() => openLink(LINKS.ISSUES)}
           />
           <LinkButton
             icon={MessageSquare}
