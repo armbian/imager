@@ -123,6 +123,16 @@ pub(crate) fn reject_simulated(path: &str) -> Result<(), String> {
     Ok(())
 }
 
+pub(crate) fn check_capacity(image_size: u64, device_size: u64) -> Result<(), String> {
+    // Device sizes are whole sectors, so this also covers the sector padding of the last write.
+    if device_size == 0 || image_size > device_size {
+        return Err(format!(
+            "[DEVICE_TOO_SMALL:{image_size}:{device_size}] image needs {image_size} bytes, device has {device_size}"
+        ));
+    }
+    Ok(())
+}
+
 /// Unmount a device before flashing (platform-specific)
 #[allow(dead_code)]
 pub(crate) fn unmount_device(device_path: &str) -> Result<(), String> {
@@ -231,5 +241,24 @@ mod tests {
         ] {
             assert!(reject_simulated(path).is_ok(), "{path:?} was refused");
         }
+    }
+
+    #[test]
+    fn capacity_allows_exact_fit() {
+        assert!(check_capacity(1024, 1024).is_ok());
+        assert!(check_capacity(0, 1024).is_ok());
+    }
+
+    #[test]
+    fn capacity_refuses_one_byte_over() {
+        let err = check_capacity(1025, 1024).unwrap_err();
+        assert!(err.starts_with("[DEVICE_TOO_SMALL:1025:1024]"));
+    }
+
+    #[test]
+    fn capacity_refuses_unknown_device_size() {
+        assert!(check_capacity(1, 0)
+            .unwrap_err()
+            .starts_with("[DEVICE_TOO_SMALL:1:0]"));
     }
 }

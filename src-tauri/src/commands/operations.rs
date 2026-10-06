@@ -14,7 +14,9 @@ use crate::config;
 use crate::devices::target::TAG_NOT_FOUND;
 use crate::devices::{get_block_devices, select_flash_target, FlashTarget, TargetRefusal};
 use crate::download::download_image as do_download;
-use crate::flash::{flash_image as do_flash, reject_simulated, request_authorization};
+use crate::flash::{
+    check_capacity, flash_image as do_flash, reject_simulated, request_authorization,
+};
 use crate::utils::{app_cache_dir, images_dir, validate_cache_path};
 use crate::{log_debug, log_error, log_info, log_warn};
 
@@ -202,6 +204,14 @@ pub async fn flash_image(
     flash_state.reset();
 
     let target = resolve_flash_target(&app, &device_path, expected_size).await?;
+
+    let image_size = std::fs::metadata(&path)
+        .map_err(|e| format!("Failed to get image size: {e}"))?
+        .len();
+    if let Err(e) = check_capacity(image_size, target.size()) {
+        log_error!("operations", "Refusing target {:?}: {}", device_path, e);
+        return Err(e);
+    }
 
     // With a profile selected, flash a temp copy with the preset injected so the
     // shared cached/decompressed image stays pristine.
