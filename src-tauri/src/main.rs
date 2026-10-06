@@ -144,6 +144,16 @@ fn main() {
         builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
     }
 
+    // Lets an MCP client drive dev builds; localhost only, never in release.
+    #[cfg(debug_assertions)]
+    {
+        builder = builder.plugin(
+            tauri_plugin_mcp_bridge::Builder::new()
+                .bind_address("127.0.0.1")
+                .build(),
+        );
+    }
+
     builder
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
