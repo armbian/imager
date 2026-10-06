@@ -8,6 +8,7 @@ export { BoardImage } from './BoardImage';
 export { ChangelogModal } from './ChangelogModal';
 export { ConfirmationDialog } from './ConfirmationDialog';
 export { DeviceIcon, getDeviceBadge } from './DeviceIcon';
+export { EmptyState } from './EmptyState';
 export { ErrorDisplay } from './ErrorDisplay';
 export { GridPager } from './GridPager';
 export { MarqueeText } from './MarqueeText';

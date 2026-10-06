@@ -3,12 +3,13 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Factory, RefreshCw, SearchX, X } from 'lucide-react';
 import { getBoards, getVendors } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useManufacturerList, type ManufacturerData } from '../../hooks/useVendorLogos';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { usePagedGrid } from '../../hooks/usePagedGrid';
-import { ErrorDisplay, SearchBox, GridPager } from '../shared';
+import { ErrorDisplay, SearchBox, GridPager, EmptyState } from '../shared';
 import { DEFAULT_COLOR, staggerDelay } from '../../utils';
 import { VENDOR, UI, PARTNER_TIER_RANK } from '../../config';
 import type { BoardInfo, VendorInfo, Manufacturer } from '../../types';
@@ -36,7 +37,8 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
   const { data: vendors } = useAsyncData<VendorInfo[]>(() => getVendors(), []);
   const { manufacturers, isLoaded } = useManufacturerList(boards, true, search);
 
-  const ready = !!(manufacturers && manufacturers.length > 0 && isLoaded);
+  // Logos never load for an empty board list, so that case is ready as soon as the fetch ends.
+  const ready = isLoaded || (!loading && !boards?.length);
   const { showSkeleton } = useSkeletonLoading(loading, ready);
 
   // Map vendor slug -> partner tier (platinum/gold/silver) for badges.
@@ -78,7 +80,7 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
 
       {error ? (
         <ErrorDisplay error={error} onRetry={reload} compact />
-      ) : showSkeleton ? (
+      ) : showSkeleton || loading ? (
         <div className="mfr-grid">
           {Array.from({ length: UI.SKELETON.MANUFACTURER_PANEL }).map((_, i) => (
             <div key={i} className="mfr-card is-skeleton">
@@ -93,7 +95,21 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
           ))}
         </div>
       ) : manufacturers.length === 0 ? (
-        <div className="mfr-empty">{t('modal.noManufacturers')}</div>
+        search ? (
+          <EmptyState
+            icon={SearchX}
+            title={t('modal.noManufacturers')}
+            hint={t('modal.searchEmptyHint')}
+            action={{ label: t('modal.clearSearch'), icon: X, onClick: () => setSearch('') }}
+          />
+        ) : (
+          <EmptyState
+            icon={Factory}
+            title={t('modal.noManufacturers')}
+            hint={t('modal.listEmptyHint')}
+            action={{ label: t('device.refresh'), icon: RefreshCw, onClick: reload }}
+          />
+        )
       ) : (
         <>
           <div ref={measureGrid} className={`mfr-grid${pageCount > 1 ? ' mfr-grid--paged' : ''}`}>

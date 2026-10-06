@@ -157,6 +157,8 @@ export const UI = {
   ICON_SIZE: {
     SEARCH: 18,
     FLASH_STAGE: 32,
+    EMPTY_STATE: 30,
+    EMPTY_STATE_ACTION: 15,
   },
 } as const;
 

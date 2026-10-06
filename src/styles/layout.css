@@ -1218,15 +1218,6 @@
   color: #0f172a;
 }
 
-.mfr-empty {
-  flex: 1;
-  display: grid;
-  place-items: center;
-  padding: 40px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
 /* DEVICE PANEL (inline storage browser) */
 .device-panel__head {
   display: flex;
