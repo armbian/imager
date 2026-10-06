@@ -16,7 +16,7 @@
     "--dev": "Development commands",
     "dev": "vite",
     "build:dev": "tsc -b && vite build --mode development",
-    "tauri:dev": "tauri dev",
+    "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "tauri:build:dev": "tauri build --debug",
     "--prod": "Production commands",
     "build": "tsc -b && vite build",
