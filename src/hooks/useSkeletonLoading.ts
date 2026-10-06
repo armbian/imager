@@ -2,13 +2,14 @@
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 import { useState, useEffect } from 'react';
+import { UI } from '../config';
 
 /** Skeleton loading with a min visibility window to avoid flicker: shows on load, hides
- * only after data is ready and `minDuration` (default 300ms) elapses. */
+ * only after data is ready and `minDuration` elapses. */
 export function useSkeletonLoading(
   loading: boolean,
   isReady: boolean,
-  minDuration: number = 300
+  minDuration: number = UI.SKELETON.MIN_VISIBLE_MS
 ): { showSkeleton: boolean } {
   const [showSkeleton, setShowSkeleton] = useState(false);
 

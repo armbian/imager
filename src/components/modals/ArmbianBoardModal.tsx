@@ -34,7 +34,6 @@ export function ArmbianBoardModal({
 
   const { isExiting, handleClose, handleAction } = useModalExitAnimation({
     onClose,
-    duration: 200,
     onExiting: () => {
       // 'auto' enables silent auto-selection on future runs
       setArmbianBoardDetection('auto');

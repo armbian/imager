@@ -44,7 +44,7 @@ export function MarqueeText({ text, maxWidth, className = '' }: MarqueeTextProps
       }
     };
 
-    const timer = setTimeout(checkOverflow, 50);
+    const timer = setTimeout(checkOverflow, UI.MARQUEE.MEASURE_DELAY_MS);
     document.fonts?.ready.then(checkOverflow);
     window.addEventListener('resize', checkOverflow);
 
