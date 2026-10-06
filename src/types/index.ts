@@ -159,6 +159,8 @@ export interface FlashProgress {
 
 /** Represents a Qualcomm device in EDL mode detected via USB */
 export interface QdlDevice {
+  /** Device path (`qdl://<bus_id>/<address>`) passed back to target this device */
+  path: string;
   serial: string;
   bus_id: string;
   device_address: number;

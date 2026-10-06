@@ -26,13 +26,13 @@ use super::extract::FIREHOSE_ELF;
 use super::provision::ProvisionSource;
 use super::QdlStorage;
 use crate::flash::FlashState;
-use crate::{log_info, log_warn};
+use crate::{log_error, log_info, log_warn};
 
 /// Execute the full QDL flash: upload firehose, program partitions from `flash_dir`,
-/// optionally targeting a device by `serial`, reporting progress via `state`.
+/// targeting the EDL device at `device_path`, reporting progress via `state`.
 pub fn qdl_flash(
     flash_dir: &Path,
-    serial: Option<String>,
+    device_path: &str,
     autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
@@ -40,7 +40,7 @@ pub fn qdl_flash(
 
     // Connect, upload the firehose programmer, and configure Firehose (eMMC defaults).
     let elf_path = flash_dir.join(FIREHOSE_ELF);
-    let mut device = connect_and_configure(serial, &elf_path, QdlStorage::Emmc, &state)?;
+    let mut device = connect_and_configure(device_path, &elf_path, QdlStorage::Emmc, &state)?;
 
     // --- Autoconfig injection (still within the "configuring" stage) ---
     // Inject first-boot preset into the extracted ext4 rootfs blob IN PLACE before Firehose reads it.
@@ -88,14 +88,14 @@ pub fn qdl_flash(
 pub fn qdl_flash_ufs(
     image_path: &Path,
     elf_path: &Path,
-    serial: Option<String>,
+    device_path: &str,
     autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
     provision: ProvisionSource,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
-    let mut device = connect_and_configure(serial, elf_path, QdlStorage::Ufs, &state)?;
+    let mut device = connect_and_configure(device_path, elf_path, QdlStorage::Ufs, &state)?;
 
     // Inject before Firehose reads the image; detect.rs handles the 4096-byte UFS sectors.
     if let Some(cfg) = autoconfig.as_ref() {
@@ -247,13 +247,28 @@ fn build_ufs_packet(attrs: &[(String, String)]) -> Vec<u8> {
 
 /// Connect, upload the firehose programmer from `elf_path`, and configure Firehose for `storage`.
 fn connect_and_configure(
-    serial: Option<String>,
+    device_path: &str,
     elf_path: &Path,
     storage: QdlStorage,
     state: &Arc<FlashState>,
 ) -> Result<QdlDevice<dyn QdlReadWrite>, String> {
     update_qdl_stage(state, "connecting");
-    log_info!("qdl::flash", "Connecting to EDL device...");
+    log_info!(
+        "qdl::flash",
+        "Connecting to EDL device {:?}...",
+        device_path
+    );
+
+    let serial = super::detect::resolve_edl_serial(device_path).map_err(|e| {
+        log_error!("qdl::flash", "Refusing EDL target {:?}: {}", device_path, e);
+        e
+    })?;
+    log_info!(
+        "qdl::flash",
+        "EDL target {:?} resolved to serial {:?}",
+        device_path,
+        serial
+    );
 
     let rw_channel = setup_target_device(QdlBackend::Usb, serial, None).map_err(|e| {
         let msg = e.to_string();

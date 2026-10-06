@@ -23,7 +23,7 @@ export function sortDevices(devices: BlockDevice[]): BlockDevice[] {
 /** Map a QDL device onto BlockDevice so it flows through the same selection UI. */
 export function qdlToBlockDevice(qdl: QdlDevice): BlockDevice {
   return {
-    path: `qdl://${qdl.bus_id}/${qdl.device_address}`,
+    path: qdl.path,
     name: `Bus ${qdl.bus_id} Addr ${qdl.device_address}`,
     size: 0,
     size_formatted: '',

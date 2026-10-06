@@ -31,7 +31,7 @@ import {
 import { getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
-import { isDeviceConnected } from '../utils/deviceUtils';
+import { isDeviceConnected, qdlToBlockDevice } from '../utils/deviceUtils';
 import { isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
 
 interface UseFlashOperationProps {
@@ -187,7 +187,7 @@ export function useFlashOperation({
     try {
       if (isEdlFlash) {
         const qdlDevices = await getQdlDevices();
-        if (qdlDevices.length === 0) {
+        if (!isDeviceConnected(device.path, qdlDevices.map(qdlToBlockDevice))) {
           await handleDeviceDisconnectedInternal();
           return false;
         }
@@ -411,12 +411,12 @@ export function useFlashOperation({
           path,
           soc ?? '',
           boardSlug ?? '',
-          undefined,
+          device.path,
           autoconfigRef.current ?? undefined
         );
       } else if (isQdlMode) {
         // QDL path: TAR archive → extract → Sahara → Firehose
-        await flashQdlImage(path, undefined, autoconfigRef.current ?? undefined);
+        await flashQdlImage(path, device.path, autoconfigRef.current ?? undefined);
       } else {
         await flashImage(path, device.path, device.size, !skipVerifyRef.current, autoconfigRef.current ?? undefined);
       }
