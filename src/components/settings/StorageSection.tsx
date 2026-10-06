@@ -18,7 +18,7 @@ import { CacheManagerModal } from './CacheManagerModal';
 import { useToasts } from '../../hooks/useToasts';
 import { useSettingsGroup } from '../../hooks/useSettingsGroup';
 import { useAsyncData } from '../../hooks/useAsyncData';
-import { CACHE, EVENTS } from '../../config';
+import { CACHE, EVENTS, UI } from '../../config';
 import { formatBytes } from '../../utils';
 
 /** Storage section: cache usage panel (hairline meter, coherent with `.flash-track`) plus a card of controls — enable toggle, max-size select, clear, and a row opening CacheManagerModal.
@@ -123,11 +123,10 @@ export function StorageSection() {
    * visible width so a tiny assets cache stays distinguishable, then combined width is clamped to never overflow the track. */
   const { imagesPercent, assetsPercent } = useMemo(() => {
     if (cacheMaxSize <= 0) return { imagesPercent: 0, assetsPercent: 0 };
-    const MIN_VISIBLE = 4; // percent floor for a non-empty segment
     const rawImages = (breakdown.images / cacheMaxSize) * 100;
     const rawAssets = (breakdown.assets / cacheMaxSize) * 100;
-    let images = breakdown.images > 0 ? Math.max(rawImages, MIN_VISIBLE) : 0;
-    let assets = breakdown.assets > 0 ? Math.max(rawAssets, MIN_VISIBLE) : 0;
+    let images = breakdown.images > 0 ? Math.max(rawImages, UI.STORAGE_BAR_MIN_PERCENT) : 0;
+    let assets = breakdown.assets > 0 ? Math.max(rawAssets, UI.STORAGE_BAR_MIN_PERCENT) : 0;
     // Keep the assets segment visible, then let images take the remaining room
     assets = Math.min(assets, 100);
     images = Math.min(images, 100 - assets);

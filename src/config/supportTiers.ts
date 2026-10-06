@@ -28,3 +28,6 @@ export const SUPPORT_TIER_ORDER: string[] = ['platinum', 'standard', 'community'
 
 /** Partner tier ranking used to sort manufacturers (lower rank = higher priority) */
 export const PARTNER_TIER_RANK: Record<string, number> = { platinum: 0, gold: 1, silver: 2 };
+
+/** Rank for vendors without a partner tier, sorting them after every partner */
+export const PARTNER_TIER_UNRANKED = 99;

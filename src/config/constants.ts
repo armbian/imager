@@ -121,7 +121,6 @@ export const PALETTE = {
 /** UI color constants */
 export const COLORS = {
   DEFAULT_ICON: PALETTE.SLATE,
-  ALERT_WARNING: PALETTE.AMBER,
   QR_DARK: '#000000',
   QR_LIGHT: '#ffffff',
 } as const;
@@ -156,22 +155,38 @@ export const UI = {
   },
   SKELETON: {
     MIN_VISIBLE_MS: 300,
-    BOARD_GRID_COUNT: 8,
-    LIST_COUNT: 6,
-    MANUFACTURER_MODAL: 6,
-    DEVICE_MODAL: 4,
-    IMAGE_MODAL: 6,
     MANUFACTURER_PANEL: 12,
     BOARD_PANEL: 10,
     OS_PANEL: 8,
+    DEVICE_PANEL: 4,
   },
   MARQUEE: {
-    DEFAULT_WIDTH: 180,
     MEASURE_DELAY_MS: 50,
     SEPARATOR_WIDTH: 5,
+    SUMMARY_VALUE_WIDTH: 340,
+    SUMMARY_TARGET_WIDTH: 300,
   },
-  /** Armbian board modal image width in pixels */
-  ARMBIAN_BOARD_IMAGE_WIDTH: 480,
+  /** Paged card grid fit; COL_MIN, GAP and PAD mirror .mfr-grid in styles/layout.css */
+  GRID: {
+    COL_MIN: 220,
+    GAP: 18,
+    PAD: 24,
+    /** Always show at least this many full rows so a short window isn't left with a lonely row */
+    MIN_ROWS: 2,
+    /** Default page cap, sized to avoid loading too many heavy cards (board photos) at once */
+    MAX_PER_PAGE: 40,
+    INITIAL_PAGE_SIZE: 15,
+    /** Logos are light and preloaded, so a high cap fills large monitors without splitting a screenful */
+    MANUFACTURER_MAX_PER_PAGE: 120,
+    /** Card min-height plus row gap: .mfr-card 206 + 18, .board-card 250 + 18 */
+    CARD_ROW: {
+      MANUFACTURER: 224,
+      BOARD: 268,
+    },
+  },
+  OS_REC_MAX_COLUMNS: 3,
+  /** Percent floor that keeps a non-empty storage bar segment visible */
+  STORAGE_BAR_MIN_PERCENT: 4,
   /** Icon sizes in pixels */
   ICON_SIZE: {
     SEARCH: 18,
