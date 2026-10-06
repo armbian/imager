@@ -51,6 +51,8 @@ export const EVENTS = {
   PROFILES_CHANGED: 'armbian-autoconfig-profiles-changed',
   AUTOCONFIG_PROFILE_CREATED: 'armbian-autoconfig-profile-created',
   OPEN_SETTINGS: 'armbian-open-settings',
+  /** Carries the opt-in autoconfig profile id (or null) picked at flash time */
+  AUTOCONFIG_PROFILE_SELECTED: 'armbian-autoconfig-profile-selected',
 } as const;
 
 /** Storage key prefixes for sessionStorage/localStorage */
@@ -218,6 +220,9 @@ export const UI = {
 export const VENDOR = {
   /** Fallback vendor ID for boards with invalid/missing vendor */
   FALLBACK_ID: 'other',
+  FALLBACK_NAME: 'Other',
+  /** Vendor shown for a cached image whose board came from its filename only */
+  UNKNOWN_NAME: 'Unknown',
 } as const;
 
 /** Special board slugs for synthetic selection entries */
@@ -231,4 +236,9 @@ export const SLUGS = {
 export const IMAGE_VARIANT = {
   CACHED: 'cached',
   CUSTOM: 'custom',
+} as const;
+
+export const LOCAL_SOURCE_LABEL = {
+  [IMAGE_VARIANT.CACHED]: 'Cached',
+  [IMAGE_VARIANT.CUSTOM]: 'Custom',
 } as const;

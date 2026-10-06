@@ -43,6 +43,14 @@ export const KERNEL_BADGES: Record<string, BadgeConfig> = {
   'cloud': { label: 'Cloud', color: PALETTE.SKY },
 };
 
+/** Storage target badges */
+export const STORAGE_BADGES: Record<string, BadgeConfig> = {
+  'ufs': { label: 'UFS', color: PALETTE.AMBER },
+};
+
+/** Fallback badge for an image without a desktop environment */
+export const CLI_BADGE: BadgeConfig = { label: 'CLI', color: PALETTE.SLATE };
+
 /** Desktop environment keys, used for filtering */
 export const DESKTOP_ENVIRONMENTS = Object.keys(DESKTOP_BADGES);
 

@@ -65,6 +65,27 @@ export interface ImageInfo {
   custom_path?: string;
 }
 
+/** API image formats the app writes; mirrors the allowlist in src-tauri/src/images/filters.rs */
+export const IMAGE_FORMAT = {
+  SD: 'sd',
+  BLOCK: 'block',
+  QDL: 'qdl',
+} as const;
+
+/** API storage target of an image; UFS builds ship as format "sd" */
+export const IMAGE_STORAGE = {
+  UFS: 'ufs',
+} as const;
+
+export const IMAGE_STABILITY = {
+  STABLE: 'stable',
+} as const;
+
+/** Whether an image targets UFS storage (written raw over QDL/Firehose). */
+export function isUfsImage(image: Pick<ImageInfo, 'storage'>): boolean {
+  return image.storage?.toLowerCase() === IMAGE_STORAGE.UFS;
+}
+
 /** How an image is written: raw block (dd), QDL TAR (Firehose rawprogram), or QDL UFS (raw Firehose write). */
 export const FLASH_METHOD = {
   BLOCK: 'block',
@@ -77,8 +98,8 @@ export type FlashMethod = (typeof FLASH_METHOD)[keyof typeof FLASH_METHOD];
 /** Single source of truth for the write path of an image. UFS is detected by the
  *  storage field (the API ships it as format "sd"), QDL TAR by the "qdl" format. */
 export function deriveFlashMethod(image: Pick<ImageInfo, 'format' | 'storage'>): FlashMethod {
-  if (image.storage?.toLowerCase() === 'ufs') return FLASH_METHOD.QDL_UFS;
-  if (image.format === 'qdl') return FLASH_METHOD.QDL;
+  if (isUfsImage(image)) return FLASH_METHOD.QDL_UFS;
+  if (image.format === IMAGE_FORMAT.QDL) return FLASH_METHOD.QDL;
   return FLASH_METHOD.BLOCK;
 }
 

@@ -17,9 +17,6 @@ import { POLLING, UI, EVENTS, qdlInstructionsKey } from '../../config';
 import { getDeviceColors } from '../../config/deviceColors';
 import { getDeviceType, devicesChanged, sortDevices, qdlToBlockDevice } from '../../utils/deviceUtils';
 
-/** Window event carrying the opt-in autoconfig profile id (or null) picked at flash time. */
-export const AUTOCONFIG_PROFILE_SELECTED_EVENT = 'armbian-autoconfig-profile-selected';
-
 interface DevicePanelProps {
   /** Pick a device, revealing the confirm summary (does not flash yet). */
   onSelect: (device: BlockDevice) => void;
@@ -92,7 +89,7 @@ export function DevicePanel({
     // Collapse the picker once a choice is made — the row already shows the result.
     setShowProfilePicker(false);
     window.dispatchEvent(
-      new CustomEvent(AUTOCONFIG_PROFILE_SELECTED_EVENT, { detail: { id: id || null } })
+      new CustomEvent(EVENTS.AUTOCONFIG_PROFILE_SELECTED, { detail: { id: id || null } })
     );
   }, []);
 

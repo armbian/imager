@@ -8,6 +8,7 @@ import armbianLogoBlack from '../../assets/armbian-logo-black.png';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer } from '../../types';
 import { isEdlImage } from '../../types';
 import { UpdateModal } from '../shared';
+import { isDetectedBoard } from '../../utils';
 import { SettingsButton } from '../settings';
 
 interface HeaderProps {
@@ -47,7 +48,7 @@ export function Header({
   const isCustomImage = selectedImage?.is_custom;
 
   // Detected-board images show all 4 steps; generic .img files show 2.
-  const hasDetectedBoard = selectedBoard && selectedBoard.slug !== 'custom' && selectedBoard.slug !== 'cached';
+  const hasDetectedBoard = isDetectedBoard(selectedBoard);
   const isGenericCustom = isCustomImage && !hasDetectedBoard;
   // EDL targets are USB devices in download mode, not storage drives.
   const isEdl = !!selectedImage && isEdlImage(selectedImage);
