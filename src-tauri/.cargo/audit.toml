@@ -1,0 +1,16 @@
+# cargo-audit config. Only advisories blocked upstream belong here; recheck on every Tauri bump.
+
+[advisories]
+ignore = [
+    # glib 0.18 unsound (Linux): tauri > wry > gtk 0.18, needs gtk 0.19 from https://github.com/tauri-apps/wry/pull/1843
+    "RUSTSEC-2024-0429",
+    # rand 0.7.3 unsound: build-time only, tauri-utils > kuchikiki > selectors > phf_codegen 0.8
+    "RUSTSEC-2026-0097",
+    # gettext-rs 0.7 unsound (Linux): udisks2 0.3.1 (latest) pins gettext-rs 0.7, fix is 0.8
+    "RUSTSEC-2026-0244",
+]
+
+[output]
+# Unmaintained stays informational: all hits are transitive (tauri, qdlrs, mbrman) with no release to move to.
+deny = ["unsound", "yanked"]
+quiet = false
