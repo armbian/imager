@@ -3,8 +3,9 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getReducedMotion, setReducedMotion as saveMotion } from '../hooks/useSettings';
+import { SETTINGS } from '../config';
 
-export type MotionMode = 'auto' | 'reduce' | 'full';
+export type MotionMode = (typeof SETTINGS.MOTION_MODES)[keyof typeof SETTINGS.MOTION_MODES];
 
 interface MotionContextType {
   motion: MotionMode;
@@ -18,9 +19,9 @@ const MotionContext = createContext<MotionContextType | undefined>(undefined);
 function applyMotion(mode: MotionMode) {
   const root = document.documentElement;
 
-  if (mode === 'reduce') {
+  if (mode === SETTINGS.MOTION_MODES.REDUCE) {
     root.setAttribute('data-reduced-motion', 'true');
-  } else if (mode === 'full') {
+  } else if (mode === SETTINGS.MOTION_MODES.FULL) {
     root.setAttribute('data-reduced-motion', 'false');
   } else {
     root.removeAttribute('data-reduced-motion');
@@ -29,7 +30,7 @@ function applyMotion(mode: MotionMode) {
 
 /** Manages the motion preference, applies it to the document element, and persists it. */
 export function MotionProvider({ children }: { children: ReactNode }) {
-  const [motion, setMotionState] = useState<MotionMode>('auto');
+  const [motion, setMotionState] = useState<MotionMode>(SETTINGS.MOTION_MODES.AUTO);
 
   useEffect(() => {
     getReducedMotion()

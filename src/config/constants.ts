@@ -93,6 +93,11 @@ export const SETTINGS = {
     ALLOW_SYSTEM_DEVICES: false,
     REDUCED_MOTION: 'auto',
   },
+  THEME_MODES: {
+    LIGHT: 'light',
+    DARK: 'dark',
+    AUTO: 'auto',
+  },
   /** Motion preference: follow the OS, or force animations on/off regardless. */
   MOTION_MODES: {
     AUTO: 'auto',
@@ -105,6 +110,19 @@ export const SETTINGS = {
     AUTO: 'auto',
   },
 } as const;
+
+/** Must match the platform ids returned by the backend get_system_info */
+export const PLATFORM = {
+  LINUX: 'linux',
+  MACOS: 'macos',
+  WINDOWS: 'windows',
+} as const;
+
+export const PLATFORM_LABEL: Record<string, string> = {
+  [PLATFORM.MACOS]: 'macOS',
+  [PLATFORM.WINDOWS]: 'Windows',
+  [PLATFORM.LINUX]: 'Linux',
+};
 
 /** Shared color palette referenced across config modules */
 export const PALETTE = {

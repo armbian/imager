@@ -4,18 +4,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Gauge, Monitor, Moon, Search, Sparkles, Sun } from 'lucide-react';
-import { load } from '@tauri-apps/plugin-store';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme, type Theme } from '../../contexts/ThemeContext';
 import { useMotion, type MotionMode } from '../../contexts/MotionContext';
 import { changeLanguage as i18nChangeLanguage, getCurrentLanguage } from '../../i18n';
-import { SUPPORTED_LANGUAGES, flagUrl } from '../../config/i18n';
+import { SUPPORTED_LANGUAGES, AUTO_LANGUAGE_CODE, flagUrl } from '../../config/i18n';
+import { SETTINGS } from '../../config';
+import { getLanguage } from '../../hooks/useSettings';
 import { useToasts } from '../../hooks/useToasts';
 import { logWarn } from '../../hooks/useTauri';
 
 /** Theme option metadata for the segmented theme selector */
 interface ThemeOption {
   /** Theme identifier passed to setTheme */
-  value: 'light' | 'dark' | 'auto';
+  value: Theme;
   /** Lucide icon component for the option */
   Icon: typeof Sun;
   /** i18n key for the option label */
@@ -24,16 +25,16 @@ interface ThemeOption {
 
 /** Available theme options rendered as segmented cards */
 const THEME_OPTIONS: ThemeOption[] = [
-  { value: 'light', Icon: Sun, labelKey: 'settings.themeLight' },
-  { value: 'dark', Icon: Moon, labelKey: 'settings.themeDark' },
-  { value: 'auto', Icon: Monitor, labelKey: 'settings.themeAuto' },
+  { value: SETTINGS.THEME_MODES.LIGHT, Icon: Sun, labelKey: 'settings.themeLight' },
+  { value: SETTINGS.THEME_MODES.DARK, Icon: Moon, labelKey: 'settings.themeDark' },
+  { value: SETTINGS.THEME_MODES.AUTO, Icon: Monitor, labelKey: 'settings.themeAuto' },
 ];
 
 /** Motion options; reusing the theme card layout keeps the two selectors consistent. */
 const MOTION_OPTIONS: { value: MotionMode; Icon: typeof Sun; labelKey: string }[] = [
-  { value: 'full', Icon: Sparkles, labelKey: 'settings.motionFull' },
-  { value: 'reduce', Icon: Gauge, labelKey: 'settings.motionReduce' },
-  { value: 'auto', Icon: Monitor, labelKey: 'settings.motionAuto' },
+  { value: SETTINGS.MOTION_MODES.FULL, Icon: Sparkles, labelKey: 'settings.motionFull' },
+  { value: SETTINGS.MOTION_MODES.REDUCE, Icon: Gauge, labelKey: 'settings.motionReduce' },
+  { value: SETTINGS.MOTION_MODES.AUTO, Icon: Monitor, labelKey: 'settings.motionAuto' },
 ];
 
 /** Appearance settings: theme cards + searchable language grid. Defaults language to "auto"
@@ -51,10 +52,9 @@ export function AppearanceSection() {
   useEffect(() => {
     const checkAutoLanguage = async () => {
       try {
-        const store = await load('settings.json', { autoSave: true, defaults: {} });
-        const savedLanguage = await store.get<string>('language');
+        const savedLanguage = await getLanguage();
         if (!savedLanguage) {
-          setCurrentLanguage('auto');
+          setCurrentLanguage(AUTO_LANGUAGE_CODE);
         }
       } catch (error) {
         console.error('Failed to check language mode:', error);
@@ -80,7 +80,7 @@ export function AppearanceSection() {
     const query = search.trim().toLowerCase();
     if (!query) return SUPPORTED_LANGUAGES;
     return SUPPORTED_LANGUAGES.filter(
-      (lang) => lang.code === 'auto' || lang.name.toLowerCase().includes(query)
+      (lang) => lang.code === AUTO_LANGUAGE_CODE || lang.name.toLowerCase().includes(query)
     );
   }, [search]);
 

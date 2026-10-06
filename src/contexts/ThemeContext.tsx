@@ -3,8 +3,9 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getTheme, setTheme as saveTheme } from '../hooks/useSettings';
+import { SETTINGS } from '../config';
 
-export type Theme = 'light' | 'dark' | 'auto';
+export type Theme = (typeof SETTINGS.THEME_MODES)[keyof typeof SETTINGS.THEME_MODES];
 
 interface ThemeContextType {
   theme: Theme;
@@ -19,17 +20,17 @@ interface ThemeProviderProps {
 
 // Manages theme state, applies it to the document element, and persists it
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>('auto');
+  const [theme, setThemeState] = useState<Theme>(SETTINGS.THEME_MODES.AUTO);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Apply theme classes to the document element
   const applyTheme = (selectedTheme: Theme) => {
     const root = document.documentElement;
 
-    if (selectedTheme === 'light') {
+    if (selectedTheme === SETTINGS.THEME_MODES.LIGHT) {
       root.classList.add('theme-light');
       root.classList.remove('theme-dark');
-    } else if (selectedTheme === 'dark') {
+    } else if (selectedTheme === SETTINGS.THEME_MODES.DARK) {
       root.classList.add('theme-dark');
       root.classList.remove('theme-light');
     } else {
@@ -48,8 +49,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       } catch (error) {
         // If no saved theme, default to auto
         console.warn('Failed to load theme from storage, using auto:', error);
-        setThemeState('auto');
-        applyTheme('auto');
+        setThemeState(SETTINGS.THEME_MODES.AUTO);
+        applyTheme(SETTINGS.THEME_MODES.AUTO);
       } finally {
         setIsInitialized(true);
       }

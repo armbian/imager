@@ -43,6 +43,8 @@ export {
   VENDOR,
   SLUGS,
   IMAGE_VARIANT,
+  PLATFORM,
+  PLATFORM_LABEL,
   type DeviceType,
 } from './constants';
 

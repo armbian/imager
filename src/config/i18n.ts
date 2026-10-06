@@ -4,6 +4,8 @@
 
 // Supported-language config. To add one: drop src/locales/{code}.json and add an entry below.
 
+import { SETTINGS } from './constants';
+
 // Twemoji flag SVGs from the maintained @twemoji/svg package; Vite bundles only these
 // (offline-safe, no runtime CDN, no assets in the repo).
 import flagAuto from '@twemoji/svg/1f310.svg';
@@ -60,9 +62,12 @@ const LANGUAGES: LanguageMetadata[] = [
   { code: 'zh', name: '中文', flag: '🇨🇳' },
 ];
 
+/** Language code meaning "follow the system locale"; never persisted */
+export const AUTO_LANGUAGE_CODE = 'auto';
+
 /** Auto language option; name is set dynamically in the UI via translation */
 const AUTO_LANGUAGE: LanguageMetadata = {
-  code: 'auto',
+  code: AUTO_LANGUAGE_CODE,
   name: '',  // Will be translated in UI
   flag: '🌐',
 };
@@ -79,7 +84,7 @@ export function getSupportedLanguageCodes(): string[] {
 
 /** Get the default language (English) */
 export function getDefaultLanguage(): string {
-  return 'en';
+  return SETTINGS.DEFAULTS.LANGUAGE;
 }
 
 /** Extract the language code from a locale string (e.g. "en-US" -> "en") */
