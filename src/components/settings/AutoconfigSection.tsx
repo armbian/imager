@@ -17,6 +17,9 @@ import {
   deleteAutoconfigProfile,
 } from '../../hooks/useSettings';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
+import { ErrorDisplay } from '../shared/ErrorDisplay';
+import { useAsyncData } from '../../hooks/useAsyncData';
+import { logWarn } from '../../hooks/useTauri';
 import { useToasts } from '../../hooks/useToasts';
 import { EVENTS } from '../../config';
 import {
@@ -205,8 +208,11 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
   const { t } = useTranslation();
   const { showSuccess, showError } = useToasts();
 
-  const [profiles, setProfiles] = useState<AutoconfigProfile[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const { data: loadedProfiles, error: loadError, reload: loadProfiles } = useAsyncData<AutoconfigProfile[]>(
+    async () => [...(await getAutoconfigProfiles())].sort((a, b) => b.updatedAt - a.updatedAt),
+    []
+  );
+  const profiles = loadedProfiles ?? [];
 
   // Editor state: null = list view; otherwise editing this draft.
   const [draft, setDraft] = useState<AutoconfigProfile | null>(null);
@@ -214,24 +220,10 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
   const [pendingDelete, setPendingDelete] = useState<AutoconfigProfile | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [revealSecrets, setRevealSecrets] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [nameMissing, setNameMissing] = useState(false);
 
   const timezones = useMemo(() => getTimezones(), []);
-
-  const loadProfiles = useCallback(async () => {
-    try {
-      const list = await getAutoconfigProfiles();
-      // Most recently edited first.
-      setProfiles([...list].sort((a, b) => b.updatedAt - a.updatedAt));
-    } catch (error) {
-      console.error('Failed to load autoconfig profiles:', error);
-    } finally {
-      setLoaded(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadProfiles();
-  }, [loadProfiles]);
 
   // Opened via the "create new profile" shortcut: jump straight into the editor.
   useEffect(() => {
@@ -244,6 +236,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     setIsNew(true);
     setShowPreview(false);
     setRevealSecrets(false);
+    setNameMissing(false);
   };
 
   /** Opens the editor for an existing profile (clone so edits stay local until saved). */
@@ -252,6 +245,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     setIsNew(false);
     setShowPreview(false);
     setRevealSecrets(false);
+    setNameMissing(false);
   };
 
   const handleCancel = () => {
@@ -261,12 +255,13 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
 
   /** Persists the current draft, refreshing the list and notifying listeners. */
   const handleSave = async () => {
-    if (!draft) return;
+    if (!draft || isSaving) return;
     const name = draft.name.trim();
     if (!name) {
-      showError(t('settings.autoconfig.toastError'));
+      setNameMissing(true);
       return;
     }
+    setIsSaving(true);
     try {
       const wasNew = isNew;
       const toSave: AutoconfigProfile = { ...draft, name, updatedAt: Date.now() };
@@ -281,8 +276,10 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
       }
       onSaved?.();
     } catch (error) {
-      console.error('Failed to save autoconfig profile:', error);
+      logWarn('autoconfig', `Failed to save profile: ${error}`);
       showError(t('settings.autoconfig.toastError'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -306,7 +303,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     setDraft((prev) => (prev ? { ...prev, config: { ...prev.config, [key]: value } } : prev));
   }, []);
 
-  if (!loaded) return null;
+  if (loadedProfiles === null && !loadError) return null;
 
   // Detail view: profile editor.
   if (draft) {
@@ -338,8 +335,8 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
             {t('settings.autoconfig.cancel')}
           </button>
           <span className="ac-editor__name">{draft.name.trim() || t('settings.autoconfig.newProfile')}</span>
-          <button className="btn btn-primary btn-sm" onClick={handleSave}>
-            {t('settings.autoconfig.save')}
+          <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? t('settings.autoconfig.saving') : t('settings.autoconfig.save')}
           </button>
         </div>
 
@@ -351,12 +348,19 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
         </div>
 
         <div className="ac-hero">
-          <Field label={t('settings.autoconfig.nameLabel')}>
+          <Field
+            label={t('settings.autoconfig.nameLabel')}
+            error={nameMissing ? t('settings.autoconfig.nameRequired') : undefined}
+          >
             <TextInput
               icon={FileCog}
               value={draft.name}
               placeholder={t('settings.autoconfig.namePlaceholder')}
-              onChange={(v) => setDraft((prev) => (prev ? { ...prev, name: v } : prev))}
+              invalid={nameMissing}
+              onChange={(v) => {
+                setNameMissing(false);
+                setDraft((prev) => (prev ? { ...prev, name: v } : prev));
+              }}
             />
           </Field>
         </div>
@@ -590,7 +594,9 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
           </button>
         </div>
 
-        {profiles.length === 0 ? (
+        {loadError ? (
+          <ErrorDisplay error={loadError} onRetry={loadProfiles} compact />
+        ) : profiles.length === 0 ? (
           <div className="autoconfig-empty">
             <FileCog size={32} />
             <div className="autoconfig-empty-title">{t('settings.autoconfig.emptyTitle')}</div>
