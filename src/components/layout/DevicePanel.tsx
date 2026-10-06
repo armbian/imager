@@ -6,7 +6,7 @@ import {
   RefreshCw, TriangleAlert, Shield, Usb, Lock, Cpu, ArrowRight, ChevronDown, Plus,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText } from '../shared';
+import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText, EmptyState } from '../shared';
 import type { BlockDevice, AutoconfigProfile, AutoconfigProfilesChangedDetail, FlashMethod } from '../../types';
 import { isEdlMethod } from '../../types';
 import { getBlockDevices, getQdlDevices } from '../../hooks/useTauri';
@@ -152,6 +152,8 @@ export function DevicePanel({
   }, [devices, showSystem]);
 
   const { showSkeleton } = useSkeletonLoading(loading, devicesReady);
+  // useSkeletonLoading starts false, so the first load needs its own guard; polling never sets `loading`.
+  const showDeviceSkeleton = showSkeleton || (loading && rawDevices === null);
 
   // Sync external device data into local state only when it actually changes.
   useEffect(() => {
@@ -350,7 +352,7 @@ export function DevicePanel({
         </div>
       ) : (
         <div className="device-panel__body">
-          {showSkeleton && (
+          {showDeviceSkeleton && (
             <div className="device-grid">
               {Array.from({ length: UI.SKELETON.DEVICE_MODAL }).map((_, i) => (
                 <div key={i} className="device-card is-skeleton">
@@ -364,18 +366,16 @@ export function DevicePanel({
             </div>
           )}
 
-          {filteredDevices.length === 0 && !showSkeleton && (
-            <div className="device-empty">
-              <span className="device-empty__icon">{isQdlMode ? <Cpu size={30} /> : <Usb size={30} />}</span>
-              <p className="device-empty__title">{isQdlMode ? t('device.qdlNotFound') : t('modal.noDevices')}</p>
-              <p className="device-empty__hint">
-                {isQdlMode ? t(qdlInstructionsKey(edlEntry)) : t('modal.insertDevice')}
-              </p>
-              {refreshButton}
-            </div>
+          {filteredDevices.length === 0 && !showSkeleton && !loading && (
+            <EmptyState
+              icon={isQdlMode ? Cpu : Usb}
+              title={isQdlMode ? t('device.qdlNotFound') : t('modal.noDevices')}
+              hint={isQdlMode ? t(qdlInstructionsKey(edlEntry)) : t('modal.insertDevice')}
+              action={{ label: t('device.refresh'), icon: RefreshCw, onClick: reload }}
+            />
           )}
 
-          {!showSkeleton && filteredDevices.length > 0 && (
+          {!showDeviceSkeleton && filteredDevices.length > 0 && (
             <>
               <div className="device-grid">
                 {filteredDevices.map((device) => {

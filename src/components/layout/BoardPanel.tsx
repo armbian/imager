@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CircuitBoard, RefreshCw, SearchX, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getBoards, getCachedBoardImage } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
@@ -11,7 +11,7 @@ import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { usePagedGrid } from '../../hooks/usePagedGrid';
 import { compareBoardsBySupport, staggerDelay, stripVendorPrefix } from '../../utils';
 import { UI, SUPPORT_TIER_LABEL } from '../../config';
-import { ErrorDisplay, SearchBox, BoardImage, GridPager, MarqueeText } from '../shared';
+import { ErrorDisplay, SearchBox, BoardImage, GridPager, MarqueeText, EmptyState } from '../shared';
 import type { BoardInfo, Manufacturer } from '../../types';
 
 interface BoardPanelProps {
@@ -32,7 +32,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
   const { data: boards, loading, error, reload } = useAsyncData<BoardInfo[]>(() => getBoards(), []);
   const { isLoaded: vendorLogosChecked, getEffectiveVendor } = useVendorLogos(boards, true);
 
-  const ready = !!(boards && boards.length > 0 && vendorLogosChecked);
+  const ready = vendorLogosChecked || (!loading && !boards?.length);
   const { showSkeleton } = useSkeletonLoading(loading, ready);
 
   // Boards for the selected manufacturer, searched and sorted by support tier.
@@ -64,7 +64,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
       await Promise.all(
         pagedBoards.map(async (board) => {
           if (loadedSlugsRef.current.has(board.slug)) return;
-          const dataUri = await getCachedBoardImage(board.slug);
+          const dataUri = await getCachedBoardImage(board.slug).catch(() => null);
           loadedSlugsRef.current.add(board.slug);
           setBoardImages((prev) => ({ ...prev, [board.slug]: dataUri ?? null }));
         })
@@ -81,7 +81,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
 
       {error ? (
         <ErrorDisplay error={error} onRetry={reload} compact />
-      ) : showSkeleton ? (
+      ) : showSkeleton || loading ? (
         <div className="mfr-grid">
           {Array.from({ length: UI.SKELETON.BOARD_PANEL }).map((_, i) => (
             <div key={i} className="board-card is-skeleton">
@@ -96,7 +96,21 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
           ))}
         </div>
       ) : filteredBoards.length === 0 ? (
-        <div className="mfr-empty">{t('modal.noBoards')}</div>
+        search ? (
+          <EmptyState
+            icon={SearchX}
+            title={t('modal.noBoards')}
+            hint={t('modal.searchEmptyHint')}
+            action={{ label: t('modal.clearSearch'), icon: X, onClick: () => setSearch('') }}
+          />
+        ) : (
+          <EmptyState
+            icon={CircuitBoard}
+            title={t('modal.noBoards')}
+            hint={t('modal.listEmptyHint')}
+            action={{ label: t('device.refresh'), icon: RefreshCw, onClick: reload }}
+          />
+        )
       ) : (
         <>
           <div ref={measureGrid} className={`mfr-grid${pageCount > 1 ? ' mfr-grid--paged' : ''}`}>

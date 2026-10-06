@@ -18,7 +18,7 @@ import {
 import { getMonoLogo } from '../../config/mono-logos';
 import { formatFileSize, hexToRgba, staggerDelay, splitArmbianVersion, formatDate, armbianIdentityKey, formatKernelLabel } from '../../utils';
 import { distroGradient, distroBlock, distroVars } from '../../utils/distroTheme';
-import { ErrorDisplay, ConfirmationDialog } from '../shared';
+import { ErrorDisplay, ConfirmationDialog, EmptyState } from '../shared';
 import type { BoardInfo, ImageInfo, ImageFilterType, CachedImageInfo } from '../../types';
 
 /** Non-promoted filter keys available in the toolbar (recommended is pinned, not a filter). */
@@ -107,7 +107,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
     [board.slug]
   );
 
-  const ready = !!(allImages && allImages.length > 0);
+  const ready = !!allImages?.length || !loading;
   const { showSkeleton } = useSkeletonLoading(loading, ready);
 
   // Locally cached images, keyed by parsed identity so a remote image can be flagged as already downloaded.
@@ -333,7 +333,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
 
       {error ? (
         <ErrorDisplay error={error} onRetry={reload} compact />
-      ) : showSkeleton ? (
+      ) : showSkeleton || loading ? (
         <div className="os-body">
           <div className="os-rest-grid">
             {Array.from({ length: UI.SKELETON.OS_PANEL }).map((_, i) => (
@@ -355,7 +355,20 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
           </div>
         </div>
       ) : recommended.length === 0 && rest.length === 0 ? (
-        <div className="mfr-empty">{t('modal.noImages')}</div>
+        filterType !== 'all' ? (
+          <EmptyState
+            icon={Package}
+            title={t('modal.noImages')}
+            action={{ label: t('modal.allImages'), icon: Layers, onClick: () => setFilterType('all') }}
+          />
+        ) : (
+          <EmptyState
+            icon={Package}
+            title={t('modal.noImages')}
+            hint={t('modal.noImagesHint')}
+            action={{ label: t('device.refresh'), icon: RefreshCw, onClick: reload }}
+          />
+        )
       ) : (
         <div className="os-body">
           {recommended.length > 0 && (
