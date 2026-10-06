@@ -31,7 +31,7 @@ use crate::utils::custom_decompress_dir;
 
 /// Apply cache settings: clear all images when disabled, else evict to the size limit.
 fn manage_download_cache(app: &tauri::App) {
-    let (cache_enabled, cache_max_size) = match app.store("settings.json") {
+    let (cache_enabled, cache_max_size) = match app.store(config::app::SETTINGS_STORE) {
         Ok(store) => {
             let enabled = store
                 .get("cache_enabled")
@@ -210,7 +210,7 @@ fn main() {
             }
 
             // Raise the log level to DEBUG when developer mode is on.
-            match app.store("settings.json") {
+            match app.store(config::app::SETTINGS_STORE) {
                 Ok(store) => {
                     let developer_mode = store
                         .get("developer_mode")

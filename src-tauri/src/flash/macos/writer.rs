@@ -5,13 +5,15 @@
 
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
+use std::os::unix::fs::FileTypeExt;
 use std::os::unix::io::{AsRawFd, FromRawFd};
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use crate::config;
-use crate::flash::{sync_device, unmount_device, FlashState};
+use crate::devices::{device_changed_error, FlashTarget, TAG_INVALID_PATH};
+use crate::flash::{reject_simulated, sync_device, unmount_device, FlashState};
 use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_debug, log_error, log_info};
 
@@ -22,6 +24,10 @@ const MODULE: &str = "flash::macos::writer";
 
 /// Sector size for raw device I/O alignment on macOS (/dev/rdisk)
 const SECTOR_SIZE: usize = 512;
+
+// <sys/disk.h>: _IOR('d', 24, uint32_t) and _IOR('d', 25, uint64_t); libc does not export them.
+const DKIOCGETBLOCKSIZE: libc::c_ulong = 0x4004_6418;
+const DKIOCGETBLOCKCOUNT: libc::c_ulong = 0x4008_6419;
 
 /// Wrapper to make auth_ref Send safe
 pub struct SendableAuthRef(pub AuthorizationRef);
@@ -226,13 +232,48 @@ pub fn quick_erase(device: &mut File, device_fd: i32) -> Result<(), String> {
     Ok(())
 }
 
+// Size via ioctl: SEEK_END is not usable on rdisk.
+fn check_opened_device(device: &File, target: &FlashTarget) -> Result<(), String> {
+    let metadata = device
+        .metadata()
+        .map_err(|e| format!("Failed to stat device {}: {}", target.path(), e))?;
+    if !metadata.file_type().is_char_device() {
+        return Err(format!(
+            "{TAG_INVALID_PATH} {:?} did not open as a raw device",
+            target.path()
+        ));
+    }
+
+    let fd = device.as_raw_fd();
+    let mut block_size: u32 = 0;
+    let mut block_count: u64 = 0;
+    let ok = unsafe {
+        libc::ioctl(fd, DKIOCGETBLOCKSIZE, &mut block_size as *mut u32) == 0
+            && libc::ioctl(fd, DKIOCGETBLOCKCOUNT, &mut block_count as *mut u64) == 0
+    };
+    if !ok {
+        return Err(format!(
+            "Failed to read device size: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+
+    let size = block_count.saturating_mul(u64::from(block_size));
+    if size != target.size() {
+        return Err(device_changed_error(target.path(), target.size(), size));
+    }
+    Ok(())
+}
+
 /// Flash an image to a block device on macOS
 pub async fn flash_image(
     image_path: &PathBuf,
-    device_path: &str,
+    target: &FlashTarget,
     state: Arc<FlashState>,
     verify: bool,
 ) -> Result<(), String> {
+    reject_simulated(target.path())?;
+    let device_path = target.path();
     state.reset();
 
     let image_size = std::fs::metadata(image_path)
@@ -266,16 +307,24 @@ pub async fn flash_image(
     }
 
     // Delegate to an inner fn so we can always free the auth ref afterward.
-    let result = do_flash_work(
-        image_path,
-        device_path,
-        &mut device,
-        device_fd,
-        image_size,
-        state,
-        verify,
-    )
-    .await;
+    let result = match check_opened_device(&device, target) {
+        Ok(()) => {
+            do_flash_work(
+                image_path,
+                device_path,
+                &mut device,
+                device_fd,
+                image_size,
+                state,
+                verify,
+            )
+            .await
+        }
+        Err(e) => {
+            log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
+            Err(e)
+        }
+    };
 
     drop(device);
 

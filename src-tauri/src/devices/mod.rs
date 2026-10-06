@@ -3,6 +3,7 @@
 
 //! Platform-specific block device detection.
 
+pub(crate) mod target;
 mod types;
 
 #[cfg(target_os = "macos")]
@@ -14,6 +15,8 @@ mod linux;
 #[cfg(target_os = "windows")]
 mod windows;
 
+pub(crate) use target::{device_changed_error, TAG_INVALID_PATH};
+pub use target::{select_flash_target, FlashTarget, TargetRefusal};
 pub use types::BlockDevice;
 
 #[cfg(target_os = "macos")]

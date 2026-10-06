@@ -6,13 +6,15 @@
 
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
+use std::os::unix::fs::{FileTypeExt, OpenOptionsExt};
 use std::os::unix::io::{AsRawFd, FromRawFd};
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use crate::config;
-use crate::flash::{sync_device, unmount_device, FlashState};
+use crate::devices::{device_changed_error, FlashTarget, TAG_INVALID_PATH};
+use crate::flash::{reject_simulated, sync_device, unmount_device, FlashState};
 use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_debug, log_error, log_info};
 
@@ -67,22 +69,55 @@ async fn open_device_udisks2(device_path: &str) -> Result<File, String> {
 fn open_device_direct(device_path: &str) -> Result<File, String> {
     use std::fs::OpenOptions;
 
+    if !device_path.starts_with("/dev/") || device_path.contains("..") {
+        return Err(format!(
+            "{TAG_INVALID_PATH} refusing direct open of {device_path:?}"
+        ));
+    }
+
     log_debug!(MODULE, "Attempting direct device open: {}", device_path);
 
     OpenOptions::new()
         .read(true)
         .write(true)
+        .custom_flags(libc::O_NOFOLLOW)
         .open(device_path)
         .map_err(|e| format!("Failed to open device {}: {}", device_path, e))
+}
+
+fn check_opened_device(device: &mut File, target: &FlashTarget) -> Result<(), String> {
+    let metadata = device
+        .metadata()
+        .map_err(|e| format!("Failed to stat device {}: {}", target.path(), e))?;
+    if !metadata.file_type().is_block_device() {
+        return Err(format!(
+            "{TAG_INVALID_PATH} {:?} is not a block device",
+            target.path()
+        ));
+    }
+
+    let size = device
+        .seek(SeekFrom::End(0))
+        .map_err(|e| format!("Failed to read device size: {}", e))?;
+    device
+        .seek(SeekFrom::Start(0))
+        .map_err(|e| format!("Failed to seek to start: {}", e))?;
+
+    if size != target.size() {
+        return Err(device_changed_error(target.path(), target.size(), size));
+    }
+    Ok(())
 }
 
 /// Flash an image to a block device
 pub async fn flash_image(
     image_path: &PathBuf,
-    device_path: &str,
+    target: &FlashTarget,
     state: Arc<FlashState>,
     verify: bool,
 ) -> Result<(), String> {
+    reject_simulated(target.path())?;
+    let device_path = target.path();
     state.reset();
 
     log_info!(
@@ -122,6 +157,11 @@ pub async fn flash_image(
             open_device_direct(device_path)?
         }
     };
+
+    if let Err(e) = check_opened_device(&mut device, target) {
+        log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
+        return Err(e);
+    }
 
     let device_fd = device.as_raw_fd();
 

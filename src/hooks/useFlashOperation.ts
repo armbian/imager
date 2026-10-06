@@ -418,7 +418,7 @@ export function useFlashOperation({
         // QDL path: TAR archive → extract → Sahara → Firehose
         await flashQdlImage(path, undefined, autoconfigRef.current ?? undefined);
       } else {
-        await flashImage(path, device.path, !skipVerifyRef.current, autoconfigRef.current ?? undefined);
+        await flashImage(path, device.path, device.size, !skipVerifyRef.current, autoconfigRef.current ?? undefined);
       }
       if (intervalRef.current) clearInterval(intervalRef.current);
       setStage('complete');
@@ -481,7 +481,7 @@ export function useFlashOperation({
 
       // EDL (QDL/UFS) skips block-device authorization (USB access handled by OS)
       if (!isEdlFlash) {
-        const authorized = await requestWriteAuthorization(device.path);
+        const authorized = await requestWriteAuthorization(device.path, device.size);
         if (!authorized) {
           failFlash(t('error.authCancelled'));
           return;
@@ -595,7 +595,7 @@ export function useFlashOperation({
       // Re-authorize before re-flashing the existing image
       setStage('authorizing');
       try {
-        const authorized = await requestWriteAuthorization(device.path);
+        const authorized = await requestWriteAuthorization(device.path, device.size);
         if (!authorized) {
           failFlash(t('error.authCancelled'));
           return;
