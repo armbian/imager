@@ -7,7 +7,7 @@ import { getVariantBadge, getKernelType, KERNEL_BADGES } from '../config/badges'
 import type { ImageInfo } from '../types';
 
 // Re-export color helpers from the dedicated color module
-export { hexToRgb, hexToRgba } from './color';
+export { hexToRgb, hexToRgba, adjustBrightness, solidBadgeVars } from './color';
 
 /** Default color for icons without specific branding */
 export const DEFAULT_COLOR = COLORS.DEFAULT_ICON;

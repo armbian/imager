@@ -10,7 +10,7 @@ import { getLogs } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { stripAnsiCodes } from '../../utils';
 import { ErrorDisplay } from '../shared/ErrorDisplay';
-import { TIMING } from '../../config';
+import { TIMING, COLORS } from '../../config';
 
 interface LogsModalProps {
   isOpen: boolean;
@@ -42,8 +42,8 @@ export function LogsModal({ isOpen, onClose }: LogsModalProps) {
 
   // Converts ANSI-coded log text into HTML; escapeXML guards against injection.
   const ansiConverter = new Ansi({
-    fg: '#FFF',
-    bg: '#000',
+    fg: COLORS.TERMINAL_FG,
+    bg: COLORS.TERMINAL_BG,
     newline: true,
     escapeXML: true,
     stream: false,

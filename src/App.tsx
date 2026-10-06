@@ -15,6 +15,7 @@ import { UpdateProvider } from './contexts/UpdateContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
 import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, SUPPORT_TIER, UI, SETTINGS, PLATFORM } from './config';
 import { IMAGE_FORMAT, IMAGE_STORAGE, IMAGE_STABILITY } from './types';
+import { DEFAULT_COLOR } from './utils';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig } from './types';
 import './styles/index.css';
 
@@ -145,7 +146,7 @@ function AppContent() {
       const manufacturer: Manufacturer = {
         id: board.vendor || VENDOR.FALLBACK_ID,
         name: board.vendor_name || VENDOR.FALLBACK_NAME,
-        color: 'slate',
+        color: DEFAULT_COLOR,
         boardCount: 1,
       };
 
@@ -311,7 +312,7 @@ function AppContent() {
       setSelectedManufacturer({
         id: displayBoard.vendor,
         name: displayBoard.vendor_name,
-        color: '#6b7280',
+        color: DEFAULT_COLOR,
         boardCount: 1,
       });
       setSelectedBoard(displayBoard);
@@ -428,7 +429,7 @@ function AppContent() {
         setSelectedManufacturer({
           id: displayBoard.vendor,
           name: displayBoard.vendor_name,
-          color: '#6b7280',
+          color: DEFAULT_COLOR,
           boardCount: 1,
         });
         setSelectedBoard(displayBoard);

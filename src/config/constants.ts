@@ -136,6 +136,9 @@ export const PALETTE = {
   CYAN: '#06b6d4',
   SKY: '#0ea5e9',
   SLATE: '#64748b',
+  TEAL: '#14b8a6',
+  GRAY: '#6b7280',
+  ORANGE: '#f2651f',
 } as const;
 
 /** UI color constants */
@@ -143,6 +146,9 @@ export const COLORS = {
   DEFAULT_ICON: PALETTE.SLATE,
   QR_DARK: '#000000',
   QR_LIGHT: '#ffffff',
+  ON_TILE: '#ffffff',
+  TERMINAL_FG: '#FFF',
+  TERMINAL_BG: '#000',
 } as const;
 
 export const QR_CODE = {
