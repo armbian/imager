@@ -142,7 +142,15 @@
     "qdlCancelled": "Gravação cancelada.",
     "qdlPermissionDenied": "Acesso USB negado. No Linux, instale as regras udev: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "Não foi possível ligar ao dispositivo EDL. Certifique-se de que está em modo EDL e ligado por USB.",
-    "qdlAutoconfigFailed": "Não foi possível aplicar o perfil de configuração automática à imagem QDL."
+    "qdlAutoconfigFailed": "Não foi possível aplicar o perfil de configuração automática à imagem QDL.",
+    "deviceInvalidPath": "Não é possível escrever neste dispositivo. Selecione o dispositivo novamente.",
+    "deviceNotFound": "O dispositivo selecionado já não está ligado. Volte a ligá-lo e selecione-o novamente.",
+    "deviceChanged": "O dispositivo selecionado mudou desde que o escolheu. Selecione-o novamente antes de escrever.",
+    "deviceReadOnly": "O dispositivo está protegido contra escrita. Deslize o interruptor de bloqueio do cartão para a posição de desbloqueio e tente novamente.",
+    "deviceSystemBlocked": "Este é um disco do sistema. Ative «Permitir discos do sistema» nas Definições para escrever nele.",
+    "deviceTooSmall": "A imagem precisa de {{needed}}, mas o dispositivo tem apenas {{available}}. Utilize um dispositivo maior.",
+    "qdlDeviceNotFound": "O dispositivo EDL selecionado já não está ligado. Volte a ligá-lo em modo EDL e selecione-o novamente.",
+    "qdlMultipleDevices": "Estão ligados vários dispositivos EDL e não é possível identificar o selecionado. Ligue apenas a placa que pretende gravar."
   },
   "custom": {
     "customImage": "Imagem personalizada",

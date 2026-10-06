@@ -142,7 +142,15 @@
     "qdlCancelled": "Уписивање је отказано.",
     "qdlPermissionDenied": "USB приступ је одбијен. На Линуксу инсталирајте udev правила: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "Повезивање са EDL уређајем није успело. Уверите се да је у EDL режиму и повезан преко USB-а.",
-    "qdlAutoconfigFailed": "Примена профила аутоконфигурације на QDL слику није успела."
+    "qdlAutoconfigFailed": "Примена профила аутоконфигурације на QDL слику није успела.",
+    "deviceInvalidPath": "На овај уређај није могуће писати. Поново изаберите уређај.",
+    "deviceNotFound": "Изабрани уређај више није повезан. Поново га повежите и изаберите.",
+    "deviceChanged": "Изабрани уређај се променио откако сте га изабрали. Поново га изаберите пре писања.",
+    "deviceReadOnly": "Уређај је заштићен од писања. Померите прекидач за закључавање картице у откључани положај и покушајте поново.",
+    "deviceSystemBlocked": "Ово је системски диск. Да бисте писали на њега, укључите „Дозволи системске дискове“ у Подешавањима.",
+    "deviceTooSmall": "Слици је потребно {{needed}}, а уређај има само {{available}}. Користите већи уређај.",
+    "qdlDeviceNotFound": "Изабрани EDL уређај више није повезан. Поново га повежите у EDL режиму и изаберите.",
+    "qdlMultipleDevices": "Повезано је више EDL уређаја и изабрани се не може препознати. Повежите само плочу на коју желите да уписујете."
   },
   "custom": {
     "customImage": "Прилагођена слика",

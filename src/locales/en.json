@@ -142,7 +142,15 @@
     "qdlCancelled": "Flash cancelled.",
     "qdlPermissionDenied": "USB access denied. On Linux, install udev rules: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "Couldn't connect to the EDL device. Make sure it's in EDL mode and connected via USB.",
-    "qdlAutoconfigFailed": "Failed to apply the autoconfig profile to the QDL image."
+    "qdlAutoconfigFailed": "Failed to apply the autoconfig profile to the QDL image.",
+    "deviceInvalidPath": "This device can't be written to. Select the device again.",
+    "deviceNotFound": "The selected device is no longer connected. Reconnect it and select it again.",
+    "deviceChanged": "The selected device changed since you picked it. Select it again before writing.",
+    "deviceReadOnly": "The device is write-protected. Slide the card's lock switch off and try again.",
+    "deviceSystemBlocked": "This is a system drive. Turn on \"Allow system drives\" in Settings to write to it.",
+    "deviceTooSmall": "The image needs {{needed}} but the device holds only {{available}}. Use a larger device.",
+    "qdlDeviceNotFound": "The selected EDL device is no longer connected. Reconnect it in EDL mode and select it again.",
+    "qdlMultipleDevices": "Several EDL devices are connected and the selected one can't be identified. Connect only the board you want to flash."
   },
   "custom": {
     "customImage": "Custom Image",

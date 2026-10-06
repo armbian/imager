@@ -142,7 +142,15 @@
     "qdlCancelled": "Yazma iptal edildi.",
     "qdlPermissionDenied": "USB erişimi reddedildi. Linux'ta udev kurallarını yükleyin: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "EDL cihazına bağlanılamadı. Cihazın EDL modunda olduğundan ve USB ile bağlı olduğundan emin olun.",
-    "qdlAutoconfigFailed": "Otomatik yapılandırma profili QDL imajına uygulanamadı."
+    "qdlAutoconfigFailed": "Otomatik yapılandırma profili QDL imajına uygulanamadı.",
+    "deviceInvalidPath": "Bu cihaza yazılamıyor. Cihazı yeniden seçin.",
+    "deviceNotFound": "Seçilen cihaz artık bağlı değil. Yeniden bağlayıp tekrar seçin.",
+    "deviceChanged": "Seçtiğinizden beri seçilen cihaz değişti. Yazmadan önce cihazı yeniden seçin.",
+    "deviceReadOnly": "Cihaz yazmaya karşı korumalı. Kartın kilit anahtarını kilitsiz konuma kaydırıp tekrar deneyin.",
+    "deviceSystemBlocked": "Bu bir sistem sürücüsü. Üzerine yazmak için Ayarlar'da “Sistem sürücülerine izin ver” seçeneğini açın.",
+    "deviceTooSmall": "İmaj için {{needed}} gerekiyor ancak cihazın kapasitesi yalnızca {{available}}. Daha büyük bir cihaz kullanın.",
+    "qdlDeviceNotFound": "Seçilen EDL cihazı artık bağlı değil. EDL modunda yeniden bağlayıp tekrar seçin.",
+    "qdlMultipleDevices": "Birden fazla EDL cihazı bağlı ve seçilen cihaz belirlenemiyor. Yalnızca yazmak istediğiniz geliştirme kartını bağlayın."
   },
   "custom": {
     "customImage": "Özel İmaj",
