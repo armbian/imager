@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "无法将自动配置文件应用到 QDL 镜像。"
   },
   "custom": {
-    "customImage": "自定义镜像"
+    "customImage": "自定义镜像",
+    "selectError": "无法打开所选镜像"
   },
   "armbian": {
     "description": "此设备正在运行 Armbian。是否预先选定该开发板，省去手动步骤？",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "校验设置已更新",
       "skipVerifyError": "更新校验设置失败",
       "forceOfflineUpdated": "离线模式已更新",
-      "forceOfflineError": "更新离线模式失败"
+      "forceOfflineError": "更新离线模式失败",
+      "languageError": "更改语言失败"
     },
     "autoconfig": {
       "tab": "配置文件",

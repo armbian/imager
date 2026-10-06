@@ -438,7 +438,8 @@ function AppContent() {
         setShowWelcome(false);
       }
     } catch (err) {
-      console.error('Failed to select custom image:', err);
+      logWarn('app', `Failed to select custom image: ${err}`);
+      showError(t('custom.selectError'));
     }
   }
 

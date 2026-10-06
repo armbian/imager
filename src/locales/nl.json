@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Het toepassen van het autoconfig-profiel op de QDL-image is mislukt."
   },
   "custom": {
-    "customImage": "Aangepaste image"
+    "customImage": "Aangepaste image",
+    "selectError": "Kan de geselecteerde image niet openen"
   },
   "armbian": {
     "description": "Dit apparaat draait Armbian. Wil je dit board alvast selecteren en de handmatige stappen overslaan?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Verificatie-instelling bijgewerkt",
       "skipVerifyError": "Kan verificatie-instelling niet bijwerken",
       "forceOfflineUpdated": "Offline-modus bijgewerkt",
-      "forceOfflineError": "Kan offline-modus niet bijwerken"
+      "forceOfflineError": "Kan offline-modus niet bijwerken",
+      "languageError": "Kan de taal niet wijzigen"
     },
     "autoconfig": {
       "tab": "Profielen",

@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Failed to apply the autoconfig profile to the QDL image."
   },
   "custom": {
-    "customImage": "Custom Image"
+    "customImage": "Custom Image",
+    "selectError": "Couldn't open the selected image"
   },
   "armbian": {
     "description": "This device is running Armbian. Want to pre-select this board and skip the manual steps?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Verification setting updated",
       "skipVerifyError": "Failed to update verification setting",
       "forceOfflineUpdated": "Offline mode updated",
-      "forceOfflineError": "Failed to update offline mode"
+      "forceOfflineError": "Failed to update offline mode",
+      "languageError": "Failed to change language"
     },
     "autoconfig": {
       "tab": "Profiles",

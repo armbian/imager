@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Profila samodejne konfiguracije ni bilo mogoče uporabiti za sliko QDL."
   },
   "custom": {
-    "customImage": "Slika po meri"
+    "customImage": "Slika po meri",
+    "selectError": "Izbrane slike ni bilo mogoče odpreti"
   },
   "armbian": {
     "description": "Ta naprava uporablja Armbian. Želite to ploščo izbrati vnaprej in preskočiti ročne korake?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Nastavitev preverjanja posodobljena",
       "skipVerifyError": "Posodobitev nastavitve preverjanja ni uspela",
       "forceOfflineUpdated": "Način brez povezave posodobljen",
-      "forceOfflineError": "Načina brez povezave ni bilo mogoče posodobiti"
+      "forceOfflineError": "Načina brez povezave ni bilo mogoče posodobiti",
+      "languageError": "Jezika ni bilo mogoče spremeniti"
     },
     "autoconfig": {
       "tab": "Profili",

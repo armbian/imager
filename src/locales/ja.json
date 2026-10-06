@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "自動設定プロファイルをQDLイメージに適用できませんでした。"
   },
   "custom": {
-    "customImage": "カスタムイメージ"
+    "customImage": "カスタムイメージ",
+    "selectError": "選択したイメージを開けませんでした"
   },
   "armbian": {
     "description": "このデバイスではArmbianが動作しています。このボードをあらかじめ選択して、手動の手順を省略しますか？",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "検証の設定を更新しました",
       "skipVerifyError": "検証設定の更新に失敗しました",
       "forceOfflineUpdated": "オフラインモードを更新しました",
-      "forceOfflineError": "オフラインモードの更新に失敗しました"
+      "forceOfflineError": "オフラインモードの更新に失敗しました",
+      "languageError": "言語の変更に失敗しました"
     },
     "autoconfig": {
       "tab": "プロファイル",

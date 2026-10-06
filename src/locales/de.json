@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Das Autoconfig-Profil konnte nicht auf das QDL-Image angewendet werden."
   },
   "custom": {
-    "customImage": "Benutzerdefiniertes Image"
+    "customImage": "Benutzerdefiniertes Image",
+    "selectError": "Das ausgewählte Image konnte nicht geöffnet werden"
   },
   "armbian": {
     "description": "Dieses Gerät läuft mit Armbian. Möchtest du dieses Board vorauswählen und die manuellen Schritte überspringen?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Überprüfungseinstellung aktualisiert",
       "skipVerifyError": "Fehler beim Aktualisieren der Überprüfungseinstellung",
       "forceOfflineUpdated": "Offline-Modus aktualisiert",
-      "forceOfflineError": "Fehler beim Aktualisieren des Offline-Modus"
+      "forceOfflineError": "Fehler beim Aktualisieren des Offline-Modus",
+      "languageError": "Die Sprache konnte nicht geändert werden"
     },
     "autoconfig": {
       "tab": "Profile",

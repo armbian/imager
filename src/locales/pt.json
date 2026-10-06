@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Não foi possível aplicar o perfil de configuração automática à imagem QDL."
   },
   "custom": {
-    "customImage": "Imagem personalizada"
+    "customImage": "Imagem personalizada",
+    "selectError": "Não foi possível abrir a imagem selecionada"
   },
   "armbian": {
     "description": "Este dispositivo utiliza Armbian. Pretende pré-selecionar esta placa e saltar a seleção manual?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Definição de verificação atualizada",
       "skipVerifyError": "Falha ao atualizar a definição de verificação",
       "forceOfflineUpdated": "Modo offline atualizado",
-      "forceOfflineError": "Falha ao atualizar o modo offline"
+      "forceOfflineError": "Falha ao atualizar o modo offline",
+      "languageError": "Falha ao alterar o idioma"
     },
     "autoconfig": {
       "tab": "Perfis",
