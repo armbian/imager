@@ -23,7 +23,7 @@ import {
 import { getSystemInfo, getArmbianRelease } from '../../hooks/useTauri';
 import { useToasts } from '../../hooks/useToasts';
 import { useSettingsGroup } from '../../hooks/useSettingsGroup';
-import { EVENTS } from '../../config';
+import { EVENTS, SETTINGS, PLATFORM } from '../../config';
 
 /** Preferences tab (notification/verification/connectivity/Armbian board-detection cards). Notifications use set-after-await; skip-verify & force-offline use optimistic update+rollback under a shared `isToggling` guard; the Armbian select uses optimistic update+rollback and is force-disabled (`'disabled'`) on non-Armbian/non-Linux hosts.
  * MOTD changes dispatch `MOTD_CHANGED`, all others `SETTINGS_CHANGED`; rendering gated until settings load to avoid toggle flicker on mount. */
@@ -50,7 +50,7 @@ export function PreferencesSection() {
     armbianDetection: getArmbianBoardDetection,
     isArmbian: async () => {
       const info = await getSystemInfo();
-      if (info.platform !== 'linux') return false;
+      if (info.platform !== PLATFORM.LINUX) return false;
       const release = await getArmbianRelease();
       return release !== null;
     },
@@ -59,13 +59,13 @@ export function PreferencesSection() {
   // Gates rendering until loaded to prevent toggle animation on mount
   const loaded = Object.keys(settingsGroup).length > 0;
 
-  const [showMotd, setShowMotdState] = useState<boolean>(true);
-  const [showUpdaterModal, setShowUpdaterModalState] = useState<boolean>(true);
-  const [showWelcome, setShowWelcomeState] = useState<boolean>(true);
-  const [skipVerify, setSkipVerifyState] = useState<boolean>(false);
-  const [forceOffline, setForceOfflineState] = useState<boolean>(false);
-  const [allowSystemDevices, setAllowSystemDevicesState] = useState<boolean>(false);
-  const [armbianDetection, setArmbianDetection] = useState<string>('disabled');
+  const [showMotd, setShowMotdState] = useState<boolean>(SETTINGS.DEFAULTS.SHOW_MOTD);
+  const [showUpdaterModal, setShowUpdaterModalState] = useState<boolean>(SETTINGS.DEFAULTS.SHOW_UPDATER_MODAL);
+  const [showWelcome, setShowWelcomeState] = useState<boolean>(SETTINGS.DEFAULTS.SHOW_WELCOME);
+  const [skipVerify, setSkipVerifyState] = useState<boolean>(SETTINGS.DEFAULTS.SKIP_VERIFY);
+  const [forceOffline, setForceOfflineState] = useState<boolean>(SETTINGS.DEFAULTS.FORCE_OFFLINE);
+  const [allowSystemDevices, setAllowSystemDevicesState] = useState<boolean>(SETTINGS.DEFAULTS.ALLOW_SYSTEM_DEVICES);
+  const [armbianDetection, setArmbianDetection] = useState<string>(SETTINGS.ARMBIAN_DETECTION_MODES.DISABLED);
   const [isToggling, setIsToggling] = useState<boolean>(false);
   const [initialized, setInitialized] = useState(false);
 
@@ -394,14 +394,14 @@ export function PreferencesSection() {
             </div>
             <select
               className="settings-select"
-              value={settingsGroup.isArmbian ? armbianDetection : 'disabled'}
+              value={settingsGroup.isArmbian ? armbianDetection : SETTINGS.ARMBIAN_DETECTION_MODES.DISABLED}
               onChange={handleArmbianDetectionChange}
               disabled={!settingsGroup.isArmbian}
               aria-label={t('settings.armbian.label')}
             >
-              <option value="disabled">{t('settings.armbian.mode_disabled')}</option>
-              <option value="modal">{t('settings.armbian.mode_modal')}</option>
-              <option value="auto">{t('settings.armbian.mode_auto')}</option>
+              <option value={SETTINGS.ARMBIAN_DETECTION_MODES.DISABLED}>{t('settings.armbian.mode_disabled')}</option>
+              <option value={SETTINGS.ARMBIAN_DETECTION_MODES.MODAL}>{t('settings.armbian.mode_modal')}</option>
+              <option value={SETTINGS.ARMBIAN_DETECTION_MODES.AUTO}>{t('settings.armbian.mode_auto')}</option>
             </select>
           </div>
         </div>

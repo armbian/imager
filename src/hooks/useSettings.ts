@@ -52,6 +52,29 @@ export async function setTheme(theme: string): Promise<void> {
   }
 }
 
+/** Open the settings store, rejecting when it is unavailable. */
+export async function loadSettingsStore(): Promise<void> {
+  await getStore();
+}
+
+/** Get the explicitly saved UI language; null when the user follows the system locale */
+export async function getLanguage(): Promise<string | null> {
+  const store = await getStore();
+  return (await store.get<string>(SETTINGS.KEYS.LANGUAGE)) ?? null;
+}
+
+export async function setLanguage(lang: string): Promise<void> {
+  const store = await getStore();
+  await store.set(SETTINGS.KEYS.LANGUAGE, lang);
+  await store.save();
+}
+
+export async function clearLanguage(): Promise<void> {
+  const store = await getStore();
+  await store.delete(SETTINGS.KEYS.LANGUAGE);
+  await store.save();
+}
+
 /** Get the motion preference ('auto', 'reduce' or 'full') */
 export async function getReducedMotion(): Promise<string> {
   try {
@@ -288,9 +311,11 @@ export async function getArmbianBoardDetection(): Promise<string> {
 
 /** Set the Armbian board detection mode ('disabled', 'modal', or 'auto') */
 export async function setArmbianBoardDetection(mode: string): Promise<void> {
-  if (!['disabled', 'modal', 'auto'].includes(mode)) {
+  const modes: string[] = Object.values(SETTINGS.ARMBIAN_DETECTION_MODES);
+  if (!modes.includes(mode)) {
+    const quoted = modes.map((m) => `'${m}'`);
     throw new Error(
-      `Invalid Armbian board detection mode: ${mode}. Must be 'disabled', 'modal', or 'auto'`
+      `Invalid Armbian board detection mode: ${mode}. Must be ${quoted.slice(0, -1).join(', ')}, or ${quoted[quoted.length - 1]}`
     );
   }
 

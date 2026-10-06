@@ -10,6 +10,7 @@ import { BoardBadges } from '../shared/BoardBadges';
 import type { ArmbianReleaseInfo, BoardInfo } from '../../types';
 import { setArmbianBoardDetection } from '../../hooks/useSettings';
 import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
+import { SETTINGS } from '../../config';
 
 interface ArmbianBoardModalProps {
   isOpen: boolean;
@@ -35,8 +36,8 @@ export function ArmbianBoardModal({
   const { isExiting, handleClose, handleAction } = useModalExitAnimation({
     onClose,
     onExiting: () => {
-      // 'auto' enables silent auto-selection on future runs
-      setArmbianBoardDetection('auto');
+      // Auto mode enables silent auto-selection on future runs
+      setArmbianBoardDetection(SETTINGS.ARMBIAN_DETECTION_MODES.AUTO);
     },
   });
 
@@ -48,7 +49,7 @@ export function ArmbianBoardModal({
 
   const handleCloseWithCallback = useCallback(() => {
     handleAction(() => {
-      setArmbianBoardDetection('disabled');
+      setArmbianBoardDetection(SETTINGS.ARMBIAN_DETECTION_MODES.DISABLED);
       onDetectionDisabled?.();
     });
   }, [handleAction, onDetectionDisabled]);

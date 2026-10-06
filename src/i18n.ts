@@ -5,8 +5,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
-import { load } from '@tauri-apps/plugin-store';
-import { getLanguageFromLocale } from './config/i18n';
+import { getLanguageFromLocale, getDefaultLanguage, AUTO_LANGUAGE_CODE } from './config/i18n';
+import { getLanguage, setLanguage, clearLanguage, loadSettingsStore } from './hooks/useSettings';
 
 // Load every locale JSON via Vite glob so new languages are picked up automatically
 const localeModules = import.meta.glob('./locales/*.json', { eager: true });
@@ -23,11 +23,10 @@ const resources = Object.entries(localeModules).reduce((acc, [path, module]) => 
 
 /** Initialize i18n using the saved language, falling back to system locale detection */
 export async function initI18n(): Promise<void> {
-  let language = 'en';
+  let language = getDefaultLanguage();
 
   try {
-    const store = await load('settings.json', { autoSave: true, defaults: {} });
-    const savedLanguage = await store.get<string>('language');
+    const savedLanguage = await getLanguage();
     if (savedLanguage) {
       language = savedLanguage;
     }
@@ -38,7 +37,7 @@ export async function initI18n(): Promise<void> {
       language = getLanguageFromLocale(systemLocale);
     } catch (localeError) {
       console.warn('Failed to get system locale, using default:', localeError);
-      language = 'en';
+      language = getDefaultLanguage();
     }
   }
 
@@ -47,7 +46,7 @@ export async function initI18n(): Promise<void> {
     .init({
       resources,
       lng: language,
-      fallbackLng: 'en',
+      fallbackLng: getDefaultLanguage(),
       interpolation: {
         escapeValue: false, // React already escapes values
       },
@@ -59,12 +58,13 @@ export async function initI18n(): Promise<void> {
 
 /** Change the active language (e.g. 'en', 'it', 'auto') and persist it */
 export async function changeLanguage(lang: string): Promise<void> {
-  const store = await load('settings.json', { autoSave: true, defaults: {} });
+  // An unavailable store rejects before the language switches, so the caller can report it
+  await loadSettingsStore();
 
-  if (lang === 'auto') {
+  if (lang === AUTO_LANGUAGE_CODE) {
     // Remove saved language to enable auto-detection
     try {
-      await store.delete('language');
+      await clearLanguage();
     } catch (error) {
       console.error('Failed to delete language from storage:', error);
     }
@@ -76,15 +76,14 @@ export async function changeLanguage(lang: string): Promise<void> {
       await i18n.changeLanguage(detectedLang);
     } catch (localeError) {
       console.warn('Failed to get system locale, using default:', localeError);
-      await i18n.changeLanguage('en');
+      await i18n.changeLanguage(getDefaultLanguage());
     }
   } else {
     // Change language in i18next
     await i18n.changeLanguage(lang);
 
-    // Persist to storage using Store plugin
     try {
-      await store.set('language', lang);
+      await setLanguage(lang);
     } catch (error) {
       console.error('Failed to save language to storage:', error);
     }

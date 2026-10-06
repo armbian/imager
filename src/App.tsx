@@ -14,7 +14,7 @@ import { ToastProvider, useToasts } from './hooks/useToasts';
 import { UpdateProvider } from './contexts/UpdateContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
 import { AUTOCONFIG_PROFILE_SELECTED_EVENT } from './components/layout/DevicePanel';
-import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, UI } from './config';
+import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, UI, SETTINGS, PLATFORM } from './config';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig } from './types';
 import './styles/index.css';
 
@@ -179,7 +179,7 @@ function AppContent() {
 
         // Armbian detection is Linux-only
         const systemInfo = await getSystemInfo();
-        if (systemInfo.platform !== 'linux') {
+        if (systemInfo.platform !== PLATFORM.LINUX) {
           armbianCheckRef.current = true;
           logInfo('app', `Skipping Armbian detection on ${systemInfo.platform}`);
           return;
@@ -202,7 +202,7 @@ function AppContent() {
         setArmbianInfo(info);
 
         const detectionMode = await getArmbianBoardDetection();
-        if (detectionMode === 'disabled') {
+        if (detectionMode === SETTINGS.ARMBIAN_DETECTION_MODES.DISABLED) {
           return;
         }
 
@@ -229,9 +229,9 @@ function AppContent() {
           logWarn('app', `Failed to get board image: ${err}`);
         }
 
-        if (detectionMode === 'modal') {
+        if (detectionMode === SETTINGS.ARMBIAN_DETECTION_MODES.MODAL) {
           setShowArmbianModal(true);
-        } else if (detectionMode === 'auto') {
+        } else if (detectionMode === SETTINGS.ARMBIAN_DETECTION_MODES.AUTO) {
           // Queue the silent auto-selection; it runs after the welcome screen, never skipping it.
           setPendingAutoSelect(matchedBoard);
         }

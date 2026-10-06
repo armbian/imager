@@ -18,7 +18,7 @@ import { CacheManagerModal } from './CacheManagerModal';
 import { useToasts } from '../../hooks/useToasts';
 import { useSettingsGroup } from '../../hooks/useSettingsGroup';
 import { useAsyncData } from '../../hooks/useAsyncData';
-import { CACHE, EVENTS, UI } from '../../config';
+import { CACHE, EVENTS, UI, SETTINGS } from '../../config';
 import { formatBytes } from '../../utils';
 
 /** Storage section: cache usage panel (hairline meter, coherent with `.flash-track`) plus a card of controls — enable toggle, max-size select, clear, and a row opening CacheManagerModal.
@@ -35,7 +35,7 @@ export function StorageSection() {
     cacheMaxSize: getCacheMaxSize,
   });
 
-  const [cacheEnabled, setCacheEnabledState] = useState<boolean>(true);
+  const [cacheEnabled, setCacheEnabledState] = useState<boolean>(SETTINGS.DEFAULTS.CACHE_ENABLED);
   const [cacheMaxSize, setCacheMaxSizeState] = useState<number>(CACHE.DEFAULT_SIZE);
   const [initialized, setInitialized] = useState(false);
 

@@ -19,18 +19,8 @@ import {
 import { getTauriVersion, getSystemInfo } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { ErrorDisplay } from '../shared/ErrorDisplay';
-import { LINKS } from '../../config/constants';
+import { LINKS, PLATFORM_LABEL } from '../../config/constants';
 import armbianLogo from '../../../src-tauri/icons/icon.png';
-
-/** Maps a raw backend platform id (e.g. "macos") to a display name (e.g. "macOS"); returns the original when unknown. */
-function formatPlatformName(platform: string): string {
-  const platformNames: Record<string, string> = {
-    macos: 'macOS',
-    windows: 'Windows',
-    linux: 'Linux',
-  };
-  return platformNames[platform] || platform;
-}
 
 interface InfoCardProps {
   /** Leading icon rendered inside the accent-tinted chip. */
@@ -87,7 +77,7 @@ export function AboutSection() {
     return {
       appVersion: `v${appVersion}`,
       tauriVersion: `v${tauriVersion}`,
-      platform: formatPlatformName(systemInfo.platform),
+      platform: PLATFORM_LABEL[systemInfo.platform] || systemInfo.platform,
       arch: systemInfo.arch,
     };
   }, []);
