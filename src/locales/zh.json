@@ -350,7 +350,7 @@
     "installNow": "立即安装",
     "install": "安装",
     "restartNow": "立即重启",
-    "cancel": "取消",
+    "continueInBackground": "在后台继续",
     "retry": "重试",
     "readyMessage": "更新已下载完成。请重启应用以完成安装。",
     "errorMessage": "更新下载失败，请稍后再试。",

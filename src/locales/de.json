@@ -350,7 +350,7 @@
     "installNow": "Jetzt installieren",
     "install": "Installieren",
     "restartNow": "Jetzt neu starten",
-    "cancel": "Abbrechen",
+    "continueInBackground": "Im Hintergrund fortsetzen",
     "retry": "Erneut versuchen",
     "readyMessage": "Das Update wurde heruntergeladen. Starte die App neu, um die Installation abzuschließen.",
     "errorMessage": "Das Update konnte nicht heruntergeladen werden. Bitte versuche es später erneut.",

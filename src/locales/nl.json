@@ -350,7 +350,7 @@
     "installNow": "Nu installeren",
     "install": "Installeren",
     "restartNow": "Nu herstarten",
-    "cancel": "Annuleren",
+    "continueInBackground": "Doorgaan op de achtergrond",
     "retry": "Opnieuw proberen",
     "readyMessage": "De update is gedownload. Start de app opnieuw om de installatie te voltooien.",
     "errorMessage": "Kan de update niet downloaden. Probeer het later opnieuw.",

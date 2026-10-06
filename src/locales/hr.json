@@ -350,7 +350,7 @@
     "installNow": "Instaliraj sada",
     "install": "Instaliraj",
     "restartNow": "Ponovno pokreni sada",
-    "cancel": "Odustani",
+    "continueInBackground": "Nastavi u pozadini",
     "retry": "Pokušaj ponovno",
     "readyMessage": "Ažuriranje je preuzeto. Ponovno pokrenite aplikaciju za dovršetak instalacije.",
     "errorMessage": "Preuzimanje ažuriranja nije uspjelo. Pokušajte ponovno kasnije.",

@@ -350,7 +350,7 @@
     "installNow": "今すぐインストール",
     "install": "インストール",
     "restartNow": "今すぐ再起動",
-    "cancel": "キャンセル",
+    "continueInBackground": "バックグラウンドで続行",
     "retry": "再試行",
     "readyMessage": "更新のダウンロードが完了しました。インストールを完了するには、アプリを再起動してください。",
     "errorMessage": "更新のダウンロードに失敗しました。しばらくしてからもう一度お試しください。",

@@ -350,7 +350,7 @@
     "installNow": "Install Now",
     "install": "Install",
     "restartNow": "Restart Now",
-    "cancel": "Cancel",
+    "continueInBackground": "Continue in background",
     "retry": "Retry",
     "readyMessage": "The update is downloaded. Restart the app to finish installing.",
     "errorMessage": "Failed to download the update. Please try again later.",
