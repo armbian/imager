@@ -8,6 +8,7 @@ export {
   OS_INFO,
   APP_INFO,
   getOsInfo,
+  getOsName,
   getAppInfo,
   getImageVariantLabel,
   type OsInfoConfig,

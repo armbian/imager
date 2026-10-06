@@ -9,13 +9,13 @@ import { useTranslation } from 'react-i18next';
 import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText, EmptyState } from '../shared';
 import type { BlockDevice, AutoconfigProfile, AutoconfigProfilesChangedDetail, FlashMethod } from '../../types';
 import { isEdlMethod } from '../../types';
-import { getBlockDevices, getQdlDevices } from '../../hooks/useTauri';
+import { getTargetDevices } from '../../hooks/useTauri';
 import { getAutoconfigProfiles, getAllowSystemDevices } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { POLLING, UI, EVENTS, qdlInstructionsKey } from '../../config';
 import { getDeviceColors } from '../../config/deviceColors';
-import { getDeviceType, devicesChanged, sortDevices, qdlToBlockDevice } from '../../utils/deviceUtils';
+import { getDeviceType, devicesChanged, sortDevices } from '../../utils/deviceUtils';
 
 interface DevicePanelProps {
   /** Pick a device, revealing the confirm summary (does not flash yet). */
@@ -126,13 +126,7 @@ export function DevicePanel({
   }, []);
 
   const { data: rawDevices, loading, error, reload } = useAsyncData<BlockDevice[]>(
-    async () => {
-      if (isQdlMode) {
-        const qdlDevices = await getQdlDevices();
-        return qdlDevices.map(qdlToBlockDevice);
-      }
-      return getBlockDevices();
-    },
+    () => getTargetDevices(isQdlMode),
     [isQdlMode]
   );
 
@@ -165,13 +159,7 @@ export function DevicePanel({
   // Poll for device changes (detect new USB/SD insertions) while browsing.
   const pollDevices = useCallback(async () => {
     try {
-      let newDevices: BlockDevice[];
-      if (isQdlMode) {
-        const qdlDevices = await getQdlDevices();
-        newDevices = qdlDevices.map(qdlToBlockDevice);
-      } else {
-        newDevices = await getBlockDevices();
-      }
+      const newDevices = await getTargetDevices(isQdlMode);
       if (devicesChanged(prevDevicesRef.current, newDevices)) {
         prevDevicesRef.current = newDevices;
         setDevices(sortDevices(newDevices));

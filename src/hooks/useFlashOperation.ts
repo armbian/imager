@@ -22,8 +22,7 @@ import {
   requestWriteAuthorization,
   checkNeedsDecompression,
   decompressCustomImage,
-  getBlockDevices,
-  getQdlDevices,
+  isTargetConnected,
   continueDownloadWithoutSha,
   cleanupFailedDownload,
   listCachedImages,
@@ -31,7 +30,6 @@ import {
 import { getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
-import { isDeviceConnected, qdlToBlockDevice } from '../utils/deviceUtils';
 import { isDeviceRefusalError, isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
 
 interface UseFlashOperationProps {
@@ -185,18 +183,9 @@ export function useFlashOperation({
   /** Check the device is connected; trigger the disconnect handler and return false if not */
   const checkDeviceOrDisconnect = useCallback(async (): Promise<boolean> => {
     try {
-      if (isEdlFlash) {
-        const qdlDevices = await getQdlDevices();
-        if (!isDeviceConnected(device.path, qdlDevices.map(qdlToBlockDevice))) {
-          await handleDeviceDisconnectedInternal();
-          return false;
-        }
-      } else {
-        const devices = await getBlockDevices();
-        if (!isDeviceConnected(device.path, devices)) {
-          await handleDeviceDisconnectedInternal();
-          return false;
-        }
+      if (!(await isTargetConnected(device, isEdlFlash))) {
+        await handleDeviceDisconnectedInternal();
+        return false;
       }
     } catch {
       // If we can't check, assume still connected

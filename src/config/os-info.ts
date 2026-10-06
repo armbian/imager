@@ -7,9 +7,26 @@
 import type { ImageInfo } from '../types';
 import { getVariantBadge } from './badges';
 
+/** Distro families; values double as the family names matched in a distro string */
+export const OS_FAMILY = {
+  DEBIAN: 'debian',
+  UBUNTU: 'ubuntu',
+} as const;
+
+export type OsFamily = (typeof OS_FAMILY)[keyof typeof OS_FAMILY];
+
+const OS_FAMILY_NAME: Record<OsFamily, string> = {
+  [OS_FAMILY.DEBIAN]: 'Debian',
+  [OS_FAMILY.UBUNTU]: 'Ubuntu',
+};
+
+/** OS name shown when a distro string matches no known release or family */
+const FALLBACK_OS_NAME = 'Armbian';
+
 export interface OsInfoConfig {
   name: string;
   color: string;
+  family: OsFamily;
 }
 
 export interface AppInfoConfig {
@@ -23,20 +40,20 @@ export interface AppInfoConfig {
 /** OS/Distro release information */
 export const OS_INFO: Record<string, OsInfoConfig> = {
   // Debian releases
-  'bookworm': { name: 'Debian 12', color: 'transparent' },
-  'bullseye': { name: 'Debian 11', color: 'transparent' },
-  'trixie': { name: 'Debian 13', color: 'transparent' },
-  'forky': { name: 'Debian 14', color: 'transparent' },
-  'sid': { name: 'Debian Sid', color: 'transparent' },
+  'bookworm': { name: 'Debian 12', color: 'transparent', family: OS_FAMILY.DEBIAN },
+  'bullseye': { name: 'Debian 11', color: 'transparent', family: OS_FAMILY.DEBIAN },
+  'trixie': { name: 'Debian 13', color: 'transparent', family: OS_FAMILY.DEBIAN },
+  'forky': { name: 'Debian 14', color: 'transparent', family: OS_FAMILY.DEBIAN },
+  'sid': { name: 'Debian Sid', color: 'transparent', family: OS_FAMILY.DEBIAN },
   // Ubuntu releases
-  'noble': { name: 'Ubuntu 24.04', color: 'transparent' },
-  'jammy': { name: 'Ubuntu 22.04', color: 'transparent' },
-  'resolute': { name: 'Ubuntu 26.04', color: 'transparent' },
-  'plucky': { name: 'Ubuntu 25.04', color: 'transparent' },
-  'oracular': { name: 'Ubuntu 24.10', color: 'transparent' },
-  'focal': { name: 'Ubuntu 20.04', color: 'transparent' },
-  'mantic': { name: 'Ubuntu 23.10', color: 'transparent' },
-  'lunar': { name: 'Ubuntu 23.04', color: 'transparent' },
+  'noble': { name: 'Ubuntu 24.04', color: 'transparent', family: OS_FAMILY.UBUNTU },
+  'jammy': { name: 'Ubuntu 22.04', color: 'transparent', family: OS_FAMILY.UBUNTU },
+  'resolute': { name: 'Ubuntu 26.04', color: 'transparent', family: OS_FAMILY.UBUNTU },
+  'plucky': { name: 'Ubuntu 25.04', color: 'transparent', family: OS_FAMILY.UBUNTU },
+  'oracular': { name: 'Ubuntu 24.10', color: 'transparent', family: OS_FAMILY.UBUNTU },
+  'focal': { name: 'Ubuntu 20.04', color: 'transparent', family: OS_FAMILY.UBUNTU },
+  'mantic': { name: 'Ubuntu 23.10', color: 'transparent', family: OS_FAMILY.UBUNTU },
+  'lunar': { name: 'Ubuntu 23.04', color: 'transparent', family: OS_FAMILY.UBUNTU },
 };
 
 /** Special applications with their own branding */
@@ -58,6 +75,16 @@ export function getOsInfo(distroRelease: string): OsInfoConfig | null {
     }
   }
   return null;
+}
+
+/** Human-readable OS name for a distro release: the known release, else its family, else Armbian. */
+export function getOsName(distroRelease: string): string {
+  const info = getOsInfo(distroRelease);
+  if (info) return info.name;
+  const distro = distroRelease.toLowerCase();
+  if (distro.includes(OS_FAMILY.UBUNTU)) return OS_FAMILY_NAME[OS_FAMILY.UBUNTU];
+  if (distro.includes(OS_FAMILY.DEBIAN)) return OS_FAMILY_NAME[OS_FAMILY.DEBIAN];
+  return FALLBACK_OS_NAME;
 }
 
 /** Get app info from a preinstalled application name */

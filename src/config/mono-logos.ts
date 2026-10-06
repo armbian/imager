@@ -15,6 +15,7 @@ import kaliMono from '../assets/os-logos/mono/kali.svg';
 import openhabMono from '../assets/os-logos/mono/openhab.svg';
 import openmediavaultMono from '../assets/os-logos/mono/openmediavault.svg';
 import vscodeMono from '../assets/os-logos/mono/vscode.svg';
+import { getOsInfo, OS_FAMILY } from './os-info';
 
 /** Preinstalled-application marks, matched against the application substring. */
 const APP_MONO: Record<string, string> = {
@@ -40,12 +41,12 @@ export function getMonoLogo(distroRelease: string, app?: string | null): string 
   }
 
   const distro = distroRelease.toLowerCase();
-  if (distro.includes('ubuntu')) return ubuntuMono;
-  if (distro.includes('debian')) return debianMono;
+  if (distro.includes(OS_FAMILY.UBUNTU)) return ubuntuMono;
+  if (distro.includes(OS_FAMILY.DEBIAN)) return debianMono;
 
-  // Ubuntu/Debian codenames used by the Armbian API.
-  if (/(noble|jammy|resolute|plucky|oracular|focal|mantic|lunar)/.test(distro)) return ubuntuMono;
-  if (/(bookworm|bullseye|trixie|forky|sid)/.test(distro)) return debianMono;
+  const family = getOsInfo(distro)?.family;
+  if (family === OS_FAMILY.UBUNTU) return ubuntuMono;
+  if (family === OS_FAMILY.DEBIAN) return debianMono;
 
   return null;
 }

@@ -8,6 +8,7 @@ import { getGithubRelease, openUrl } from '../../hooks/useTauri';
 import type { GitHubRelease } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { ErrorDisplay } from './ErrorDisplay';
+import { formatDate } from '../../utils';
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -36,14 +37,6 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
   }, [releaseBody]);
 
   if (!isOpen) return null;
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
 
   // Convert the release body's markdown to HTML
   const parseReleaseBody = (body: string | null): string => {
@@ -197,7 +190,7 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
                 <div className="changelog-meta">
                   <span className="changelog-date">
                     <Calendar size={14} />
-                    {formatDate(release.published_at)}
+                    {formatDate(release.published_at, undefined, 'long')}
                   </span>
                   <button
                     onClick={() => openUrl(release.html_url)}
