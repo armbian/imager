@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Otomatik yapılandırma profili QDL imajına uygulanamadı."
   },
   "custom": {
-    "customImage": "Özel İmaj"
+    "customImage": "Özel İmaj",
+    "selectError": "Seçilen imaj açılamadı"
   },
   "armbian": {
     "description": "Bu cihaz Armbian çalıştırıyor. Bu kartı önceden seçip manuel adımları atlamak ister misiniz?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Doğrulama ayarı güncellendi",
       "skipVerifyError": "Doğrulama ayarı güncellenemedi",
       "forceOfflineUpdated": "Çevrimdışı mod güncellendi",
-      "forceOfflineError": "Çevrimdışı mod güncellenemedi"
+      "forceOfflineError": "Çevrimdışı mod güncellenemedi",
+      "languageError": "Dil değiştirilemedi"
     },
     "autoconfig": {
       "tab": "Profiller",

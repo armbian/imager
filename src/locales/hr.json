@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Primjena profila automatske konfiguracije na QDL sliku nije uspjela."
   },
   "custom": {
-    "customImage": "Prilagođena slika"
+    "customImage": "Prilagođena slika",
+    "selectError": "Odabranu sliku nije moguće otvoriti"
   },
   "armbian": {
     "description": "Ovaj uređaj koristi Armbian. Želite li unaprijed odabrati ovu ploču i preskočiti ručne korake?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Postavka provjere je ažurirana",
       "skipVerifyError": "Ažuriranje postavke provjere nije uspjelo",
       "forceOfflineUpdated": "Izvanmrežni način rada je ažuriran",
-      "forceOfflineError": "Ažuriranje izvanmrežnog načina rada nije uspjelo"
+      "forceOfflineError": "Ažuriranje izvanmrežnog načina rada nije uspjelo",
+      "languageError": "Promjena jezika nije uspjela"
     },
     "autoconfig": {
       "tab": "Profili",

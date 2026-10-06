@@ -9,6 +9,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useMotion, type MotionMode } from '../../contexts/MotionContext';
 import { changeLanguage as i18nChangeLanguage, getCurrentLanguage } from '../../i18n';
 import { SUPPORTED_LANGUAGES, flagUrl } from '../../config/i18n';
+import { useToasts } from '../../hooks/useToasts';
+import { logWarn } from '../../hooks/useTauri';
 
 /** Theme option metadata for the segmented theme selector */
 interface ThemeOption {
@@ -40,6 +42,7 @@ export function AppearanceSection() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { motion, setMotion } = useMotion();
+  const { showError } = useToasts();
   const [currentLanguage, setCurrentLanguage] = useState<string>(getCurrentLanguage());
   const [initialized, setInitialized] = useState(false);
   const [search, setSearch] = useState('');
@@ -62,14 +65,13 @@ export function AppearanceSection() {
     checkAutoLanguage();
   }, []);
 
-  /** Apply the selected UI language immediately and track it in state.
-   * @param langCode - language code to activate (or "auto" for system locale) */
   const handleLanguageChange = async (langCode: string) => {
     try {
       await i18nChangeLanguage(langCode);
       setCurrentLanguage(langCode);
     } catch (error) {
-      console.error('Failed to change language:', error);
+      logWarn('settings', `Failed to change language: ${error}`);
+      showError(t('settings.toast.languageError'));
     }
   };
 

@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Nie udało się zastosować profilu autokonfiguracji do obrazu QDL."
   },
   "custom": {
-    "customImage": "Własny obraz"
+    "customImage": "Własny obraz",
+    "selectError": "Nie udało się otworzyć wybranego obrazu"
   },
   "armbian": {
     "description": "To urządzenie działa pod kontrolą Armbian. Wybrać tę płytkę wstępnie i pominąć ręczne kroki?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Ustawienie weryfikacji zaktualizowane",
       "skipVerifyError": "Nie udało się zaktualizować ustawienia weryfikacji",
       "forceOfflineUpdated": "Tryb offline zaktualizowany",
-      "forceOfflineError": "Nie udało się zaktualizować trybu offline"
+      "forceOfflineError": "Nie udało się zaktualizować trybu offline",
+      "languageError": "Nie udało się zmienić języka"
     },
     "autoconfig": {
       "tab": "Profile",

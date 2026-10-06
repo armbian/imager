@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "자동 구성 프로필을 QDL 이미지에 적용하지 못했습니다."
   },
   "custom": {
-    "customImage": "사용자 지정 이미지"
+    "customImage": "사용자 지정 이미지",
+    "selectError": "선택한 이미지를 열지 못했습니다"
   },
   "armbian": {
     "description": "이 기기는 Armbian으로 실행 중입니다. 이 보드를 미리 선택하고 수동 단계를 건너뛸까요?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "검증 설정을 업데이트했습니다",
       "skipVerifyError": "검증 설정을 업데이트하지 못했습니다",
       "forceOfflineUpdated": "오프라인 모드를 업데이트했습니다",
-      "forceOfflineError": "오프라인 모드를 업데이트하지 못했습니다"
+      "forceOfflineError": "오프라인 모드를 업데이트하지 못했습니다",
+      "languageError": "언어를 변경하지 못했습니다"
     },
     "autoconfig": {
       "tab": "프로필",

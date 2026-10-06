@@ -145,7 +145,8 @@
     "qdlAutoconfigFailed": "Det gick inte att tillämpa autoconfig-profilen på QDL-avbildningen."
   },
   "custom": {
-    "customImage": "Egen avbildning"
+    "customImage": "Egen avbildning",
+    "selectError": "Det gick inte att öppna den valda avbildningen"
   },
   "armbian": {
     "description": "Den här enheten kör Armbian. Vill du förvälja det här kortet och hoppa över de manuella stegen?",
@@ -275,7 +276,8 @@
       "skipVerifyUpdated": "Verifieringsinställning uppdaterad",
       "skipVerifyError": "Det gick inte att uppdatera verifieringsinställningen",
       "forceOfflineUpdated": "Offlineläge uppdaterat",
-      "forceOfflineError": "Det gick inte att uppdatera offlineläget"
+      "forceOfflineError": "Det gick inte att uppdatera offlineläget",
+      "languageError": "Det gick inte att byta språk"
     },
     "autoconfig": {
       "tab": "Profiler",
