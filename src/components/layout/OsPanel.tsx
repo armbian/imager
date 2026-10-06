@@ -12,14 +12,16 @@ import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import {
   getOsInfo, getAppInfo, getKernelType, getImageVariantLabel,
-  KERNEL_BADGES, UI,
+  KERNEL_BADGES, STORAGE_BADGES, SUPPORT_TIER, UI,
   isTrunkImage, IMAGE_FILTER_PREDICATES, FILTER_BUTTONS, categoryOf, type OsCategory,
 } from '../../config';
 import { getMonoLogo } from '../../config/mono-logos';
 import { formatFileSize, hexToRgba, staggerDelay, splitArmbianVersion, formatDate, armbianIdentityKey, formatKernelLabel } from '../../utils';
 import { distroGradient, distroBlock, distroVars } from '../../utils/distroTheme';
 import { ErrorDisplay, ConfirmationDialog, EmptyState } from '../shared';
-import type { BoardInfo, ImageInfo, ImageFilterType, CachedImageInfo } from '../../types';
+import { isUfsImage, IMAGE_STORAGE, type BoardInfo, type ImageInfo, type ImageFilterType, type CachedImageInfo } from '../../types';
+
+const UFS_BADGE = STORAGE_BADGES[IMAGE_STORAGE.UFS];
 
 /** Non-promoted filter keys available in the toolbar (recommended is pinned, not a filter). */
 type RestFilter = Exclude<ImageFilterType, 'all' | 'recommended'>;
@@ -149,7 +151,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
 
   // Warn before community-tier boards or rolling (trunk) development builds.
   function handleClick(image: ImageInfo) {
-    const needsWarning = board.support_tier === 'community' || isTrunkImage(image);
+    const needsWarning = board.support_tier === SUPPORT_TIER.COMMUNITY || isTrunkImage(image);
     if (!needsWarning) {
       onSelect(image);
       return;
@@ -211,10 +213,10 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
                 {formatKernelLabel(image)}
               </span>
             )}
-            {image.storage?.toLowerCase() === 'ufs' && (
+            {isUfsImage(image) && (
               <span className="dl-card__kernel">
-                <span className="dl-dot" style={{ background: '#f59e0b' }} />
-                UFS
+                <span className="dl-dot" style={{ background: UFS_BADGE.color }} />
+                {UFS_BADGE.label}
               </span>
             )}
             <span className="dl-card__footright">
@@ -269,7 +271,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
                   label={formatKernelLabel(image) ?? kernelBadge.label}
                 />
               )}
-              {image.storage?.toLowerCase() === 'ufs' && <SoftBadge color="#f59e0b" label="UFS" />}
+              {isUfsImage(image) && <SoftBadge color={UFS_BADGE.color} label={UFS_BADGE.label} />}
             </div>
             <div className="os-card__footright">
               {isCached(image) && <CachedBadge label={t('modal.cachedTooltip')} />}
@@ -391,7 +393,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
           isOpen={showWarning}
           title={t('modal.imageStatusTitle')}
           message={
-            board.support_tier === 'community'
+            board.support_tier === SUPPORT_TIER.COMMUNITY
               ? t('modal.communityBoardMessage')
               : t('modal.rollingBuildMessage')
           }

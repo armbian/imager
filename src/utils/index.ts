@@ -142,6 +142,15 @@ export function parseArmbianFilename(filename: string): ArmbianFilenameInfo | nu
   };
 }
 
+/** Kernel-field suffix marking a UFS build in a parsed Armbian filename */
+export const UFS_KERNEL_SUFFIX = '-ufs';
+
+/** Split a parsed kernel version into its version and whether it carries the UFS suffix. */
+export function splitUfsKernel(kernel: string | null): { kernel: string | null; isUfs: boolean } {
+  if (!kernel || !kernel.toLowerCase().endsWith(UFS_KERNEL_SUFFIX)) return { kernel, isUfs: false };
+  return { kernel: kernel.slice(0, -UFS_KERNEL_SUFFIX.length), isUfs: true };
+}
+
 /** Stable identity key for an Armbian image filename (board+version+distro+branch+kernel+desktop),
  * used to match a remote image against locally cached files regardless of compression extension.
  * Returns null when the name isn't a recognizable Armbian image. */

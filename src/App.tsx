@@ -13,8 +13,8 @@ import { useConnectivity } from './hooks/useConnectivity';
 import { ToastProvider, useToasts } from './hooks/useToasts';
 import { UpdateProvider } from './contexts/UpdateContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
-import { AUTOCONFIG_PROFILE_SELECTED_EVENT } from './components/layout/DevicePanel';
-import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, UI, SETTINGS, PLATFORM } from './config';
+import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, SUPPORT_TIER, UI, SETTINGS, PLATFORM } from './config';
+import { IMAGE_FORMAT, IMAGE_STORAGE, IMAGE_STABILITY } from './types';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig } from './types';
 import './styles/index.css';
 
@@ -95,8 +95,8 @@ function AppContent() {
       const id = (e as CustomEvent<{ id: string | null }>).detail?.id ?? null;
       setSelectedProfileId(id);
     };
-    window.addEventListener(AUTOCONFIG_PROFILE_SELECTED_EVENT, handler);
-    return () => window.removeEventListener(AUTOCONFIG_PROFILE_SELECTED_EVENT, handler);
+    window.addEventListener(EVENTS.AUTOCONFIG_PROFILE_SELECTED, handler);
+    return () => window.removeEventListener(EVENTS.AUTOCONFIG_PROFILE_SELECTED, handler);
   }, []);
 
   // Resolve the picked profile id to its config; null when no profile is selected
@@ -144,7 +144,7 @@ function AppContent() {
     try {
       const manufacturer: Manufacturer = {
         id: board.vendor || VENDOR.FALLBACK_ID,
-        name: board.vendor_name || 'Other',
+        name: board.vendor_name || VENDOR.FALLBACK_NAME,
         color: 'slate',
         boardCount: 1,
       };
@@ -273,7 +273,7 @@ function AppContent() {
       }
 
       const cachedImage: ImageInfo = {
-        release: 'Cached',
+        release: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CACHED],
         distro_release: filename,
         kernel_branch: '',
         kernel_version: '',
@@ -284,8 +284,8 @@ function AppContent() {
         direct_url: '',
         sha_url: null,
         file_size: size,
-        stability: 'stable',
-        format: 'sd',
+        stability: IMAGE_STABILITY.STABLE,
+        format: IMAGE_FORMAT.SD,
         companions: [],
         display_variants: [],
         is_custom: true,
@@ -301,8 +301,8 @@ function AppContent() {
         slug: boardSlug || SLUGS.CACHED,
         name: boardName || t('custom.customImage'),
         vendor: hasCacheMetadata ? SLUGS.DETECTED : SLUGS.CACHED,
-        vendor_name: hasCacheMetadata ? (boardName || 'Unknown') : 'Cached',
-        support_tier: 'community',
+        vendor_name: hasCacheMetadata ? (boardName || VENDOR.UNKNOWN_NAME) : LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CACHED],
+        support_tier: SUPPORT_TIER.COMMUNITY,
         image_count: 1,
         has_desktop: false,
         promoted: false,
@@ -388,10 +388,10 @@ function AppContent() {
         if (ufsBoardSlug) {
           logInfo('app', `Custom image detected as UFS: ${result.name} (board ${ufsBoardSlug})`);
         }
-        const flashMethod = isQdl ? 'qdl' : 'block';
+        const format = isQdl ? IMAGE_FORMAT.QDL : IMAGE_FORMAT.BLOCK;
 
         const customImage: ImageInfo = {
-          release: 'Custom',
+          release: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CUSTOM],
           distro_release: result.name,
           kernel_branch: '',
           kernel_version: '',
@@ -402,9 +402,9 @@ function AppContent() {
           direct_url: '',
           sha_url: null,
           file_size: result.size,
-          stability: 'stable',
-          format: flashMethod,
-          storage: ufsBoardSlug ? 'ufs' : null,
+          stability: IMAGE_STABILITY.STABLE,
+          format,
+          storage: ufsBoardSlug ? IMAGE_STORAGE.UFS : null,
           companions: [],
           display_variants: [],
           is_custom: true,
@@ -418,8 +418,8 @@ function AppContent() {
           slug: ufsBoardSlug ?? SLUGS.CUSTOM,
           name: t('custom.customImage'),
           vendor: SLUGS.CUSTOM,
-          vendor_name: 'Custom',
-          support_tier: 'community',
+          vendor_name: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CUSTOM],
+          support_tier: SUPPORT_TIER.COMMUNITY,
           image_count: 1,
           has_desktop: false,
           promoted: false,

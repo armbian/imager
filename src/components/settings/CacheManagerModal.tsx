@@ -15,13 +15,16 @@ import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { BoardBadges } from '../shared/BoardBadges';
 import { BoardImage } from '../shared/BoardImage';
 import { useToasts } from '../../hooks/useToasts';
-import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage } from '../../utils';
+import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage, splitUfsKernel } from '../../utils';
 import { EVENTS, UI } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
-import { getDesktopEnv, getVariantBadge, getKernelType, KERNEL_BADGES, adjustBrightness } from '../../config/badges';
-import type { CachedImageInfo, BoardInfo } from '../../types';
+import { getDesktopEnv, getVariantBadge, getKernelType, KERNEL_BADGES, STORAGE_BADGES, CLI_BADGE, adjustBrightness } from '../../config/badges';
+import { IMAGE_STORAGE, type CachedImageInfo, type BoardInfo } from '../../types';
+
+/** Group key for cached images whose board slug is unknown */
+const UNKNOWN_BOARD_GROUP = '__unknown__';
 
 interface CacheManagerModalProps {
   isOpen: boolean;
@@ -117,7 +120,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
     const groupMap = new Map<string, CachedImageInfo[]>();
 
     for (const img of cachedImages) {
-      const key = img.board_slug ?? '__unknown__';
+      const key = img.board_slug ?? UNKNOWN_BOARD_GROUP;
       const existing = groupMap.get(key);
       if (existing) {
         existing.push(img);
@@ -127,7 +130,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
     }
 
     return Array.from(groupMap.entries()).map(([key, images]) => {
-      const slug = key === '__unknown__' ? null : key;
+      const slug = key === UNKNOWN_BOARD_GROUP ? null : key;
       const matchedBoard = slug
         ? allBoards.find((b) => b.slug === slug) ?? null
         : null;
@@ -144,7 +147,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
     });
   }, [cachedImages, allBoards, boardImageUrls, t]);
 
-  const groupKey = useCallback((group: BoardGroup) => group.slug ?? '__unknown__', []);
+  const groupKey = useCallback((group: BoardGroup) => group.slug ?? UNKNOWN_BOARD_GROUP, []);
 
   // Resolve the active group: honor selectedKey when still present, else fall back
   // to the first group (covers initial load and the case where it was just deleted).
@@ -313,8 +316,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                       const variantBadge = getVariantBadge(parsed?.desktop);
                       const kernelType = parsed?.branch ? getKernelType(parsed.branch) : null;
                       const badgeConfig = kernelType ? KERNEL_BADGES[kernelType] : null;
-                      const isUfs = !!parsed?.kernel && parsed.kernel.toLowerCase().endsWith('-ufs');
-                      const kernelVersion = isUfs ? parsed!.kernel!.slice(0, -4) : parsed?.kernel ?? null;
+                      const { kernel: kernelVersion, isUfs } = splitUfsKernel(parsed?.kernel ?? null);
                       // Split "26.2.0-trunk.904" → base headline + build suffix (shown in meta).
                       const { base: baseVersion, build } = splitArmbianVersion(parsed?.version ?? '');
 
@@ -370,7 +372,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                                   }}
                                 >
                                   <Terminal size={11} />
-                                  <span>{variantBadge?.label ?? 'CLI'}</span>
+                                  <span>{variantBadge?.label ?? CLI_BADGE.label}</span>
                                 </div>
                               )}
                               {badgeConfig && (
@@ -401,7 +403,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                                   }}
                                 >
                                   <HardDrive size={11} />
-                                  <span>UFS</span>
+                                  <span>{STORAGE_BADGES[IMAGE_STORAGE.UFS].label}</span>
                                 </div>
                               )}
                             </div>

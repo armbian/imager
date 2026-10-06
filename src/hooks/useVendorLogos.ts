@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { BoardInfo } from '../types';
 import { getCachedVendorLogo } from './useTauri';
-import { VENDOR } from '../config';
+import { VENDOR, SUPPORT_TIER } from '../config';
 
 interface VendorLogoState {
   failedLogos: Set<string>;
@@ -119,7 +119,7 @@ export function useManufacturerList(
     for (const board of boards) {
       const validLogo = hasValidLogo(board);
       const vendorId = validLogo ? (board.vendor || VENDOR.FALLBACK_ID) : VENDOR.FALLBACK_ID;
-      const vendorName = validLogo ? (board.vendor_name || 'Other') : 'Other';
+      const vendorName = validLogo ? (board.vendor_name || VENDOR.FALLBACK_NAME) : VENDOR.FALLBACK_NAME;
       const vendorLogo = validLogo
         ? (cachedUrls.get(board.vendor) || null)
         : null;
@@ -135,10 +135,10 @@ export function useManufacturerList(
       }
       vendorMap[vendorId].count++;
 
-      if (board.support_tier === 'platinum') {
+      if (board.support_tier === SUPPORT_TIER.PLATINUM) {
         vendorMap[vendorId].platinumCount++;
       }
-      if (board.support_tier === 'standard') {
+      if (board.support_tier === SUPPORT_TIER.STANDARD) {
         vendorMap[vendorId].standardCount++;
       }
     }

@@ -5,6 +5,7 @@ import { useEffect, useCallback } from 'react';
 import { getBlockDevices, getQdlDevices } from './useTauri';
 import { POLLING } from '../config';
 import type { BlockDevice } from '../types';
+import { isQdlDevicePath } from '../utils/deviceUtils';
 
 /** Monitor the selected device and clear it if it disconnects */
 export function useDeviceMonitor(
@@ -18,7 +19,7 @@ export function useDeviceMonitor(
     try {
       // QDL (Qualcomm EDL) targets are not block devices; check the QDL list
       // instead, matching useFlashOperation's "gone when none present" semantics.
-      if (selectedDevice.path.startsWith('qdl://')) {
+      if (isQdlDevicePath(selectedDevice.path)) {
         const qdlDevices = await getQdlDevices();
         if (qdlDevices.length === 0) {
           onDeviceDisconnected();

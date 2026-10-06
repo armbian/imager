@@ -10,6 +10,7 @@ import { getOsName } from '../../assets/os-logos';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
 import { formatImageIdentity } from '../../utils';
+import { SLUGS } from '../../config';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { useFlashOperation } from '../../hooks/useFlashOperation';
 import { FlashStageIcon, getStageKey, isIndeterminateStage } from './FlashStageIcon';
@@ -71,7 +72,7 @@ export function FlashProgress({
   const showHeader = stage !== 'authorizing' && stage !== 'error';
   const isError = stage === 'error';
   const isComplete = stage === 'complete';
-  const isCustomIcon = image.is_custom && board.slug === 'custom';
+  const isCustomIcon = image.is_custom && board.slug === SLUGS.CUSTOM;
   const isEdl = isEdlImage(image);
 
   // Glow brightness tracks progress; indeterminate stages sit at mid-glow.

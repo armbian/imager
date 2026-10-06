@@ -4,7 +4,7 @@
 /** Image filtering predicates and filter button definitions shared by image selection UIs */
 
 import { Star, Shield, RefreshCw, AppWindow, Box } from 'lucide-react';
-import type { ImageInfo } from '../types';
+import { IMAGE_STABILITY, type ImageInfo } from '../types';
 import { DESKTOP_ENVIRONMENTS } from './badges';
 
 /** Trunk / rolling-release builds carry "trunk" in their release version */
@@ -14,7 +14,7 @@ export const isTrunkImage = (image: ImageInfo): boolean => image.release.toLower
 export const IMAGE_FILTER_PREDICATES: Record<string, (img: ImageInfo) => boolean> = {
   recommended: (img) => img.promoted === true,
   // Exclude trunk so Stable and Rolling stay mutually exclusive
-  stable: (img) => img.stability === 'stable' && !isTrunkImage(img),
+  stable: (img) => img.stability === IMAGE_STABILITY.STABLE && !isTrunkImage(img),
   rolling: isTrunkImage,
   apps: (img) => !!(img.preinstalled_application && img.preinstalled_application.length > 0),
   // Minimal: no desktop environment and no preinstalled apps
