@@ -42,7 +42,6 @@ export function SettingsButton({ variant = 'floating' }: SettingsButtonProps) {
 
   const { isExiting, handleClose } = useModalExitAnimation({
     onClose: () => setIsSettingsOpen(false),
-    duration: 200,
   });
 
   const handleOpenSettings = () => {

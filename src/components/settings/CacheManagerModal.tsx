@@ -16,7 +16,7 @@ import { BoardBadges } from '../shared/BoardBadges';
 import { BoardImage } from '../shared/BoardImage';
 import { useToasts } from '../../hooks/useToasts';
 import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage } from '../../utils';
-import { EVENTS } from '../../config';
+import { EVENTS, UI } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
@@ -322,7 +322,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
                         <div
                           key={image.path}
                           className="cache-image-row"
-                          style={{ animationDelay: `${index * 25}ms` }}
+                          style={{ animationDelay: `${index * UI.CACHE_ROW_STAGGER_MS}ms` }}
                         >
                           {/* Distro-tinted tile with a white mark anchors each row (matches the OS gallery). */}
                           <div

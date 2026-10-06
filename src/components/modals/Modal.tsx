@@ -16,10 +16,7 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, searchBar, showBack, onBack }: ModalProps) {
-  const { isExiting, handleClose } = useModalExitAnimation({
-    onClose,
-    duration: 200,
-  });
+  const { isExiting, handleClose } = useModalExitAnimation({ onClose });
 
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') {

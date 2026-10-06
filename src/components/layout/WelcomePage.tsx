@@ -6,6 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getBoards, getCachedBoardImage } from '../../hooks/useTauri';
 import { shuffle } from '../../utils';
+import { SUPPORT_TIER, TIMING, UI } from '../../config';
 import { BoardImage } from '../shared';
 import type { BoardInfo } from '../../types';
 
@@ -15,12 +16,8 @@ interface WelcomePageProps {
 }
 
 /** Only showcase well-supported boards on the landing. */
-const TIERS = new Set(['platinum', 'gold', 'silver']);
+const TIERS = new Set<string>([SUPPORT_TIER.PLATINUM]);
 
-/** How many boards flank the focused one on each side of the coverflow. */
-const SIDE = 2;
-/** Auto-advance cadence in milliseconds. */
-const ADVANCE_MS = 3600;
 /** Non-breaking space, used to keep the product name on a single line. */
 const NBSP = String.fromCharCode(160);
 
@@ -38,7 +35,7 @@ export function WelcomePage({ onStart }: WelcomePageProps) {
       .then((boards) => {
         if (!alive) return;
         const top = boards.filter((b) => TIERS.has((b.support_tier || '').toLowerCase()));
-        setPool(shuffle(top).slice(0, 24));
+        setPool(shuffle(top).slice(0, UI.COVERFLOW.POOL_SIZE));
       })
       .catch(() => {
         // Offline or API error: the hero falls back to text only.
@@ -77,7 +74,7 @@ export function WelcomePage({ onStart }: WelcomePageProps) {
     if (reduce) return;
     const id = setInterval(() => {
       setIndex((i) => (i + 1) % deckLen);
-    }, ADVANCE_MS);
+    }, TIMING.COVERFLOW_ADVANCE);
     return () => clearInterval(id);
   }, [deckLen]);
 
@@ -95,16 +92,13 @@ export function WelcomePage({ onStart }: WelcomePageProps) {
             if (off < -deckLen / 2) off += deckLen;
             const abs = Math.abs(off);
             // Slides beyond the visible flank are parked off-stage.
-            if (abs > SIDE) return null;
-            const scale = abs === 0 ? 1 : abs === 1 ? 0.72 : 0.5;
-            const opacity = abs === 0 ? 1 : abs === 1 ? 0.55 : 0.22;
-            const blur = abs === 0 ? 0 : abs === 1 ? 1.5 : 3;
+            if (abs > UI.COVERFLOW.FLANK) return null;
             const style = {
               '--x': off,
-              '--s': scale,
-              opacity,
-              filter: `blur(${blur}px)`,
-              zIndex: 10 - abs,
+              '--s': UI.COVERFLOW.SCALE[abs],
+              opacity: UI.COVERFLOW.OPACITY[abs],
+              filter: `blur(${UI.COVERFLOW.BLUR_PX[abs]}px)`,
+              zIndex: UI.COVERFLOW.Z_BASE - abs,
             } as React.CSSProperties;
             return (
               <div

@@ -24,6 +24,8 @@ export const LINKS = {
 export const TIMING = {
   MOTD_ROTATION: 30000,
   COPIED_NOTIFICATION: 2000,
+  TOAST_DURATION: 3000,
+  COVERFLOW_ADVANCE: 3600,
 } as const;
 
 export const CACHE = {
@@ -136,9 +138,24 @@ export const UI = {
     MAX_INDEX: 18,
     STEP_S: 0.04,
   },
-  /** Modal exit animation duration in milliseconds */
+  /** Modal exit animation duration in milliseconds; mirrors --dur-base */
   MODAL_EXIT_MS: 200,
+  /** Toast exit animation duration; mirrors --dur-medium */
+  TOAST_EXIT_MS: 300,
+  /** Must outlast the last .split.is-entering .side-step delay plus --dur-slow in styles/layout.css */
+  ENTRANCE_MS: 1100,
+  CACHE_ROW_STAGGER_MS: 25,
+  /** Welcome coverflow: per-distance values are indexed by distance from the focused slide */
+  COVERFLOW: {
+    FLANK: 2,
+    POOL_SIZE: 24,
+    SCALE: [1, 0.72, 0.5],
+    OPACITY: [1, 0.55, 0.22],
+    BLUR_PX: [0, 1.5, 3],
+    Z_BASE: 10,
+  },
   SKELETON: {
+    MIN_VISIBLE_MS: 300,
     BOARD_GRID_COUNT: 8,
     LIST_COUNT: 6,
     MANUFACTURER_MODAL: 6,
@@ -150,6 +167,7 @@ export const UI = {
   },
   MARQUEE: {
     DEFAULT_WIDTH: 180,
+    MEASURE_DELAY_MS: 50,
     SEPARATOR_WIDTH: 5,
   },
   /** Armbian board modal image width in pixels */

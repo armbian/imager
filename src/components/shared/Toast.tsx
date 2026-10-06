@@ -4,6 +4,7 @@
 // Auto-dismissing success/error notification toast
 
 import { useState, useEffect } from 'react';
+import { TIMING, UI } from '../../config';
 
 export interface ToastProps {
   message: string;
@@ -12,13 +13,13 @@ export interface ToastProps {
   onClose: () => void;
 }
 
-export function Toast({ message, type, duration = 3000, onClose }: ToastProps) {
+export function Toast({ message, type, duration = TIMING.TOAST_DURATION, onClose }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const outerTimer = setTimeout(() => {
       setIsVisible(false);
-      const innerTimer = setTimeout(onClose, 300);
+      const innerTimer = setTimeout(onClose, UI.TOAST_EXIT_MS);
       return () => clearTimeout(innerTimer);
     }, duration);
 

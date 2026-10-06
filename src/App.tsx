@@ -14,7 +14,7 @@ import { ToastProvider, useToasts } from './hooks/useToasts';
 import { UpdateProvider } from './contexts/UpdateContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
 import { AUTOCONFIG_PROFILE_SELECTED_EVENT } from './components/layout/DevicePanel';
-import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT } from './config';
+import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, UI } from './config';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig } from './types';
 import './styles/index.css';
 
@@ -76,8 +76,7 @@ function AppContent() {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     if (prevShowWelcomeRef.current && !showWelcome) {
       setEntering(true);
-      // Match the longest staggered animation so the class clears before hover state
-      timeoutId = setTimeout(() => setEntering(false), 1100);
+      timeoutId = setTimeout(() => setEntering(false), UI.ENTRANCE_MS);
     }
     prevShowWelcomeRef.current = showWelcome;
     return () => clearTimeout(timeoutId);
