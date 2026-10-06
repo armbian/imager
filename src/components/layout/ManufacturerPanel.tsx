@@ -11,11 +11,8 @@ import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { usePagedGrid } from '../../hooks/usePagedGrid';
 import { ErrorDisplay, SearchBox, GridPager, EmptyState } from '../shared';
 import { DEFAULT_COLOR, staggerDelay } from '../../utils';
-import { VENDOR, UI, PARTNER_TIER_RANK } from '../../config';
+import { VENDOR, UI, PARTNER_TIER_RANK, PARTNER_TIER_UNRANKED } from '../../config';
 import type { BoardInfo, VendorInfo, Manufacturer } from '../../types';
-
-/** Approximate vendor card row height (min-height 206 + row gap) for the fit calc. */
-const CARD_ROW = 224;
 
 function MfrLogo({ manufacturer }: { manufacturer: ManufacturerData }) {
   if (!manufacturer.logo || manufacturer.id === VENDOR.FALLBACK_ID) {
@@ -55,7 +52,7 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
   const sorted = useMemo(() => {
     const rank = (id: string) => {
       const tier = tierMap.get(id);
-      return tier !== undefined ? PARTNER_TIER_RANK[tier] : 99;
+      return tier !== undefined ? PARTNER_TIER_RANK[tier] : PARTNER_TIER_UNRANKED;
     };
     return manufacturers
       .map((m, i) => ({ m, i }))
@@ -63,13 +60,12 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
       .map((x) => x.m);
   }, [manufacturers, tierMap]);
 
-  // Window-adaptive pagination (resets on search change). Logos are light/preloaded, so a high cap (120)
-  // lets the page fill the screen without cutting a screenful in half on large monitors.
+  // Window-adaptive pagination (resets on search change).
   const { setPage, pageCount, safePage, pagedItems: pagedMfrs, measureGrid } = usePagedGrid(
     sorted,
-    CARD_ROW,
+    UI.GRID.CARD_ROW.MANUFACTURER,
     search,
-    120
+    UI.GRID.MANUFACTURER_MAX_PER_PAGE
   );
 
   return (

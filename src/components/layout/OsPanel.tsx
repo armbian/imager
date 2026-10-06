@@ -376,7 +376,7 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
               <SectionHeader icon={Star} title={t('modal.promoted')} color="#f2651f" count={recommended.length} date={formatBuildDate(recommended)} />
               <div
                 className="os-rec-grid"
-                style={{ gridTemplateColumns: `repeat(${Math.min(recommended.length, 3)}, minmax(0, 1fr))` }}
+                style={{ gridTemplateColumns: `repeat(${Math.min(recommended.length, UI.OS_REC_MAX_COLUMNS)}, minmax(0, 1fr))` }}
               >
                 {recommended.map(renderRecommended)}
               </div>

@@ -19,9 +19,6 @@ interface BoardPanelProps {
   onSelect: (board: BoardInfo) => void;
 }
 
-/** Approximate board card row height (min-height 250 + row gap) for the fit calc. */
-const CARD_ROW = 268;
-
 /** Inline board browser: cards with board photo, support-tier badge, vendor label and name. */
 export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
   const { t } = useTranslation();
@@ -53,7 +50,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
   // Window-adaptive pagination (resets when the manufacturer or search changes).
   const { setPage, pageCount, safePage, pagedItems: pagedBoards, measureGrid } = usePagedGrid(
     filteredBoards,
-    CARD_ROW,
+    UI.GRID.CARD_ROW.BOARD,
     `${manufacturer.id}\x1f${search}`
   );
 

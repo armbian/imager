@@ -2,17 +2,9 @@
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { UI } from '../config';
 
-/** Default upper bound, sized to avoid loading too many heavy cards (board
- *  photos) at once. Callers with light cards (vendor logos) can raise it. */
-const DEFAULT_MAX_PER_PAGE = 40;
-// Grid metrics mirrored from CSS (.mfr-grid) for the column/row fit calculation.
-const COL_MIN = 220;
-const GRID_GAP = 18;
-const GRID_PAD = 24;
-/** Always show at least this many full rows so a short window isn't left with a
- *  single lonely row (the page scrolls; bottom padding clears the floating pager). */
-const MIN_ROWS = 2;
+const { COL_MIN, GAP: GRID_GAP, PAD: GRID_PAD, MIN_ROWS } = UI.GRID;
 
 export interface PagedGrid<T> {
   page: number;
@@ -30,10 +22,10 @@ export function usePagedGrid<T>(
   items: T[],
   cardRow: number,
   resetKey: unknown,
-  maxPerPage: number = DEFAULT_MAX_PER_PAGE
+  maxPerPage: number = UI.GRID.MAX_PER_PAGE
 ): PagedGrid<T> {
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState<number>(UI.GRID.INITIAL_PAGE_SIZE);
   const observerRef = useRef<ResizeObserver | null>(null);
 
   // Measure the grid viewport and derive how many cards (cols × rows) fit; callback ref (re)attaches the

@@ -225,7 +225,7 @@ export function DevicePanel({
                     <span className="device-summary__label">{row.label}</span>
                     <span className="device-summary__valueinfo">
                       {/* Long values (e.g. custom image filenames) auto-scroll instead of truncating. */}
-                      <MarqueeText text={row.value} className="device-summary__value" maxWidth={340} />
+                      <MarqueeText text={row.value} className="device-summary__value" maxWidth={UI.MARQUEE.SUMMARY_VALUE_WIDTH} />
                       {row.sub && <span className="device-summary__sub">{row.sub}</span>}
                     </span>
                   </li>
@@ -237,7 +237,7 @@ export function DevicePanel({
                     <MarqueeText
                       text={selectedDevice.model || selectedDevice.name}
                       className="device-summary__targetname"
-                      maxWidth={300}
+                      maxWidth={UI.MARQUEE.SUMMARY_TARGET_WIDTH}
                     />
                     <span className="device-summary__targetsub">
                       {selectedDevice.name}
@@ -354,7 +354,7 @@ export function DevicePanel({
         <div className="device-panel__body">
           {showDeviceSkeleton && (
             <div className="device-grid">
-              {Array.from({ length: UI.SKELETON.DEVICE_MODAL }).map((_, i) => (
+              {Array.from({ length: UI.SKELETON.DEVICE_PANEL }).map((_, i) => (
                 <div key={i} className="device-card is-skeleton">
                   <span className="sk-shim dev-sk-icon" />
                   <span className="device-card__info">
