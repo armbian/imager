@@ -1873,10 +1873,6 @@
 /* SETTINGS BUTTON - glass (moved from layout.css) */
 
 .settings-button {
-  position: fixed;
-  bottom: 12px;
-  right: 14px;
-  z-index: 50;
   width: 40px;
   height: 40px;
   display: flex;
@@ -1921,10 +1917,6 @@
 
 /* Inline variant: sits in the sidebar toolbar next to the custom-image link */
 .settings-button--inline {
-  position: static;
-  bottom: auto;
-  right: auto;
-  z-index: auto;
   width: 40px;
   height: 40px;
   flex-shrink: 0;

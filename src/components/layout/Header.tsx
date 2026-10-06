@@ -119,7 +119,7 @@ export function Header({
             </div>
           )}
           {/* Settings lives top-right, freeing the sidebar */}
-          {!hideSettings && <SettingsButton variant="inline" />}
+          {!hideSettings && <SettingsButton />}
         </div>
       </header>
     </>
