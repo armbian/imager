@@ -10,7 +10,7 @@ use armbian_write_conf::{write_file_into_bare_ext4_image, write_file_into_image,
 use serde::Deserialize;
 
 use crate::config;
-use crate::utils::unique_suffix;
+use crate::utils::{leftover_is_stale, sweep_dir, unique_suffix};
 use crate::{log_error, log_info, log_warn};
 
 /// Login shell choices offered for the first user.
@@ -244,6 +244,7 @@ pub fn inject_into_bare_ext4_image(
     image_path: &Path,
     config: &AutoconfigConfig,
 ) -> Result<(), WriteConfError> {
+    restrict_to_owner(image_path, config::autoconfig::FILE_MODE).map_err(WriteConfError::Io)?;
     let preset = render_preset(config);
     log_info!(
         "autoconfig",
@@ -273,6 +274,18 @@ pub fn inject_into_bare_ext4_image(
             Err(e)
         }
     }
+}
+
+#[cfg(unix)]
+fn restrict_to_owner(path: &Path, mode: u32) -> std::io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))
+}
+
+// Elsewhere the per-user cache directory's ACL applies.
+#[cfg(not(unix))]
+fn restrict_to_owner(_path: &Path, _mode: u32) -> std::io::Result<()> {
+    Ok(())
 }
 
 /// A per-flash copy of an image with the preset injected; the file is removed on drop.
@@ -306,14 +319,15 @@ fn no_ext4_rootfs(e: &WriteConfError) -> String {
     )
 }
 
-/// Copy `source` into `temp_dir` and inject the preset there.
-pub fn prepare_working_copy(
-    source: &Path,
-    temp_dir: &Path,
-    config: &AutoconfigConfig,
-) -> Result<WorkingCopy, String> {
+fn create_private_copy(source: &Path, temp_dir: &Path) -> Result<WorkingCopy, String> {
+    // set_permissions follows links, so a linked dir would hand the chmod to its target.
+    if std::fs::symlink_metadata(temp_dir).is_ok_and(|m| m.file_type().is_symlink()) {
+        return Err("The autoconfig temp directory is a link; refusing to use it".to_string());
+    }
     std::fs::create_dir_all(temp_dir)
         .map_err(|e| format!("Failed to create autoconfig temp directory: {}", e))?;
+    restrict_to_owner(temp_dir, config::autoconfig::DIR_MODE)
+        .map_err(|e| format!("Failed to protect autoconfig temp directory: {}", e))?;
 
     let stem = source.file_name().map_or_else(
         || config::autoconfig::COPY_FALLBACK_NAME.into(),
@@ -329,15 +343,34 @@ pub fn prepare_working_copy(
         source.display(),
         copy.path.display()
     );
+    // fs::copy carries the source's permission bits over.
     std::fs::copy(source, &copy.path)
         .map_err(|e| format!("Failed to copy image for autoconfig: {}", e))?;
+    restrict_to_owner(&copy.path, config::autoconfig::FILE_MODE)
+        .map_err(|e| format!("Failed to protect the autoconfig working copy: {}", e))?;
+    Ok(copy)
+}
 
+/// Copy `source` into `temp_dir` and inject the preset there.
+pub fn prepare_working_copy(
+    source: &Path,
+    temp_dir: &Path,
+    config: &AutoconfigConfig,
+) -> Result<WorkingCopy, String> {
+    let copy = create_private_copy(source, temp_dir)?;
     inject_into_image(&copy.path, config).map_err(|e| match e {
         WriteConfError::UnsupportedImage(_) | WriteConfError::NoExt4Rootfs(_) => no_ext4_rootfs(&e),
         other => format!("Failed to apply autoconfig profile: {}", other),
     })?;
 
     Ok(copy)
+}
+
+/// Remove the working copies a crashed or killed session left in `temp_dir`; subdirectories are kept.
+pub fn sweep_stale_working_copies(temp_dir: &Path) -> usize {
+    sweep_dir("autoconfig", temp_dir, |name, meta| {
+        !meta.is_dir() && leftover_is_stale(name, meta.modified().ok())
+    })
 }
 
 #[cfg(test)]
@@ -450,6 +483,77 @@ mod tests {
         assert_eq!(std::fs::read(&source).unwrap(), original);
         assert_eq!(std::fs::read_dir(&temp_dir).unwrap().count(), 0);
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn working_copy_is_owner_only_before_the_preset_lands() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source.img");
+        std::fs::write(&source, b"image").unwrap();
+        std::fs::set_permissions(&source, std::fs::Permissions::from_mode(0o644)).unwrap();
+        let temp_dir = dir.path().join("work");
+
+        let copy = create_private_copy(&source, &temp_dir).unwrap();
+        let mode = |p: &Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode(copy.path()), config::autoconfig::FILE_MODE);
+        assert_eq!(mode(&temp_dir), config::autoconfig::DIR_MODE);
+        assert_eq!(mode(&source), 0o644, "the source keeps its own mode");
+        drop(copy);
+        assert_eq!(std::fs::read_dir(&temp_dir).unwrap().count(), 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_temp_dir_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source.img");
+        std::fs::write(&source, b"image").unwrap();
+        let elsewhere = dir.path().join("elsewhere");
+        std::fs::create_dir_all(&elsewhere).unwrap();
+        let link = dir.path().join("work");
+        std::os::unix::fs::symlink(&elsewhere, &link).unwrap();
+        assert!(create_private_copy(&source, &link).is_err());
+        assert_eq!(std::fs::read_dir(&elsewhere).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn the_startup_sweep_removes_only_stale_copies_in_its_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        let temp_dir = dir.path().join("work");
+        std::fs::create_dir_all(temp_dir.join("nested")).unwrap();
+        let ours = temp_dir.join(format!("{}.1.img", std::process::id()));
+        let junk = temp_dir.join("leftover.img");
+        let fresh = temp_dir.join("fresh.img");
+        let nested = temp_dir.join("nested").join("1.1.img");
+        let outside = dir.path().join("1.1.img");
+        for path in [&ours, &junk, &fresh, &nested, &outside] {
+            std::fs::write(path, b"PRESET_USER_PASSWORD=x").unwrap();
+        }
+        filetime::set_file_mtime(&junk, filetime::FileTime::zero()).unwrap();
+        #[cfg(unix)]
+        let dead = {
+            let dead = temp_dir.join(format!("{}.1.img", i32::MAX));
+            std::fs::write(&dead, b"x").unwrap();
+            dead
+        };
+
+        let removed = sweep_stale_working_copies(&temp_dir);
+        assert!(ours.exists(), "a copy of this process is in use");
+        assert!(!junk.exists());
+        assert!(fresh.exists(), "no owner pid and still recent");
+        assert!(
+            nested.exists() && outside.exists(),
+            "nothing outside the dir itself"
+        );
+        #[cfg(unix)]
+        {
+            assert!(!dead.exists(), "the process that made it is gone");
+            assert_eq!(removed, 2);
+        }
+        #[cfg(not(unix))]
+        assert_eq!(removed, 1);
     }
 
     #[test]
