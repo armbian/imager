@@ -12,7 +12,12 @@ use std::time::SystemTime;
 use filetime::FileTime;
 use once_cell::sync::Lazy;
 
-use crate::utils::{assets_dir, images_dir, parse_armbian_filename, validate_cache_path};
+use crate::config::cache::UFS_PRESET_PURGE_MARKER;
+use crate::config::images::CACHED_IMAGE_EXT;
+use crate::qdl::boards::is_ufs_build_filename;
+use crate::utils::{
+    app_cache_dir, assets_dir, images_dir, parse_armbian_filename, validate_path_in_cache,
+};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "cache";
@@ -449,8 +454,11 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
         .map_err(|e| format!("Failed to acquire cache lock: {}", e))?;
 
     let cache_dir = get_images_cache_dir();
-    let file_path = cache_dir.join(filename);
+    remove_cached_file(&cache_dir, filename)?;
+    calculate_cache_size_internal(&cache_dir, &assets_dir())
+}
 
+fn remove_cached_file(cache_dir: &Path, filename: &str) -> Result<(), String> {
     if filename.contains("..") || filename.contains('/') || filename.contains('\\') {
         log_error!(
             MODULE,
@@ -459,6 +467,8 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
         );
         return Err("Invalid filename".to_string());
     }
+
+    let file_path = cache_dir.join(filename);
 
     if !file_path.exists() {
         return Err(format!("File not found in cache: {}", filename));
@@ -469,7 +479,7 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
     }
 
     // Confirm the canonical path is still inside the cache directory.
-    if let Err(e) = validate_cache_path(&file_path) {
+    if let Err(e) = validate_path_in_cache(&file_path, cache_dir) {
         log_error!(
             MODULE,
             "Attempted to delete file outside cache: {}: {}",
@@ -485,13 +495,96 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
     })?;
 
     log_info!(MODULE, "Deleted cached image: {}", filename);
+    Ok(())
+}
 
-    calculate_cache_size_internal(&cache_dir, &assets_dir())
+/// Drop cached UFS builds once per install: v2.0.2 to v2.0.4 injected the autoconfig preset into them in place (#196).
+pub fn purge_tainted_ufs_images() {
+    let _lock = match CACHE_LOCK.lock() {
+        Ok(guard) => guard,
+        Err(e) => {
+            log_error!(MODULE, "Failed to acquire cache lock: {}", e);
+            return;
+        }
+    };
+
+    let marker = app_cache_dir().join(UFS_PRESET_PURGE_MARKER);
+    purge_tainted_ufs_images_internal(&get_images_cache_dir(), &marker);
+}
+
+/// Returns the number of images removed; writes `marker` only when every removal succeeded.
+fn purge_tainted_ufs_images_internal(images: &Path, marker: &Path) -> usize {
+    if marker.exists() {
+        return 0;
+    }
+
+    let entries = match fs::read_dir(images) {
+        Ok(entries) => Some(entries),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+        Err(e) => {
+            log_warn!(MODULE, "Failed to read cache for the UFS purge: {}", e);
+            return 0;
+        }
+    };
+
+    let mut removed = 0;
+    let mut failed = 0;
+    for entry in entries.into_iter().flatten() {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(e) => {
+                log_warn!(
+                    MODULE,
+                    "Failed to read a cache entry for the UFS purge: {}",
+                    e
+                );
+                failed += 1;
+                continue;
+            }
+        };
+        let Some(filename) = entry.file_name().to_str().map(str::to_string) else {
+            continue;
+        };
+        if !filename.ends_with(CACHED_IMAGE_EXT) || !is_ufs_build_filename(&filename) {
+            continue;
+        }
+        log_info!(
+            MODULE,
+            "Purging UFS image cached before the #196 fix: {}",
+            filename
+        );
+        match remove_cached_file(images, &filename) {
+            Ok(()) => removed += 1,
+            Err(e) => {
+                log_warn!(MODULE, "Failed to purge {}: {}", filename, e);
+                failed += 1;
+            }
+        }
+    }
+
+    if failed > 0 {
+        log_warn!(
+            MODULE,
+            "{} cached UFS images could not be purged, retrying next start",
+            failed
+        );
+        return removed;
+    }
+
+    if let Some(parent) = marker.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    match fs::write(marker, b"") {
+        Ok(()) => log_info!(MODULE, "UFS cache purge done, {} images removed", removed),
+        Err(e) => log_warn!(MODULE, "Failed to write UFS purge marker: {}", e),
+    }
+    removed
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::images::DOWNLOAD_SUFFIX;
     use std::time::Duration;
 
     struct Fixture {
@@ -587,6 +680,51 @@ mod tests {
         assert!(f.assets.is_dir());
         assert_eq!(fs::read_dir(&f.images).unwrap().count(), 0);
         assert_eq!(fs::read_dir(&f.assets).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn ufs_purge_runs_once_and_spares_other_images() {
+        let f = fixture();
+        let ufs = "Armbian-unofficial_26.08.0-trunk_Radxa-dragon-q6a_resolute_edge_7.1.3_gnome-ufs_desktop.img";
+        let sd = "Armbian-unofficial_26.08.0-trunk_Radxa-dragon-q6a_resolute_edge_7.1.3_gnome_desktop.img";
+        let marker = f._root.path().join(UFS_PRESET_PURGE_MARKER);
+        let kernel_ufs = "Armbian_26.8.1_Radxa-dragon-q6a_trixie_current_6.18.2-ufs_minimal.img";
+        let partial = format!("{kernel_ufs}.xz{DOWNLOAD_SUFFIX}");
+        for name in [ufs, sd, kernel_ufs, partial.as_str()] {
+            fs::write(f.images.join(name), b"x").unwrap();
+        }
+
+        assert_eq!(purge_tainted_ufs_images_internal(&f.images, &marker), 2);
+        assert!(!f.images.join(ufs).exists());
+        assert!(!f.images.join(kernel_ufs).exists());
+        assert!(f.images.join(sd).exists());
+        assert!(f.images.join(&partial).exists());
+        assert!(marker.exists());
+
+        fs::write(f.images.join(ufs), b"x").unwrap();
+        assert_eq!(purge_tainted_ufs_images_internal(&f.images, &marker), 0);
+        assert!(f.images.join(ufs).exists());
+    }
+
+    #[test]
+    fn ufs_purge_of_unreadable_dir_leaves_no_marker() {
+        let root = tempfile::tempdir().unwrap();
+        let not_a_dir = root.path().join("images");
+        fs::write(&not_a_dir, b"x").unwrap();
+        let marker = root.path().join(UFS_PRESET_PURGE_MARKER);
+        assert_eq!(purge_tainted_ufs_images_internal(&not_a_dir, &marker), 0);
+        assert!(!marker.exists());
+    }
+
+    #[test]
+    fn ufs_purge_of_missing_dir_still_marks_done() {
+        let root = tempfile::tempdir().unwrap();
+        let marker = root.path().join(UFS_PRESET_PURGE_MARKER);
+        assert_eq!(
+            purge_tainted_ufs_images_internal(&root.path().join("images"), &marker),
+            0
+        );
+        assert!(marker.exists());
     }
 
     #[test]

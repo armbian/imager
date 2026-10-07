@@ -159,6 +159,9 @@ pub mod images {
 
     /// Temporary download file suffix
     pub const DOWNLOAD_SUFFIX: &str = ".downloading";
+
+    /// Extension of a finished, decompressed image in the cache
+    pub const CACHED_IMAGE_EXT: &str = ".img";
 }
 
 /// Cache management settings
@@ -168,6 +171,9 @@ pub mod cache {
 
     /// A temp leftover with no live owner pid is removed at startup once older than this
     pub const STALE_TEMP_SECS: u64 = 12 * 60 * 60;
+
+    /// Marker in the app cache root: the one-time purge of UFS images tainted by issue #196 ran
+    pub const UFS_PRESET_PURGE_MARKER: &str = ".ufs-preset-purge-done";
 }
 
 /// Bus types for the dev scenarios presets, model and vdisk; same strings `devices/types.rs` emits
