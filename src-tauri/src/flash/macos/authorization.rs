@@ -24,6 +24,8 @@ pub struct SavedAuthorization {
     pub auth_ref: SafeAuthRef,
     pub external_form: AuthorizationExternalForm,
     pub device_path: String,
+    /// Flash generation current when this was saved
+    pub saved_at: u64,
 }
 
 /// Global state to store authorization between request and flash
@@ -93,6 +95,7 @@ pub fn request_authorization(target: &FlashTarget) -> Result<bool, String> {
             auth_ref: SafeAuthRef(auth_ref),
             external_form,
             device_path: raw_device,
+            saved_at: crate::flash::current_generation(),
         });
         if let Some(old) = replaced {
             AuthorizationFree(old.auth_ref.0, 0);
@@ -103,9 +106,15 @@ pub fn request_authorization(target: &FlashTarget) -> Result<bool, String> {
     }
 }
 
-/// Free the saved authorization, if any; the flash that would have used it returned early.
-pub fn discard_saved_authorization() {
-    let saved = SAVED_AUTH.lock().unwrap_or_else(|p| p.into_inner()).take();
+/// Free the authorization saved before flash `generation` began, if that flash left it unused.
+pub fn discard_saved_authorization(generation: u64) {
+    let saved = {
+        let mut guard = SAVED_AUTH.lock().unwrap_or_else(|p| p.into_inner());
+        match guard.as_ref() {
+            Some(auth) if crate::flash::saved_before(auth.saved_at, generation) => guard.take(),
+            _ => None,
+        }
+    };
     if let Some(auth) = saved {
         log_info!(
             MODULE,

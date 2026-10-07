@@ -39,12 +39,22 @@ pub struct OpenDeviceResult {
     pub auth_ref: SendableAuthRef,
 }
 
-/// Open device using previously saved authorization
-pub fn open_device_with_saved_auth(device_path: &str) -> Result<OpenDeviceResult, String> {
+/// Open device using the authorization saved before flash `generation` began
+pub fn open_device_with_saved_auth(
+    device_path: &str,
+    generation: u64,
+) -> Result<OpenDeviceResult, String> {
     let mut saved_guard = SAVED_AUTH.lock().unwrap();
-    let auth = saved_guard
-        .take()
-        .ok_or("No authorization saved - call request_authorization first")?;
+    // A newer authorization belongs to a later flash: leave it for that one.
+    if !saved_guard
+        .as_ref()
+        .is_some_and(|auth| crate::flash::saved_before(auth.saved_at, generation))
+    {
+        return Err("No authorization saved - call request_authorization first".to_string());
+    }
+    let Some(auth) = saved_guard.take() else {
+        return Err("No authorization saved - call request_authorization first".to_string());
+    };
 
     if auth.device_path != device_path {
         // Restore the saved auth before bailing.
@@ -294,17 +304,12 @@ pub async fn flash_image(
 
     // Reuse the auth captured earlier, so no dialog appears now.
     log_debug!(MODULE, "Opening device with saved authorization");
-    let open_result = open_device_with_saved_auth(&raw_device)?;
+    let open_result = open_device_with_saved_auth(&raw_device, state.session_generation())?;
     let mut device = open_result.file;
     let device_fd = device.as_raw_fd();
     let auth_ref_wrapper = open_result.auth_ref;
 
     log_debug!(MODULE, "Keeping authorization ref alive during flash");
-
-    {
-        let mut saved = SAVED_AUTH.lock().unwrap();
-        *saved = None;
-    }
 
     // Delegate to an inner fn so we can always free the auth ref afterward.
     let result = match check_opened_device(&device, target) {
@@ -571,6 +576,54 @@ mod tests {
             std::fs::read(&disk).unwrap() == before,
             "nothing may be erased"
         );
+    }
+
+    #[tokio::test]
+    async fn a_cancelled_flash_never_writes_once_the_next_one_starts() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let image = image(dir, 1024 * 1024);
+        let (disk, file) = vdisk(dir, 16 * 1024 * 1024);
+        let before: Vec<u8> = (0..16 * 1024 * 1024).map(|i| (i % 5) as u8 + 1).collect();
+        std::fs::write(&disk, &before).unwrap();
+        let state = Arc::new(FlashState::new());
+        let old = state.begin_session().await.unwrap();
+        state.cancel();
+        let next = {
+            let state = state.clone();
+            tokio::spawn(async move { state.begin_session().await })
+        };
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+
+        let err = flash_to_vdisk(&image, "test", file, state.clone(), false)
+            .await
+            .unwrap_err();
+        drop(old);
+        let next = next.await.unwrap();
+
+        assert_eq!(err, crate::flash::cancelled_err());
+        assert!(
+            std::fs::read(&disk).unwrap() == before,
+            "nothing may be erased"
+        );
+        assert!(next.is_ok());
+        assert!(state.ensure_not_cancelled().is_ok());
+    }
+
+    #[test]
+    fn a_newer_authorization_is_left_for_its_own_flash() {
+        use super::super::authorization::SavedAuthorization;
+        use super::super::bindings::{AuthorizationExternalForm, SafeAuthRef};
+        *SAVED_AUTH.lock().unwrap() = Some(SavedAuthorization {
+            auth_ref: SafeAuthRef(std::ptr::null_mut()),
+            external_form: AuthorizationExternalForm { bytes: [0; 32] },
+            device_path: "/dev/rdisk99".to_string(),
+            saved_at: 7,
+        });
+
+        assert!(open_device_with_saved_auth("/dev/rdisk99", 7).is_err());
+        let kept = SAVED_AUTH.lock().unwrap().take();
+        assert_eq!(kept.map(|auth| auth.saved_at), Some(7));
     }
 
     #[tokio::test]

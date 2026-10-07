@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use tauri::State;
 
 use crate::autoconfig::{prepare_flash_copy, PrepError};
-use crate::flash::reject_simulated;
+use crate::flash::{reject_simulated, FlashSession, FlashState, SessionRefusal};
 use crate::qdl;
 use crate::qdl::QdlDevice;
 use crate::utils::{autoconfig_temp_dir, qdl_temp_dir};
@@ -25,6 +25,26 @@ fn tag_join_error(e: tokio::task::JoinError) -> String {
     } else {
         format!("{} {}", qdl::TAG_QDL_ERROR, msg)
     }
+}
+
+struct ExtractionCleanup(PathBuf);
+
+impl Drop for ExtractionCleanup {
+    fn drop(&mut self) {
+        qdl::extract::cleanup_extraction(&self.0);
+    }
+}
+
+/// One flash at a time, as for block devices; a cancel maps to the QDL cancel error.
+async fn begin_qdl_session(flash_state: &FlashState) -> Result<FlashSession, String> {
+    flash_state.begin_session().await.map_err(|refusal| {
+        let message = match refusal {
+            SessionRefusal::Cancelled(_) => qdl::QDL_CANCELLED_ERROR.to_string(),
+            SessionRefusal::Busy(_) => refusal.message(),
+        };
+        log_error!("qdl_operations", "QDL flash not started: {}", message);
+        message
+    })
 }
 
 /// Detect connected USB devices in Qualcomm EDL mode (VID:PID 05c6:9008); empty list if none.
@@ -70,7 +90,7 @@ pub async fn flash_qdl_image(
     );
 
     let flash_state = state.flash_state.clone();
-    flash_state.reset();
+    let session = begin_qdl_session(&flash_state).await?;
 
     #[cfg(debug_assertions)]
     if let Some(result) = super::dev_scenarios::intercept_qdl_flash(
@@ -104,6 +124,9 @@ pub async fn flash_qdl_image(
     let flash_dir_clone = flash_dir.clone();
     let extract_root = qdl::extract::extraction_dir(&extract_dir);
     let result = tokio::task::spawn_blocking(move || {
+        let _session = session;
+        // Dropped before the session, panics included: the next flash extracts into the same directory.
+        let _extraction = ExtractionCleanup(extract_dir);
         qdl::flash::qdl_flash(
             &flash_dir_clone,
             &extract_root,
@@ -114,8 +137,6 @@ pub async fn flash_qdl_image(
     })
     .await
     .map_err(tag_join_error)?;
-
-    qdl::extract::cleanup_extraction(&extract_dir);
 
     match &result {
         Ok(()) => {
@@ -149,7 +170,7 @@ pub async fn flash_qdl_ufs_image(
     );
 
     let flash_state = state.flash_state.clone();
-    flash_state.reset();
+    let session = begin_qdl_session(&flash_state).await?;
 
     let image_path = PathBuf::from(&image_path);
 
@@ -221,6 +242,7 @@ pub async fn flash_qdl_ufs_image(
 
     // qdlrs is synchronous, so run the flash off the async runtime.
     let result = tokio::task::spawn_blocking(move || {
+        let _session = session;
         qdl::flash::qdl_flash_ufs(
             &write_path,
             &loader_path,
@@ -239,4 +261,39 @@ pub async fn flash_qdl_ufs_image(
         Err(e) => log_error!("qdl_operations", "QDL UFS flash failed: {}", e),
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use std::time::Duration;
+
+    #[tokio::test]
+    async fn the_extraction_is_gone_before_the_next_flash_starts() {
+        let dir = tempfile::tempdir().unwrap();
+        let extract_dir = dir.path().join("qdl-extract");
+        std::fs::create_dir_all(extract_dir.join("flash")).unwrap();
+        let state = Arc::new(FlashState::new());
+        let session = state.begin_session().await.unwrap();
+        let next = {
+            let state = state.clone();
+            let extract_dir = extract_dir.clone();
+            tokio::spawn(async move {
+                let next = state.begin_session().await;
+                (next.is_ok(), extract_dir.exists())
+            })
+        };
+
+        let held = extract_dir.clone();
+        tokio::task::spawn_blocking(move || {
+            let _session = session;
+            let _extraction = ExtractionCleanup(held);
+            std::thread::sleep(Duration::from_millis(300));
+        })
+        .await
+        .unwrap();
+
+        assert_eq!(next.await.unwrap(), (true, false));
+    }
 }

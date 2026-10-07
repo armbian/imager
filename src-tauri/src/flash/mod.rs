@@ -16,10 +16,13 @@ mod windows;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use tokio::sync::Mutex;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::{Mutex, OwnedMutexGuard};
 
 #[cfg(target_os = "windows")]
 use crate::devices::FlashTarget;
+use crate::log_info;
 
 /// QDL (Qualcomm EDL) progress state. Uses `std::sync::Mutex` because `qdl_flash`
 /// runs in `spawn_blocking`.
@@ -52,6 +55,58 @@ impl QdlProgress {
     }
 }
 
+// Each flash command takes the next number.
+static GENERATION: AtomicU64 = AtomicU64::new(0);
+
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub(crate) fn current_generation() -> u64 {
+    GENERATION.load(Ordering::SeqCst)
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum SessionRefusal {
+    Cancelled(u64),
+    Busy(u64),
+}
+
+impl SessionRefusal {
+    pub fn generation(&self) -> u64 {
+        match self {
+            SessionRefusal::Cancelled(g) | SessionRefusal::Busy(g) => *g,
+        }
+    }
+
+    /// Message for the block-device path; QDL callers map `Cancelled` to their own error.
+    pub fn message(&self) -> String {
+        match self {
+            SessionRefusal::Cancelled(_) => cancelled_err(),
+            SessionRefusal::Busy(_) => crate::utils::tagged(
+                crate::utils::TAG_FLASH_BUSY,
+                crate::config::flash::BUSY_ERROR,
+            ),
+        }
+    }
+}
+
+pub struct FlashSession {
+    generation: u64,
+    _slot: OwnedMutexGuard<()>,
+}
+
+struct WaitingGuard<'a>(&'a AtomicU64);
+
+impl Drop for WaitingGuard<'_> {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+impl FlashSession {
+    pub fn generation(&self) -> u64 {
+        self.generation
+    }
+}
+
 /// Flash progress state shared between frontend and backend
 pub struct FlashState {
     pub total_bytes: AtomicU64,
@@ -62,6 +117,10 @@ pub struct FlashState {
     pub error: Mutex<Option<String>>,
     pub qdl: QdlProgress,
     prep_stage: std::sync::Mutex<Option<&'static str>>,
+    slot: Arc<Mutex<()>>,
+    session_generation: AtomicU64,
+    cancelled_generation: AtomicU64,
+    waiting: AtomicU64,
 }
 
 impl FlashState {
@@ -75,16 +134,73 @@ impl FlashState {
             error: Mutex::new(None),
             qdl: QdlProgress::new(),
             prep_stage: std::sync::Mutex::new(None),
+            slot: Arc::new(Mutex::new(())),
+            session_generation: AtomicU64::new(0),
+            cancelled_generation: AtomicU64::new(0),
+            waiting: AtomicU64::new(0),
         }
     }
 
-    /// Start of a new operation: clears progress and any earlier cancel.
-    pub fn reset(&self) {
-        self.reset_progress();
-        self.is_cancelled.store(false, Ordering::SeqCst);
+    /// Cancel every flash started so far, including one still waiting for its turn.
+    pub fn cancel(&self) {
+        // The global counter, so a flash that has just taken its number is covered too.
+        self.cancelled_generation
+            .fetch_max(GENERATION.load(Ordering::SeqCst), Ordering::SeqCst);
+        self.is_cancelled.store(true, Ordering::SeqCst);
     }
 
-    /// Writers call this instead of `reset`, so a cancel pressed before the write still stops it.
+    /// Wait for the previous flash to release the device, then clear progress.
+    pub async fn begin_session(&self) -> Result<FlashSession, SessionRefusal> {
+        self.begin_session_within(Duration::from_secs(crate::config::flash::BUSY_WAIT_SECS))
+            .await
+    }
+
+    async fn begin_session_within(&self, wait: Duration) -> Result<FlashSession, SessionRefusal> {
+        let generation = GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+        self.waiting.fetch_add(1, Ordering::SeqCst);
+        // Released after the progress reset, so a poll that sees no waiter never reads the previous flash.
+        let _waiting = WaitingGuard(&self.waiting);
+        let deadline = Instant::now() + wait;
+        let mut waited = false;
+        loop {
+            if self.cancelled_generation.load(Ordering::SeqCst) >= generation {
+                return Err(SessionRefusal::Cancelled(generation));
+            }
+            if let Ok(slot) = self.slot.clone().try_lock_owned() {
+                self.session_generation.store(generation, Ordering::SeqCst);
+                self.reset_progress();
+                // Clear first, then re-check, so a cancel landing in between is never lost.
+                self.is_cancelled.store(false, Ordering::SeqCst);
+                if self.cancelled_generation.load(Ordering::SeqCst) >= generation {
+                    self.is_cancelled.store(true, Ordering::SeqCst);
+                }
+                return Ok(FlashSession {
+                    generation,
+                    _slot: slot,
+                });
+            }
+            if Instant::now() >= deadline {
+                return Err(SessionRefusal::Busy(generation));
+            }
+            if !waited {
+                waited = true;
+                log_info!("flash", "Waiting for the previous flash to finish");
+            }
+            tokio::time::sleep(Duration::from_millis(crate::config::flash::BUSY_POLL_MS)).await;
+        }
+    }
+
+    /// True while a flash waits for its turn; progress still describes the previous flash then.
+    pub fn is_waiting(&self) -> bool {
+        self.waiting.load(Ordering::SeqCst) > 0
+    }
+
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+    pub fn session_generation(&self) -> u64 {
+        self.session_generation.load(Ordering::SeqCst)
+    }
+
+    /// Writers call this instead of a full reset, so a cancel pressed before the write still stops it.
     pub fn reset_progress(&self) {
         self.total_bytes.store(0, Ordering::SeqCst);
         self.written_bytes.store(0, Ordering::SeqCst);
@@ -120,10 +236,17 @@ pub use windows::flash_image;
 #[cfg(all(debug_assertions, target_os = "macos"))]
 pub(crate) use macos::flash_to_vdisk;
 
-/// Drop an authorization saved for a write that is not going to happen.
-pub fn discard_saved_authorization() {
+/// Drop an authorization saved before flash `generation` began; a newer one belongs to a later flash.
+pub fn discard_saved_authorization(generation: u64) {
     #[cfg(target_os = "macos")]
-    macos::discard_saved_authorization();
+    macos::discard_saved_authorization(generation);
+    #[cfg(not(target_os = "macos"))]
+    let _ = generation;
+}
+
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+pub(crate) fn saved_before(saved_at: u64, generation: u64) -> bool {
+    saved_at < generation
 }
 
 #[cfg(target_os = "linux")]
@@ -298,10 +421,100 @@ mod tests {
             state.ensure_not_cancelled().unwrap_err(),
             "[CANCELLED] Flash cancelled"
         );
-        state.set_prep_stage(Some(crate::config::flash::PREP_STAGE_APPLYING_PROFILE));
-        state.reset();
+    }
+
+    fn spawn_session(
+        state: &Arc<FlashState>,
+        wait: Duration,
+    ) -> tokio::task::JoinHandle<Result<FlashSession, SessionRefusal>> {
+        let state = state.clone();
+        tokio::spawn(async move { state.begin_session_within(wait).await })
+    }
+
+    #[tokio::test]
+    async fn a_cancel_survives_a_new_flash_starting() {
+        let state = Arc::new(FlashState::new());
+        let old = state.begin_session().await.unwrap();
+        state.cancel();
+        let new = spawn_session(&state, Duration::from_secs(5));
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        assert!(state.ensure_not_cancelled().is_err(), "old flash must stop");
+        assert!(!new.is_finished(), "new flash waits for the old one");
+        drop(old);
+        let new = new.await.unwrap().unwrap();
         assert!(state.ensure_not_cancelled().is_ok());
-        assert_eq!(state.prep_stage(), None);
+        assert!(new.generation() > 0);
+    }
+
+    #[tokio::test]
+    async fn a_cancel_while_waiting_stops_the_waiting_flash() {
+        let state = Arc::new(FlashState::new());
+        let old = state.begin_session().await.unwrap();
+        let new = spawn_session(&state, Duration::from_secs(5));
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        state.cancel();
+
+        assert!(matches!(
+            new.await.unwrap().err(),
+            Some(SessionRefusal::Cancelled(_))
+        ));
+        assert!(state.ensure_not_cancelled().is_err());
+        drop(old);
+        assert!(state.begin_session().await.is_ok());
+        assert!(state.ensure_not_cancelled().is_ok());
+    }
+
+    #[tokio::test]
+    async fn a_waiting_flash_hides_the_previous_progress() {
+        let state = Arc::new(FlashState::new());
+        let old = state.begin_session().await.unwrap();
+        state.written_bytes.store(42, Ordering::SeqCst);
+        assert!(!state.is_waiting());
+        let new = spawn_session(&state, Duration::from_secs(5));
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        assert!(state.is_waiting());
+        drop(old);
+        let _new = new.await.unwrap().unwrap();
+        assert!(!state.is_waiting());
+        assert_eq!(state.written_bytes.load(Ordering::SeqCst), 0);
+    }
+
+    #[tokio::test]
+    async fn a_refused_flash_stops_waiting() {
+        let state = Arc::new(FlashState::new());
+        let _old = state.begin_session().await.unwrap();
+        let refusal = spawn_session(&state, Duration::from_millis(200))
+            .await
+            .unwrap();
+        assert!(matches!(refusal.err(), Some(SessionRefusal::Busy(_))));
+        assert!(!state.is_waiting());
+    }
+
+    #[tokio::test]
+    async fn a_stuck_flash_refuses_the_next_one() {
+        let state = Arc::new(FlashState::new());
+        let _old = state.begin_session().await.unwrap();
+        let new = spawn_session(&state, Duration::from_millis(300));
+        let refusal = new.await.unwrap().err().unwrap();
+        assert!(matches!(refusal, SessionRefusal::Busy(_)));
+        assert!(refusal.message().starts_with("[FLASH_BUSY]"));
+    }
+
+    #[test]
+    fn a_cancel_covers_a_flash_that_only_took_its_number() {
+        let state = FlashState::new();
+        let generation = GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+        state.cancel();
+        assert!(state.cancelled_generation.load(Ordering::SeqCst) >= generation);
+    }
+
+    #[test]
+    fn only_an_authorization_older_than_the_flash_is_discarded() {
+        assert!(saved_before(4, 5));
+        assert!(!saved_before(5, 5));
+        assert!(!saved_before(6, 5));
     }
 
     #[test]

@@ -182,6 +182,8 @@ export interface FlashProgress {
   partitions_written: number;
   /** Autoconfig work before the write (image copy, then profile injection); null otherwise */
   prep_stage: FlashPrepStage | null;
+  /** A flash waits for the previous one to finish; the other fields still describe that one */
+  is_waiting: boolean;
 }
 
 export type FlashPrepStage = (typeof FLASH_PREP_STAGE)[keyof typeof FLASH_PREP_STAGE];

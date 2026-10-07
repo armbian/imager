@@ -38,6 +38,8 @@ pub struct FlashProgress {
     pub partitions_written: u64,
     /// Autoconfig work before the write: "copying", then "applying_profile"
     pub prep_stage: Option<&'static str>,
+    /// A flash is waiting for the previous one to finish; every other field still describes that one
+    pub is_waiting: bool,
 }
 
 /// Get current download progress
@@ -78,6 +80,8 @@ pub async fn get_download_progress(state: State<'_, AppState>) -> Result<Downloa
 #[tauri::command]
 pub async fn get_flash_progress(state: State<'_, AppState>) -> Result<FlashProgress, String> {
     let fs = &state.flash_state;
+    // Read before the progress fields: the waiter clears it only after resetting them.
+    let is_waiting = fs.is_waiting();
 
     let total = fs.total_bytes.load(std::sync::atomic::Ordering::SeqCst);
     let written = fs.written_bytes.load(std::sync::atomic::Ordering::SeqCst);
@@ -131,6 +135,7 @@ pub async fn get_flash_progress(state: State<'_, AppState>) -> Result<FlashProgr
         partitions_total,
         partitions_written,
         prep_stage: fs.prep_stage(),
+        is_waiting,
     })
 }
 
@@ -141,9 +146,6 @@ pub async fn cancel_operation(state: State<'_, AppState>) -> Result<(), String> 
         .download_state
         .is_cancelled
         .store(true, std::sync::atomic::Ordering::SeqCst);
-    state
-        .flash_state
-        .is_cancelled
-        .store(true, std::sync::atomic::Ordering::SeqCst);
+    state.flash_state.cancel();
     Ok(())
 }

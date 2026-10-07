@@ -6,6 +6,7 @@
 use std::fmt::Display;
 
 pub const TAG_CANCELLED: &str = "[CANCELLED]";
+pub const TAG_FLASH_BUSY: &str = "[FLASH_BUSY]";
 
 /// Prefix `detail` with a machine tag, keeping the human text for the logs.
 pub fn tagged(tag: &str, detail: impl Display) -> String {
