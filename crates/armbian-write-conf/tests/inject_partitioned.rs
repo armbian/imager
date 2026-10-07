@@ -12,7 +12,6 @@ const SECTOR: u64 = 512;
 const MBR_ENTRY: usize = 0x1be;
 const MBR_LINUX: u8 = 0x83;
 const DEST: &str = "/root/.not_logged_in_yet";
-const PRESET_NAME: &str = ".not_logged_in_yet";
 const PRESET: &[u8] = b"PRESET_USER_NAME=\"tester\"\nPRESET_CONNECT_WIRELESS=\"n\"\n";
 
 /// An MBR disk with one Linux partition holding a small populated rootfs.
@@ -54,7 +53,7 @@ fn preset_lands_in_a_partitioned_image() {
     let sweep = common::full_sweep(&image, PARTITION_OFFSET);
     assert_eq!(sweep.files, 2);
     assert_eq!(sweep.unreadable, 0);
-    common::assert_e2fsck_clean(&image, PARTITION_OFFSET, PRESET_NAME);
+    common::assert_e2fsck_clean(&image, PARTITION_OFFSET);
 }
 
 #[test]
@@ -68,6 +67,7 @@ fn a_second_injection_replaces_the_preset() {
     write_file_into_image(&image, DEST, PRESET).unwrap();
 
     assert_eq!(common::read_back(&image, PARTITION_OFFSET, DEST), PRESET);
+    common::assert_e2fsck_clean(&image, PARTITION_OFFSET);
 }
 
 #[test]

@@ -13,12 +13,12 @@ const SUPERBLOCK_OFFSET: usize = 1024;
 const SUPERBLOCK_SIZE: usize = 1024;
 const GROUP_DESCRIPTOR_SIZE_OFFSET: usize = 0xfe;
 const SUPERBLOCK_CHECKSUM_OFFSET: usize = 0x3fc;
-const E2FSCK_CANDIDATES: &[&str] = &[
-    "e2fsck",
-    "/sbin/e2fsck",
-    "/usr/sbin/e2fsck",
-    "/opt/homebrew/opt/e2fsprogs/sbin/e2fsck",
-    "/usr/local/opt/e2fsprogs/sbin/e2fsck",
+const E2FSPROGS_DIRS: &[&str] = &[
+    "",
+    "/sbin/",
+    "/usr/sbin/",
+    "/opt/homebrew/opt/e2fsprogs/sbin/",
+    "/usr/local/opt/e2fsprogs/sbin/",
 ];
 
 /// A bare mkext4 filesystem with 32-byte group descriptors, the size armbian-ext4fs writes.
@@ -104,27 +104,43 @@ pub fn read_back(image: &Path, base: u64, path: &str) -> Vec<u8> {
     fs.read(path).unwrap()
 }
 
-fn e2fsck() -> Option<PathBuf> {
-    if let Some(path) = std::env::var_os("E2FSCK") {
+/// An e2fsprogs binary from its env override (E2FSCK, MKFS_EXT4, DEBUGFS) or the usual dirs.
+fn e2fsprogs_tool(name: &str) -> Option<PathBuf> {
+    let var = name.to_uppercase().replace('.', "_");
+    if let Some(path) = std::env::var_os(&var) {
         return Some(PathBuf::from(path));
     }
-    E2FSCK_CANDIDATES
+    let found = E2FSPROGS_DIRS
         .iter()
-        .map(PathBuf::from)
+        .map(|dir| PathBuf::from(format!("{dir}{name}")))
         .find(|candidate| {
             Command::new(candidate)
                 .arg("-V")
                 .output()
                 .is_ok_and(|o| o.status.success())
-        })
+        });
+    if found.is_none() {
+        eprintln!("SKIP {name}: not installed (set {var} to its path)");
+    }
+    found
+}
+
+/// A bare filesystem made by the real mkfs.ext4 with 4K blocks; None when e2fsprogs is missing.
+pub fn mkfs_ext4(image: &Path, size: u64) -> Option<()> {
+    let bin = e2fsprogs_tool("mkfs.ext4")?;
+    std::fs::File::create(image).unwrap().set_len(size).unwrap();
+    let out = Command::new(bin)
+        .args(["-q", "-F", "-b", "4096"])
+        .arg(image)
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "mkfs.ext4 failed: {out:?}");
+    Some(())
 }
 
 /// Run `e2fsck -fn` on the filesystem at `base`; None when e2fsck is not installed.
 pub fn e2fsck_clean(image: &Path, base: u64) -> Option<(bool, String)> {
-    let Some(bin) = e2fsck() else {
-        eprintln!("SKIP e2fsck: not installed (set E2FSCK to its path)");
-        return None;
-    };
+    let bin = e2fsprogs_tool("e2fsck")?;
     let target = if base == 0 {
         image.display().to_string()
     } else {
@@ -139,29 +155,25 @@ pub fn e2fsck_clean(image: &Path, base: u64) -> Option<(bool, String)> {
     Some((out.status.success(), log))
 }
 
-/// Ignores two armbian-ext4fs quirks: the file's dirent type and the free-inode total.
-pub fn assert_e2fsck_clean(image: &Path, base: u64, created: &str) {
-    let Some((clean, log)) = e2fsck_clean(image, base) else {
-        return;
-    };
-    if clean {
-        return;
+/// Fails on any `e2fsck -fn` finding at `base`; skips when e2fsck is not installed.
+pub fn assert_e2fsck_clean(image: &Path, base: u64) {
+    if let Some((clean, log)) = e2fsck_clean(image, base) {
+        assert!(clean, "e2fsck -fn found problems:\n{log}");
     }
-    let known = format!("Entry '{created}' in ");
-    let unexpected: Vec<&str> = log
-        .lines()
-        .filter(|line| {
-            let line = line.trim();
-            !(line.is_empty()
-                || line.starts_with("Pass ")
-                || line.starts_with("e2fsck ")
-                || line == "Fix? no"
-                || line.contains("WARNING: Filesystem still has errors")
-                || line.contains(" files (")
-                || (line.starts_with("Free inodes count wrong (") && !line.contains("group"))
-                || (line.starts_with(&known)
-                    && line.ends_with("has an incorrect filetype (was 2, should be 1).")))
-        })
-        .collect();
-    assert!(unexpected.is_empty(), "e2fsck -fn found problems:\n{log}");
+}
+
+/// Runs debugfs commands read-write against `image`; None when debugfs is missing.
+pub fn debugfs_write(image: &Path, commands: &str) -> Option<()> {
+    let bin = e2fsprogs_tool("debugfs")?;
+    let script = image.with_extension("debugfs");
+    std::fs::write(&script, commands).unwrap();
+    let out = Command::new(bin)
+        .arg("-w")
+        .arg("-f")
+        .arg(&script)
+        .arg(image)
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "debugfs failed: {out:?}");
+    Some(())
 }

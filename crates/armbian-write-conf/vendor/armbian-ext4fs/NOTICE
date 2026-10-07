@@ -16,9 +16,15 @@ Modifications made to the upstream source
    `InodeFileType::S_IFREG` instead of `S_IFDIR`. The upstream value created
    newly opened files as directories; regular files must be S_IFREG.
    The S_IFDIR values in `ext4_dir_mk` and `ext4_dir_open` are unchanged.
+   It also refuses to open anything that is not a regular file.
 
 3. `dir_add_entry` writes the directory entry file type from the child
    inode mode instead of always "directory".
+
+4. `balloc_free_blocks` clears the right bitmap range and walks groups
+   correctly; superblock counters are read from disk before each update
+   instead of from the snapshot taken at open; truncating to zero frees the
+   whole extent tree (any depth) after detaching it from the inode.
 
 The upstream binary (src/main.rs) and its [[bin]] target were removed; only
 the library is retained.

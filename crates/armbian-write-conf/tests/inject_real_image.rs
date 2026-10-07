@@ -53,7 +53,7 @@ fn inject_into_real_image() {
         common::read_back(&tmp, report.partition_offset, DEST),
         CONTENT
     );
-    common::assert_e2fsck_clean(&tmp, report.partition_offset, ".not_logged_in_yet");
+    common::assert_e2fsck_clean(&tmp, report.partition_offset);
 
     let _ = std::fs::remove_file(&tmp);
 }

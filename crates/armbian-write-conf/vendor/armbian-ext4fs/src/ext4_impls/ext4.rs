@@ -71,6 +71,11 @@ impl Ext4 {
         }
     }
 
+    /// The superblock as on disk now; `self.super_block` is the snapshot taken at open.
+    pub fn load_super_block(&self) -> Ext4Superblock {
+        Block::load(&self.block_device, SUPERBLOCK_OFFSET).read_as()
+    }
+
     // with dir result search path offset
     pub fn generic_open(
         &self,
