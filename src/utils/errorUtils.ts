@@ -19,6 +19,8 @@ const DEVICE_ERROR_KEYS = {
   '[DEVICE_CHANGED]': 'error.deviceChanged',
   '[DEVICE_READ_ONLY]': 'error.deviceReadOnly',
   '[DEVICE_SYSTEM_BLOCKED]': 'error.deviceSystemBlocked',
+  // Twin of TAG_FLASH_BUSY in src-tauri/src/utils/errors.rs: the previous flash still holds the device
+  '[FLASH_BUSY]': 'error.flashBusy',
 } as const;
 
 /** Twins of TAG_SHA_MISMATCH (download.rs), TAG_VERIFY_* (flash/verify.rs), TAG_DECOMPRESS_FAILED (decompress.rs) and TAG_CANCELLED (utils/errors.rs) */
@@ -50,12 +52,12 @@ export function isShaUnavailableError(error: string): boolean {
   return error.includes('[SHA_UNAVAILABLE]');
 }
 
-/** True when the backend refused the target device before writing ([DEVICE_*] tags) */
+/** True when the backend refused the target device before writing ([DEVICE_*] tags, [FLASH_BUSY]) */
 export function isDeviceRefusalError(error: string): boolean {
   return DEVICE_TOO_SMALL_PATTERN.test(error) || findTaggedKey(error, DEVICE_ERROR_KEYS) !== undefined;
 }
 
-/** Map tagged backend flash errors ([AUTOCONFIG_NOT_ARMBIAN], [DEVICE_*], [WRITE_FAILED:offset], image checks, [QDL_*]) to translated messages */
+/** Map tagged backend flash errors ([AUTOCONFIG_NOT_ARMBIAN], [DEVICE_*], [FLASH_BUSY], [WRITE_FAILED:offset], image checks, [QDL_*]) to translated messages */
 export function translateFlashError(error: string, t: TFn): string {
   // Block and QDL flashes both refuse a profile this way; the UFS path wraps it in [QDL_AUTOCONFIG_FAILED].
   if (error.includes(AUTOCONFIG_NOT_ARMBIAN_TAG)) return t('error.autoconfigNotArmbian');

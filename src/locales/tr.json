@@ -165,7 +165,8 @@
     "shaMismatch": "İndirilen imaj bozuk: sağlama toplamı eşleşmiyor. Yeni bir kopya almak için yeniden indirmeyi deneyin.",
     "verifyMismatch": "Cihaza yazılanlar imajla eşleşmiyor. Kart arızalı olabilir. Başka bir kart deneyin.",
     "verifyReadFailed": "Yazma işlemini doğrulamak için cihaz geri okunamadı. Yeniden bağlayıp tekrar deneyin ya da başka bir kart veya okuyucu deneyin.",
-    "imageDecompressFailed": "İmaj açılamadı. Dosya bozuk veya eksik olabilir. Yeniden indirin veya başka bir dosya seçin."
+    "imageDecompressFailed": "İmaj açılamadı. Dosya bozuk veya eksik olabilir. Yeniden indirin veya başka bir dosya seçin.",
+    "flashBusy": "Önceki yazma işlemi hâlâ tamamlanıyor. Biraz bekleyip tekrar deneyin."
   },
   "custom": {
     "customImage": "Özel İmaj",

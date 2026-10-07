@@ -165,7 +165,8 @@
     "shaMismatch": "Pobrany obraz jest uszkodzony: jego suma kontrolna się nie zgadza. Spróbuj pobrać go ponownie, aby uzyskać nową kopię.",
     "verifyMismatch": "Dane zapisane na urządzeniu nie zgadzają się z obrazem. Karta może być uszkodzona. Spróbuj innej karty.",
     "verifyReadFailed": "Nie udało się odczytać urządzenia, aby zweryfikować zapis. Podłącz je ponownie i spróbuj jeszcze raz albo użyj innej karty lub czytnika.",
-    "imageDecompressFailed": "Nie udało się rozpakować obrazu. Plik może być uszkodzony lub niekompletny. Pobierz go ponownie lub wybierz inny plik."
+    "imageDecompressFailed": "Nie udało się rozpakować obrazu. Plik może być uszkodzony lub niekompletny. Pobierz go ponownie lub wybierz inny plik.",
+    "flashBusy": "Poprzedni zapis jeszcze się kończy. Poczekaj chwilę i spróbuj ponownie."
   },
   "custom": {
     "customImage": "Własny obraz",

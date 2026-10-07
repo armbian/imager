@@ -165,7 +165,8 @@
     "shaMismatch": "A imagem baixada está danificada: o checksum não confere. Tente baixá-la novamente para obter uma cópia nova.",
     "verifyMismatch": "O que foi gravado no dispositivo não confere com a imagem. O cartão pode estar com defeito. Tente outro cartão.",
     "verifyReadFailed": "Não foi possível reler o dispositivo para verificar a gravação. Reconecte-o e tente novamente, ou tente outro cartão ou leitor.",
-    "imageDecompressFailed": "Não foi possível descompactar a imagem. O arquivo pode estar danificado ou incompleto. Baixe-o novamente ou escolha outro arquivo."
+    "imageDecompressFailed": "Não foi possível descompactar a imagem. O arquivo pode estar danificado ou incompleto. Baixe-o novamente ou escolha outro arquivo.",
+    "flashBusy": "A gravação anterior ainda está sendo finalizada. Aguarde um momento e tente novamente."
   },
   "custom": {
     "customImage": "Imagem personalizada",

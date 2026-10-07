@@ -165,7 +165,8 @@
     "shaMismatch": "Das heruntergeladene Image ist beschädigt: Die Prüfsumme stimmt nicht überein. Lade es erneut herunter, um eine frische Kopie zu erhalten.",
     "verifyMismatch": "Die auf das Gerät geschriebenen Daten stimmen nicht mit dem Image überein. Die Karte ist möglicherweise defekt. Versuche eine andere Karte.",
     "verifyReadFailed": "Das Gerät konnte zur Überprüfung des Schreibvorgangs nicht zurückgelesen werden. Verbinde es erneut und versuche es noch einmal oder verwende eine andere Karte oder einen anderen Leser.",
-    "imageDecompressFailed": "Das Image konnte nicht entpackt werden. Die Datei ist möglicherweise beschädigt oder unvollständig. Lade sie erneut herunter oder wähle eine andere Datei."
+    "imageDecompressFailed": "Das Image konnte nicht entpackt werden. Die Datei ist möglicherweise beschädigt oder unvollständig. Lade sie erneut herunter oder wähle eine andere Datei.",
+    "flashBusy": "Der vorherige Flash-Vorgang wird noch abgeschlossen. Warte einen Moment und versuche es erneut."
   },
   "custom": {
     "customImage": "Benutzerdefiniertes Image",

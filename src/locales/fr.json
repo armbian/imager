@@ -165,7 +165,8 @@
     "shaMismatch": "L'image téléchargée est corrompue : sa somme de contrôle ne correspond pas. Réessayez de la télécharger pour obtenir une copie saine.",
     "verifyMismatch": "Les données écrites sur le périphérique ne correspondent pas à l'image. La carte est peut-être défaillante. Essayez une autre carte.",
     "verifyReadFailed": "Le périphérique n'a pas pu être relu pour vérifier l'écriture. Reconnectez-le et réessayez, ou essayez une autre carte ou un autre lecteur.",
-    "imageDecompressFailed": "L'image n'a pas pu être décompressée. Le fichier est peut-être corrompu ou incomplet. Téléchargez-le à nouveau ou choisissez un autre fichier."
+    "imageDecompressFailed": "L'image n'a pas pu être décompressée. Le fichier est peut-être corrompu ou incomplet. Téléchargez-le à nouveau ou choisissez un autre fichier.",
+    "flashBusy": "Le flash précédent n'est pas encore terminé. Patientez un instant et réessayez."
   },
   "custom": {
     "customImage": "Image personnalisée",

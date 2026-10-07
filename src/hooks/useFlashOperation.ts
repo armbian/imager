@@ -454,7 +454,7 @@ export function useFlashOperation({
       }
 
       // Increment failure count for cached (non-custom) images; skip on disconnect or a device
-      // refusal (e.g. card too small) so neither burns down a good cached image.
+      // refusal (e.g. card too small, previous flash still finishing) so neither burns down a good cached image.
       if (!image.is_custom && !isQdlMode && !deviceDisconnectedRef.current && !isDeviceRefusalError(rawError)) {
         const currentCount = getFlashFailureCount() + 1;
         setFlashFailureCount(currentCount);

@@ -165,7 +165,8 @@
     "shaMismatch": "Preuzeta slika je oštećena: njezin se kontrolni zbroj ne podudara. Pokušajte je ponovno preuzeti da dobijete novu kopiju.",
     "verifyMismatch": "Ono što je zapisano na uređaj ne podudara se sa slikom. Kartica je možda neispravna. Pokušajte s drugom karticom.",
     "verifyReadFailed": "Uređaj nije bilo moguće ponovno pročitati radi provjere zapisa. Ponovno ga spojite i pokušajte opet ili pokušajte s drugom karticom ili čitačem.",
-    "imageDecompressFailed": "Sliku nije bilo moguće raspakirati. Datoteka je možda oštećena ili nepotpuna. Ponovno je preuzmite ili odaberite drugu datoteku."
+    "imageDecompressFailed": "Sliku nije bilo moguće raspakirati. Datoteka je možda oštećena ili nepotpuna. Ponovno je preuzmite ili odaberite drugu datoteku.",
+    "flashBusy": "Prethodno snimanje se još privodi kraju. Pričekajte trenutak i pokušajte ponovno."
   },
   "custom": {
     "customImage": "Prilagođena slika",
