@@ -139,6 +139,42 @@ jobs:
         working-directory: src-tauri
         run: cargo test --release
 
+  # cfg(windows) code is never compiled by the Linux lint job.
+  rust-lint-windows:
+    name: Rust Lint (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # generate_context!() only needs the frontendDist directory to exist.
+      - name: Create empty frontend dist
+        shell: bash
+        run: mkdir -p dist
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          cache-on-failure: true
+          shared-key: "v1-windows-x64-lint"
+
+      - name: Run Clippy
+        working-directory: src-tauri
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run Clippy (release)
+        working-directory: src-tauri
+        run: cargo clippy --release --all-targets --all-features -- -D warnings
+
   # ===========================================
   # Build Test - All Platforms
   # ===========================================
