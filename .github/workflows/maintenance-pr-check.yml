@@ -125,6 +125,15 @@ jobs:
         working-directory: src-tauri
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+      # Release builds compile without the debug-only dev scenarios emulator; lint and test that cfg too.
+      - name: Run Clippy (release)
+        working-directory: src-tauri
+        run: cargo clippy --release --all-targets --all-features -- -D warnings
+
+      - name: Run tests (release)
+        working-directory: src-tauri
+        run: cargo test --release
+
   # ===========================================
   # Build Test - All Platforms
   # ===========================================
@@ -247,6 +256,14 @@ jobs:
 
       - name: Build application
         run: cargo tauri build --bundles ${{ matrix.bundles }}
+
+      - name: Check release binary has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-binary.sh src-tauri/target/release/armbian-imager
+
+      - name: Check frontend bundle has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-dist.sh dist
 
       # See scripts/build/appimage-unbundle-wayland.sh — bundled libwayland aborts
       # EGL init on the user's Wayland session (issue #67). Keeps the AppImage that
