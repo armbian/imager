@@ -44,6 +44,10 @@ impl TargetRefusal {
     }
 }
 
+pub(crate) fn device_not_found_error(path: &str) -> String {
+    format!("{TAG_NOT_FOUND} {path:?} is not a detected device")
+}
+
 /// Shared by the scan check and the writers' post-open size checks.
 pub(crate) fn device_changed_error(path: &str, expected: u64, actual: u64) -> String {
     format!("{TAG_CHANGED} {path:?} is now {actual} bytes, {expected} bytes were selected")
@@ -126,11 +130,7 @@ pub fn select_flash_target(
 
     let matches: Vec<&BlockDevice> = devices.iter().filter(|d| d.path == path).collect();
     let device = match matches.as_slice() {
-        [] => {
-            return Err(TargetRefusal::NotFound(format!(
-                "{TAG_NOT_FOUND} {path:?} is not a detected device"
-            )))
-        }
+        [] => return Err(TargetRefusal::NotFound(device_not_found_error(path))),
         [device] => *device,
         many => {
             return Err(TargetRefusal::Refused(format!(

@@ -12,6 +12,8 @@ mod cache;
 mod commands;
 mod config;
 mod decompress;
+#[cfg(debug_assertions)]
+mod dev_scenarios;
 mod devices;
 mod download;
 mod flash;
@@ -200,6 +202,18 @@ fn main() {
             commands::settings::clear_cache,
             commands::settings::list_cached_images,
             commands::settings::delete_cached_image,
+            #[cfg(debug_assertions)]
+            commands::dev_scenarios::dev_scenarios_status,
+            #[cfg(debug_assertions)]
+            commands::dev_scenarios::dev_set_scenario,
+            #[cfg(debug_assertions)]
+            commands::dev_scenarios::dev_reset,
+            #[cfg(debug_assertions)]
+            commands::dev_scenarios::dev_make_test_image,
+            #[cfg(debug_assertions)]
+            commands::dev_scenarios::dev_create_vdisk,
+            #[cfg(debug_assertions)]
+            commands::dev_scenarios::dev_delete_vdisk,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]

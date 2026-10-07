@@ -150,3 +150,73 @@ pub mod cache {
     /// Default maximum cache size (20 GB)
     pub const DEFAULT_MAX_SIZE: u64 = 20 * 1024 * 1024 * 1024;
 }
+
+/// Bus types for the dev scenarios presets, model and vdisk; same strings `devices/types.rs` emits
+#[cfg(debug_assertions)]
+pub mod devices {
+    pub const BUS_SD: &str = "SD";
+    pub const BUS_USB: &str = "USB";
+    pub const BUS_NVME: &str = "NVMe";
+    pub const BUS_SATA: &str = "SATA";
+    pub const BUS_SAS: &str = "SAS";
+    pub const BUS_TYPES: [&str; 5] = [BUS_SD, BUS_USB, BUS_NVME, BUS_SATA, BUS_SAS];
+}
+
+/// Dev scenarios emulator
+#[cfg(debug_assertions)]
+pub mod dev {
+    pub const ID_MAX_LEN: usize = 32;
+    /// `devsim://edl-*` paths are EDL targets
+    pub const EDL_ID_PREFIX: &str = "edl-";
+    pub const MAX_FAKE_DEVICES: usize = 16;
+    pub const MAX_LABEL_LEN: usize = 128;
+    pub const DEFAULT_MODEL: &str = "Simulated disk";
+    pub const DEFAULT_EDL_DESCRIPTION: &str = "Simulated Qualcomm EDL device";
+    pub const EDL_BUS_ID: &str = "devsim";
+
+    pub const MAX_DELAY_MS: u64 = 10 * 60 * 1000;
+    pub const DEFAULT_FAIL_AT_PERCENT: u8 = 40;
+    pub const MAX_FAIL_AT_PERCENT: u8 = 99;
+    pub const DEFAULT_WRITE_MB_PER_SEC: u32 = 200;
+    pub const DEFAULT_VERIFY_MB_PER_SEC: u32 = 400;
+    pub const MAX_MB_PER_SEC: u32 = 10_000;
+    pub const DEFAULT_API_DELAY_MS: u64 = 3_000;
+    pub const DEFAULT_DOWNLOAD_KB_PER_SEC: u32 = 512;
+    pub const MAX_DOWNLOAD_KB_PER_SEC: u32 = 1_000_000;
+
+    pub const SIM_TICK_MS: u64 = 100;
+    pub const SIM_SECTOR_SIZE: u64 = 512;
+    pub const SIM_EXPECTED_SHA: &str =
+        "0000000000000000000000000000000000000000000000000000000000000000";
+    pub const QDL_STAGE_MS: u64 = 400;
+    pub const QDL_SIM_PARTITIONS: [&str; 3] = ["boot", "dtb", "rootfs"];
+
+    pub const TEST_IMAGE_DIR: &str = "dev-test-images";
+    /// Generated test image name: `<prefix><size><unit>[<unaligned>]<ext>`
+    pub const TEST_IMAGE_PREFIX: &str = "devsim-test-";
+    pub const TEST_IMAGE_SIZE_UNIT: &str = "mb";
+    pub const TEST_IMAGE_UNALIGNED: &str = "-unaligned";
+    pub const TEST_IMAGE_EXT: &str = ".img";
+    pub const MAX_TEST_IMAGE_MB: u64 = 32 * 1024;
+    pub const UNALIGNED_TAIL_BYTES: u64 = 300;
+    pub const TEST_PATTERN_BYTES: u64 = 1024 * 1024;
+
+    pub const VDISK_DIR: &str = "dev-vdisks";
+    pub const VDISK_SUFFIX: &str = ".vdisk.img";
+    pub const MAX_VDISK_MB: u64 = 32 * 1024;
+    pub const VDISK_MODEL: &str = "Virtual disk (file)";
+    pub const VDISK_UNSUPPORTED: &str = "Virtual disks are only supported on macOS";
+
+    /// As real cards report them
+    pub const PRESET_SD_32G_BYTES: u64 = 31_914_983_424;
+    pub const PRESET_SD_8G_BYTES: u64 = 7_948_206_080;
+    pub const PRESET_SD_1G_BYTES: u64 = 1_073_741_824;
+    pub const PRESET_USB_16G_BYTES: u64 = 15_745_024_000;
+    pub const PRESET_NVME_512G_BYTES: u64 = 512_110_190_592;
+    pub const PRESET_HOT_PLUG_APPEAR_MS: u64 = 4_000;
+    pub const PRESET_HOT_PLUG_DISAPPEAR_MS: u64 = 8_000;
+    pub const PRESET_AUTH_DENIED_DELAY_MS: u64 = 1_500;
+    pub const PRESET_SLOW_WRITE_MB_PER_SEC: u32 = 4;
+    pub const PRESET_SLOW_VERIFY_MB_PER_SEC: u32 = 8;
+    pub const PRESET_SLOW_DOWNLOAD_KB_PER_SEC: u32 = 256;
+}

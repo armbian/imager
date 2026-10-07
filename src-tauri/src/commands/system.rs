@@ -201,6 +201,10 @@ fn open_url_windows(url: &str) -> Result<(), String> {
 /// Check reachability of the Armbian API health endpoint (5s timeout)
 #[tauri::command]
 pub async fn check_connectivity() -> bool {
+    #[cfg(debug_assertions)]
+    if let Some(online) = super::dev_scenarios::connectivity_override() {
+        return online;
+    }
     match CONNECTIVITY_CLIENT
         .get(crate::config::urls::health())
         .send()

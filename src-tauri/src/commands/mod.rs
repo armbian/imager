@@ -5,6 +5,8 @@
 
 pub mod board_queries;
 pub mod custom_image;
+#[cfg(debug_assertions)]
+pub mod dev_scenarios;
 pub mod operations;
 pub mod progress;
 pub mod qdl_operations;

@@ -17,7 +17,7 @@ use crate::download::download_image as do_download;
 use crate::flash::{
     check_capacity, flash_image as do_flash, reject_simulated, request_authorization,
 };
-use crate::utils::{app_cache_dir, images_dir, validate_cache_path};
+use crate::utils::{app_cache_dir, image_size, images_dir, validate_cache_path};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 use super::state::AppState;
@@ -104,6 +104,13 @@ pub async fn request_write_authorization(
         "Requesting write authorization for device: {}",
         device_path
     );
+    #[cfg(debug_assertions)]
+    if let Some(result) =
+        super::dev_scenarios::intercept_authorization(&app, &device_path, expected_size).await
+    {
+        return result;
+    }
+
     let target = resolve_flash_target(&app, &device_path, expected_size).await?;
     let result = request_authorization(&target);
     match &result {
@@ -203,11 +210,24 @@ pub async fn flash_image(
     // reset it reads the previous flash's stale state (is_verifying=true, verified=100%) and latches onto it.
     flash_state.reset();
 
+    #[cfg(debug_assertions)]
+    if let Some(result) = super::dev_scenarios::intercept_flash(
+        &app,
+        &path,
+        &device_path,
+        expected_size,
+        verify,
+        autoconfig.as_ref(),
+        flash_state.clone(),
+    )
+    .await
+    {
+        return result;
+    }
+
     let target = resolve_flash_target(&app, &device_path, expected_size).await?;
 
-    let image_size = std::fs::metadata(&path)
-        .map_err(|e| format!("Failed to get image size: {e}"))?
-        .len();
+    let image_size = image_size(&path)?;
     if let Err(e) = check_capacity(image_size, target.size()) {
         log_error!("operations", "Refusing target {:?}: {}", device_path, e);
         return Err(e);
@@ -227,14 +247,7 @@ pub async fn flash_image(
 
     // Always remove the temp copy, regardless of flash outcome.
     if let Some(copy) = temp_copy {
-        if let Err(e) = std::fs::remove_file(&copy) {
-            log_warn!(
-                "operations",
-                "Failed to remove autoconfig temp copy {}: {}",
-                copy.display(),
-                e
-            );
-        }
+        remove_autoconfig_copy(&copy);
     }
 
     match &result {
@@ -249,9 +262,20 @@ pub async fn flash_image(
     result
 }
 
+pub(crate) fn remove_autoconfig_copy(copy: &std::path::Path) {
+    if let Err(e) = std::fs::remove_file(copy) {
+        log_warn!(
+            "operations",
+            "Failed to remove autoconfig temp copy {}: {}",
+            copy.display(),
+            e
+        );
+    }
+}
+
 /// Copy the decompressed image to a per-flash temp file and inject the autoconfig preset into the copy.
 /// Aborts (deleting the copy) if the image has no writable ext4 rootfs, since a profile was requested.
-fn prepare_autoconfig_copy(
+pub(crate) fn prepare_autoconfig_copy(
     source: &std::path::Path,
     config: &AutoconfigConfig,
 ) -> Result<PathBuf, String> {

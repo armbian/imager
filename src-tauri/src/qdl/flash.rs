@@ -24,7 +24,11 @@ use xmltree::{Element, XMLNode};
 
 use super::extract::FIREHOSE_ELF;
 use super::provision::ProvisionSource;
-use super::QdlStorage;
+use super::{
+    QdlStorage, QDL_CANCELLED_ERROR, STAGE_COMPLETE, STAGE_CONFIGURING, STAGE_CONNECTING,
+    STAGE_FIREHOSE, STAGE_PARTITION_PREFIX, STAGE_PATCHING, STAGE_PROVISIONING, STAGE_RESETTING,
+    STAGE_SAHARA, UFS_PARTITION_LABEL,
+};
 use crate::flash::FlashState;
 use crate::{log_error, log_info, log_warn};
 
@@ -52,7 +56,7 @@ pub fn qdl_flash(
 
     // --- Stage 4: Program partitions from rawprogram0.xml ---
     check_cancelled(&state)?;
-    update_qdl_stage(&state, "firehose");
+    update_qdl_stage(&state, STAGE_FIREHOSE);
 
     let rawprogram_path = flash_dir.join("rawprogram0.xml");
     program_from_xml(&mut device, &rawprogram_path, flash_dir, &state)?;
@@ -61,13 +65,13 @@ pub fn qdl_flash(
     let patch_path = flash_dir.join("patch0.xml");
     if patch_path.exists() {
         check_cancelled(&state)?;
-        update_qdl_stage(&state, "patching");
+        update_qdl_stage(&state, STAGE_PATCHING);
         log_info!("qdl::flash", "Applying patches from patch0.xml...");
         patch_from_xml(&mut device, &patch_path)?;
     }
 
     // --- Stage 6: Reset device ---
-    update_qdl_stage(&state, "resetting");
+    update_qdl_stage(&state, STAGE_RESETTING);
     log_info!("qdl::flash", "Resetting device...");
 
     device.reset_on_drop = false;
@@ -77,7 +81,7 @@ pub fn qdl_flash(
         })
         .ok();
 
-    update_qdl_stage(&state, "complete");
+    update_qdl_stage(&state, STAGE_COMPLETE);
     log_info!("qdl::flash", "QDL flash completed successfully");
 
     Ok(())
@@ -105,7 +109,7 @@ pub fn qdl_flash_ufs(
     }
 
     check_cancelled(&state)?;
-    update_qdl_stage(&state, "firehose");
+    update_qdl_stage(&state, STAGE_FIREHOSE);
 
     let sector_size = QdlStorage::Ufs.sector_size();
     let img_len = fs::metadata(image_path)
@@ -115,10 +119,10 @@ pub fn qdl_flash_ufs(
     let total_bytes = num_sectors as u64 * sector_size as u64;
     state.qdl.partitions_total.store(1, Ordering::SeqCst);
     state.total_bytes.store(total_bytes, Ordering::SeqCst);
-    {
-        let mut stage = state.qdl.stage.lock().unwrap_or_else(|p| p.into_inner());
-        *stage = "partition:system".to_string();
-    }
+    update_qdl_stage(
+        &state,
+        &format!("{STAGE_PARTITION_PREFIX}{UFS_PARTITION_LABEL}"),
+    );
 
     log_info!(
         "qdl::flash",
@@ -134,10 +138,10 @@ pub fn qdl_flash_ufs(
             match provision {
                 ProvisionSource::Ready(prov) => {
                     check_cancelled(&state)?;
-                    update_qdl_stage(&state, "provisioning");
+                    update_qdl_stage(&state, STAGE_PROVISIONING);
                     provision_ufs(&mut device, &prov)?;
                     check_cancelled(&state)?;
-                    update_qdl_stage(&state, "firehose");
+                    update_qdl_stage(&state, STAGE_FIREHOSE);
                     state.written_bytes.store(0, Ordering::SeqCst);
                     write_ufs_image(&mut device, image_path, num_sectors, &state).map_err(|e| {
                         format!("Failed to write UFS image after provisioning: {e}")
@@ -158,7 +162,7 @@ pub fn qdl_flash_ufs(
     state.qdl.partitions_written.store(1, Ordering::SeqCst);
     state.written_bytes.store(total_bytes, Ordering::SeqCst);
 
-    update_qdl_stage(&state, "resetting");
+    update_qdl_stage(&state, STAGE_RESETTING);
     log_info!("qdl::flash", "Resetting device...");
     device.reset_on_drop = false;
     firehose_reset(&mut device, &FirehoseResetMode::Reset, 0)
@@ -167,7 +171,7 @@ pub fn qdl_flash_ufs(
         })
         .ok();
 
-    update_qdl_stage(&state, "complete");
+    update_qdl_stage(&state, STAGE_COMPLETE);
     log_info!("qdl::flash", "QDL UFS flash completed successfully");
     Ok(())
 }
@@ -252,7 +256,7 @@ fn connect_and_configure(
     storage: QdlStorage,
     state: &Arc<FlashState>,
 ) -> Result<QdlDevice<dyn QdlReadWrite>, String> {
-    update_qdl_stage(state, "connecting");
+    update_qdl_stage(state, STAGE_CONNECTING);
     log_info!(
         "qdl::flash",
         "Connecting to EDL device {:?}...",
@@ -298,7 +302,7 @@ fn connect_and_configure(
     log_info!("qdl::flash", "Connected to EDL device");
 
     check_cancelled(state)?;
-    update_qdl_stage(state, "sahara");
+    update_qdl_stage(state, STAGE_SAHARA);
     log_info!("qdl::flash", "Starting Sahara handshake...");
 
     // Reading the chip serial number initiates the Sahara HELLO exchange.
@@ -357,7 +361,7 @@ fn connect_and_configure(
     device.reset_on_drop = true;
 
     check_cancelled(state)?;
-    update_qdl_stage(state, "configuring");
+    update_qdl_stage(state, STAGE_CONFIGURING);
     log_info!("qdl::flash", "Configuring Firehose protocol...");
     firehose_read(&mut device, firehose_parser_ack_nak)
         .map_err(|e| format!("Failed to read firehose welcome: {}", e))?;
@@ -673,10 +677,7 @@ fn program_single_partition<T: QdlChan>(
     check_cancelled(state)?;
 
     let display_label = if label.is_empty() { filename } else { label };
-    {
-        let mut stage = state.qdl.stage.lock().unwrap_or_else(|p| p.into_inner());
-        *stage = format!("partition:{}", display_label);
-    }
+    update_qdl_stage(state, &format!("{STAGE_PARTITION_PREFIX}{display_label}"));
     state
         .qdl
         .partitions_written
@@ -804,16 +805,16 @@ fn patch_from_xml<T: QdlChan>(channel: &mut T, patch_path: &Path) -> Result<(), 
 }
 
 /// Update the QDL stage name in the shared flash state
-fn update_qdl_stage(state: &FlashState, stage: &str) {
+pub(crate) fn update_qdl_stage(state: &FlashState, stage: &str) {
     let mut s = state.qdl.stage.lock().unwrap_or_else(|p| p.into_inner());
     *s = stage.to_string();
 }
 
 /// Check if the operation has been cancelled and return an error if so
-fn check_cancelled(state: &FlashState) -> Result<(), String> {
+pub(crate) fn check_cancelled(state: &FlashState) -> Result<(), String> {
     if state.is_cancelled.load(Ordering::SeqCst) {
         log_info!("qdl::flash", "Operation cancelled by user");
-        Err("QDL flash cancelled by user".to_string())
+        Err(QDL_CANCELLED_ERROR.to_string())
     } else {
         Ok(())
     }

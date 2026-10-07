@@ -335,6 +335,43 @@ pub async fn flash_image(
     result
 }
 
+#[cfg(debug_assertions)]
+pub(crate) async fn flash_to_vdisk(
+    image_path: &PathBuf,
+    label: &str,
+    mut file: File,
+    state: Arc<FlashState>,
+    verify: bool,
+) -> Result<(), String> {
+    let metadata = file
+        .metadata()
+        .map_err(|e| format!("Failed to stat virtual disk {label}: {e}"))?;
+    if !metadata.is_file() {
+        return Err(format!(
+            "{TAG_INVALID_PATH} {label:?} is not a regular file"
+        ));
+    }
+
+    let image_size = std::fs::metadata(image_path)
+        .map_err(|e| format!("Failed to get image size: {}", e))?
+        .len();
+    // A write past EOF grows a regular file instead of failing, so the fit is checked up front.
+    let padded = image_size.div_ceil(SECTOR_SIZE as u64) * SECTOR_SIZE as u64;
+    let needed = padded.saturating_add(config::flash::QUICK_ERASE_SIZE as u64);
+    crate::flash::check_capacity(needed, metadata.len())?;
+
+    state.reset();
+    state.total_bytes.store(image_size, Ordering::SeqCst);
+    let fd = file.as_raw_fd();
+    log_info!(
+        MODULE,
+        "Writing {} to virtual disk {}",
+        image_path.display(),
+        label
+    );
+    do_flash_work(image_path, label, &mut file, fd, image_size, state, verify).await
+}
+
 async fn do_flash_work(
     image_path: &PathBuf,
     device_path: &str,
@@ -446,4 +483,92 @@ fn verify_written_data(
     // BufReader keeps raw-device reads sector-aligned, avoiding EINVAL on the final read.
     let mut buf_reader = BufReader::with_capacity(config::flash::CHUNK_SIZE, &*device);
     crate::flash::verify::verify_data(image_path, &mut buf_reader, state)
+}
+
+#[cfg(all(test, debug_assertions))]
+mod tests {
+    use super::*;
+    use crate::flash::FlashState;
+
+    fn image(dir: &std::path::Path, len: usize) -> PathBuf {
+        let path = dir.join("image.img");
+        let data: Vec<u8> = (0..len).map(|i| (i % 253) as u8 + 1).collect();
+        std::fs::write(&path, data).unwrap();
+        path
+    }
+
+    fn vdisk(dir: &std::path::Path, len: u64) -> (PathBuf, File) {
+        let path = dir.join("disk.vdisk.img");
+        let file = File::create(&path).unwrap();
+        file.set_len(len).unwrap();
+        let file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&path)
+            .unwrap();
+        (path, file)
+    }
+
+    #[tokio::test]
+    async fn writes_and_verifies_an_unaligned_image() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let image_len = 3 * 1024 * 1024 + 300;
+        let image = image(dir, image_len);
+        let disk_len = 16 * 1024 * 1024;
+        let (disk, file) = vdisk(dir, disk_len);
+        let state = Arc::new(FlashState::new());
+
+        flash_to_vdisk(&image, "test", file, state.clone(), true)
+            .await
+            .unwrap();
+
+        let written = std::fs::read(&disk).unwrap();
+        assert_eq!(written.len() as u64, disk_len, "the file must not grow");
+        assert_eq!(&written[..image_len], &std::fs::read(&image).unwrap()[..]);
+        assert!(written[image_len..image_len + 212].iter().all(|b| *b == 0));
+        assert_eq!(
+            state.verified_bytes.load(Ordering::SeqCst),
+            image_len as u64
+        );
+    }
+
+    #[tokio::test]
+    async fn refuses_a_disk_without_room_for_image_and_erase() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let image = image(dir, 1024 * 1024);
+        let (disk, file) = vdisk(dir, 11 * 1024 * 1024 - 512);
+        let err = flash_to_vdisk(&image, "test", file, Arc::new(FlashState::new()), false)
+            .await
+            .unwrap_err();
+        assert!(err.starts_with("[DEVICE_TOO_SMALL:"), "{err}");
+        assert_eq!(
+            std::fs::metadata(&disk).unwrap().len(),
+            11 * 1024 * 1024 - 512
+        );
+        assert!(std::fs::read(&disk).unwrap().iter().all(|b| *b == 0));
+    }
+
+    #[tokio::test]
+    async fn refuses_anything_but_a_regular_file() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let image = image(dir, 1024);
+        let null = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open("/dev/null")
+            .unwrap();
+        let err = flash_to_vdisk(
+            &image,
+            "/dev/null",
+            null,
+            Arc::new(FlashState::new()),
+            false,
+        )
+        .await
+        .unwrap_err();
+        assert!(err.starts_with(TAG_INVALID_PATH), "{err}");
+    }
 }
