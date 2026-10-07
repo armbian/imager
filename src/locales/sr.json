@@ -143,6 +143,7 @@
     "qdlPermissionDenied": "USB приступ је одбијен. На Линуксу инсталирајте udev правила: echo 'SUBSYSTEM==\"usb\", ATTR{idVendor}==\"05c6\", ATTR{idProduct}==\"9008\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/51-qdl.rules && echo 'blacklist qcserial' | sudo tee /etc/modprobe.d/blacklist-qcserial.conf && sudo udevadm control --reload-rules",
     "qdlConnectionFailed": "Повезивање са EDL уређајем није успело. Уверите се да је у EDL режиму и повезан преко USB-а.",
     "qdlAutoconfigFailed": "Примена профила аутоконфигурације на QDL слику није успела.",
+    "autoconfigNotArmbian": "Ова слика нема Armbian подешавање при првом покретању, па се профил не може применити. Упишите је без профила или изаберите Armbian слику.",
     "deviceInvalidPath": "На овај уређај није могуће писати. Поново изаберите уређај.",
     "deviceNotFound": "Изабрани уређај више није повезан. Поново га повежите и изаберите.",
     "deviceChanged": "Изабрани уређај се променио откако сте га изабрали. Поново га изаберите пре писања.",

@@ -247,7 +247,7 @@ pub(crate) async fn intercept_flash(
         check_capacity(image_size(image_path)?, block.size)?;
 
         let working_copy = autoconfig
-            .map(|config| prepare_working_copy(image_path, &autoconfig_temp_dir(), config))
+            .map(|config| prepare_working_copy(image_path, &autoconfig_temp_dir(), config, false))
             .transpose()?;
         let flash_path = working_copy.as_ref().map_or(image_path, |copy| copy.path());
         log_info!(

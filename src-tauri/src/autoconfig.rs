@@ -6,12 +6,17 @@
 
 use std::path::{Path, PathBuf};
 
-use armbian_write_conf::{write_file_into_bare_ext4_image, write_file_into_image, WriteConfError};
+use armbian_write_conf::{
+    rootfs_has_regular_file, write_file_into_bare_ext4_image, write_file_into_image, WriteConfError,
+};
 use serde::Deserialize;
 
 use crate::config;
 use crate::utils::{leftover_is_stale, sweep_dir, unique_suffix};
 use crate::{log_error, log_info, log_warn};
+
+/// A profile was requested for a custom image without Armbian's first-login script (twin in errorUtils.ts).
+pub const TAG_NOT_ARMBIAN: &str = "[AUTOCONFIG_NOT_ARMBIAN]";
 
 /// Login shell choices offered for the first user.
 #[derive(Debug, Clone, Deserialize)]
@@ -319,6 +324,50 @@ fn no_ext4_rootfs(e: &WriteConfError) -> String {
     )
 }
 
+/// Whether the image's rootfs carries Armbian's first-login script. Opens `image_path` read-only.
+pub fn has_firstlogin_marker(image_path: &Path) -> Result<bool, WriteConfError> {
+    let meta = std::fs::metadata(image_path)?;
+    if !meta.is_file() {
+        return Err(WriteConfError::UnsupportedImage(
+            "not a regular file".to_string(),
+        ));
+    }
+    rootfs_has_regular_file(image_path, config::autoconfig::FIRSTLOGIN_MARKER)
+}
+
+fn marker_verdict(probe: Result<bool, WriteConfError>) -> Result<(), String> {
+    match probe {
+        Ok(true) => Ok(()),
+        Ok(false) => Err(format!(
+            "{TAG_NOT_ARMBIAN} This image has no Armbian first-login setup, so the selected autoconfig profile cannot be applied"
+        )),
+        Err(e @ (WriteConfError::UnsupportedImage(_) | WriteConfError::NoExt4Rootfs(_))) => {
+            Err(no_ext4_rootfs(&e))
+        }
+        Err(e) => Err(format!("Failed to read the image for autoconfig: {}", e)),
+    }
+}
+
+/// Refuse a profile for a custom image whose rootfs has no first-login script, before any copy or device access.
+pub fn require_firstlogin_marker(image_path: &Path) -> Result<(), String> {
+    let probe = has_firstlogin_marker(image_path);
+    match &probe {
+        Ok(found) => log_info!(
+            "autoconfig",
+            "First-login marker in {}: {}",
+            image_path.display(),
+            found
+        ),
+        Err(e) => log_warn!(
+            "autoconfig",
+            "First-login marker check failed for {}: {}",
+            image_path.display(),
+            e
+        ),
+    }
+    marker_verdict(probe)
+}
+
 fn create_private_copy(source: &Path, temp_dir: &Path) -> Result<WorkingCopy, String> {
     // set_permissions follows links, so a linked dir would hand the chmod to its target.
     if std::fs::symlink_metadata(temp_dir).is_ok_and(|m| m.file_type().is_symlink()) {
@@ -351,12 +400,16 @@ fn create_private_copy(source: &Path, temp_dir: &Path) -> Result<WorkingCopy, St
     Ok(copy)
 }
 
-/// Copy `source` into `temp_dir` and inject the preset there.
+/// Copy `source` into `temp_dir` and inject the preset there; `require_marker` probes the source read-only first.
 pub fn prepare_working_copy(
     source: &Path,
     temp_dir: &Path,
     config: &AutoconfigConfig,
+    require_marker: bool,
 ) -> Result<WorkingCopy, String> {
+    if require_marker {
+        require_firstlogin_marker(source)?;
+    }
     let copy = create_private_copy(source, temp_dir)?;
     inject_into_image(&copy.path, config).map_err(|e| match e {
         WriteConfError::UnsupportedImage(_) | WriteConfError::NoExt4Rootfs(_) => no_ext4_rootfs(&e),
@@ -477,7 +530,7 @@ mod tests {
 
         let mut config = empty();
         config.locale = Some("en_US.UTF-8".to_string());
-        let result = prepare_working_copy(&source, &temp_dir, &config);
+        let result = prepare_working_copy(&source, &temp_dir, &config, false);
 
         assert!(result.is_err(), "a non-ext4 image must be refused");
         assert_eq!(std::fs::read(&source).unwrap(), original);
@@ -554,6 +607,50 @@ mod tests {
         }
         #[cfg(not(unix))]
         assert_eq!(removed, 1);
+    }
+
+    #[test]
+    fn a_custom_image_is_checked_before_any_copy() {
+        let dir = test_scratch_dir("wc-marker");
+        let temp_dir = dir.join("work");
+        let source = dir.join("custom.img");
+        let original = vec![0x5au8; 64 * 1024];
+        std::fs::write(&source, &original).unwrap();
+        let mut config = empty();
+        config.root_password = Some("secret".to_string());
+
+        let err = prepare_working_copy(&source, &temp_dir, &config, true)
+            .map(|_| ())
+            .unwrap_err();
+
+        assert!(err.contains("ext4"), "{err}");
+        assert!(!temp_dir.exists(), "the refusal comes before the copy");
+        assert_eq!(std::fs::read(&source).unwrap(), original);
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn a_directory_is_never_probed_as_an_image() {
+        let dir = test_scratch_dir("wc-marker-dir");
+        assert!(matches!(
+            has_firstlogin_marker(&dir),
+            Err(WriteConfError::UnsupportedImage(_))
+        ));
+        assert!(require_firstlogin_marker(&dir.join("missing.img")).is_err());
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn marker_verdicts_keep_missing_apart_from_read_errors() {
+        assert!(marker_verdict(Ok(true)).is_ok());
+        let missing = marker_verdict(Ok(false)).unwrap_err();
+        assert!(missing.starts_with(TAG_NOT_ARMBIAN), "{missing}");
+        let no_ext4 = marker_verdict(Err(WriteConfError::NoExt4Rootfs("x".into()))).unwrap_err();
+        assert!(!no_ext4.contains(TAG_NOT_ARMBIAN), "{no_ext4}");
+        let io =
+            marker_verdict(Err(WriteConfError::Io(std::io::Error::other("boom")))).unwrap_err();
+        assert!(!io.contains(TAG_NOT_ARMBIAN), "{io}");
+        assert!(io.contains("Failed to read"), "{io}");
     }
 
     #[test]

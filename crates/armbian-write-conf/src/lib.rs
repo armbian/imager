@@ -144,6 +144,12 @@ pub fn write_file_into_image(
     })
 }
 
+/// Whether `path` is a regular file in the image's ext4 rootfs. Read-only: never opens the image for writing.
+pub fn rootfs_has_regular_file(image_path: &Path, path: &str) -> Result<bool, WriteConfError> {
+    let part = detect::detect_rootfs(image_path)?;
+    validate::has_regular_file(image_path, part.offset, path)
+}
+
 /// Write `content` to `dest_path` in a BARE ext4 image (no partition table, superblock at byte 0; e.g. Armbian QDL `disk-sdcard.img.root` blobs). Confirms ext4 magic at 0, writes via `armbian-ext4fs`, validates read-only.
 /// Errors ([`WriteConfError`]) on non-bare-ext4 image, write failure, or bad validation.
 pub fn write_file_into_bare_ext4_image(

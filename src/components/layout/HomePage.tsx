@@ -277,7 +277,7 @@ export function HomePage({
       onSelect={onSelectDevice}
       onConfirm={onConfirmDevice}
       onCancel={onClearDevice}
-      supportsAutoconfig={!isGenericCustom}
+      supportsAutoconfig={selectedImage?.supports_autoconfig ?? !isGenericCustom}
     />
   );
 
