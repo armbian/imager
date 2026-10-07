@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageInfo, BlockDevice, AutoconfigConfig } from '../types';
-import { FLASH_METHOD, deriveFlashMethod, isEdlMethod } from '../types';
+import { FLASH_METHOD, deriveFlashMethod, isEdlMethod, isIdleFlashProgress } from '../types';
 import { PHASE_ORDER, type FlashStage, type FlashPhase } from '../components/flash/FlashStageIcon';
 import {
   downloadImage,
@@ -28,7 +28,7 @@ import {
   listCachedImages,
 } from './useTauri';
 import { getSkipVerify } from './useSettings';
-import { POLLING, CACHE, STORAGE_KEYS } from '../config';
+import { POLLING, CACHE, STORAGE_KEYS, FLASH_PREP_STAGE } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
 import { isDeviceRefusalError, isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
 
@@ -86,6 +86,9 @@ function buildPhases(opts: { download: boolean; prepare: boolean; verify: boolea
   return phases;
 }
 
+// 'pending' until a poll proves it belongs to this run: a reset (idle) state or a live prep stage.
+type PrepTracking = 'none' | 'pending' | 'idle' | 'active';
+
 export function useFlashOperation({
   image,
   device,
@@ -112,6 +115,7 @@ export function useFlashOperation({
   // True once this flash's write phase is observed; guards against a stale is_verifying from a
   // previous run latching the UI onto "verifying" with a full bar before this run writes.
   const flashWriteSeenRef = useRef<boolean>(false);
+  const prepRef = useRef<PrepTracking>('none');
   const hasStartedRef = useRef<boolean>(false);
   const deviceDisconnectedRef = useRef<boolean>(false);
   const userCancelledRef = useRef<boolean>(false);
@@ -123,6 +127,7 @@ export function useFlashOperation({
   // Keep the latest opt-in profile config for the event-driven flash flow.
   const autoconfigRef = useRef<AutoconfigConfig | null>(autoconfig ?? null);
   autoconfigRef.current = autoconfig ?? null;
+  const hasProfile = autoconfigRef.current !== null;
 
   // Failure tracking via sessionStorage
   const failureStorageKey = `${STORAGE_KEYS.FLASH_FAILURE_PREFIX}${image.file_url}`;
@@ -223,7 +228,7 @@ export function useFlashOperation({
     const activeStages: FlashStage[] = isEdlFlash
       ? ['downloading', 'verifying_sha', 'decompressing']
       : ['downloading', 'verifying_sha', 'decompressing',
-         'flashing', 'verifying'];
+         FLASH_PREP_STAGE.APPLYING_PROFILE, 'flashing', 'verifying'];
     if (!activeStages.includes(stage)) {
       if (deviceMonitorRef.current) {
         clearInterval(deviceMonitorRef.current);
@@ -255,7 +260,7 @@ export function useFlashOperation({
       }
 
       const needsDecompress = await checkNeedsDecompression(customPath);
-      setPhases(buildPhases({ download: false, prepare: needsDecompress, verify: !skipVerifyRef.current }));
+      setPhases(buildPhases({ download: false, prepare: needsDecompress || hasProfile, verify: !skipVerifyRef.current }));
 
       if (needsDecompress) {
         setStage('decompressing');
@@ -336,7 +341,11 @@ export function useFlashOperation({
 
   /** Start flash with progress polling */
   async function startFlash(path: string) {
-    setStage(isQdlMode ? 'extracting' : 'flashing');
+    const writeStage: FlashStage = isQdlMode ? 'extracting' : 'flashing';
+    // The TAR path injects the profile during extraction, so only block and UFS flashes prep first.
+    const awaitPrep = !isQdlMode && hasProfile;
+    prepRef.current = awaitPrep ? 'pending' : 'none';
+    setStage(awaitPrep ? FLASH_PREP_STAGE.APPLYING_PROFILE : writeStage);
     setProgress(0);
     maxProgressRef.current = 0;
     flashWriteSeenRef.current = false;
@@ -345,7 +354,20 @@ export function useFlashOperation({
       try {
         const prog = await getFlashProgress();
 
-        if (prog.is_qdl_mode && prog.qdl_stage) {
+        if (prepRef.current !== 'none') {
+          if (prog.prep_stage) {
+            prepRef.current = 'active';
+          } else if (prepRef.current === 'active' || (prepRef.current === 'idle' && !isIdleFlashProgress(prog))) {
+            // Prep ended, or finished between two polls and the write has begun.
+            prepRef.current = 'none';
+            setStage(writeStage);
+          } else if (isIdleFlashProgress(prog)) {
+            prepRef.current = 'idle';
+          }
+        }
+
+        const preparing = prepRef.current !== 'none';
+        if (!preparing && prog.is_qdl_mode && prog.qdl_stage) {
           if (prog.qdl_stage === 'sahara' || prog.qdl_stage === 'connecting' || prog.qdl_stage === 'configuring' || prog.qdl_stage === 'provisioning') {
             setStage('qdl_sahara');
           } else if (prog.qdl_stage.startsWith('partition:') || prog.qdl_stage === 'firehose' || prog.qdl_stage === 'patching') {
@@ -359,7 +381,7 @@ export function useFlashOperation({
             maxProgressRef.current = prog.progress_percent;
             setProgress(prog.progress_percent);
           }
-        } else {
+        } else if (!preparing) {
           // A non-verifying poll means this run is actually writing: open the latch.
           if (!prog.is_verifying) {
             flashWriteSeenRef.current = true;
@@ -496,7 +518,7 @@ export function useFlashOperation({
         setPhases(
           buildPhases({
             download: !cached,
-            prepare: isQdlMode || (!cached && isCompressedImage(image.direct_url)),
+            prepare: isQdlMode || hasProfile || (!cached && isCompressedImage(image.direct_url)),
             verify: !isEdlFlash && !skipVerifyRef.current,
           })
         );
@@ -575,12 +597,12 @@ export function useFlashOperation({
       // EDL: skip block-device authorization (USB access handled by OS). The TAR path
       // re-extracts (prepare), but a UFS .img is already decompressed and ready.
       if (isEdlFlash) {
-        setPhases(buildPhases({ download: false, prepare: isQdlMode, verify: false }));
+        setPhases(buildPhases({ download: false, prepare: isQdlMode || hasProfile, verify: false }));
         startFlash(imagePath);
         return;
       }
-      // The image is already downloaded/decompressed: only write (and maybe verify) remain.
-      setPhases(buildPhases({ download: false, prepare: false, verify: !skipVerifyRef.current }));
+      // The image is already downloaded/decompressed: only the profile prep, write and verify remain.
+      setPhases(buildPhases({ download: false, prepare: hasProfile, verify: !skipVerifyRef.current }));
       // Re-authorize before re-flashing the existing image
       setStage('authorizing');
       try {

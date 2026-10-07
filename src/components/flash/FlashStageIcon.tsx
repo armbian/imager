@@ -13,8 +13,9 @@ import {
   Cpu,
   Layers,
   FolderOpen,
+  FileCog,
 } from 'lucide-react';
-import { UI } from '../../config';
+import { UI, FLASH_PREP_STAGE } from '../../config';
 
 export type FlashStage =
   | 'authorizing'
@@ -22,6 +23,7 @@ export type FlashStage =
   | 'verifying_sha'
   | 'decompressing'
   | 'extracting'
+  | typeof FLASH_PREP_STAGE.APPLYING_PROFILE
   | 'qdl_sahara'
   | 'qdl_firehose'
   | 'flashing'
@@ -46,6 +48,8 @@ export function FlashStageIcon({ stage, size = UI.ICON_SIZE.FLASH_STAGE }: Flash
       return <Archive size={size} className="stage-icon decompressing" />;
     case 'extracting':
       return <FolderOpen size={size} className="stage-icon decompressing" />;
+    case FLASH_PREP_STAGE.APPLYING_PROFILE:
+      return <FileCog size={size} className="stage-icon decompressing" />;
     case 'qdl_sahara':
       return <Cpu size={size} className="stage-icon flashing" />;
     case 'qdl_firehose':
@@ -74,6 +78,8 @@ export function getStageKey(stage: FlashStage): string {
       return 'flash.decompressing';
     case 'extracting':
       return 'flash.extracting';
+    case FLASH_PREP_STAGE.APPLYING_PROFILE:
+      return 'flash.applyingProfile';
     case 'qdl_sahara':
       return 'flash.qdlSahara';
     case 'qdl_firehose':
@@ -105,6 +111,7 @@ export function stagePhase(stage: FlashStage): FlashPhase | null {
       return 'download';
     case 'decompressing':
     case 'extracting':
+    case FLASH_PREP_STAGE.APPLYING_PROFILE:
       return 'prepare';
     case 'qdl_sahara':
     case 'qdl_firehose':
@@ -120,7 +127,9 @@ export function stagePhase(stage: FlashStage): FlashPhase | null {
 }
 
 /** Stages shown with an indeterminate (breathing) bar instead of a percentage. */
-const INDETERMINATE_STAGES: FlashStage[] = ['decompressing', 'verifying_sha', 'extracting', 'qdl_sahara'];
+const INDETERMINATE_STAGES: FlashStage[] = [
+  'decompressing', 'verifying_sha', 'extracting', FLASH_PREP_STAGE.APPLYING_PROFILE, 'qdl_sahara',
+];
 
 /** True when a stage has no meaningful percentage and uses the indeterminate bar. */
 // eslint-disable-next-line react-refresh/only-export-components

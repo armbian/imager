@@ -51,6 +51,7 @@
     "noShaTitle": "Keine Prüfsumme verfügbar",
     "noShaMessage": "Für dieses Image gibt es keine SHA-Prüfsumme, daher lassen sich die geschriebenen Daten nicht überprüfen. Das Flashen wird trotzdem fortgesetzt.",
     "extracting": "Archiv wird entpackt...",
+    "applyingProfile": "Profil wird angewendet...",
     "qdlSahara": "Firmware-Loader wird hochgeladen...",
     "qdlFirehose": "Partitionen werden geschrieben...",
     "profile": {

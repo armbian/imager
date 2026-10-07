@@ -51,6 +51,7 @@
     "noShaTitle": "Sem checksum disponível",
     "noShaMessage": "Esta imagem não tem checksum SHA, por isso não é possível verificar os dados gravados. A gravação prossegue mesmo assim.",
     "extracting": "A extrair o arquivo...",
+    "applyingProfile": "A aplicar o seu perfil...",
     "qdlSahara": "A carregar o carregador de firmware...",
     "qdlFirehose": "A escrever partições...",
     "profile": {

@@ -51,6 +51,7 @@
     "noShaTitle": "Ingen kontrollsumma tillgänglig",
     "noShaMessage": "Den här avbildningen saknar SHA-kontrollsumma, så den skrivna datan kan inte verifieras. Flashningen fortsätter ändå.",
     "extracting": "Extraherar arkiv...",
+    "applyingProfile": "Tillämpar din profil...",
     "qdlSahara": "Laddar upp firmware-laddare...",
     "qdlFirehose": "Skriver partitioner...",
     "profile": {
