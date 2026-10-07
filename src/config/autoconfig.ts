@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import type { AutoconfigConfig, UserShell } from '../types';
+import type { AutoconfigConfig, SshKeySource as KeyLookupSource, UserShell } from '../types';
 import { staticIpErrors, trimmedOrUndefined, type StaticIpErrors } from '../utils';
 import { AUTOCONFIG } from './constants';
 
@@ -169,6 +169,17 @@ export function isValidKeyUser(forge: keyof typeof SSH_KEY_FORGES, user: string)
 
 export function forgeKeysUrl(forge: keyof typeof SSH_KEY_FORGES, user: string): string {
   return `${SSH_KEY_FORGES[forge].prefix}${user.trim()}${SSH_KEYS_SUFFIX}`;
+}
+
+export function keyLookupSource(source: SshKeySource): KeyLookupSource {
+  return source === 'link' ? 'url' : source;
+}
+
+/** "SHA256:7vN3...O2nM" shortened to its edges, as the key list shows it. */
+export function shortFingerprint(fingerprint: string): string {
+  const hash = fingerprint.slice(fingerprint.indexOf(':') + 1);
+  const edge = AUTOCONFIG.FINGERPRINT_EDGE;
+  return hash.length > edge * 2 ? `${hash.slice(0, edge)}\u2026${hash.slice(-edge)}` : hash;
 }
 
 /** Placeholder shown for secret values in the live preview. */

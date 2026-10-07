@@ -3,7 +3,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { qdlToBlockDevice, isDeviceConnected } from '../utils/deviceUtils';
-import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, CustomImageClassification, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig, DevScenario, DevScenariosStatus, DevTestImage } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, CustomImageClassification, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig, DevScenario, DevScenariosStatus, DevTestImage, SshKeyLookup, SshKeySource } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
   return invoke('get_boards');
@@ -199,6 +199,15 @@ export async function deleteCachedImage(filename: string): Promise<number> {
 /** Check reachability of the Armbian API (HEAD request, 5s timeout) */
 export async function checkConnectivity(): Promise<boolean> {
   return invoke('check_connectivity');
+}
+
+// ============================================================================
+// SSH keys
+// ============================================================================
+
+/** Fetch the public keys behind a profile's key source; rejects with an [SSH_KEYS_*] code */
+export async function lookupSshKeys(source: SshKeySource, value: string): Promise<SshKeyLookup> {
+  return invoke('lookup_ssh_keys', { source, value });
 }
 
 // ============================================================================

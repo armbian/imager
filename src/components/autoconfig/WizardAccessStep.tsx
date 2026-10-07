@@ -9,6 +9,7 @@ import { AUTOCONFIG_PLACEHOLDERS, SSH_KEY_FORGES, type SshKeySource } from '../.
 import type { ProfileWizardState } from '../../hooks/useProfileWizard';
 import { PasswordInput } from '../shared/PasswordInput';
 import { SegmentedChoice } from '../shared/SegmentedChoice';
+import { SshKeyStatus } from './SshKeyCheck';
 import { WizardField, WizardMore, WizardTextField } from './WizardFields';
 
 const SEG_ICON = UI.ICON_SIZE.WIZARD_SEG;
@@ -16,10 +17,13 @@ const FORGE_ICON = { github: Github, gitlab: Gitlab } as const;
 
 export function WizardAccessStep({ wizard, uid }: { wizard: ProfileWizardState; uid: string }) {
   const { t } = useTranslation();
-  const { draft, more, attempted, stepError, patch, toggleMore, shownError } = wizard;
+  const { draft, more, attempted, stepError, keyCheck, patch, toggleMore, shownError } = wizard;
   const a = draft.access;
   const forge = a.source === 'link' ? null : SSH_KEY_FORGES[a.source];
   const ForgeIcon = a.source === 'link' ? null : FORGE_ICON[a.source];
+  const keyStatus = keyCheck.status === 'idle' ? undefined : (
+    <SshKeyStatus check={keyCheck} forge={forge?.label ?? null} showKeys />
+  );
   const sources: { value: SshKeySource; label: string; icon: ReactNode }[] = [
     { value: 'github', label: SSH_KEY_FORGES.github.label, icon: <Github size={14} aria-hidden="true" /> },
     { value: 'gitlab', label: SSH_KEY_FORGES.gitlab.label, icon: <Gitlab size={14} aria-hidden="true" /> },
@@ -58,8 +62,7 @@ export function WizardAccessStep({ wizard, uid }: { wizard: ProfileWizardState; 
               label={t('settings.autoconfig.wizard.access.forgeUser', { forge: forge.label })}
               htmlFor={`${uid}-keys`}
               error={shownError(stepError)}
-              hint={a.keyUser.trim() && !stepError ? t('settings.autoconfig.wizard.access.fetchHint') : undefined}
-              ok
+              status={keyStatus}
             >
               <WizardTextField
                 id={`${uid}-keys`}
@@ -76,6 +79,7 @@ export function WizardAccessStep({ wizard, uid }: { wizard: ProfileWizardState; 
               label={t('settings.autoconfig.wizard.access.linkLabel')}
               htmlFor={`${uid}-link`}
               error={shownError(stepError)}
+              status={keyStatus}
               hint={t('settings.autoconfig.wizard.access.linkHint')}
             >
               <WizardTextField

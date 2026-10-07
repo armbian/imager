@@ -2,16 +2,16 @@
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronDown, CircleCheck, Globe, Plus, TriangleAlert } from 'lucide-react';
+import { ChevronDown, Globe, Plus, TriangleAlert } from 'lucide-react';
 import { UI } from '../../config';
 import { loadCountryFlag } from '../../config/countryFlags';
 
-export function WizardField({ label, children, hint, ok, error, htmlFor }: {
+export function WizardField({ label, children, hint, error, status, htmlFor }: {
   label: string;
   children: ReactNode;
   hint?: string;
-  ok?: boolean;
   error?: string | null;
+  status?: ReactNode;
   htmlFor?: string;
 }) {
   return (
@@ -23,9 +23,10 @@ export function WizardField({ label, children, hint, ok, error, htmlFor }: {
           <TriangleAlert size={UI.ICON_SIZE.WIZARD_HINT} aria-hidden="true" />
           {error}
         </div>
+      ) : status ? (
+        status
       ) : hint ? (
-        <div className={`pw-hint${ok ? ' is-ok' : ''}`}>
-          {ok && <CircleCheck size={UI.ICON_SIZE.WIZARD_HINT} aria-hidden="true" />}
+        <div className="pw-hint">
           {hint}
         </div>
       ) : null}

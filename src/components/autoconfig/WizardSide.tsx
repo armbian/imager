@@ -18,7 +18,7 @@ interface WizardSideProps {
 
 export function WizardSide({ wizard, boardName, boardImage }: WizardSideProps) {
   const { t } = useTranslation();
-  const { draft, step, stepIndex } = wizard;
+  const { draft, step, stepIndex, keyCount } = wizard;
   const name = draft.name.trim();
 
   return (
@@ -38,7 +38,7 @@ export function WizardSide({ wizard, boardName, boardImage }: WizardSideProps) {
           const at = WIZARD_STEPS.indexOf(item);
           const state = stepIndex === at ? 'cur' : stepIndex > at ? (draft.skipped[item] ? 'skip' : 'done') : '';
           const Icon = ITEM_ICON[item];
-          const summary = state === 'done' ? wizardItemSummary(item, draft, t) : [];
+          const summary = state === 'done' ? wizardItemSummary(item, draft, keyCount, t) : [];
           return (
             <li key={item} className={`pw-item${state ? ` is-${state}` : ''}`} aria-current={state === 'cur' ? 'step' : undefined}>
               <span className="pw-item__icon" aria-hidden="true">

@@ -158,6 +158,46 @@ pub mod http {
     pub const CLIENT_HEADER_VALUE: &str = "armbian-imager";
 }
 
+/// Public SSH key lookup behind a profile's key source (PRESET_USER_KEY / PRESET_ROOT_KEY)
+pub mod ssh_keys {
+    /// Keys URLs are {base}{username}{KEYS_SUFFIX}
+    pub const GITHUB_KEYS_BASE: &str = "https://github.com/";
+    pub const GITLAB_KEYS_BASE: &str = "https://gitlab.com/";
+    pub const KEYS_SUFFIX: &str = ".keys";
+
+    pub const GITHUB_USERNAME_MAX_CHARS: usize = 39;
+    pub const GITLAB_USERNAME_MAX_CHARS: usize = 255;
+    pub const URL_MAX_CHARS: usize = 2048;
+
+    /// The only scheme accepted for a link and for every redirect hop
+    pub const REQUIRED_SCHEME: &str = "https";
+
+    pub const TIMEOUT_SECS: u64 = 8;
+    pub const MAX_REDIRECTS: usize = 3;
+
+    /// Response bodies above this are refused, not truncated
+    pub const MAX_BODY_BYTES: usize = 64 * 1024;
+
+    /// Keys listed in a lookup result; the total still counts every valid key
+    pub const MAX_KEYS: usize = 50;
+
+    pub const COMMENT_MAX_CHARS: usize = 100;
+
+    /// Accepted OpenSSH public key types and the label `ssh-keygen -l` prints for each
+    pub const KEY_TYPES: &[(&str, &str)] = &[
+        ("ssh-ed25519", "ED25519"),
+        ("ssh-rsa", "RSA"),
+        ("ecdsa-sha2-nistp256", "ECDSA"),
+        ("ecdsa-sha2-nistp384", "ECDSA"),
+        ("ecdsa-sha2-nistp521", "ECDSA"),
+        ("sk-ssh-ed25519@openssh.com", "ED25519-SK"),
+        ("sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK"),
+    ];
+
+    /// Prefix of the fingerprint string, as ssh-keygen prints it
+    pub const FINGERPRINT_PREFIX: &str = "SHA256:";
+}
+
 /// Image filtering constants
 pub mod images {
     /// Filter value for empty preinstalled application

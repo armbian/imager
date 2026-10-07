@@ -250,6 +250,26 @@ export interface ArmbianReleaseInfo {
   board_name: string; // e.g., "Orange Pi 5" - Human-readable board name for display
 }
 
+/** Where a profile's public SSH keys come from (lookup_ssh_keys) */
+export type SshKeySource = 'github' | 'gitlab' | 'url';
+
+/** One public key served by a key source */
+export interface SshKeyInfo {
+  /** OpenSSH type string, e.g. "ssh-ed25519" */
+  keyType: string;
+  /** Label as `ssh-keygen -l` prints it: ED25519, RSA, ECDSA, ED25519-SK, ECDSA-SK */
+  label: string;
+  comment: string | null;
+  /** "SHA256:<base64>", as `ssh-keygen -l` prints it */
+  fingerprint: string;
+}
+
+/** Result of lookup_ssh_keys; `keys` lists at most 50, `total` counts every valid key */
+export interface SshKeyLookup {
+  total: number;
+  keys: SshKeyInfo[];
+}
+
 /** Login shell for the first user provisioned via autoconfig */
 export type UserShell = 'bash' | 'zsh';
 
