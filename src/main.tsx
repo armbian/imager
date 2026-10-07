@@ -7,10 +7,12 @@ import App from './App';
 import { initI18n } from './i18n';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { MotionProvider } from './contexts/MotionContext';
+import { PLATFORM, PLATFORM_CLASS } from './config';
+import { uiPlatform } from './utils';
 
 // Tag the platform so the layout can reserve space for the overlay traffic lights (macOS)
-if (navigator.userAgent.includes('Mac')) {
-  document.documentElement.classList.add('is-macos');
+if (uiPlatform() === PLATFORM.MACOS) {
+  document.documentElement.classList.add(PLATFORM_CLASS.MACOS);
 }
 
 // Disable context menu in production

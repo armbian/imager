@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { COLORS, UI, SLUGS, SUPPORT_TIER, SUPPORT_TIER_ORDER, IMAGE_VARIANT, LOCAL_SOURCE_LABEL } from '../config';
+import { COLORS, UI, SLUGS, SUPPORT_TIER, SUPPORT_TIER_ORDER, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, PLATFORM, PLATFORM_UA, BYTES_PER_KB } from '../config';
 import { getImageVariantLabel, getOsInfo } from '../config/os-info';
 import { getVariantBadge, getKernelType, KERNEL_BADGES } from '../config/badges';
 import { IMAGE_STABILITY, type ImageInfo, type BoardInfo, type Manufacturer } from '../types';
@@ -69,10 +69,9 @@ export function formatFileSize(
 /** Format bytes as a human-readable string (e.g. "2.3 GB") */
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
-  const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  const i = Math.floor(Math.log(bytes) / Math.log(BYTES_PER_KB));
+  return parseFloat((bytes / Math.pow(BYTES_PER_KB, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 /** Parsed metadata from an Armbian image filename */
@@ -319,4 +318,20 @@ export function compareBoardsBySupport<T extends {
   const bPriority = bIdx === -1 ? SUPPORT_TIER_ORDER.length : bIdx;
   if (aPriority !== bPriority) return aPriority - bPriority;
   return a.name.localeCompare(b.name);
+}
+
+/** Platform from the webview user agent, available before get_system_info answers. */
+export function uiPlatform(): (typeof PLATFORM)[keyof typeof PLATFORM] {
+  const ua = navigator.userAgent;
+  if (ua.includes(PLATFORM_UA.MACOS)) return PLATFORM.MACOS;
+  if (ua.includes(PLATFORM_UA.WINDOWS)) return PLATFORM.WINDOWS;
+  return PLATFORM.LINUX;
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function tailPath(path: string, segments = 1): string {
+  return path.split(/[\\/]/).filter(Boolean).slice(-segments).join('/') || path;
 }

@@ -7,9 +7,13 @@ import { SETTINGS } from '../config';
 
 export type Theme = (typeof SETTINGS.THEME_MODES)[keyof typeof SETTINGS.THEME_MODES];
 
+export interface ApplyOptions {
+  persist?: boolean;
+}
+
 interface ThemeContextType {
   theme: Theme;
-  setTheme: (theme: Theme) => void;
+  setTheme: (theme: Theme, options?: ApplyOptions) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -59,12 +63,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     loadTheme();
   }, []);
 
-  // Set theme and persist to storage
-  const setTheme = async (newTheme: Theme) => {
+  const setTheme = async (newTheme: Theme, { persist = true }: ApplyOptions = {}) => {
     setThemeState(newTheme);
     applyTheme(newTheme);
+    if (!persist) return;
 
-    // Persist to storage
     try {
       await saveTheme(newTheme);
     } catch (error) {

@@ -4,12 +4,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getReducedMotion, setReducedMotion as saveMotion } from '../hooks/useSettings';
 import { SETTINGS } from '../config';
+import type { ApplyOptions } from './ThemeContext';
 
 export type MotionMode = (typeof SETTINGS.MOTION_MODES)[keyof typeof SETTINGS.MOTION_MODES];
 
 interface MotionContextType {
   motion: MotionMode;
-  setMotion: (mode: MotionMode) => void;
+  setMotion: (mode: MotionMode, options?: ApplyOptions) => void;
 }
 
 const MotionContext = createContext<MotionContextType | undefined>(undefined);
@@ -43,9 +44,10 @@ export function MotionProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const setMotion = async (mode: MotionMode) => {
+  const setMotion = async (mode: MotionMode, { persist = true }: ApplyOptions = {}) => {
     setMotionState(mode);
     applyMotion(mode);
+    if (!persist) return;
 
     try {
       await saveMotion(mode);

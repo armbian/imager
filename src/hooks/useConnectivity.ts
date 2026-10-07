@@ -61,8 +61,12 @@ export function useConnectivity(): ConnectivityState {
     check();
 
     const interval = setInterval(check, POLLING.CONNECTIVITY_CHECK);
+    window.addEventListener(EVENTS.CONNECTIVITY_RECHECK, check);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener(EVENTS.CONNECTIVITY_RECHECK, check);
+    };
   }, [check, forced]);
 
   useEffect(() => {

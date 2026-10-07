@@ -34,6 +34,8 @@ export {
   POLLING,
   LINKS,
   TIMING,
+  BYTES_PER_KB,
+  BYTES_PER_MB,
   CACHE,
   EVENTS,
   STORAGE_KEYS,
@@ -47,6 +49,8 @@ export {
   IMAGE_VARIANT,
   LOCAL_SOURCE_LABEL,
   PLATFORM,
+  PLATFORM_UA,
+  PLATFORM_CLASS,
   PLATFORM_LABEL,
   type DeviceType,
 } from './constants';
