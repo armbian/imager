@@ -113,7 +113,10 @@ impl Ext4 {
 
             // log::trace!("find in parent {:x?} r {:?} name {:?}", parent, r, current_path);
             if let Err(e) = r {
-                if e.error() != Errno::ENOENT || !create {
+                if e.error() != Errno::ENOENT {
+                    return Err(e);
+                }
+                if !create {
                     return_errno_with_message!(Errno::ENOENT, "No such file or directory");
                 }
 

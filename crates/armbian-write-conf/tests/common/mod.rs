@@ -133,14 +133,32 @@ fn e2fsprogs_tool(name: &str) -> Option<PathBuf> {
 
 /// A bare filesystem made by the real mkfs.ext4 with 4K blocks; None when e2fsprogs is missing.
 pub fn mkfs_ext4(image: &Path, size: u64) -> Option<()> {
+    mkfs_ext4_with(image, size, &["-b", "4096"])
+}
+
+/// A bare filesystem made by mkfs.ext4 with `options`; None when e2fsprogs is missing.
+pub fn mkfs_ext4_with(image: &Path, size: u64, options: &[&str]) -> Option<()> {
     let bin = e2fsprogs_tool("mkfs.ext4")?;
     std::fs::File::create(image).unwrap().set_len(size).unwrap();
     let out = Command::new(bin)
-        .args(["-q", "-F", "-b", "4096"])
+        .args(["-q", "-F"])
+        .args(options)
         .arg(image)
         .output()
         .unwrap();
     assert!(out.status.success(), "mkfs.ext4 failed: {out:?}");
+    Some(())
+}
+
+/// Rebuilds every directory index with `e2fsck -fyD`, which turns a large linear /root into an htree.
+pub fn e2fsck_index_directories(image: &Path) -> Option<()> {
+    let bin = e2fsprogs_tool("e2fsck")?;
+    let out = Command::new(bin).arg("-fyD").arg(image).output().unwrap();
+    // Exit 1 means e2fsck changed the filesystem, which is the point here.
+    assert!(
+        matches!(out.status.code(), Some(0 | 1)),
+        "e2fsck -fyD failed: {out:?}"
+    );
     Some(())
 }
 

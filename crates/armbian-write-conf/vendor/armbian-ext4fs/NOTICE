@@ -32,5 +32,9 @@ Modifications made to the upstream source
    directory inode instead of the block's first entry, and a block
    allocation without a goal no longer starts at a missing group 1.
 
+6. `create` and `create_with_attr` refuse to add an entry to a hash-indexed
+   (htree) directory, and `generic_open` returns the lookup's own error
+   instead of reporting every failure as "No such file or directory".
+
 The upstream binary (src/main.rs) and its [[bin]] target were removed; only
 the library is retained.

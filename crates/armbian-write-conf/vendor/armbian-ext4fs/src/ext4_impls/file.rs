@@ -68,7 +68,11 @@ impl Ext4 {
     pub fn create(&self, parent: u32, name: &str, inode_mode: u16) -> Result<Ext4InodeRef> {
         let mut parent_inode_ref = self.get_inode_ref(parent);
 
-        // let mut child_inode_ref = self.create_inode(inode_mode)?;
+        // A linear insert would overwrite the dx_root of a hash-indexed directory.
+        if parent_inode_ref.inode.flags() & EXT4_INODE_FLAG_INDEX != 0 {
+            return_errno_with_message!(Errno::ENOTSUP, "Cannot add entries to a hash-indexed directory");
+        }
+
         let init_child_ref = self.create_inode(inode_mode)?;
 
         self.write_back_inode_without_csum(&init_child_ref);
@@ -134,7 +138,10 @@ impl Ext4 {
     pub fn create_with_attr(&self, parent: u32, name: &str, inode_mode: u16, uid:u16, gid: u16) -> Result<Ext4InodeRef> {
         let mut parent_inode_ref = self.get_inode_ref(parent);
 
-        // let mut child_inode_ref = self.create_inode(inode_mode)?;
+        if parent_inode_ref.inode.flags() & EXT4_INODE_FLAG_INDEX != 0 {
+            return_errno_with_message!(Errno::ENOTSUP, "Cannot add entries to a hash-indexed directory");
+        }
+
         let mut init_child_ref = self.create_inode(inode_mode)?;
 
         init_child_ref.inode.set_uid(uid);
