@@ -93,6 +93,9 @@ pub use macos::flash_image;
 #[cfg(target_os = "windows")]
 pub use windows::flash_image;
 
+#[cfg(all(debug_assertions, target_os = "macos"))]
+pub(crate) use macos::flash_to_vdisk;
+
 #[cfg(target_os = "linux")]
 pub use linux::request_authorization;
 #[cfg(target_os = "macos")]
@@ -115,9 +118,11 @@ pub(crate) fn is_simulated_path(path: &str) -> bool {
 /// Called again at every writer entry so a simulated path can never reach real device I/O.
 pub(crate) fn reject_simulated(path: &str) -> Result<(), String> {
     if is_simulated_path(path) {
+        // The prefix is formatted as data so the release binary check can find it.
         return Err(format!(
-            "{} simulated device path refused: {path:?}",
-            crate::devices::TAG_INVALID_PATH
+            "{} simulated device path refused: {path:?} ({} paths are never written)",
+            crate::devices::TAG_INVALID_PATH,
+            crate::config::flash::SIMULATED_DEVICE_PREFIX
         ));
     }
     Ok(())

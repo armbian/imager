@@ -3,7 +3,8 @@
 
 //! Formatting helpers for human-readable output and Armbian filename parsing.
 
-pub const MB: u64 = 1024 * 1024;
+pub const KB: u64 = 1024;
+pub const MB: u64 = 1024 * KB;
 pub const GB: u64 = 1024 * 1024 * 1024;
 
 /// Convert bytes to megabytes as f64 (for calculations and logging)

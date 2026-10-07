@@ -3,7 +3,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { qdlToBlockDevice, isDeviceConnected } from '../utils/deviceUtils';
-import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, CustomImageClassification, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig } from '../types';
+import type { BoardInfo, ImageInfo, BlockDevice, DownloadProgress, FlashProgress, CustomImageInfo, CustomImageClassification, ArmbianReleaseInfo, CachedImageInfo, CacheBreakdown, QdlDevice, VendorInfo, AutoconfigConfig, DevScenario, DevScenariosStatus, DevTestImage } from '../types';
 
 export async function getBoards(): Promise<BoardInfo[]> {
   return invoke('get_boards');
@@ -269,4 +269,32 @@ export async function flashQdlUfsImage(
   autoconfig?: AutoconfigConfig | null
 ): Promise<void> {
   return invoke('flash_qdl_ufs_image', { imagePath, soc, boardSlug, devicePath, autoconfig });
+}
+
+// === Dev scenarios emulator (debug builds only: a rejected dev_scenarios_status means release) ===
+
+export async function devScenariosStatus(): Promise<DevScenariosStatus> {
+  return invoke('dev_scenarios_status');
+}
+
+/** Omitted fields take their defaults; returns the stored scenario. */
+export async function devSetScenario(scenario: Partial<DevScenario>): Promise<DevScenario> {
+  return invoke('dev_set_scenario', { scenario });
+}
+
+export async function devReset(): Promise<DevScenario> {
+  return invoke('dev_reset');
+}
+
+export async function devMakeTestImage(sizeMb: number, unaligned?: boolean): Promise<DevTestImage> {
+  return invoke('dev_make_test_image', { sizeMb, unaligned });
+}
+
+/** macOS only; never overwrites an existing file. */
+export async function devCreateVdisk(id: string, sizeMb: number): Promise<DevScenariosStatus> {
+  return invoke('dev_create_vdisk', { id, sizeMb });
+}
+
+export async function devDeleteVdisk(id: string): Promise<DevScenariosStatus> {
+  return invoke('dev_delete_vdisk', { id });
 }

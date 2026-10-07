@@ -28,6 +28,24 @@ pub const QDL_PATH_PREFIX: &str = "qdl://";
 
 pub const TAG_QDL_DEVICE_NOT_FOUND: &str = "[QDL_DEVICE_NOT_FOUND]";
 pub const TAG_QDL_MULTIPLE_DEVICES: &str = "[QDL_MULTIPLE_DEVICES]";
+pub const TAG_QDL_DISCONNECTED: &str = "[QDL_DISCONNECTED]";
+pub const TAG_QDL_CANCELLED: &str = "[QDL_CANCELLED]";
+pub const TAG_QDL_ERROR: &str = "[QDL_ERROR]";
+
+pub const QDL_CANCELLED_ERROR: &str = "QDL flash cancelled by user";
+
+/// `FlashState.qdl.stage` values; src/hooks/useFlashOperation.ts matches them.
+pub const STAGE_CONNECTING: &str = "connecting";
+pub const STAGE_SAHARA: &str = "sahara";
+pub const STAGE_CONFIGURING: &str = "configuring";
+pub const STAGE_PROVISIONING: &str = "provisioning";
+pub const STAGE_FIREHOSE: &str = "firehose";
+pub const STAGE_PATCHING: &str = "patching";
+pub const STAGE_RESETTING: &str = "resetting";
+pub const STAGE_COMPLETE: &str = "complete";
+pub const STAGE_PARTITION_PREFIX: &str = "partition:";
+
+pub const UFS_PARTITION_LABEL: &str = "system";
 
 pub const SECTOR_SIZE_EMMC: usize = 512;
 pub const SECTOR_SIZE_UFS: usize = 4096;

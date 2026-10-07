@@ -295,3 +295,93 @@ export interface AutoconfigProfilesChangedDetail {
 
 /** How a settled flash screen leaves: Back on error, Flash another on done */
 export type FlashExit = () => void | Promise<void>;
+
+// === Dev scenarios emulator (debug builds only; mirrors src-tauri/src/dev_scenarios/model.rs) ===
+
+export type DevFlashOutcome = 'success' | 'writeError' | 'verifyMismatch' | 'unplug' | 'authDenied';
+export type DevApiFault = 'normal' | 'offline' | 'slow' | 'empty' | 'serverError';
+export type DevDownloadFault = 'normal' | 'offline' | 'slow' | 'shaMismatch';
+
+/** A `vdisk` device takes its size from the backing file (sizeBytes 0). */
+export interface DevFakeDevice {
+  id: string;
+  model?: string;
+  sizeBytes?: number;
+  busType?: 'SD' | 'USB' | 'NVMe' | 'SATA' | 'SAS' | null;
+  isRemovable?: boolean;
+  isSystem?: boolean;
+  isReadOnly?: boolean;
+  appearAfterMs?: number | null;
+  disappearAfterMs?: number | null;
+  vdisk?: boolean;
+}
+
+export interface DevFakeEdlDevice {
+  id: string;
+  serial?: string;
+  description?: string;
+  appearAfterMs?: number | null;
+  disappearAfterMs?: number | null;
+}
+
+export interface DevFlashSim {
+  outcome: DevFlashOutcome;
+  failAtPercent: number;
+  writeMbPerSec: number;
+  verifyMbPerSec: number;
+  authDelayMs: number;
+}
+
+export interface DevNetworkSim {
+  api: DevApiFault;
+  apiDelayMs: number;
+  download: DevDownloadFault;
+  downloadKbPerSec: number;
+}
+
+export interface DevScenario {
+  hideRealDevices: boolean;
+  devices: DevFakeDevice[];
+  edlDevices: DevFakeEdlDevice[];
+  flash: DevFlashSim;
+  network: DevNetworkSim;
+}
+
+export interface DevPreset {
+  id: string;
+  label: string;
+  description: string;
+  scenario: DevScenario;
+}
+
+export interface DevLimits {
+  idMaxLen: number;
+  maxFakeDevices: number;
+  maxTestImageMb: number;
+  maxVdiskMb: number;
+  maxDelayMs: number;
+}
+
+export interface DevVdisk {
+  id: string;
+  sizeBytes: number;
+  path: string;
+}
+
+export interface DevScenariosStatus {
+  active: boolean;
+  scenario: DevScenario;
+  /** The hot-plug clock: milliseconds since the scenario was set */
+  elapsedMs: number;
+  /** Fake device ids a simulated mid-write unplug removed */
+  unplugged: string[];
+  presets: DevPreset[];
+  limits: DevLimits;
+  vdiskSupported: boolean;
+  vdisks: DevVdisk[];
+}
+
+export interface DevTestImage {
+  path: string;
+  sizeBytes: number;
+}

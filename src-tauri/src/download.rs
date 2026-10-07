@@ -227,6 +227,9 @@ pub async fn download_image(
         return Ok(cached_path);
     }
 
+    #[cfg(debug_assertions)]
+    crate::dev_scenarios::network::check_download_start()?;
+
     std::fs::create_dir_all(output_dir)
         .map_err(|e| format!("Failed to create output directory: {}", e))?;
 
@@ -278,6 +281,9 @@ pub async fn download_image(
         config::logging::DOWNLOAD_LOG_INTERVAL_MB,
     );
 
+    #[cfg(debug_assertions)]
+    let throttle = crate::dev_scenarios::network::download_throttle();
+
     while let Some(chunk) = stream.next().await {
         if state.is_cancelled.load(Ordering::SeqCst) {
             log_info!(MODULE, "Download cancelled by user");
@@ -303,6 +309,9 @@ pub async fn download_image(
         downloaded += chunk.len() as u64;
         state.downloaded_bytes.store(downloaded, Ordering::SeqCst);
         tracker.update(chunk.len() as u64);
+
+        #[cfg(debug_assertions)]
+        throttle.pace(chunk.len()).await;
     }
 
     drop(temp_file);
@@ -311,7 +320,10 @@ pub async fn download_image(
     if let Some(sha_url) = sha_url {
         state.is_verifying_sha.store(true, Ordering::SeqCst);
         log_info!(MODULE, "Verifying SHA256...");
-        match verify_sha256(&client, &temp_path, sha_url, &state).await {
+        let verified = verify_sha256(&client, &temp_path, sha_url, &state).await;
+        #[cfg(debug_assertions)]
+        let verified = crate::dev_scenarios::network::sha_result(verified);
+        match verified {
             Ok(()) => {
                 log_info!(MODULE, "SHA256 verification successful");
             }

@@ -27,6 +27,11 @@ static PREV_DEVICE_PATHS: Lazy<Mutex<HashSet<String>>> = Lazy::new(|| Mutex::new
 pub async fn get_boards(state: State<'_, AppState>) -> Result<Vec<BoardInfo>, String> {
     log_debug!("board_queries", "Fetching boards list");
 
+    #[cfg(debug_assertions)]
+    if super::dev_scenarios::api_returns_empty("Boards").await? {
+        return Ok(Vec::new());
+    }
+
     let mut boards_guard = state.boards.lock().await;
     if boards_guard.is_none() {
         log_debug!("board_queries", "Cache miss - fetching from API");
@@ -63,6 +68,11 @@ pub async fn get_images_for_board(
         kernel_filter,
         variant_filter
     );
+
+    #[cfg(debug_assertions)]
+    if super::dev_scenarios::api_returns_empty("Images").await? {
+        return Ok(Vec::new());
+    }
 
     // Push the filters the API supports server-side; the rest are applied below.
     let api_images = fetch_images_for_board(
@@ -112,6 +122,11 @@ pub async fn get_images_for_board(
 pub async fn get_vendors(state: State<'_, AppState>) -> Result<Vec<ApiVendor>, String> {
     log_debug!("board_queries", "Fetching vendors list");
 
+    #[cfg(debug_assertions)]
+    if super::dev_scenarios::api_returns_empty("Vendors").await? {
+        return Ok(Vec::new());
+    }
+
     let mut vendors_guard = state.vendors.lock().await;
     if vendors_guard.is_none() {
         log_debug!("board_queries", "Vendors cache miss - fetching from API");
@@ -133,7 +148,12 @@ pub async fn get_vendors(state: State<'_, AppState>) -> Result<Vec<ApiVendor>, S
 /// Get available block devices
 #[tauri::command]
 pub async fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
-    let devices = devices_get_block_devices().map_err(|e| {
+    #[cfg(debug_assertions)]
+    let scanned = super::dev_scenarios::list_block_devices(devices_get_block_devices);
+    #[cfg(not(debug_assertions))]
+    let scanned = devices_get_block_devices();
+
+    let devices = scanned.map_err(|e| {
         log_error!("board_queries", "Failed to get block devices: {}", e);
         e
     })?;

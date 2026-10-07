@@ -14,9 +14,25 @@ use crate::{log_error, log_info, log_warn};
 
 use super::state::AppState;
 
+/// Tag error codes so the frontend can map them to i18n keys.
+fn tag_join_error(e: tokio::task::JoinError) -> String {
+    let msg = e.to_string();
+    if msg.contains("Error sending data") || msg.contains("Error receiving data") {
+        qdl::TAG_QDL_DISCONNECTED.to_string()
+    } else if msg.contains("cancelled") || msg.contains("Interrupted") {
+        qdl::TAG_QDL_CANCELLED.to_string()
+    } else {
+        format!("{} {}", qdl::TAG_QDL_ERROR, msg)
+    }
+}
+
 /// Detect connected USB devices in Qualcomm EDL mode (VID:PID 05c6:9008); empty list if none.
 #[tauri::command]
 pub async fn get_qdl_devices() -> Result<Vec<QdlDevice>, String> {
+    #[cfg(debug_assertions)]
+    if let Some(devices) = super::dev_scenarios::qdl_devices_override() {
+        return Ok(devices);
+    }
     qdl::detect::get_qdl_devices()
 }
 
@@ -55,6 +71,18 @@ pub async fn flash_qdl_image(
     let flash_state = state.flash_state.clone();
     flash_state.reset();
 
+    #[cfg(debug_assertions)]
+    if let Some(result) = super::dev_scenarios::intercept_qdl_flash(
+        crate::dev_scenarios::flash_sim::QdlKind::Tar,
+        std::path::Path::new(&tar_path),
+        &device_path,
+        flash_state.clone(),
+    )
+    .await
+    {
+        return result;
+    }
+
     check_edl_target(&device_path)?;
 
     let tar_path = PathBuf::from(&tar_path);
@@ -77,17 +105,7 @@ pub async fn flash_qdl_image(
         qdl::flash::qdl_flash(&flash_dir_clone, &device_path, autoconfig, flash_state)
     })
     .await
-    .map_err(|e| {
-        let msg = e.to_string();
-        // Tag error codes so the frontend can map them to i18n keys.
-        if msg.contains("Error sending data") || msg.contains("Error receiving data") {
-            "[QDL_DISCONNECTED]".to_string()
-        } else if msg.contains("cancelled") || msg.contains("Interrupted") {
-            "[QDL_CANCELLED]".to_string()
-        } else {
-            format!("[QDL_ERROR] {}", msg)
-        }
-    })?;
+    .map_err(tag_join_error)?;
 
     qdl::extract::cleanup_extraction(&extract_dir);
 
@@ -125,6 +143,18 @@ pub async fn flash_qdl_ufs_image(
     let flash_state = state.flash_state.clone();
     flash_state.reset();
 
+    #[cfg(debug_assertions)]
+    if let Some(result) = super::dev_scenarios::intercept_qdl_flash(
+        crate::dev_scenarios::flash_sim::QdlKind::Ufs,
+        std::path::Path::new(&image_path),
+        &device_path,
+        flash_state.clone(),
+    )
+    .await
+    {
+        return result;
+    }
+
     check_edl_target(&device_path)?;
 
     // Resolve the board's QDL facts from the API (bundled fallback), then fetch the
@@ -132,12 +162,13 @@ pub async fn flash_qdl_ufs_image(
     let resolved = qdl::registry::resolve(&board_slug).await.ok_or_else(|| {
         let msg = format!("No QDL metadata for board '{board_slug}' (SoC hint '{soc}')");
         log_error!("qdl_operations", "{}", msg);
-        format!("[QDL_ERROR] {msg}")
+        format!("{} {msg}", qdl::TAG_QDL_ERROR)
     })?;
 
     if resolved.storage != qdl::QdlStorage::Ufs {
         return Err(format!(
-            "[QDL_ERROR] Board '{board_slug}' is not a UFS QDL target"
+            "{} Board '{board_slug}' is not a UFS QDL target",
+            qdl::TAG_QDL_ERROR
         ));
     }
 
@@ -165,16 +196,7 @@ pub async fn flash_qdl_ufs_image(
         )
     })
     .await
-    .map_err(|e| {
-        let msg = e.to_string();
-        if msg.contains("Error sending data") || msg.contains("Error receiving data") {
-            "[QDL_DISCONNECTED]".to_string()
-        } else if msg.contains("cancelled") || msg.contains("Interrupted") {
-            "[QDL_CANCELLED]".to_string()
-        } else {
-            format!("[QDL_ERROR] {}", msg)
-        }
-    })?;
+    .map_err(tag_join_error)?;
 
     match &result {
         Ok(()) => log_info!("qdl_operations", "QDL UFS flash completed successfully"),
