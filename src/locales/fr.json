@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Inconnu",
     "confirm": "Confirmer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
   },
   "settings": {
     "title": "Paramètres",
@@ -354,7 +356,116 @@
       "previewReveal": "Afficher",
       "previewHide": "Masquer",
       "previewEmpty": "Rien de défini pour l'instant. Remplissez les champs ci-dessus pour créer le fichier de premier démarrage.",
-      "settingsCount": "paramètres"
+      "settingsCount": "paramètres",
+      "guided": "Configuration guidée",
+      "wifiKeyFits": "Convient au Wi-Fi (8 à 63 caractères)",
+      "wifiKeyLength": "Les mots de passe Wi-Fi comptent généralement de 8 à 63 caractères",
+      "wizard": {
+        "eyebrow": "Nouveau profil",
+        "unnamed": "Pas encore de nom",
+        "forBoard": "Pour {{board}}",
+        "forAnyBoard": "Pour toute carte",
+        "stepOf": "Étape <b>{{current}}</b> sur {{total}}",
+        "close": "Fermer",
+        "skip": "Ignorer cette étape",
+        "back": "Retour",
+        "next": "Suivant",
+        "create": "Créer le profil",
+        "noMatch": "Aucun résultat",
+        "password": "Mot de passe",
+        "nameHint": "Toutes les étapes suivantes sont facultatives. Ignorez ce dont vous n'avez pas besoin.",
+        "ssidRequired": "Saisissez le nom du réseau ou choisissez Câble.",
+        "addressRequired": "Saisissez l'adresse ou choisissez Automatique.",
+        "usernameRequired": "Saisissez un nom d'utilisateur ou choisissez À la première connexion.",
+        "keyUserInvalid": "Ce nom d'utilisateur n'est pas valide.",
+        "steps": {
+          "name": "Nom",
+          "network": "Réseau",
+          "user": "Utilisateur",
+          "locale": "Langue et heure",
+          "access": "Accès",
+          "review": "Vérification"
+        },
+        "pending": {
+          "network": "Conserve les valeurs par défaut d'Armbian",
+          "user": "Demandé au premier démarrage",
+          "locale": "Valeurs par défaut d'Armbian",
+          "access": "Connexion par mot de passe uniquement"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "Ethernet",
+          "location": "Selon la localisation",
+          "keysFrom": "Clés SSH depuis {{forge}}",
+          "keysLink": "Clés SSH depuis un lien",
+          "passwordOnly": "Mot de passe uniquement",
+          "rootSet": "mot de passe root défini"
+        },
+        "name": {
+          "title": "Comment l'appeler ?",
+          "sub": "Vous le choisirez par son nom dans le résumé."
+        },
+        "network": {
+          "title": "Comment la carte se connecte-t-elle ?",
+          "sub": "Vous pourrez le modifier plus tard dans les Paramètres.",
+          "cable": "Câble",
+          "wifi": "Wi-Fi",
+          "both": "Les deux",
+          "ssid": "Nom du réseau",
+          "country": "Pays",
+          "cableLine": "Branchez le câble avant le premier démarrage. La carte reçoit son adresse de votre routeur.",
+          "moreWifi": "Pays et adresse IP",
+          "moreCable": "Adresse IP",
+          "searchCountry": "Rechercher un pays",
+          "ip": "Adresse IP",
+          "ipAuto": "Automatique",
+          "ipFixed": "Fixe",
+          "address": "Adresse",
+          "netmask": "Masque de sous-réseau",
+          "gateway": "Passerelle",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Qui se connecte ?",
+          "sub": "Le compte que vous utilisez sur la carte, pour la connexion et pour sudo.",
+          "now": "Le créer maintenant",
+          "later": "À la première connexion",
+          "more": "Nom complet et shell de connexion",
+          "shellDefault": "Valeur par défaut d'Armbian",
+          "laterLine": "À votre première connexion, via SSH ou avec un clavier et un écran, Armbian vous demande de créer un utilisateur. La langue et l'heure de ce profil ne sont alors pas appliquées."
+        },
+        "locale": {
+          "title": "Langue et heure",
+          "sub": "Appliqué quand la carte crée votre utilisateur.",
+          "location": "Selon la localisation",
+          "choose": "Je choisis",
+          "language": "Langue",
+          "searchTimezone": "Rechercher un fuseau horaire",
+          "locationLine": "Armbian définit la langue et le fuseau horaire d'après l'endroit d'où la carte se connecte à Internet.",
+          "userComplete": "Votre utilisateur est complet, Armbian les applique donc.",
+          "userIncomplete": "Armbian ne les applique que si le profil crée un utilisateur avec un mot de passe et un nom complet."
+        },
+        "access": {
+          "title": "Comment vous connectez-vous ?",
+          "sub": "Les clés SSH vous permettent de vous connecter sans saisir de mot de passe.",
+          "keys": "Clés SSH",
+          "passwordOnly": "Mot de passe uniquement",
+          "source": "D'où viennent les clés",
+          "link": "Lien",
+          "forgeUser": "Nom d'utilisateur {{forge}}",
+          "linkLabel": "Lien vers les clés publiques",
+          "fetchHint": "La carte les récupère au premier démarrage.",
+          "linkHint": "Toute adresse https qui fournit des clés publiques, une par ligne.",
+          "passwordLine": "Vous vous connectez avec votre mot de passe, via SSH ou avec un clavier et un écran.",
+          "rootHint": "Laissez vide et Armbian vous demandera de le changer à la première connexion."
+        },
+        "review": {
+          "title": "Prêt à créer {{name}}",
+          "sub": "Vérifiez-le une fois. Il est ensuite sélectionné dans le résumé.",
+          "subSettings": "Vérifiez-le une fois. Il apparaît ensuite dans votre liste de profils.",
+          "later": "Vous pouvez le modifier à tout moment dans Paramètres, Autoconfiguration."
+        }
+      }
     }
   },
   "update": {

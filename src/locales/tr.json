@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Bilinmeyen",
     "confirm": "Onayla",
-    "cancel": "İptal"
+    "cancel": "İptal",
+    "showPassword": "Parolayı göster",
+    "hidePassword": "Parolayı gizle"
   },
   "settings": {
     "title": "Ayarlar",
@@ -354,7 +356,116 @@
       "previewReveal": "Göster",
       "previewHide": "Gizle",
       "previewEmpty": "Henüz hiçbir şey ayarlanmadı. İlk açılış dosyasını oluşturmak için yukarıdaki alanları doldurun.",
-      "settingsCount": "ayar"
+      "settingsCount": "ayar",
+      "guided": "Rehberli kurulum",
+      "wifiKeyFits": "Wi-Fi için uygun (8 ile 63 karakter)",
+      "wifiKeyLength": "Wi-Fi parolaları genellikle 8 ile 63 karakter uzunluğundadır",
+      "wizard": {
+        "eyebrow": "Yeni profil",
+        "unnamed": "Henüz ad yok",
+        "forBoard": "{{board}} için",
+        "forAnyBoard": "Her kart için",
+        "stepOf": "Adım <b>{{current}}</b> / {{total}}",
+        "close": "Kapat",
+        "skip": "Bu adımı atla",
+        "back": "Geri",
+        "next": "İleri",
+        "create": "Profil oluştur",
+        "noMatch": "Eşleşen yok",
+        "password": "Parola",
+        "nameHint": "Sonraki adımların hepsi isteğe bağlıdır. İhtiyacınız olmayanları atlayın.",
+        "ssidRequired": "Ağ adını yazın veya Kablo seçeneğini seçin.",
+        "addressRequired": "Adresi yazın veya Otomatik seçeneğini seçin.",
+        "usernameRequired": "Bir kullanıcı adı yazın veya İlk oturum açmada seçeneğini seçin.",
+        "keyUserInvalid": "Bu geçerli bir kullanıcı adı değil.",
+        "steps": {
+          "name": "Ad",
+          "network": "Ağ",
+          "user": "Kullanıcı",
+          "locale": "Dil ve saat",
+          "access": "Erişim",
+          "review": "Gözden geçir"
+        },
+        "pending": {
+          "network": "Armbian varsayılanlarını korur",
+          "user": "İlk açılışta sorulur",
+          "locale": "Armbian varsayılanları",
+          "access": "Yalnızca parolayla oturum açma"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "Ethernet",
+          "location": "Konumdan",
+          "keysFrom": "{{forge}} üzerinden SSH anahtarları",
+          "keysLink": "Bağlantıdan SSH anahtarları",
+          "passwordOnly": "Yalnızca parola",
+          "rootSet": "root parolası ayarlandı"
+        },
+        "name": {
+          "title": "Adı ne olsun?",
+          "sub": "Özette onu adıyla seçersiniz."
+        },
+        "network": {
+          "title": "Nasıl bağlanıyor?",
+          "sub": "Bunu daha sonra Ayarlar'dan değiştirebilirsiniz.",
+          "cable": "Kablo",
+          "wifi": "Wi-Fi",
+          "both": "İkisi de",
+          "ssid": "Ağ adı",
+          "country": "Ülke",
+          "cableLine": "İlk açılıştan önce kabloyu takın. Kart adresini yönlendiricinizden alır.",
+          "moreWifi": "Ülke ve IP adresi",
+          "moreCable": "IP adresi",
+          "searchCountry": "Ülke ara",
+          "ip": "IP adresi",
+          "ipAuto": "Otomatik",
+          "ipFixed": "Sabit",
+          "address": "Adres",
+          "netmask": "Ağ maskesi",
+          "gateway": "Ağ geçidi",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Kim oturum açıyor?",
+          "sub": "Kartta oturum açmak ve sudo için kullandığınız hesap.",
+          "now": "Şimdi oluştur",
+          "later": "İlk oturum açmada",
+          "more": "Tam ad ve oturum açma kabuğu",
+          "shellDefault": "Armbian varsayılanı",
+          "laterLine": "İlk oturum açışınızda, SSH ile veya klavye ve monitörle, Armbian sizden bir kullanıcı oluşturmanızı ister. Bu profildeki dil ve saat o zaman uygulanmaz."
+        },
+        "locale": {
+          "title": "Dil ve saat",
+          "sub": "Kart kullanıcınızı oluşturduğunda uygulanır.",
+          "location": "Konumdan",
+          "choose": "Ben seçerim",
+          "language": "Dil",
+          "searchTimezone": "Saat dilimi ara",
+          "locationLine": "Armbian dili ve saat dilimini, kartın internete bağlandığı yere göre ayarlar.",
+          "userComplete": "Kullanıcınız tamam, bu yüzden Armbian bunları uygular.",
+          "userIncomplete": "Armbian bunları yalnızca profil parolalı ve tam adlı bir kullanıcı oluşturduğunda uygular."
+        },
+        "access": {
+          "title": "Nasıl giriyorsunuz?",
+          "sub": "SSH anahtarlarıyla parola yazmadan oturum açabilirsiniz.",
+          "keys": "SSH anahtarları",
+          "passwordOnly": "Yalnızca parola",
+          "source": "Anahtarların kaynağı",
+          "link": "Bağlantı",
+          "forgeUser": "{{forge}} kullanıcı adı",
+          "linkLabel": "Açık anahtarların bağlantısı",
+          "fetchHint": "Kart bunları ilk açılışta alır.",
+          "linkHint": "Açık anahtarları satır başına bir tane sunan herhangi bir https adresi.",
+          "passwordLine": "Parolanızla oturum açarsınız, SSH ile veya klavye ve monitörle.",
+          "rootHint": "Boş bırakın, Armbian ilk oturum açmada sizden değiştirmenizi ister."
+        },
+        "review": {
+          "title": "{{name}} oluşturmaya hazır",
+          "sub": "Bir kez kontrol edin. Sonra özette seçili olur.",
+          "subSettings": "Bir kez kontrol edin. Sonra profil listenizde görünür.",
+          "later": "Bunu istediğiniz zaman Ayarlar, Otomatik yapılandırma bölümünden değiştirebilirsiniz."
+        }
+      }
     }
   },
   "update": {

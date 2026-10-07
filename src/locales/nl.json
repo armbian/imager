@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Onbekend",
     "confirm": "Bevestigen",
-    "cancel": "Annuleren"
+    "cancel": "Annuleren",
+    "showPassword": "Wachtwoord tonen",
+    "hidePassword": "Wachtwoord verbergen"
   },
   "settings": {
     "title": "Instellingen",
@@ -354,7 +356,116 @@
       "previewReveal": "Tonen",
       "previewHide": "Verbergen",
       "previewEmpty": "Er is nog niets ingesteld. Vul de bovenstaande velden in om het opstartbestand te maken.",
-      "settingsCount": "instellingen"
+      "settingsCount": "instellingen",
+      "guided": "Begeleide instelling",
+      "wifiKeyFits": "Geschikt voor Wi-Fi (8 tot 63 tekens)",
+      "wifiKeyLength": "Wi-Fi-wachtwoorden hebben meestal 8 tot 63 tekens",
+      "wizard": {
+        "eyebrow": "Nieuw profiel",
+        "unnamed": "Nog geen naam",
+        "forBoard": "Voor {{board}}",
+        "forAnyBoard": "Voor elk board",
+        "stepOf": "Stap <b>{{current}}</b> van {{total}}",
+        "close": "Sluiten",
+        "skip": "Deze stap overslaan",
+        "back": "Terug",
+        "next": "Volgende",
+        "create": "Profiel maken",
+        "noMatch": "Geen overeenkomsten",
+        "password": "Wachtwoord",
+        "nameHint": "Alle volgende stappen zijn optioneel. Sla over wat je niet nodig hebt.",
+        "ssidRequired": "Typ de netwerknaam of kies Kabel.",
+        "addressRequired": "Typ het adres of kies Automatisch.",
+        "usernameRequired": "Typ een gebruikersnaam of kies Bij de eerste login.",
+        "keyUserInvalid": "Dat is geen geldige gebruikersnaam.",
+        "steps": {
+          "name": "Naam",
+          "network": "Netwerk",
+          "user": "Gebruiker",
+          "locale": "Taal en tijd",
+          "access": "Toegang",
+          "review": "Controle"
+        },
+        "pending": {
+          "network": "Behoudt de Armbian-standaarden",
+          "user": "Gevraagd bij de eerste start",
+          "locale": "Armbian-standaarden",
+          "access": "Alleen inloggen met wachtwoord"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "Ethernet",
+          "location": "Op basis van de locatie",
+          "keysFrom": "SSH-sleutels van {{forge}}",
+          "keysLink": "SSH-sleutels via een link",
+          "passwordOnly": "Alleen wachtwoord",
+          "rootSet": "root-wachtwoord ingesteld"
+        },
+        "name": {
+          "title": "Hoe noemen we het?",
+          "sub": "Je kiest het op naam in het overzicht."
+        },
+        "network": {
+          "title": "Hoe maakt het verbinding?",
+          "sub": "Je kunt dit later wijzigen in Instellingen.",
+          "cable": "Kabel",
+          "wifi": "Wi-Fi",
+          "both": "Beide",
+          "ssid": "Netwerknaam",
+          "country": "Land",
+          "cableLine": "Steek de kabel erin vóór de eerste start. Het board krijgt zijn adres van je router.",
+          "moreWifi": "Land en IP-adres",
+          "moreCable": "IP-adres",
+          "searchCountry": "Landen zoeken",
+          "ip": "IP-adres",
+          "ipAuto": "Automatisch",
+          "ipFixed": "Vast",
+          "address": "Adres",
+          "netmask": "Netmasker",
+          "gateway": "Gateway",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Wie logt in?",
+          "sub": "Het account dat je op het board gebruikt, voor inloggen en voor sudo.",
+          "now": "Nu aanmaken",
+          "later": "Bij de eerste login",
+          "more": "Volledige naam en login-shell",
+          "shellDefault": "Armbian-standaard",
+          "laterLine": "De eerste keer dat je inlogt, via SSH of met toetsenbord en monitor, vraagt Armbian je een gebruiker aan te maken. De taal en tijd uit dit profiel worden dan niet toegepast."
+        },
+        "locale": {
+          "title": "Taal en tijd",
+          "sub": "Wordt toegepast wanneer het board je gebruiker aanmaakt.",
+          "location": "Op basis van de locatie",
+          "choose": "Ik kies",
+          "language": "Taal",
+          "searchTimezone": "Tijdzones zoeken",
+          "locationLine": "Armbian stelt de taal en tijdzone in op basis van waar het board verbinding maakt met internet.",
+          "userComplete": "Je gebruiker is compleet, dus Armbian past deze toe.",
+          "userIncomplete": "Armbian past deze alleen toe als het profiel een gebruiker met een wachtwoord en een volledige naam aanmaakt."
+        },
+        "access": {
+          "title": "Hoe kom je binnen?",
+          "sub": "Met SSH-sleutels log je in zonder een wachtwoord te typen.",
+          "keys": "SSH-sleutels",
+          "passwordOnly": "Alleen wachtwoord",
+          "source": "Waar de sleutels vandaan komen",
+          "link": "Link",
+          "forgeUser": "{{forge}}-gebruikersnaam",
+          "linkLabel": "Link naar de openbare sleutels",
+          "fetchHint": "Het board haalt ze op bij de eerste start.",
+          "linkHint": "Elk https-adres dat openbare sleutels aanbiedt, één per regel.",
+          "passwordLine": "Je logt in met je wachtwoord, via SSH of met toetsenbord en monitor.",
+          "rootHint": "Laat het leeg en Armbian vraagt je het bij de eerste login te wijzigen."
+        },
+        "review": {
+          "title": "Klaar om {{name}} te maken",
+          "sub": "Controleer het één keer. Daarna is het geselecteerd in het overzicht.",
+          "subSettings": "Controleer het één keer. Daarna staat het in je profielenlijst.",
+          "later": "Je kunt het altijd wijzigen in Instellingen, Autoconfig."
+        }
+      }
     }
   },
   "update": {

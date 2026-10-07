@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Sconosciuto",
     "confirm": "Conferma",
-    "cancel": "Annulla"
+    "cancel": "Annulla",
+    "showPassword": "Mostra password",
+    "hidePassword": "Nascondi password"
   },
   "settings": {
     "title": "Impostazioni",
@@ -354,7 +356,116 @@
       "previewReveal": "Mostra",
       "previewHide": "Nascondi",
       "previewEmpty": "Non è ancora stato impostato nulla. Compila i campi qui sopra per creare il file di primo avvio.",
-      "settingsCount": "impostazioni"
+      "settingsCount": "impostazioni",
+      "guided": "Configurazione guidata",
+      "wifiKeyFits": "Adatta al Wi-Fi (da 8 a 63 caratteri)",
+      "wifiKeyLength": "Le password Wi-Fi hanno di solito da 8 a 63 caratteri",
+      "wizard": {
+        "eyebrow": "Nuovo profilo",
+        "unnamed": "Ancora senza nome",
+        "forBoard": "Per {{board}}",
+        "forAnyBoard": "Per qualsiasi scheda",
+        "stepOf": "Passaggio <b>{{current}}</b> di {{total}}",
+        "close": "Chiudi",
+        "skip": "Salta questo passaggio",
+        "back": "Indietro",
+        "next": "Avanti",
+        "create": "Crea profilo",
+        "noMatch": "Nessuna corrispondenza",
+        "password": "Password",
+        "nameHint": "Tutti i passaggi successivi sono facoltativi. Salta quello che non ti serve.",
+        "ssidRequired": "Digita il nome della rete o scegli Cavo.",
+        "addressRequired": "Digita l'indirizzo o scegli Automatico.",
+        "usernameRequired": "Digita un nome utente o scegli Al primo accesso.",
+        "keyUserInvalid": "Non è un nome utente valido.",
+        "steps": {
+          "name": "Nome",
+          "network": "Rete",
+          "user": "Utente",
+          "locale": "Lingua e ora",
+          "access": "Accesso",
+          "review": "Verifica"
+        },
+        "pending": {
+          "network": "Mantiene le impostazioni predefinite di Armbian",
+          "user": "Chiesto al primo avvio",
+          "locale": "Impostazioni predefinite di Armbian",
+          "access": "Solo accesso con password"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "Ethernet",
+          "location": "Dalla posizione",
+          "keysFrom": "Chiavi SSH da {{forge}}",
+          "keysLink": "Chiavi SSH da un link",
+          "passwordOnly": "Solo password",
+          "rootSet": "password root impostata"
+        },
+        "name": {
+          "title": "Come lo chiamiamo?",
+          "sub": "Lo sceglierai per nome nel riepilogo."
+        },
+        "network": {
+          "title": "Come si collega?",
+          "sub": "Puoi cambiarlo più tardi in Impostazioni.",
+          "cable": "Cavo",
+          "wifi": "Wi-Fi",
+          "both": "Entrambi",
+          "ssid": "Nome della rete",
+          "country": "Paese",
+          "cableLine": "Collega il cavo prima del primo avvio. La scheda riceve l'indirizzo dal tuo router.",
+          "moreWifi": "Paese e indirizzo IP",
+          "moreCable": "Indirizzo IP",
+          "searchCountry": "Cerca paesi",
+          "ip": "Indirizzo IP",
+          "ipAuto": "Automatico",
+          "ipFixed": "Fisso",
+          "address": "Indirizzo",
+          "netmask": "Maschera di rete",
+          "gateway": "Gateway",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Chi accede?",
+          "sub": "L'account che usi sulla scheda, per l'accesso e per sudo.",
+          "now": "Crealo ora",
+          "later": "Al primo accesso",
+          "more": "Nome completo e shell di accesso",
+          "shellDefault": "Predefinita di Armbian",
+          "laterLine": "La prima volta che accedi, via SSH o con tastiera e monitor, Armbian ti chiede di creare un utente. La lingua e l'ora di questo profilo non vengono applicate in quel caso."
+        },
+        "locale": {
+          "title": "Lingua e ora",
+          "sub": "Applicate quando la scheda crea il tuo utente.",
+          "location": "Dalla posizione",
+          "choose": "Scelgo io",
+          "language": "Lingua",
+          "searchTimezone": "Cerca fusi orari",
+          "locationLine": "Armbian imposta la lingua e il fuso orario in base al luogo da cui la scheda si collega a internet.",
+          "userComplete": "Il tuo utente è completo, quindi Armbian le applica.",
+          "userIncomplete": "Armbian le applica solo quando il profilo crea un utente con password e nome completo."
+        },
+        "access": {
+          "title": "Come entri?",
+          "sub": "Le chiavi SSH ti permettono di accedere senza digitare una password.",
+          "keys": "Chiavi SSH",
+          "passwordOnly": "Solo password",
+          "source": "Da dove arrivano le chiavi",
+          "link": "Link",
+          "forgeUser": "Nome utente {{forge}}",
+          "linkLabel": "Link alle chiavi pubbliche",
+          "fetchHint": "La scheda le scarica al primo avvio.",
+          "linkHint": "Qualsiasi indirizzo https che serve chiavi pubbliche, una per riga.",
+          "passwordLine": "Accedi con la tua password, via SSH o con tastiera e monitor.",
+          "rootHint": "Lascia vuoto e Armbian ti chiederà di cambiarla al primo accesso."
+        },
+        "review": {
+          "title": "Pronto a creare {{name}}",
+          "sub": "Controllalo una volta. Poi viene selezionato nel riepilogo.",
+          "subSettings": "Controllalo una volta. Poi compare nell'elenco dei profili.",
+          "later": "Puoi cambiarlo quando vuoi in Impostazioni, Autoconfigurazione."
+        }
+      }
     }
   },
   "update": {

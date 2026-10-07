@@ -1,5 +1,5 @@
 /* CSS module index. Import order matters: theme vars first, then base, layout,
-   components, modal, flash, and responsive (media queries) last. */
+   components, modal, flash, settings, profile, and responsive (media queries) last. */
 
 @import './theme.css';
 @import './base.css';
@@ -8,4 +8,5 @@
 @import './modal.css';
 @import './flash.css';
 @import './settings.css';
+@import './profile.css';
 @import './responsive.css';

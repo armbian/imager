@@ -110,6 +110,13 @@
   --header-steps-border: #d0d4d8;
   --header-step-bg: #e0e3e6;
   --header-step-color: #666666;
+
+  /* Profile wizard and profile menu */
+  --pf-overlay-bg: rgba(240, 240, 244, 0.45);
+  --pf-card-shadow: 0 40px 90px -30px rgba(15, 23, 42, 0.35);
+  --pf-pop-shadow: 0 28px 60px -24px rgba(15, 23, 42, 0.28);
+  --pf-seg-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
+  --pf-board-shadow: drop-shadow(0 14px 20px rgba(15, 23, 42, 0.25));
 }
 
 /* Dark Theme */
@@ -158,6 +165,12 @@
   --header-steps-border: rgba(255, 255, 255, 0.1);
   --header-step-bg: rgba(255, 255, 255, 0.1);
   --header-step-color: #888888;
+
+  --pf-overlay-bg: rgba(8, 8, 10, 0.42);
+  --pf-card-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7);
+  --pf-pop-shadow: 0 28px 60px -24px rgba(0, 0, 0, 0.55);
+  --pf-seg-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --pf-board-shadow: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.35));
 }
 
 /* Auto Theme - System Preference */
@@ -205,5 +218,10 @@
     --header-steps-border: rgba(255, 255, 255, 0.1);
     --header-step-bg: rgba(255, 255, 255, 0.1);
     --header-step-color: #888888;
+    --pf-overlay-bg: rgba(8, 8, 10, 0.42);
+    --pf-card-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7);
+    --pf-pop-shadow: 0 28px 60px -24px rgba(0, 0, 0, 0.55);
+    --pf-seg-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --pf-board-shadow: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.35));
   }
 }

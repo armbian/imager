@@ -44,6 +44,7 @@ export {
   COLORS,
   QR_CODE,
   UI,
+  AUTOCONFIG,
   VENDOR,
   SLUGS,
   IMAGE_VARIANT,

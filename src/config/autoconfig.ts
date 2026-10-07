@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-// Static option data for the autoconfig profile editor dropdowns.
-
 import type { AutoconfigConfig, UserShell } from '../types';
 import { staticIpErrors, trimmedOrUndefined, type StaticIpErrors } from '../utils';
+import { AUTOCONFIG } from './constants';
 
 /** Example values shown as input placeholders in the profile editor */
 export const AUTOCONFIG_PLACEHOLDERS = {
@@ -70,6 +69,11 @@ export function getTimezones(): string[] {
   return ['UTC', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'Asia/Tokyo'];
 }
 
+/** Armbian applies locale and time zone only while it creates a full first user (twin: has_user in autoconfig.rs render_preset). */
+export function hasCompleteUser(c: AutoconfigConfig): boolean {
+  return !!(c.userName?.trim() && c.userPassword?.trim() && c.userRealName?.trim());
+}
+
 type StaticIpConfig = Pick<AutoconfigConfig, 'staticIp' | 'staticMask' | 'staticGateway' | 'staticDns'>;
 
 /** The static IP fields as they are saved and checked: trimmed, blank ones dropped. */
@@ -93,6 +97,64 @@ export function staticIpConfigErrors(c: StaticIpConfig): StaticIpErrors {
 // A bad static address (e.g. the subnet's broadcast .255) leaves a headless board unreachable.
 export function staticIpBlockingErrors(c: AutoconfigConfig): StaticIpErrors {
   return c.applyNetwork && c.useStaticIp ? staticIpConfigErrors(c) : {};
+}
+
+/** Offset of an IANA time zone right now, as "UTC+2"; empty when the WebView cannot tell. */
+export function timezoneOffset(timeZone: string, at: Date = new Date()): string {
+  try {
+    const part = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'shortOffset' })
+      .formatToParts(at)
+      .find((p) => p.type === 'timeZoneName')?.value;
+    return part ? part.replace('GMT', 'UTC') : '';
+  } catch {
+    return '';
+  }
+}
+
+/** A glibc locale ("it_IT.UTF-8") named in the UI language ("Italian (Italy)"); the raw value otherwise. */
+export function localeLabel(locale: string, uiLanguage: string): string {
+  const tag = locale.split('.')[0].replace('_', '-');
+  try {
+    return new Intl.DisplayNames([uiLanguage], { type: 'language' }).of(tag) ?? locale;
+  } catch {
+    return locale;
+  }
+}
+
+/** The common locale that matches an app language ("pt-BR" gives pt_BR.UTF-8, "it" gives it_IT.UTF-8). */
+export function localeForLanguage(language: string): string {
+  const [lang, region] = language.split('-');
+  const exact = region && COMMON_LOCALES.find((l) => l.startsWith(`${lang}_${region.toUpperCase()}.`));
+  return exact || COMMON_LOCALES.find((l) => l.startsWith(`${lang}_`)) || '';
+}
+
+/** Whether a Wi-Fi key has a WPA passphrase length; purely visual, nothing is blocked on it. */
+export function isWifiKeyLength(key: string): boolean {
+  return key.length >= AUTOCONFIG.WIFI_KEY_MIN && key.length <= AUTOCONFIG.WIFI_KEY_MAX;
+}
+
+/** Where public SSH keys come from: a forge account the app turns into a URL, or any link. */
+export type SshKeySource = 'github' | 'gitlab' | 'link';
+
+/** Forge key endpoints; the board fetches <prefix><user>.keys at first boot. Labels are brand names, never translated. */
+export const SSH_KEY_FORGES = {
+  github: { label: 'GitHub', prefix: 'https://github.com/', display: 'github.com/' },
+  gitlab: { label: 'GitLab', prefix: 'https://gitlab.com/', display: 'gitlab.com/' },
+} as const;
+
+const SSH_KEYS_SUFFIX = '.keys';
+
+const KEY_USER_PATTERN: Record<keyof typeof SSH_KEY_FORGES, RegExp> = {
+  github: /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/,
+  gitlab: /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,254}$/,
+};
+
+export function isValidKeyUser(forge: keyof typeof SSH_KEY_FORGES, user: string): boolean {
+  return KEY_USER_PATTERN[forge].test(user.trim());
+}
+
+export function forgeKeysUrl(forge: keyof typeof SSH_KEY_FORGES, user: string): string {
+  return `${SSH_KEY_FORGES[forge].prefix}${user.trim()}${SSH_KEYS_SUFFIX}`;
 }
 
 /** Placeholder shown for secret values in the live preview. */
@@ -151,8 +213,7 @@ export function renderPresetPreview(c: AutoconfigConfig, revealSecrets = false):
   }
 
   // Armbian applies locale/timezone only during first-user creation; emit only when a full user is defined.
-  const hasUser = !!(c.userName?.trim() && c.userPassword?.trim() && c.userRealName?.trim());
-  if (hasUser) {
+  if (hasCompleteUser(c)) {
     pushTrimmed('PRESET_LOCALE', c.locale);
     pushTrimmed('PRESET_TIMEZONE', c.timezone);
     if (c.langBasedOnLocation !== undefined) {

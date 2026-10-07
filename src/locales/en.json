@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Unknown",
     "confirm": "Confirm",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "settings": {
     "title": "Settings",
@@ -354,7 +356,116 @@
       "previewReveal": "Reveal",
       "previewHide": "Hide",
       "previewEmpty": "Nothing set yet. Fill in the fields above to build the first-boot file.",
-      "settingsCount": "settings"
+      "settingsCount": "settings",
+      "guided": "Guided setup",
+      "wifiKeyFits": "Fits Wi-Fi (8 to 63 characters)",
+      "wifiKeyLength": "Wi-Fi passwords usually have 8 to 63 characters",
+      "wizard": {
+        "eyebrow": "New profile",
+        "unnamed": "No name yet",
+        "forBoard": "For {{board}}",
+        "forAnyBoard": "For any board",
+        "stepOf": "Step <b>{{current}}</b> of {{total}}",
+        "close": "Close",
+        "skip": "Skip this step",
+        "back": "Back",
+        "next": "Next",
+        "create": "Create profile",
+        "noMatch": "Nothing matches",
+        "password": "Password",
+        "nameHint": "Every next step is optional. Skip what you do not need.",
+        "ssidRequired": "Type the network name, or pick Cable.",
+        "addressRequired": "Type the address, or pick Automatic.",
+        "usernameRequired": "Type a username, or pick At first login.",
+        "keyUserInvalid": "That is not a valid username.",
+        "steps": {
+          "name": "Name",
+          "network": "Network",
+          "user": "User",
+          "locale": "Language and time",
+          "access": "Access",
+          "review": "Review"
+        },
+        "pending": {
+          "network": "Keeps Armbian defaults",
+          "user": "Asked at first boot",
+          "locale": "Armbian defaults",
+          "access": "Password login only"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "Ethernet",
+          "location": "From the location",
+          "keysFrom": "SSH keys from {{forge}}",
+          "keysLink": "SSH keys from a link",
+          "passwordOnly": "Password only",
+          "rootSet": "root password set"
+        },
+        "name": {
+          "title": "What should we call it?",
+          "sub": "You pick it by name on the summary."
+        },
+        "network": {
+          "title": "How does it connect?",
+          "sub": "You can change it later in Settings.",
+          "cable": "Cable",
+          "wifi": "Wi-Fi",
+          "both": "Both",
+          "ssid": "Network name",
+          "country": "Country",
+          "cableLine": "Plug the cable in before the first start. The board gets its address from your router.",
+          "moreWifi": "Country and IP address",
+          "moreCable": "IP address",
+          "searchCountry": "Search countries",
+          "ip": "IP address",
+          "ipAuto": "Automatic",
+          "ipFixed": "Fixed",
+          "address": "Address",
+          "netmask": "Netmask",
+          "gateway": "Gateway",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Who logs in?",
+          "sub": "The account you use on the board, for login and for sudo.",
+          "now": "Create it now",
+          "later": "At first login",
+          "more": "Full name and login shell",
+          "shellDefault": "Armbian default",
+          "laterLine": "The first time you log in, over SSH or with a keyboard and monitor, Armbian asks you to create it. The language and time from this profile are not applied then."
+        },
+        "locale": {
+          "title": "Language and time",
+          "sub": "Applied when the board creates your user.",
+          "location": "From the location",
+          "choose": "I choose",
+          "language": "Language",
+          "searchTimezone": "Search time zones",
+          "locationLine": "Armbian sets the language and time zone from where the board connects to the internet.",
+          "userComplete": "Your user is complete, so Armbian applies these.",
+          "userIncomplete": "Armbian applies these only when the profile creates a user with a password and a full name."
+        },
+        "access": {
+          "title": "How do you get in?",
+          "sub": "SSH keys let you log in without typing a password.",
+          "keys": "SSH keys",
+          "passwordOnly": "Password only",
+          "source": "Where the keys come from",
+          "link": "Link",
+          "forgeUser": "{{forge}} username",
+          "linkLabel": "Link to the public keys",
+          "fetchHint": "The board fetches them at first start.",
+          "linkHint": "Any https address that serves public keys, one per line.",
+          "passwordLine": "You log in with your password, over SSH or with a keyboard and monitor.",
+          "rootHint": "Leave it empty and Armbian asks you to change it at first login."
+        },
+        "review": {
+          "title": "Ready to create {{name}}",
+          "sub": "Check it once. Then it is selected on the summary.",
+          "subSettings": "Check it once. Then it shows in your profile list.",
+          "later": "You can change it any time in Settings, Autoconfig."
+        }
+      }
     }
   },
   "update": {

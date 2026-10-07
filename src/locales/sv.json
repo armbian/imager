@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Okänd",
     "confirm": "Bekräfta",
-    "cancel": "Avbryt"
+    "cancel": "Avbryt",
+    "showPassword": "Visa lösenord",
+    "hidePassword": "Dölj lösenord"
   },
   "settings": {
     "title": "Inställningar",
@@ -354,7 +356,116 @@
       "previewReveal": "Visa",
       "previewHide": "Dölj",
       "previewEmpty": "Inget angivet ännu. Fyll i fälten ovan för att skapa filen för första uppstart.",
-      "settingsCount": "inställningar"
+      "settingsCount": "inställningar",
+      "guided": "Guidad konfiguration",
+      "wifiKeyFits": "Passar för Wi-Fi (8 till 63 tecken)",
+      "wifiKeyLength": "Wi-Fi-lösenord har oftast 8 till 63 tecken",
+      "wizard": {
+        "eyebrow": "Ny profil",
+        "unnamed": "Inget namn än",
+        "forBoard": "För {{board}}",
+        "forAnyBoard": "För valfritt kort",
+        "stepOf": "Steg <b>{{current}}</b> av {{total}}",
+        "close": "Stäng",
+        "skip": "Hoppa över det här steget",
+        "back": "Tillbaka",
+        "next": "Nästa",
+        "create": "Skapa profil",
+        "noMatch": "Inga träffar",
+        "password": "Lösenord",
+        "nameHint": "Alla följande steg är valfria. Hoppa över det du inte behöver.",
+        "ssidRequired": "Skriv nätverksnamnet eller välj Kabel.",
+        "addressRequired": "Skriv adressen eller välj Automatisk.",
+        "usernameRequired": "Skriv ett användarnamn eller välj Vid första inloggningen.",
+        "keyUserInvalid": "Det är inget giltigt användarnamn.",
+        "steps": {
+          "name": "Namn",
+          "network": "Nätverk",
+          "user": "Användare",
+          "locale": "Språk och tid",
+          "access": "Åtkomst",
+          "review": "Granska"
+        },
+        "pending": {
+          "network": "Behåller Armbians standardvärden",
+          "user": "Frågas vid första uppstarten",
+          "locale": "Armbians standardvärden",
+          "access": "Endast inloggning med lösenord"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "Ethernet",
+          "location": "Från platsen",
+          "keysFrom": "SSH-nycklar från {{forge}}",
+          "keysLink": "SSH-nycklar från en länk",
+          "passwordOnly": "Endast lösenord",
+          "rootSet": "root-lösenord inställt"
+        },
+        "name": {
+          "title": "Vad ska vi kalla den?",
+          "sub": "Du väljer den med namn i sammanfattningen."
+        },
+        "network": {
+          "title": "Hur ansluter den?",
+          "sub": "Du kan ändra det senare i Inställningar.",
+          "cable": "Kabel",
+          "wifi": "Wi-Fi",
+          "both": "Båda",
+          "ssid": "Nätverksnamn",
+          "country": "Land",
+          "cableLine": "Anslut kabeln före första uppstarten. Kortet får sin adress från din router.",
+          "moreWifi": "Land och IP-adress",
+          "moreCable": "IP-adress",
+          "searchCountry": "Sök länder",
+          "ip": "IP-adress",
+          "ipAuto": "Automatisk",
+          "ipFixed": "Fast",
+          "address": "Adress",
+          "netmask": "Nätmask",
+          "gateway": "Gateway",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Vem loggar in?",
+          "sub": "Kontot du använder på kortet, för inloggning och för sudo.",
+          "now": "Skapa nu",
+          "later": "Vid första inloggningen",
+          "more": "Fullständigt namn och inloggningsskal",
+          "shellDefault": "Armbians standard",
+          "laterLine": "Första gången du loggar in, via SSH eller med tangentbord och bildskärm, ber Armbian dig skapa en användare. Språket och tiden från den här profilen tillämpas då inte."
+        },
+        "locale": {
+          "title": "Språk och tid",
+          "sub": "Tillämpas när kortet skapar din användare.",
+          "location": "Från platsen",
+          "choose": "Jag väljer",
+          "language": "Språk",
+          "searchTimezone": "Sök tidszoner",
+          "locationLine": "Armbian ställer in språk och tidszon utifrån var kortet ansluter till internet.",
+          "userComplete": "Din användare är komplett, så Armbian tillämpar dem.",
+          "userIncomplete": "Armbian tillämpar dem bara när profilen skapar en användare med lösenord och fullständigt namn."
+        },
+        "access": {
+          "title": "Hur kommer du in?",
+          "sub": "Med SSH-nycklar loggar du in utan att skriva ett lösenord.",
+          "keys": "SSH-nycklar",
+          "passwordOnly": "Endast lösenord",
+          "source": "Var nycklarna kommer ifrån",
+          "link": "Länk",
+          "forgeUser": "Användarnamn på {{forge}}",
+          "linkLabel": "Länk till de publika nycklarna",
+          "fetchHint": "Kortet hämtar dem vid första uppstarten.",
+          "linkHint": "Valfri https-adress som serverar publika nycklar, en per rad.",
+          "passwordLine": "Du loggar in med ditt lösenord, via SSH eller med tangentbord och bildskärm.",
+          "rootHint": "Lämna tomt så ber Armbian dig ändra det vid första inloggningen."
+        },
+        "review": {
+          "title": "Redo att skapa {{name}}",
+          "sub": "Kontrollera en gång. Sedan är den vald i sammanfattningen.",
+          "subSettings": "Kontrollera en gång. Sedan visas den i din profillista.",
+          "later": "Du kan ändra den när som helst i Inställningar, Autokonfiguration."
+        }
+      }
     }
   },
   "update": {

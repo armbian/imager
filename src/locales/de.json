@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Unbekannt",
     "confirm": "Bestätigen",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen"
   },
   "settings": {
     "title": "Einstellungen",
@@ -354,7 +356,116 @@
       "previewReveal": "Anzeigen",
       "previewHide": "Ausblenden",
       "previewEmpty": "Noch nichts festgelegt. Füllen Sie die Felder oben aus, um die First-Boot-Datei zu erstellen.",
-      "settingsCount": "Einstellungen"
+      "settingsCount": "Einstellungen",
+      "guided": "Geführte Einrichtung",
+      "wifiKeyFits": "Passt für WLAN (8 bis 63 Zeichen)",
+      "wifiKeyLength": "WLAN-Passwörter haben meist 8 bis 63 Zeichen",
+      "wizard": {
+        "eyebrow": "Neues Profil",
+        "unnamed": "Noch kein Name",
+        "forBoard": "Für {{board}}",
+        "forAnyBoard": "Für jedes Board",
+        "stepOf": "Schritt <b>{{current}}</b> von {{total}}",
+        "close": "Schließen",
+        "skip": "Diesen Schritt überspringen",
+        "back": "Zurück",
+        "next": "Weiter",
+        "create": "Profil erstellen",
+        "noMatch": "Keine Treffer",
+        "password": "Passwort",
+        "nameHint": "Alle weiteren Schritte sind optional. Überspringe, was du nicht brauchst.",
+        "ssidRequired": "Gib den Netzwerknamen ein oder wähle Kabel.",
+        "addressRequired": "Gib die Adresse ein oder wähle Automatisch.",
+        "usernameRequired": "Gib einen Benutzernamen ein oder wähle Bei der ersten Anmeldung.",
+        "keyUserInvalid": "Das ist kein gültiger Benutzername.",
+        "steps": {
+          "name": "Name",
+          "network": "Netzwerk",
+          "user": "Benutzer",
+          "locale": "Sprache und Zeit",
+          "access": "Zugang",
+          "review": "Überprüfen"
+        },
+        "pending": {
+          "network": "Behält die Armbian-Standardwerte",
+          "user": "Wird beim ersten Start abgefragt",
+          "locale": "Armbian-Standardwerte",
+          "access": "Nur Anmeldung per Passwort"
+        },
+        "sum": {
+          "wifi": "WLAN {{ssid}}",
+          "cable": "Ethernet",
+          "location": "Vom Standort",
+          "keysFrom": "SSH-Schlüssel von {{forge}}",
+          "keysLink": "SSH-Schlüssel von einem Link",
+          "passwordOnly": "Nur Passwort",
+          "rootSet": "Root-Passwort gesetzt"
+        },
+        "name": {
+          "title": "Wie soll es heißen?",
+          "sub": "Du wählst es in der Zusammenfassung über den Namen aus."
+        },
+        "network": {
+          "title": "Wie verbindet es sich?",
+          "sub": "Du kannst das später in den Einstellungen ändern.",
+          "cable": "Kabel",
+          "wifi": "WLAN",
+          "both": "Beides",
+          "ssid": "Netzwerkname",
+          "country": "Land",
+          "cableLine": "Stecke das Kabel vor dem ersten Start ein. Das Board bekommt seine Adresse von deinem Router.",
+          "moreWifi": "Land und IP-Adresse",
+          "moreCable": "IP-Adresse",
+          "searchCountry": "Länder suchen",
+          "ip": "IP-Adresse",
+          "ipAuto": "Automatisch",
+          "ipFixed": "Fest",
+          "address": "Adresse",
+          "netmask": "Netzmaske",
+          "gateway": "Gateway",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Wer meldet sich an?",
+          "sub": "Das Konto, das du auf dem Board nutzt, für die Anmeldung und für sudo.",
+          "now": "Jetzt erstellen",
+          "later": "Bei der ersten Anmeldung",
+          "more": "Vollständiger Name und Anmelde-Shell",
+          "shellDefault": "Armbian-Standard",
+          "laterLine": "Bei der ersten Anmeldung, per SSH oder mit Tastatur und Monitor, fordert Armbian dich auf, einen Benutzer zu erstellen. Sprache und Zeit aus diesem Profil werden dann nicht angewendet."
+        },
+        "locale": {
+          "title": "Sprache und Zeit",
+          "sub": "Wird angewendet, wenn das Board deinen Benutzer erstellt.",
+          "location": "Vom Standort",
+          "choose": "Ich wähle",
+          "language": "Sprache",
+          "searchTimezone": "Zeitzonen suchen",
+          "locationLine": "Armbian legt Sprache und Zeitzone danach fest, von wo sich das Board mit dem Internet verbindet.",
+          "userComplete": "Dein Benutzer ist vollständig, daher wendet Armbian diese an.",
+          "userIncomplete": "Armbian wendet diese nur an, wenn das Profil einen Benutzer mit Passwort und vollständigem Namen erstellt."
+        },
+        "access": {
+          "title": "Wie kommst du rein?",
+          "sub": "Mit SSH-Schlüsseln meldest du dich an, ohne ein Passwort einzutippen.",
+          "keys": "SSH-Schlüssel",
+          "passwordOnly": "Nur Passwort",
+          "source": "Woher die Schlüssel kommen",
+          "link": "Link",
+          "forgeUser": "{{forge}}-Benutzername",
+          "linkLabel": "Link zu den öffentlichen Schlüsseln",
+          "fetchHint": "Das Board holt sie beim ersten Start ab.",
+          "linkHint": "Jede https-Adresse, die öffentliche Schlüssel ausliefert, einen pro Zeile.",
+          "passwordLine": "Du meldest dich mit deinem Passwort an, per SSH oder mit Tastatur und Monitor.",
+          "rootHint": "Lass es leer, dann fordert Armbian dich bei der ersten Anmeldung auf, es zu ändern."
+        },
+        "review": {
+          "title": "Bereit, {{name}} zu erstellen",
+          "sub": "Prüfe es einmal. Dann ist es in der Zusammenfassung ausgewählt.",
+          "subSettings": "Prüfe es einmal. Dann erscheint es in deiner Profilliste.",
+          "later": "Du kannst es jederzeit unter Einstellungen, Autoconfig ändern."
+        }
+      }
     }
   },
   "update": {

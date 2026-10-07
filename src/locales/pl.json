@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Nieznany",
     "confirm": "Potwierdź",
-    "cancel": "Anuluj"
+    "cancel": "Anuluj",
+    "showPassword": "Pokaż hasło",
+    "hidePassword": "Ukryj hasło"
   },
   "settings": {
     "title": "Ustawienia",
@@ -354,7 +356,116 @@
       "previewReveal": "Pokaż",
       "previewHide": "Ukryj",
       "previewEmpty": "Nic jeszcze nie ustawiono. Wypełnij powyższe pola, aby utworzyć plik pierwszego uruchomienia.",
-      "settingsCount": "ustawień"
+      "settingsCount": "ustawień",
+      "guided": "Konfiguracja z przewodnikiem",
+      "wifiKeyFits": "Pasuje do Wi-Fi (od 8 do 63 znaków)",
+      "wifiKeyLength": "Hasła Wi-Fi mają zwykle od 8 do 63 znaków",
+      "wizard": {
+        "eyebrow": "Nowy profil",
+        "unnamed": "Jeszcze bez nazwy",
+        "forBoard": "Dla {{board}}",
+        "forAnyBoard": "Dla dowolnej płytki",
+        "stepOf": "Krok <b>{{current}}</b> z {{total}}",
+        "close": "Zamknij",
+        "skip": "Pomiń ten krok",
+        "back": "Wstecz",
+        "next": "Dalej",
+        "create": "Utwórz profil",
+        "noMatch": "Brak dopasowań",
+        "password": "Hasło",
+        "nameHint": "Wszystkie kolejne kroki są opcjonalne. Pomiń to, czego nie potrzebujesz.",
+        "ssidRequired": "Wpisz nazwę sieci albo wybierz Kabel.",
+        "addressRequired": "Wpisz adres albo wybierz Automatyczny.",
+        "usernameRequired": "Wpisz nazwę użytkownika albo wybierz Przy pierwszym logowaniu.",
+        "keyUserInvalid": "To nie jest prawidłowa nazwa użytkownika.",
+        "steps": {
+          "name": "Nazwa",
+          "network": "Sieć",
+          "user": "Użytkownik",
+          "locale": "Język i czas",
+          "access": "Dostęp",
+          "review": "Przegląd"
+        },
+        "pending": {
+          "network": "Zachowuje ustawienia domyślne Armbiana",
+          "user": "Zapyta przy pierwszym uruchomieniu",
+          "locale": "Ustawienia domyślne Armbiana",
+          "access": "Tylko logowanie hasłem"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "Ethernet",
+          "location": "Z lokalizacji",
+          "keysFrom": "Klucze SSH z {{forge}}",
+          "keysLink": "Klucze SSH z linku",
+          "passwordOnly": "Tylko hasło",
+          "rootSet": "hasło root ustawione"
+        },
+        "name": {
+          "title": "Jak to nazwać?",
+          "sub": "W podsumowaniu wybierzesz go po nazwie."
+        },
+        "network": {
+          "title": "Jak się łączy?",
+          "sub": "Możesz to zmienić później w Ustawieniach.",
+          "cable": "Kabel",
+          "wifi": "Wi-Fi",
+          "both": "Oba",
+          "ssid": "Nazwa sieci",
+          "country": "Kraj",
+          "cableLine": "Podłącz kabel przed pierwszym uruchomieniem. Płytka dostaje adres od Twojego routera.",
+          "moreWifi": "Kraj i adres IP",
+          "moreCable": "Adres IP",
+          "searchCountry": "Szukaj krajów",
+          "ip": "Adres IP",
+          "ipAuto": "Automatyczny",
+          "ipFixed": "Stały",
+          "address": "Adres",
+          "netmask": "Maska sieci",
+          "gateway": "Brama",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Kto się loguje?",
+          "sub": "Konto, którego używasz na płytce, do logowania i do sudo.",
+          "now": "Utwórz teraz",
+          "later": "Przy pierwszym logowaniu",
+          "more": "Imię i nazwisko oraz powłoka logowania",
+          "shellDefault": "Domyślna Armbiana",
+          "laterLine": "Przy pierwszym logowaniu, przez SSH albo z klawiaturą i monitorem, Armbian poprosi o utworzenie użytkownika. Język i czas z tego profilu nie są wtedy stosowane."
+        },
+        "locale": {
+          "title": "Język i czas",
+          "sub": "Stosowane, gdy płytka tworzy Twojego użytkownika.",
+          "location": "Z lokalizacji",
+          "choose": "Wybieram sam",
+          "language": "Język",
+          "searchTimezone": "Szukaj stref czasowych",
+          "locationLine": "Armbian ustawia język i strefę czasową na podstawie miejsca, z którego płytka łączy się z internetem.",
+          "userComplete": "Twój użytkownik jest kompletny, więc Armbian je stosuje.",
+          "userIncomplete": "Armbian stosuje je tylko wtedy, gdy profil tworzy użytkownika z hasłem i imieniem i nazwiskiem."
+        },
+        "access": {
+          "title": "Jak się dostajesz?",
+          "sub": "Klucze SSH pozwalają logować się bez wpisywania hasła.",
+          "keys": "Klucze SSH",
+          "passwordOnly": "Tylko hasło",
+          "source": "Skąd pochodzą klucze",
+          "link": "Link",
+          "forgeUser": "Nazwa użytkownika {{forge}}",
+          "linkLabel": "Link do kluczy publicznych",
+          "fetchHint": "Płytka pobiera je przy pierwszym uruchomieniu.",
+          "linkHint": "Dowolny adres https udostępniający klucze publiczne, po jednym w wierszu.",
+          "passwordLine": "Logujesz się hasłem, przez SSH albo z klawiaturą i monitorem.",
+          "rootHint": "Zostaw puste, a Armbian poprosi o jego zmianę przy pierwszym logowaniu."
+        },
+        "review": {
+          "title": "Gotowe do utworzenia: {{name}}",
+          "sub": "Sprawdź to raz. Potem zostanie wybrany w podsumowaniu.",
+          "subSettings": "Sprawdź to raz. Potem pojawi się na liście profili.",
+          "later": "Możesz to zmienić w dowolnej chwili w Ustawieniach, Autokonfiguracja."
+        }
+      }
     }
   },
   "update": {
