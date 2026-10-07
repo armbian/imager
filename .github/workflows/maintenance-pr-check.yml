@@ -27,6 +27,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+run-name: "PR #${{ github.event.pull_request.number }}"
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
@@ -167,6 +172,7 @@ jobs:
               src-tauri/target/release/bundle/dmg/*.dmg
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -182,9 +188,11 @@ jobs:
           jq --arg v "$VERSION" '.version = $v' package.json > tmp.json && mv tmp.json package.json
 
           # Update version and disable updater in tauri.conf.json
+          # macOS: ad-hoc signing for test builds (no secrets)
           jq --arg v "$VERSION" '
             .version = $v |
             .bundle.createUpdaterArtifacts = false |
+            .bundle.macOS.signingIdentity = "-" |
             .plugins.updater.endpoints = []
           ' src-tauri/tauri.conf.json > tmp.json && mv tmp.json src-tauri/tauri.conf.json
 
@@ -277,127 +285,7 @@ jobs:
         with:
           name: ${{ matrix.platform }}
           path: ${{ matrix.artifact_path }}
-          retention-days: 7
-
-  # ===========================================
-  # Post PR Comment with Artifact Links
-  # ===========================================
-  comment:
-    name: Post Artifact Links
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: always() && needs.build.result != 'cancelled'
-    permissions:
-      pull-requests: write
-      contents: read
-    steps:
-      - name: Post comment with artifacts
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const prNumber = ${{ github.event.pull_request.number }};
-            const runId = context.runId;
-            const version = `0.0.0-pr.${prNumber}`;
-
-            // nightly.link provides public download URLs without GitHub login
-            const nightlyBase = `https://nightly.link/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
-
-            // Check which artifacts were uploaded
-            const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: runId
-            });
-
-            const artifactNames = new Set(artifacts.map(a => a.name));
-
-            const platforms = [
-              { name: 'linux-x64', label: 'Linux x64', files: '.deb / .AppImage' },
-              { name: 'windows-x64', label: 'Windows x64', files: '.exe' },
-              { name: 'macos-arm', label: 'macOS ARM64', files: '.dmg' }
-            ];
-
-            const rows = platforms.map(({ name, label, files }) => {
-              if (artifactNames.has(name)) {
-                return `| ${label} | [📦 ${files}](${nightlyBase}/${name}.zip) |`;
-              }
-              return `| ${label} | ⏭️ Skipped |`;
-            }).join('\n');
-
-            const buildSuccess = platforms.some(p => artifactNames.has(p.name));
-            const statusIcon = buildSuccess ? '🧪' : '❌';
-            const statusText = buildSuccess ? 'ready for testing' : 'failed';
-
-            const body = [
-              `## ${statusIcon} Test Builds`,
-              '',
-              `**Version:** \`${version}\` | **PR:** #${prNumber} | **Status:** ${statusText}`,
-              '',
-              '| Platform | Download |',
-              '|----------|----------|',
-              rows,
-              '',
-              '<details>',
-              '<summary>ℹ️ About these builds</summary>',
-              '',
-              '- 🔓 **Public downloads** via [nightly.link](https://nightly.link) (no GitHub login required)',
-              '- ⚠️ **Unsigned builds** for testing purposes only',
-              '- ⏰ **Expires in 7 days**',
-              '- 🔄 Updated on every push to this PR',
-              '',
-              '</details>'
-            ].join('\n');
-
-            // Find and update or create comment
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber
-            });
-
-            const marker = '## 🧪 Test Builds';
-            const altMarker = '## ❌ Test Builds';
-            const existingComment = comments.find(c =>
-              c.user.type === 'Bot' &&
-              (c.body.includes(marker) || c.body.includes(altMarker))
-            );
-
-            const commentParams = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body
-            };
-
-            if (existingComment) {
-              await github.rest.issues.updateComment({
-                ...commentParams,
-                comment_id: existingComment.id
-              });
-              core.info(`Updated comment ${existingComment.id}`);
-            } else {
-              await github.rest.issues.createComment({
-                ...commentParams,
-                issue_number: prNumber
-              });
-              core.info('Created new comment');
-            }
-
-            // Add "status: ready for review" label if all builds succeeded
-            const allBuildsSucceeded = platforms.every(p => artifactNames.has(p.name));
-            if (allBuildsSucceeded) {
-              const labelName = 'status: ready for review';
-              try {
-                await github.rest.issues.addLabels({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: prNumber,
-                  labels: [labelName]
-                });
-                core.info(`Added label: ${labelName}`);
-              } catch (e) {
-                core.warning(`Failed to add label: ${e.message}`);
-              }
-            }
+          retention-days: 14
 
   # ===========================================
   # Security Audit
@@ -445,22 +333,3 @@ jobs:
       - name: Run cargo audit
         working-directory: src-tauri
         run: cargo audit
-
-  # ===========================================
-  # Cleanup old workflow runs
-  # ===========================================
-  cleanup:
-    name: Cleanup
-    runs-on: ubuntu-latest
-    needs: [frontend, rust-lint, build, comment, security]
-    if: always()
-    permissions:
-      actions: write
-    steps:
-      - name: Delete old workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          retain_days: 7
-          keep_minimum_runs: 5
