@@ -16,7 +16,8 @@ use crate::config::cache::UFS_PRESET_PURGE_MARKER;
 use crate::config::images::CACHED_IMAGE_EXT;
 use crate::qdl::boards::is_ufs_build_filename;
 use crate::utils::{
-    app_cache_dir, assets_dir, images_dir, parse_armbian_filename, validate_path_in_cache,
+    app_cache_dir, assets_dir, images_dir, parse_armbian_filename, validate_file_name,
+    validate_path_in_cache,
 };
 use crate::{log_debug, log_error, log_info, log_warn};
 
@@ -311,6 +312,11 @@ pub fn get_cached_image(filename: &str) -> Option<PathBuf> {
         }
     };
 
+    if let Err(e) = validate_file_name(filename) {
+        log_warn!(MODULE, "{}", e);
+        return None;
+    }
+
     let cache_dir = get_images_cache_dir();
     let cached_path = cache_dir.join(filename);
 
@@ -459,12 +465,8 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
 }
 
 fn remove_cached_file(cache_dir: &Path, filename: &str) -> Result<(), String> {
-    if filename.contains("..") || filename.contains('/') || filename.contains('\\') {
-        log_error!(
-            MODULE,
-            "Invalid filename (path traversal attempt): {}",
-            filename
-        );
+    if let Err(e) = validate_file_name(filename) {
+        log_error!(MODULE, "Invalid filename (path traversal attempt): {}", e);
         return Err("Invalid filename".to_string());
     }
 

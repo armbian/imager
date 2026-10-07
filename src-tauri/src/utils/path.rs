@@ -3,10 +3,12 @@
 
 //! Path manipulation helpers used across the application.
 
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use super::app_cache_dir;
 use crate::{log_info, log_warn};
+
+pub const TAG_INVALID_FILE_NAME: &str = "[INVALID_FILE_NAME]";
 
 /// Validate that a path resolves to within the cache directory, returning its
 /// canonical form. Canonicalizes both paths to defeat symlink/traversal tricks.
@@ -25,6 +27,36 @@ pub fn validate_path_in_cache(path: &Path, cache_dir: &Path) -> Result<PathBuf, 
         return Err("Cannot operate on files outside cache directory".to_string());
     }
     Ok(canonical_path)
+}
+
+// Windows opens a device for these even with an extension and trailing spaces on the stem.
+fn is_reserved_device_name(name: &str) -> bool {
+    let stem = name.split('.').next().unwrap_or(name).trim_end_matches(' ');
+    crate::config::images::RESERVED_DEVICE_NAMES
+        .iter()
+        .any(|r| r.eq_ignore_ascii_case(stem))
+}
+
+/// Accept `name` only as one plain file name that stays inside the directory it is joined to, on every OS.
+pub fn validate_file_name(name: &str) -> Result<&str, String> {
+    // `\` and `:` are separators or drive prefixes on Windows only, so refuse them everywhere.
+    let plain = !name.is_empty()
+        && name.len() <= crate::config::images::MAX_FILE_NAME_LEN
+        && !name.contains(['/', '\\', ':', '\0'])
+        && !name.ends_with(['.', ' '])
+        && !is_reserved_device_name(name);
+    let mut components = Path::new(name).components();
+    let single = matches!(
+        (components.next(), components.next()),
+        (Some(Component::Normal(c)), None) if c == name
+    );
+    if plain && single {
+        Ok(name)
+    } else {
+        Err(format!(
+            "{TAG_INVALID_FILE_NAME} Refused file name: {name:?}"
+        ))
+    }
 }
 
 pub fn image_size(path: &Path) -> Result<u64, String> {
@@ -242,6 +274,54 @@ mod tests {
         assert_eq!(removed, 1);
         assert!(live.exists(), "another instance may be flashing from it");
         assert!(!crashed.exists());
+    }
+
+    #[test]
+    fn file_name_accepts_a_plain_name() {
+        assert_eq!(validate_file_name("x.img.xz"), Ok("x.img.xz"));
+        assert_eq!(
+            validate_file_name("Armbian_25.8.1_Rock-5b_noble_vendor_6.1.115.img.xz"),
+            Ok("Armbian_25.8.1_Rock-5b_noble_vendor_6.1.115.img.xz")
+        );
+        assert_eq!(validate_file_name("x..img.xz"), Ok("x..img.xz"));
+        assert_eq!(validate_file_name("console.img"), Ok("console.img"));
+        assert_eq!(validate_file_name("com10.img"), Ok("com10.img"));
+        assert_eq!(validate_file_name("x.con.img"), Ok("x.con.img"));
+        // No percent-decoding: an encoded backslash stays literal text.
+        assert_eq!(validate_file_name("x%5C..img.xz"), Ok("x%5C..img.xz"));
+    }
+
+    #[test]
+    fn file_name_refuses_anything_that_could_leave_the_dir() {
+        let too_long = "a".repeat(crate::config::images::MAX_FILE_NAME_LEN + 1);
+        for bad in [
+            "",
+            ".",
+            "..",
+            "..\\..\\x.img.xz",
+            "C:\\x.img.xz",
+            "C:x.img.xz",
+            "\\\\server\\share\\x.img.xz",
+            "a/b",
+            "/x.img.xz",
+            "../x.img.xz",
+            "x\0.img.xz",
+            "x.img.",
+            "x.img ",
+            "CON",
+            "CON.img",
+            "nul.img.xz",
+            "com1.img",
+            "Lpt9.img",
+            "aux .img",
+            "COM\u{b9}.img",
+            too_long.as_str(),
+        ] {
+            let err = validate_file_name(bad).unwrap_err();
+            assert!(err.starts_with(TAG_INVALID_FILE_NAME), "{bad:?}: {err}");
+        }
+        let longest = "a".repeat(crate::config::images::MAX_FILE_NAME_LEN);
+        assert!(validate_file_name(&longest).is_ok());
     }
 
     #[test]
