@@ -89,14 +89,32 @@ pub fn request_authorization(target: &FlashTarget) -> Result<bool, String> {
 
         // Keep auth_ref alive: the saved external form is only valid while it lives.
         let mut saved = SAVED_AUTH.lock().unwrap();
-        *saved = Some(SavedAuthorization {
+        let replaced = saved.replace(SavedAuthorization {
             auth_ref: SafeAuthRef(auth_ref),
             external_form,
             device_path: raw_device,
         });
+        if let Some(old) = replaced {
+            AuthorizationFree(old.auth_ref.0, 0);
+        }
 
         log_info!(MODULE, "Authorization saved successfully");
         Ok(true)
+    }
+}
+
+/// Free the saved authorization, if any; the flash that would have used it returned early.
+pub fn discard_saved_authorization() {
+    let saved = SAVED_AUTH.lock().unwrap_or_else(|p| p.into_inner()).take();
+    if let Some(auth) = saved {
+        log_info!(
+            MODULE,
+            "Discarding unused authorization for {}",
+            auth.device_path
+        );
+        unsafe {
+            AuthorizationFree(auth.auth_ref.0, 0);
+        }
     }
 }
 

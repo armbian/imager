@@ -61,6 +61,7 @@ pub struct FlashState {
     pub is_cancelled: AtomicBool,
     pub error: Mutex<Option<String>>,
     pub qdl: QdlProgress,
+    prep_stage: std::sync::Mutex<Option<&'static str>>,
 }
 
 impl FlashState {
@@ -73,6 +74,7 @@ impl FlashState {
             is_cancelled: AtomicBool::new(false),
             error: Mutex::new(None),
             qdl: QdlProgress::new(),
+            prep_stage: std::sync::Mutex::new(None),
         }
     }
 
@@ -89,6 +91,15 @@ impl FlashState {
         self.verified_bytes.store(0, Ordering::SeqCst);
         self.is_verifying.store(false, Ordering::SeqCst);
         self.qdl.reset();
+        self.set_prep_stage(None);
+    }
+
+    pub fn set_prep_stage(&self, stage: Option<&'static str>) {
+        *self.prep_stage.lock().unwrap_or_else(|p| p.into_inner()) = stage;
+    }
+
+    pub fn prep_stage(&self) -> Option<&'static str> {
+        *self.prep_stage.lock().unwrap_or_else(|p| p.into_inner())
     }
 
     pub fn ensure_not_cancelled(&self) -> Result<(), String> {
@@ -108,6 +119,12 @@ pub use windows::flash_image;
 
 #[cfg(all(debug_assertions, target_os = "macos"))]
 pub(crate) use macos::flash_to_vdisk;
+
+/// Drop an authorization saved for a write that is not going to happen.
+pub fn discard_saved_authorization() {
+    #[cfg(target_os = "macos")]
+    macos::discard_saved_authorization();
+}
 
 #[cfg(target_os = "linux")]
 pub use linux::request_authorization;
@@ -273,14 +290,18 @@ mod tests {
         let state = FlashState::new();
         state.written_bytes.store(42, Ordering::SeqCst);
         state.is_cancelled.store(true, Ordering::SeqCst);
+        state.set_prep_stage(Some(crate::config::flash::PREP_STAGE_COPYING));
         state.reset_progress();
         assert_eq!(state.written_bytes.load(Ordering::SeqCst), 0);
+        assert_eq!(state.prep_stage(), None);
         assert_eq!(
             state.ensure_not_cancelled().unwrap_err(),
             "[CANCELLED] Flash cancelled"
         );
+        state.set_prep_stage(Some(crate::config::flash::PREP_STAGE_APPLYING_PROFILE));
         state.reset();
         assert!(state.ensure_not_cancelled().is_ok());
+        assert_eq!(state.prep_stage(), None);
     }
 
     #[test]

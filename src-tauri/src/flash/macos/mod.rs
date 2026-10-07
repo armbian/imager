@@ -8,7 +8,7 @@ mod authorization;
 mod bindings;
 mod writer;
 
-pub use authorization::request_authorization;
+pub use authorization::{discard_saved_authorization, request_authorization};
 pub use writer::flash_image;
 #[cfg(debug_assertions)]
 pub(crate) use writer::flash_to_vdisk;

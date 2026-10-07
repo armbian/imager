@@ -9,7 +9,7 @@ use std::sync::Arc;
 use serde::Serialize;
 use tauri::AppHandle;
 
-use crate::autoconfig::{prepare_working_copy, AutoconfigConfig};
+use crate::autoconfig::{prepare_flash_copy, AutoconfigConfig, PrepError};
 use crate::commands::system::ArmbianReleaseInfo;
 use crate::config::dev;
 #[cfg(target_os = "macos")]
@@ -260,9 +260,20 @@ pub(crate) async fn intercept_flash(
         )?;
         check_capacity(image_size(image_path)?, block.size)?;
 
-        let working_copy = autoconfig
-            .map(|config| prepare_working_copy(image_path, &autoconfig_temp_dir(), config, false))
-            .transpose()?;
+        let working_copy = match autoconfig {
+            Some(profile) => Some(
+                prepare_flash_copy(
+                    image_path.to_path_buf(),
+                    autoconfig_temp_dir(),
+                    profile.clone(),
+                    true,
+                    flash_state.clone(),
+                )
+                .await
+                .map_err(PrepError::into_flash_error)?,
+            ),
+            None => None,
+        };
         let flash_path = working_copy.as_ref().map_or(image_path, |copy| copy.path());
         log_info!(
             MODULE,

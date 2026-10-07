@@ -36,6 +36,8 @@ pub struct FlashProgress {
     pub partitions_total: u64,
     /// Number of partitions programmed so far in QDL mode
     pub partitions_written: u64,
+    /// Autoconfig work before the write: "copying", then "applying_profile"
+    pub prep_stage: Option<&'static str>,
 }
 
 /// Get current download progress
@@ -128,6 +130,7 @@ pub async fn get_flash_progress(state: State<'_, AppState>) -> Result<FlashProgr
         qdl_stage,
         partitions_total,
         partitions_written,
+        prep_stage: fs.prep_stage(),
     })
 }
 
