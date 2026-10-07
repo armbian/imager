@@ -4,14 +4,16 @@
 //! Selection and processing of user-provided custom images.
 
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Component, Path, PathBuf};
 use tauri::State;
 
 use crate::decompress::{decompress_local_file, needs_decompression};
 use crate::images::{fetch_boards, map_board, BoardInfo};
 use crate::qdl::extract::open_tar_reader;
-use crate::utils::{custom_decompress_dir, normalize_slug, parse_armbian_filename};
-use crate::{log_debug, log_error, log_info};
+use crate::utils::{
+    custom_decompress_dir, normalize_slug, parse_armbian_filename, validate_path_in_cache,
+};
+use crate::{log_debug, log_error, log_info, log_warn};
 
 use super::state::AppState;
 
@@ -133,6 +135,8 @@ pub async fn select_custom_image(window: tauri::Window) -> Result<Option<CustomI
     }
 }
 
+const OUTSIDE_DECOMPRESS_DIR: &str = "Cannot delete files outside custom-decompress directory";
+
 /// Delete a decompressed custom image file
 #[tauri::command]
 pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), String> {
@@ -141,30 +145,9 @@ pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), 
         "Deleting decompressed custom image: {}",
         image_path
     );
-    let path = PathBuf::from(&image_path);
-
-    // Refuse to delete anything outside the custom-decompress directory.
     let custom_dir = custom_decompress_dir();
 
-    if !path.starts_with(&custom_dir) {
-        log_error!(
-            "custom_image",
-            "Attempted to delete file outside custom-decompress cache: {}",
-            image_path
-        );
-        return Err("Cannot delete files outside custom-decompress directory".to_string());
-    }
-
-    if path.exists() {
-        std::fs::remove_file(&path).map_err(|e| {
-            log_error!(
-                "custom_image",
-                "Failed to delete decompressed image {}: {}",
-                image_path,
-                e
-            );
-            format!("Failed to delete decompressed image: {}", e)
-        })?;
+    if remove_decompressed_image(Path::new(&image_path), &custom_dir)? {
         log_info!("custom_image", "Deleted decompressed image: {}", image_path);
     }
 
@@ -172,6 +155,50 @@ pub async fn delete_decompressed_custom_image(image_path: String) -> Result<(), 
     let _ = std::fs::remove_dir(&custom_dir);
 
     Ok(())
+}
+
+/// Remove a regular file confined to `dir`; Ok(false) when it is already gone.
+fn remove_decompressed_image(path: &Path, dir: &Path) -> Result<bool, String> {
+    let refuse = |why: &str| {
+        log_warn!(
+            "custom_image",
+            "Refused to delete {} ({}): not inside {}",
+            path.display(),
+            why,
+            dir.display()
+        );
+        Err(OUTSIDE_DECOMPRESS_DIR.to_string())
+    };
+
+    if path.components().any(|c| c == Component::ParentDir) {
+        return refuse("parent component");
+    }
+    if !path.starts_with(dir) {
+        return refuse("outside prefix");
+    }
+    let meta = match path.symlink_metadata() {
+        Ok(meta) => meta,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(e) => return Err(format!("Failed to inspect decompressed image: {}", e)),
+    };
+    if !meta.file_type().is_file() {
+        return refuse("not a regular file");
+    }
+    let canonical = match validate_path_in_cache(path, dir) {
+        Ok(p) => p,
+        Err(e) => return refuse(&e),
+    };
+
+    std::fs::remove_file(&canonical).map_err(|e| {
+        log_error!(
+            "custom_image",
+            "Failed to delete decompressed image {}: {}",
+            path.display(),
+            e
+        );
+        format!("Failed to delete decompressed image: {}", e)
+    })?;
+    Ok(true)
 }
 
 /// Whether a file is a QDL TAR archive (needs both rawprogram0.xml and prog_firehose_ddr.elf,
@@ -363,7 +390,90 @@ async fn match_board_from_filename(
 
 #[cfg(test)]
 mod tests {
-    use super::check_tar_for_qdl;
+    use super::{check_tar_for_qdl, remove_decompressed_image, OUTSIDE_DECOMPRESS_DIR};
+
+    fn decompress_fixture() -> (tempfile::TempDir, std::path::PathBuf, std::path::PathBuf) {
+        let root = tempfile::tempdir().unwrap();
+        let dir = root.path().join("custom-decompress");
+        std::fs::create_dir_all(&dir).unwrap();
+        let outside = root.path().join("victim.img");
+        std::fs::write(&outside, b"keep").unwrap();
+        (root, dir, outside)
+    }
+
+    #[test]
+    fn decompressed_delete_refuses_a_parent_escape() {
+        let (_root, dir, outside) = decompress_fixture();
+        let escape = dir.join("..").join("victim.img");
+        assert_eq!(
+            remove_decompressed_image(&escape, &dir),
+            Err(OUTSIDE_DECOMPRESS_DIR.to_string())
+        );
+        assert!(outside.exists());
+    }
+
+    #[test]
+    fn decompressed_delete_refuses_an_absolute_path_outside() {
+        let (_root, dir, outside) = decompress_fixture();
+        assert_eq!(
+            remove_decompressed_image(&outside, &dir),
+            Err(OUTSIDE_DECOMPRESS_DIR.to_string())
+        );
+        assert!(outside.exists());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn decompressed_delete_refuses_a_symlink_out() {
+        let (_root, dir, outside) = decompress_fixture();
+        let link = dir.join("link.img");
+        std::os::unix::fs::symlink(&outside, &link).unwrap();
+        assert_eq!(
+            remove_decompressed_image(&link, &dir),
+            Err(OUTSIDE_DECOMPRESS_DIR.to_string())
+        );
+        assert!(outside.exists());
+        assert!(link.symlink_metadata().is_ok());
+    }
+
+    #[test]
+    fn decompressed_delete_refuses_a_directory() {
+        let (_root, dir, _outside) = decompress_fixture();
+        let sub = dir.join("sub");
+        std::fs::create_dir_all(&sub).unwrap();
+        assert_eq!(
+            remove_decompressed_image(&sub, &dir),
+            Err(OUTSIDE_DECOMPRESS_DIR.to_string())
+        );
+        assert!(sub.exists());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn decompressed_delete_refuses_a_file_behind_a_linked_dir() {
+        let (root, dir, _outside) = decompress_fixture();
+        let outside_dir = root.path().join("outside");
+        std::fs::create_dir_all(&outside_dir).unwrap();
+        let victim = outside_dir.join("victim.img");
+        std::fs::write(&victim, b"keep").unwrap();
+        std::os::unix::fs::symlink(&outside_dir, dir.join("sub")).unwrap();
+        assert_eq!(
+            remove_decompressed_image(&dir.join("sub/victim.img"), &dir),
+            Err(OUTSIDE_DECOMPRESS_DIR.to_string())
+        );
+        assert!(victim.exists());
+    }
+
+    #[test]
+    fn decompressed_delete_removes_a_file_inside() {
+        let (_root, dir, outside) = decompress_fixture();
+        let image = dir.join("board.img");
+        std::fs::write(&image, b"x").unwrap();
+        assert_eq!(remove_decompressed_image(&image, &dir), Ok(true));
+        assert!(!image.exists());
+        assert_eq!(remove_decompressed_image(&image, &dir), Ok(false));
+        assert!(outside.exists());
+    }
 
     /// Build an in-memory uncompressed tar from `(path, contents)` entries.
     fn build_tar(entries: &[(&str, &[u8])]) -> Vec<u8> {
