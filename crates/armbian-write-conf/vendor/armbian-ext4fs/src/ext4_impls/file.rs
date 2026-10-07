@@ -550,6 +550,11 @@ impl Ext4 {
             return Ok(EOK);
         }
 
+        // extent_remove_space corrupts trees deeper than the inode root, so a full truncate frees the tree itself.
+        if new_size == 0 {
+            return self.truncate_inode_to_zero(inode_ref);
+        }
+
         let block_size = BLOCK_SIZE as u64;
         let new_blocks_cnt = ((new_size + block_size - 1) / block_size) as u32;
         let old_blocks_cnt = ((old_size + block_size - 1) / block_size) as u32;
@@ -563,6 +568,69 @@ impl Ext4 {
         self.write_back_inode(inode_ref);
 
         Ok(EOK)
+    }
+
+    /// Detach the whole extent tree from the inode, then free its data and tree blocks.
+    fn truncate_inode_to_zero(&self, inode_ref: &mut Ext4InodeRef) -> Result<usize> {
+        if inode_ref.inode.flags() & EXT4_INODE_FLAG_EXTENTS as u32 == 0 {
+            return_errno_with_message!(Errno::ENOTSUP, "Truncate needs an extent-mapped inode");
+        }
+
+        let root = Block::load_inode_root_block(&inode_ref.inode.block);
+        let depth = inode_ref.inode.root_header_depth();
+        let mut runs = Vec::new();
+        self.collect_extent_runs(&root.data, depth, &mut runs)?;
+
+        inode_ref.inode.extent_tree_init();
+        inode_ref.inode.set_size(0);
+        self.write_back_inode(inode_ref);
+
+        for (start, count) in runs {
+            self.balloc_free_blocks(inode_ref, start, count);
+        }
+
+        Ok(EOK)
+    }
+
+    /// Collect every (start, count) block run an extent node owns, children before their index block.
+    fn collect_extent_runs(
+        &self,
+        node: &[u8],
+        depth: u16,
+        runs: &mut Vec<(Ext4Fsblk, u32)>,
+    ) -> Result<()> {
+        let header = Ext4ExtentHeader::from_bytes(node);
+        if header.magic != EXT4_EXTENT_MAGIC
+            || header.depth != depth
+            || depth > EXT4_EXTENT_MAX_DEPTH
+            || EXT4_EXTENT_HEADER_SIZE + header.entries_count as usize * EXT4_EXTENT_SIZE
+                > node.len()
+        {
+            return_errno_with_message!(Errno::EIO, "Corrupt extent tree node");
+        }
+
+        let fs_blocks = self.super_block.blocks_count() as u64;
+        for i in 0..header.entries_count as usize {
+            let entry = &node[EXT4_EXTENT_HEADER_SIZE + i * EXT4_EXTENT_SIZE..];
+            let (start, count) = if depth == 0 {
+                let extent = Ext4Extent::from_bytes(entry);
+                (extent.get_pblock(), extent.get_actual_len() as u32)
+            } else {
+                (Ext4ExtentIndex::from_bytes(entry).get_pblock(), 1)
+            };
+            if count == 0 {
+                continue;
+            }
+            if start == 0 || start + count as u64 > fs_blocks {
+                return_errno_with_message!(Errno::EIO, "Extent points outside the filesystem");
+            }
+            if depth > 0 {
+                let child = self.block_device.read_offset(start as usize * BLOCK_SIZE);
+                self.collect_extent_runs(&child, depth - 1, runs)?;
+            }
+            runs.push((start, count));
+        }
+        Ok(())
     }
 }
 

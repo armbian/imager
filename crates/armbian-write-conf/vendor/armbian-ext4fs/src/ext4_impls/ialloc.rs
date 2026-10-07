@@ -7,7 +7,7 @@ impl Ext4 {
     pub fn ialloc_alloc_inode(&self, is_dir: bool) -> Result<u32> {
         let mut bgid = 0;
         let bg_count = self.super_block.block_group_count();
-        let mut super_block = self.super_block;
+        let mut super_block = self.load_super_block();
 
         while bgid <= bg_count {
             if bgid == bg_count {
@@ -83,7 +83,7 @@ impl Ext4 {
         // Compute index of block group
         let bgid = self.get_bgid_of_inode(index);
 
-        let mut super_block = self.super_block;
+        let mut super_block = self.load_super_block();
         let mut bg =
             Ext4BlockGroup::load_new(&self.block_device, &super_block, bgid as usize);
 

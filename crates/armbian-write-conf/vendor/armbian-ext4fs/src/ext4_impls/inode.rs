@@ -89,7 +89,7 @@ impl Ext4 {
 
     /// Allocate a new block
     pub fn allocate_new_block(&self, inode_ref: &mut Ext4InodeRef) -> Result<Ext4Fsblk> {
-        let mut super_block = self.super_block;
+        let mut super_block = self.load_super_block();
         let inodes_per_group = super_block.inodes_per_group();
         let bgid = (inode_ref.inode_num - 1) / inodes_per_group;
         let index = (inode_ref.inode_num - 1) % inodes_per_group;

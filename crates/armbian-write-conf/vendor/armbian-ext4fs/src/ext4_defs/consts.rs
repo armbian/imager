@@ -28,6 +28,7 @@ pub const EXT4_EXTENT_MAGIC: u16 = 0xF30A;
 pub const EXT4_EXTENT_HEADER_SIZE: usize = 12;
 pub const EXT4_EXTENT_SIZE: usize = 12;
 pub const EXT4_EXTENT_INDEX_SIZE: usize = 12;
+pub const EXT4_EXTENT_MAX_DEPTH: u16 = 5;
 pub const MAX_EXTENT_INDEX_COUNT: usize = 340;
 
 /// BLock group descriptor flags.

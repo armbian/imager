@@ -68,6 +68,10 @@ impl Ext4 {
 
         let inode = self.generic_open(path, &mut parent_inode_num, create, filetype.bits(), &mut 0)?;
 
+        if !self.get_inode_ref(inode).inode.is_file() {
+            return_errno_with_message!(Errno::EISDIR, "Not a regular file");
+        }
+
         if iflags & O_TRUNC != 0 {
             let mut inode_ref = self.get_inode_ref(inode);
             if inode_ref.inode.size() > 0 {
