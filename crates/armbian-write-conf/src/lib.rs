@@ -99,7 +99,7 @@ impl BlockDevice for PartDev {
     }
 }
 
-/// Write `content` to `dest_path` in the image's ext4 rootfs, then validate read-only; [`WriteConfReport`]'s `validated` is true only if it read back identically and the tree walk found no corruption.
+/// Write `content` to `dest_path` in the image's ext4 rootfs, then validate read-only.
 /// Errors ([`WriteConfError`]) on non-ext4 raw image, write failure, or bad validation.
 pub fn write_file_into_image(
     image_path: &Path,
@@ -123,12 +123,7 @@ pub fn write_file_into_image(
         .ext4_file_write(ino as u64, 0, content)
         .map_err(|e| WriteConfError::Ext4(format!("write {dest_path}: {e:?}")))?;
 
-    // Flush to disk before reloading for validation, then release handles.
-    dev.file
-        .lock()
-        .unwrap()
-        .sync_all()
-        .map_err(WriteConfError::Io)?;
+    // No fsync: validation and the flash writer read this copy through the same page cache.
     drop(fs);
     drop(dev);
 
@@ -175,12 +170,7 @@ pub fn write_file_into_bare_ext4_image(
         .ext4_file_write(ino as u64, 0, content)
         .map_err(|e| WriteConfError::Ext4(format!("write {dest_path}: {e:?}")))?;
 
-    // Flush to disk before reloading for validation, then release handles.
-    dev.file
-        .lock()
-        .unwrap()
-        .sync_all()
-        .map_err(WriteConfError::Io)?;
+    // No fsync: validation and the flash writer read this copy through the same page cache.
     drop(fs);
     drop(dev);
 

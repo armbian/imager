@@ -1,6 +1,8 @@
 //! Integration test against a real Armbian RAW image at ARMBIAN_TEST_IMAGE (with a default); if absent it prints a
 //! skip notice and passes so CI without the large image doesn't fail. The write always targets a temp copy.
 
+mod common;
+
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -39,6 +41,19 @@ fn inject_into_real_image() {
 
     assert_eq!(report.bytes_written, CONTENT.len(), "byte count mismatch");
     assert!(report.validated, "report.validated must be true");
+
+    // The full file sweep the library no longer runs, kept here as a slow oracle.
+    let sweep = common::full_sweep(&tmp, report.partition_offset);
+    eprintln!(
+        "sweep: {} regular files, {} unreadable by ext4-view",
+        sweep.files, sweep.unreadable
+    );
+    assert!(sweep.files > 0);
+    assert_eq!(
+        common::read_back(&tmp, report.partition_offset, DEST),
+        CONTENT
+    );
+    common::assert_e2fsck_clean(&tmp, report.partition_offset, ".not_logged_in_yet");
 
     let _ = std::fs::remove_file(&tmp);
 }
