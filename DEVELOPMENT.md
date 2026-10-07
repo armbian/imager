@@ -112,7 +112,7 @@ Debug builds (`npm run tauri:dev`, `npm run tauri:build:dev`) show a flask butto
 ### Single Platform
 
 ```bash
-./scripts/build/build-macos.sh      # macOS universal (ARM64 + x64)
+./scripts/build/build-macos.sh      # macOS (ARM64 and x64 binaries)
 ./scripts/build/build-linux.sh      # Linux (x64 + ARM64 via Docker)
 npm run tauri:build                  # Current platform
 ```
@@ -135,11 +135,7 @@ npm run tauri:build                  # Current platform
 
 ### Output
 
-| Platform | Format | Location |
-|----------|--------|----------|
-| macOS | .dmg, .app | `src-tauri/target/{arch}/release/bundle/` |
-| Linux | .deb, .AppImage | `src-tauri/target/{arch}/release/bundle/` |
-| Windows | .msi, .nsis | `src-tauri/target/{arch}/release/bundle/` |
+The build scripts copy the bundles (.dmg/.app, .deb/.AppImage, .msi/.exe) to `releases/` in the repo root. `npm run tauri:build` leaves them in `src-tauri/target/release/bundle/`, or in `src-tauri/target/<target>/release/bundle/` when you pass `--target`.
 
 ---
 
@@ -208,7 +204,7 @@ armbian-imager/
 │   │   ├── badges.ts                # Desktop env + kernel branch badge colors
 │   │   ├── os-info.ts               # OS logos, app logos, release mappings
 │   │   ├── deviceColors.ts          # Color scheme per device type
-│   │   └── i18n.ts                  # 18 supported languages + metadata
+│   │   └── i18n.ts                  # 20 supported languages + metadata
 │   │
 │   ├── styles/                       # CSS with design tokens
 │   │   ├── theme.css                # Custom properties (colors, spacing, radius)
@@ -222,7 +218,7 @@ armbian-imager/
 │   ├── types/index.ts               # BoardInfo, ImageInfo, BlockDevice, etc.
 │   ├── utils/index.ts               # formatFileSize, parseArmbianFilename, etc.
 │   ├── utils/deviceUtils.ts         # isDeviceConnected, getDeviceType
-│   ├── locales/                     # 18 language JSON files
+│   ├── locales/                     # 20 language JSON files
 │   └── assets/                      # Logos (Armbian, OS distros)
 │
 ├── src-tauri/                        # Rust Backend (Tauri 2)
@@ -280,7 +276,7 @@ armbian-imager/
 ├── scripts/
 │   ├── build/
 │   │   ├── build-all.sh             # Multi-platform build orchestrator
-│   │   ├── build-macos.sh           # macOS universal binary (ARM64 + x64)
+│   │   ├── build-macos.sh           # macOS (ARM64 and x64 binaries)
 │   │   └── build-linux.sh           # Linux via Docker (x64 + ARM64)
 │   ├── setup/
 │   │   ├── install.sh               # Cross-platform installer (auto-detects OS)
@@ -310,7 +306,7 @@ armbian-imager/
 
 The app uses a linear 4-step wizard: **Manufacturer -> Board -> Image -> Device**
 
-State is managed in `App.tsx` with cascade invalidation — changing a selection at step N resets all downstream selections (N+1, N+2, etc.) via `resetSelectionsFrom()`.
+State is managed in `App.tsx` with cascade invalidation: changing a selection at step N resets all downstream selections (N+1, N+2, etc.) via `resetSelectionsFrom()`.
 
 ### Frontend -> Backend Communication
 
@@ -387,7 +383,7 @@ All platforms: quick erase (64MB zeros) before flashing, `fsync` after write, sh
 | React | 19.2 | UI Framework |
 | TypeScript | 5.9 | Type Safety (strict mode) |
 | Vite | 7.2 | Build Tool & Dev Server |
-| i18next | 25.7 | Internationalization (18 languages) |
+| i18next | 25.7 | Internationalization (20 languages) |
 | Lucide React | 0.560 | Icon Library |
 | Tauri API | 2.9 | IPC Communication |
 
@@ -495,7 +491,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md).
 - Keep commits small and atomic
 - Test on multiple platforms for platform-specific changes
 - Run all quality checks before pushing
-- Update translations for user-facing text (all 18 locale files)
+- Update translations for user-facing text (all 20 locale files)
 - Follow existing patterns (hooks, Tauri commands, CSS variables)
 
 ### PR Process
@@ -510,8 +506,8 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Acknowledgments
 
-- [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager) — Inspiration
-- [Tauri](https://tauri.app/) — Framework
-- [i18next](https://www.i18next.com/) — Internationalization
-- [Lucide](https://lucide.dev/) — Icons
-- [Armbian Community](https://forum.armbian.com) — SBC support
+- [Raspberry Pi Imager](https://github.com/raspberrypi/rpi-imager): inspiration
+- [Tauri](https://tauri.app/): framework
+- [i18next](https://www.i18next.com/): internationalization
+- [Lucide](https://lucide.dev/): icons
+- [Armbian Community](https://forum.armbian.com): SBC support
