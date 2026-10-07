@@ -4,15 +4,14 @@
 //! Armbian first-boot autoconfig: render a preset (mirrors client-side AutoconfigConfig) and inject it.
 //! [`inject_into_image`] writes it to `/root/.not_logged_in_yet` in the image's ext4 rootfs, consumed on first boot. See https://docs.armbian.com/User-Guide_Autoconfig/.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use armbian_write_conf::{write_file_into_bare_ext4_image, write_file_into_image, WriteConfError};
 use serde::Deserialize;
 
-use crate::{log_error, log_info};
-
-/// Destination of the first-boot preset file inside the rootfs.
-const PRESET_DEST_PATH: &str = "/root/.not_logged_in_yet";
+use crate::config;
+use crate::utils::unique_suffix;
+use crate::{log_error, log_info, log_warn};
 
 /// Login shell choices offered for the first user.
 #[derive(Debug, Clone, Deserialize)]
@@ -34,7 +33,7 @@ impl UserShell {
 
 /// First-boot autoconfig model. All fields optional; only set/non-empty fields
 /// are emitted into the preset. Mirrors the TS `AutoconfigConfig` type.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutoconfigConfig {
     pub apply_network: Option<bool>,
@@ -63,6 +62,21 @@ pub struct AutoconfigConfig {
     pub user_real_name: Option<String>,
 
     pub remote_config_url: Option<String>,
+}
+
+// Passwords, the Wi-Fi key and key/config URLs must never reach a log: only show which fields are set.
+impl std::fmt::Debug for AutoconfigConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let set = |value: &Option<String>| value.as_deref().is_some_and(|v| !v.is_empty());
+        f.debug_struct("AutoconfigConfig")
+            .field("wifi_key_set", &set(&self.wifi_key))
+            .field("root_password_set", &set(&self.root_password))
+            .field("user_password_set", &set(&self.user_password))
+            .field("root_key_url_set", &set(&self.root_key_url))
+            .field("user_key_url_set", &set(&self.user_key_url))
+            .field("remote_config_url_set", &set(&self.remote_config_url))
+            .finish_non_exhaustive()
+    }
 }
 
 /// Quote a value for a bash-sourced file: wrap in double quotes and escape the
@@ -201,7 +215,11 @@ pub fn inject_into_image(
         image_path.display()
     );
 
-    match write_file_into_image(image_path, PRESET_DEST_PATH, preset.as_bytes()) {
+    match write_file_into_image(
+        image_path,
+        config::autoconfig::PRESET_PATH,
+        preset.as_bytes(),
+    ) {
         Ok(report) => {
             log_info!(
                 "autoconfig",
@@ -234,7 +252,11 @@ pub fn inject_into_bare_ext4_image(
         image_path.display()
     );
 
-    match write_file_into_bare_ext4_image(image_path, PRESET_DEST_PATH, preset.as_bytes()) {
+    match write_file_into_bare_ext4_image(
+        image_path,
+        config::autoconfig::PRESET_PATH,
+        preset.as_bytes(),
+    ) {
         Ok(report) => {
             log_info!(
                 "autoconfig",
@@ -253,9 +275,75 @@ pub fn inject_into_bare_ext4_image(
     }
 }
 
+/// A per-flash copy of an image with the preset injected; the file is removed on drop.
+pub struct WorkingCopy {
+    path: PathBuf,
+}
+
+impl WorkingCopy {
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for WorkingCopy {
+    fn drop(&mut self) {
+        if let Err(e) = std::fs::remove_file(&self.path) {
+            log_warn!(
+                "autoconfig",
+                "Failed to remove autoconfig working copy {}: {}",
+                self.path.display(),
+                e
+            );
+        }
+    }
+}
+
+fn no_ext4_rootfs(e: &WriteConfError) -> String {
+    format!(
+        "This image does not have a writable ext4 root filesystem, so the selected autoconfig profile cannot be applied: {}",
+        e
+    )
+}
+
+/// Copy `source` into `temp_dir` and inject the preset there.
+pub fn prepare_working_copy(
+    source: &Path,
+    temp_dir: &Path,
+    config: &AutoconfigConfig,
+) -> Result<WorkingCopy, String> {
+    std::fs::create_dir_all(temp_dir)
+        .map_err(|e| format!("Failed to create autoconfig temp directory: {}", e))?;
+
+    let stem = source.file_name().map_or_else(
+        || config::autoconfig::COPY_FALLBACK_NAME.into(),
+        |n| n.to_string_lossy(),
+    );
+    let copy = WorkingCopy {
+        path: temp_dir.join(format!("{}.{}", unique_suffix(), stem)),
+    };
+
+    log_info!(
+        "autoconfig",
+        "Copying image for autoconfig injection: {} -> {}",
+        source.display(),
+        copy.path.display()
+    );
+    std::fs::copy(source, &copy.path)
+        .map_err(|e| format!("Failed to copy image for autoconfig: {}", e))?;
+
+    inject_into_image(&copy.path, config).map_err(|e| match e {
+        WriteConfError::UnsupportedImage(_) | WriteConfError::NoExt4Rootfs(_) => no_ext4_rootfs(&e),
+        other => format!("Failed to apply autoconfig profile: {}", other),
+    })?;
+
+    Ok(copy)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_scratch_dir;
 
     fn empty() -> AutoconfigConfig {
         AutoconfigConfig {
@@ -344,5 +432,37 @@ mod tests {
         let mut c = empty();
         c.root_password = Some("secret".to_string());
         assert!(render_preset(&c).ends_with("PRESET_CONNECT_WIRELESS=\"n\"\n"));
+    }
+
+    #[test]
+    fn working_copy_never_touches_the_source() {
+        let dir = test_scratch_dir("wc-test");
+        let temp_dir = dir.join("work");
+        let source = dir.join("source.img");
+        let original = vec![0x5au8; 64 * 1024];
+        std::fs::write(&source, &original).unwrap();
+
+        let mut config = empty();
+        config.locale = Some("en_US.UTF-8".to_string());
+        let result = prepare_working_copy(&source, &temp_dir, &config);
+
+        assert!(result.is_err(), "a non-ext4 image must be refused");
+        assert_eq!(std::fs::read(&source).unwrap(), original);
+        assert_eq!(std::fs::read_dir(&temp_dir).unwrap().count(), 0);
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn debug_output_never_shows_secrets() {
+        let mut config = empty();
+        config.wifi_key = Some("SECRET-WIFI".to_string());
+        config.root_password = Some("SECRET-ROOT".to_string());
+        config.user_password = Some("SECRET-USER".to_string());
+        config.root_key_url = Some("https://SECRET/keys".to_string());
+        config.remote_config_url = Some("https://SECRET/conf".to_string());
+        config.user_name = Some("SECRET-NAME".to_string());
+        let shown = format!("{config:?}");
+        assert!(!shown.contains("SECRET"), "{shown}");
+        assert!(shown.contains("wifi_key_set: true"));
     }
 }

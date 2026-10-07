@@ -27,7 +27,7 @@ use super::provision::ProvisionSource;
 use super::{
     QdlStorage, QDL_CANCELLED_ERROR, STAGE_COMPLETE, STAGE_CONFIGURING, STAGE_CONNECTING,
     STAGE_FIREHOSE, STAGE_PARTITION_PREFIX, STAGE_PATCHING, STAGE_PROVISIONING, STAGE_RESETTING,
-    STAGE_SAHARA, UFS_PARTITION_LABEL,
+    STAGE_SAHARA, TAG_QDL_AUTOCONFIG_FAILED, UFS_PARTITION_LABEL,
 };
 use crate::flash::FlashState;
 use crate::{log_error, log_info, log_warn};
@@ -93,20 +93,12 @@ pub fn qdl_flash_ufs(
     image_path: &Path,
     elf_path: &Path,
     device_path: &str,
-    autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
     provision: ProvisionSource,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
     let mut device = connect_and_configure(device_path, elf_path, QdlStorage::Ufs, &state)?;
-
-    // Inject before Firehose reads the image; detect.rs handles the 4096-byte UFS sectors.
-    if let Some(cfg) = autoconfig.as_ref() {
-        check_cancelled(&state)?;
-        crate::autoconfig::inject_into_image(image_path, cfg)
-            .map_err(|e| format!("[QDL_AUTOCONFIG_FAILED] {}", e))?;
-    }
 
     check_cancelled(&state)?;
     update_qdl_stage(&state, STAGE_FIREHOSE);
@@ -407,22 +399,21 @@ fn inject_autoconfig(
 
     // A confirmed-ext4 rootfs that fails to write/validate is fatal.
     crate::autoconfig::inject_into_bare_ext4_image(&rootfs_path, config)
-        .map_err(|e| format!("[QDL_AUTOCONFIG_FAILED] {}", e))?;
+        .map_err(|e| format!("{} {}", TAG_QDL_AUTOCONFIG_FAILED, e))?;
 
     // B2: the mutated file must still fit within the partition window.
     let file_len = fs::metadata(&rootfs_path)
         .map_err(|e| {
             format!(
-                "[QDL_AUTOCONFIG_FAILED] failed to stat rootfs after injection: {}",
-                e
+                "{} failed to stat rootfs after injection: {}",
+                TAG_QDL_AUTOCONFIG_FAILED, e
             )
         })?
         .len();
     if file_len > window_bytes {
         return Err(format!(
-            "[QDL_AUTOCONFIG_FAILED] rootfs grew beyond partition window after injection \
-             ({} bytes > {} bytes)",
-            file_len, window_bytes
+            "{} rootfs grew beyond partition window after injection ({} bytes > {} bytes)",
+            TAG_QDL_AUTOCONFIG_FAILED, file_len, window_bytes
         ));
     }
 

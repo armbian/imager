@@ -85,6 +85,18 @@ pub mod flash {
     pub const TARGET_RESCAN_INTERVAL_MS: u64 = 100;
 }
 
+/// First-boot autoconfig preset injection
+pub mod autoconfig {
+    /// Where the preset lands in the rootfs; Armbian's first login sources it
+    pub const PRESET_PATH: &str = "/root/.not_logged_in_yet";
+
+    /// Cache subdirectory for per-flash copies with the preset injected
+    pub const TEMP_DIR: &str = "autoconfig-temp";
+
+    /// Working copy name when the source path has no file name
+    pub const COPY_FALLBACK_NAME: &str = "image.img";
+}
+
 /// Log file management settings
 pub mod log_files {
     /// Maximum number of log files to retain (oldest are deleted)

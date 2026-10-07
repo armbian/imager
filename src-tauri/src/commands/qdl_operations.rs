@@ -9,7 +9,7 @@ use tauri::State;
 use crate::flash::reject_simulated;
 use crate::qdl;
 use crate::qdl::QdlDevice;
-use crate::utils::qdl_temp_dir;
+use crate::utils::{autoconfig_temp_dir, qdl_temp_dir};
 use crate::{log_error, log_info, log_warn};
 
 use super::state::AppState;
@@ -184,19 +184,35 @@ pub async fn flash_qdl_ufs_image(
     }
 
     let image_path = PathBuf::from(&image_path);
+    // Inject into a per-flash copy before connecting, so the cached image stays pristine.
+    let working_copy = match autoconfig {
+        Some(cfg) => Some(
+            crate::autoconfig::prepare_working_copy(&image_path, &autoconfig_temp_dir(), &cfg)
+                .map_err(|e| {
+                    log_error!("qdl_operations", "Autoconfig preparation failed: {}", e);
+                    format!("{} {e}", qdl::TAG_QDL_AUTOCONFIG_FAILED)
+                })?,
+        ),
+        None => None,
+    };
+    let write_path = working_copy
+        .as_ref()
+        .map_or(image_path, |copy| copy.path().to_path_buf());
+
     // qdlrs is synchronous, so run the flash off the async runtime.
     let result = tokio::task::spawn_blocking(move || {
         qdl::flash::qdl_flash_ufs(
-            &image_path,
+            &write_path,
             &loader_path,
             &device_path,
-            autoconfig,
             provision,
             flash_state,
         )
     })
     .await
     .map_err(tag_join_error)?;
+
+    drop(working_copy);
 
     match &result {
         Ok(()) => log_info!("qdl_operations", "QDL UFS flash completed successfully"),

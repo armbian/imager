@@ -67,6 +67,11 @@ pub fn qdl_temp_dir() -> PathBuf {
     app_cache_dir().join("qdl-temp")
 }
 
+/// Directory holding per-flash image copies with an autoconfig preset injected.
+pub fn autoconfig_temp_dir() -> PathBuf {
+    app_cache_dir().join(config::autoconfig::TEMP_DIR)
+}
+
 /// Directory caching downloaded QDL firehose loaders, keyed by SoC family.
 pub fn loaders_dir() -> PathBuf {
     app_cache_dir().join("loaders")
