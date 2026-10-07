@@ -52,6 +52,9 @@ filetime = "0.2"
 # In-repo crate: writes the first-boot autoconfig file into an image's ext4 rootfs
 armbian-write-conf = { path = "../crates/armbian-write-conf" }
 
+[dev-dependencies]
+tempfile = "3"
+
 [target.'cfg(target_os = "linux")'.dependencies]
 # Linux-specific dependencies for block device access
 libc = "0.2"

@@ -151,6 +151,7 @@ dependencies = [
  "tauri-plugin-shell",
  "tauri-plugin-store",
  "tauri-plugin-updater",
+ "tempfile",
  "tokio",
  "udisks2",
  "windows-sys 0.61.2",

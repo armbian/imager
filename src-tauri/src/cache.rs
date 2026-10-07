@@ -5,7 +5,7 @@
 //! eviction. All operations are guarded by a global Mutex.
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::SystemTime;
 
@@ -41,7 +41,7 @@ pub fn calculate_cache_size() -> Result<u64, String> {
         .lock()
         .map_err(|e| format!("Failed to acquire cache lock: {}", e))?;
 
-    calculate_cache_size_internal()
+    calculate_cache_size_internal(&images_dir(), &assets_dir())
 }
 
 /// Cache size split by category: flashable images vs assets (board/vendor
@@ -71,7 +71,7 @@ pub fn calculate_cache_breakdown() -> Result<CacheBreakdown, String> {
 
 /// Recursively sum the byte size of every file under `dir` (0 if absent).
 /// Unreadable entries are skipped rather than failing the whole walk.
-fn recursive_dir_size(dir: &PathBuf) -> u64 {
+fn recursive_dir_size(dir: &Path) -> u64 {
     if !dir.exists() {
         return 0;
     }
@@ -101,9 +101,9 @@ fn recursive_dir_size(dir: &PathBuf) -> u64 {
 }
 
 /// Sum of the OS image cache and the assets cache. Caller must hold the cache lock.
-fn calculate_cache_size_internal() -> Result<u64, String> {
-    let images_size = recursive_dir_size(&images_dir());
-    let assets_size = recursive_dir_size(&assets_dir());
+fn calculate_cache_size_internal(images: &Path, assets: &Path) -> Result<u64, String> {
+    let images_size = recursive_dir_size(images);
+    let assets_size = recursive_dir_size(assets);
     let total_size = images_size + assets_size;
 
     log_debug!(
@@ -119,14 +119,12 @@ fn calculate_cache_size_internal() -> Result<u64, String> {
 
 /// Cached files sorted oldest-first for LRU eviction.
 /// Caller must hold the cache lock; this function does not.
-fn get_cached_files_by_age_internal() -> Result<Vec<CacheEntry>, String> {
-    let cache_dir = get_images_cache_dir();
-
+fn get_cached_files_by_age_internal(cache_dir: &Path) -> Result<Vec<CacheEntry>, String> {
     if !cache_dir.exists() {
         return Ok(Vec::new());
     }
 
-    let entries = fs::read_dir(&cache_dir).map_err(|e| {
+    let entries = fs::read_dir(cache_dir).map_err(|e| {
         log_error!(MODULE, "Failed to read cache directory: {}", e);
         format!("Failed to read cache directory: {}", e)
     })?;
@@ -158,7 +156,12 @@ pub fn evict_to_size(max_size: u64) -> Result<(), String> {
         .lock()
         .map_err(|e| format!("Failed to acquire cache lock: {}", e))?;
 
-    let current_size = calculate_cache_size_internal()?;
+    evict_to_size_internal(&images_dir(), &assets_dir(), max_size)
+}
+
+/// Counts both dirs toward the limit but deletes only from `images`; caller holds the cache lock.
+fn evict_to_size_internal(images: &Path, assets: &Path, max_size: u64) -> Result<(), String> {
+    let current_size = calculate_cache_size_internal(images, assets)?;
 
     if current_size <= max_size {
         log_debug!(
@@ -177,7 +180,7 @@ pub fn evict_to_size(max_size: u64) -> Result<(), String> {
         max_size
     );
 
-    let files = get_cached_files_by_age_internal()?;
+    let files = get_cached_files_by_age_internal(images)?;
     let mut freed_space: u64 = 0;
     let target_free = current_size - max_size;
 
@@ -203,7 +206,7 @@ pub fn evict_to_size(max_size: u64) -> Result<(), String> {
 
 /// Recursively delete the contents of `dir`, leaving `dir` itself in place.
 /// Returns (removed_files, failed_files).
-fn clear_dir_contents(dir: &PathBuf) -> (u32, u32) {
+fn clear_dir_contents(dir: &Path) -> (u32, u32) {
     let mut removed = 0;
     let mut failed = 0;
 
@@ -252,18 +255,29 @@ pub fn clear_cache() -> Result<(), String> {
         .lock()
         .map_err(|e| format!("Failed to acquire cache lock: {}", e))?;
 
-    let images_dir = get_images_cache_dir();
-    let assets_dir = assets_dir();
+    let result = clear_cache_internal(&images_dir(), &assets_dir());
 
+    // Drop picture_cache metadata so the next request reloads from empty disk.
+    if let Ok(handle) = tokio::runtime::Handle::try_current() {
+        handle.spawn(async {
+            crate::picture_cache::reset_meta().await;
+        });
+    }
+
+    result
+}
+
+/// Caller must hold the cache lock.
+fn clear_cache_internal(images: &Path, assets: &Path) -> Result<(), String> {
     log_info!(
         MODULE,
         "Clearing cache: images={}, assets={}",
-        images_dir.display(),
-        assets_dir.display()
+        images.display(),
+        assets.display()
     );
 
-    let (img_removed, img_failed) = clear_dir_contents(&images_dir);
-    let (asset_removed, asset_failed) = clear_dir_contents(&assets_dir);
+    let (img_removed, img_failed) = clear_dir_contents(images);
+    let (asset_removed, asset_failed) = clear_dir_contents(assets);
 
     let removed_count = img_removed + asset_removed;
     let failed_count = img_failed + asset_failed;
@@ -274,13 +288,6 @@ pub fn clear_cache() -> Result<(), String> {
         removed_count,
         failed_count
     );
-
-    // Drop picture_cache metadata so the next request reloads from empty disk.
-    if let Ok(handle) = tokio::runtime::Handle::try_current() {
-        handle.spawn(async {
-            crate::picture_cache::reset_meta().await;
-        });
-    }
 
     if failed_count > 0 {
         return Err(format!("Failed to remove {} cached files", failed_count));
@@ -479,29 +486,114 @@ pub fn delete_cached_image(filename: &str) -> Result<u64, String> {
 
     log_info!(MODULE, "Deleted cached image: {}", filename);
 
-    calculate_cache_size_internal()
+    calculate_cache_size_internal(&cache_dir, &assets_dir())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
-    #[test]
-    fn test_calculate_cache_size_empty() {
-        let result = calculate_cache_size();
-        assert!(result.is_ok());
+    struct Fixture {
+        _root: tempfile::TempDir,
+        images: PathBuf,
+        assets: PathBuf,
+    }
+
+    fn fixture() -> Fixture {
+        let root = tempfile::tempdir().unwrap();
+        let images = root.path().join("images");
+        let assets = root.path().join("assets");
+        fs::create_dir_all(&images).unwrap();
+        fs::create_dir_all(assets.join("boards")).unwrap();
+        Fixture {
+            _root: root,
+            images,
+            assets,
+        }
+    }
+
+    fn write_aged(path: &Path, len: usize, age_secs: u64) {
+        fs::write(path, vec![0u8; len]).unwrap();
+        let mtime = SystemTime::now() - Duration::from_secs(age_secs);
+        filetime::set_file_mtime(path, FileTime::from_system_time(mtime)).unwrap();
     }
 
     #[test]
-    fn test_get_cached_files_by_age() {
-        let _lock = CACHE_LOCK.lock().unwrap();
-        let result = get_cached_files_by_age_internal();
-        assert!(result.is_ok());
+    fn size_sums_images_and_nested_assets() {
+        let f = fixture();
+        fs::write(f.images.join("a.img.xz"), vec![0u8; 100]).unwrap();
+        fs::write(f.images.join("b.img.xz"), vec![0u8; 50]).unwrap();
+        fs::write(f.assets.join("boards").join("rock-5b.png"), vec![0u8; 7]).unwrap();
+        assert_eq!(calculate_cache_size_internal(&f.images, &f.assets), Ok(157));
     }
 
     #[test]
-    fn test_clear_cache_nonexistent() {
-        let result = clear_cache();
-        assert!(result.is_ok());
+    fn size_of_missing_dirs_is_zero() {
+        let root = tempfile::tempdir().unwrap();
+        let missing = root.path().join("missing");
+        assert_eq!(calculate_cache_size_internal(&missing, &missing), Ok(0));
+    }
+
+    #[test]
+    fn files_by_age_are_oldest_first_and_skip_dirs() {
+        let f = fixture();
+        write_aged(&f.images.join("new.img.xz"), 1, 10);
+        write_aged(&f.images.join("old.img.xz"), 2, 300);
+        write_aged(&f.images.join("mid.img.xz"), 3, 100);
+        fs::create_dir(f.images.join("subdir")).unwrap();
+
+        let names: Vec<_> = get_cached_files_by_age_internal(&f.images)
+            .unwrap()
+            .into_iter()
+            .map(|e| e.path.file_name().unwrap().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(names, ["old.img.xz", "mid.img.xz", "new.img.xz"]);
+    }
+
+    #[test]
+    fn files_by_age_of_missing_dir_is_empty() {
+        let root = tempfile::tempdir().unwrap();
+        let entries = get_cached_files_by_age_internal(&root.path().join("missing")).unwrap();
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn eviction_drops_oldest_images_until_under_the_limit() {
+        let f = fixture();
+        write_aged(&f.images.join("old.img.xz"), 100, 300);
+        write_aged(&f.images.join("mid.img.xz"), 100, 200);
+        write_aged(&f.images.join("new.img.xz"), 100, 10);
+        fs::write(f.assets.join("boards").join("x.png"), vec![0u8; 50]).unwrap();
+
+        evict_to_size_internal(&f.images, &f.assets, 200).unwrap();
+
+        assert!(!f.images.join("old.img.xz").exists());
+        assert!(!f.images.join("mid.img.xz").exists());
+        assert!(f.images.join("new.img.xz").exists());
+        assert!(f.assets.join("boards").join("x.png").exists());
+    }
+
+    #[test]
+    fn clear_removes_files_but_keeps_the_dirs() {
+        let f = fixture();
+        fs::write(f.images.join("a.img.xz"), b"img").unwrap();
+        fs::write(f.images.join("b.img.xz.downloading"), b"part").unwrap();
+        fs::write(f.assets.join("boards").join("rock-5b.png"), b"png").unwrap();
+
+        clear_cache_internal(&f.images, &f.assets).unwrap();
+
+        assert!(f.images.is_dir());
+        assert!(f.assets.is_dir());
+        assert_eq!(fs::read_dir(&f.images).unwrap().count(), 0);
+        assert_eq!(fs::read_dir(&f.assets).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn clear_of_missing_dirs_is_ok() {
+        let root = tempfile::tempdir().unwrap();
+        let missing = root.path().join("missing");
+        assert!(clear_cache_internal(&missing, &missing).is_ok());
+        assert!(!missing.exists());
     }
 }
