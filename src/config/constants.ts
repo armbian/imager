@@ -252,11 +252,15 @@ export const UI = {
   },
 } as const;
 
-/** Autoconfig limits the profile forms check locally */
+/** Autoconfig limits and timings for the profile forms */
 export const AUTOCONFIG = {
   /** WPA passphrase length; a 64-character hex PSK also works, so the check never blocks */
   WIFI_KEY_MIN: 8,
   WIFI_KEY_MAX: 63,
+  KEY_LOOKUP_DEBOUNCE_MS: 600,
+  KEY_LOOKUP_VISIBLE_ROWS: 2,
+  /** Characters kept on each side of a shortened SHA256 fingerprint */
+  FINGERPRINT_EDGE: 4,
 } as const;
 
 /** Vendor/manufacturer constants */

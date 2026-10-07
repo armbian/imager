@@ -7,13 +7,13 @@ import type { ProfileWizardState } from '../../hooks/useProfileWizard';
 
 export function WizardReviewStep({ wizard }: { wizard: ProfileWizardState }) {
   const { t } = useTranslation();
-  const { draft, go } = wizard;
+  const { draft, keyCount, go } = wizard;
 
   return (
     <>
       <dl className="pw-review">
         {WIZARD_ITEMS.map((item) => {
-          const parts = wizardItemSummary(item, draft, t);
+          const parts = wizardItemSummary(item, draft, keyCount, t);
           return (
             <div key={item} className="pw-review__row">
               <dt>{t(`settings.autoconfig.wizard.steps.${item}`)}</dt>

@@ -22,6 +22,7 @@ mod logging;
 mod paste;
 mod picture_cache;
 mod qdl;
+mod ssh_keys;
 mod utils;
 
 use commands::AppState;
@@ -199,6 +200,7 @@ fn main() {
             commands::system::log_debug_from_frontend,
             commands::system::get_armbian_release,
             commands::system::check_connectivity,
+            commands::ssh_keys::lookup_ssh_keys,
             commands::update::get_github_release,
             commands::update::is_app_in_applications,
             paste::upload::upload_logs,

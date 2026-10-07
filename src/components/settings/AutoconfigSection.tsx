@@ -20,6 +20,7 @@ import { ConfirmationDialog } from '../shared/ConfirmationDialog';
 import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { PasswordInput } from '../shared/PasswordInput';
 import { ProfileWizard } from '../autoconfig/ProfileWizard';
+import { SshKeyUrlCheck } from '../autoconfig/SshKeyCheck';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { logWarn } from '../../hooks/useTauri';
 import { useToasts } from '../../hooks/useToasts';
@@ -43,19 +44,22 @@ function countSet(values: unknown[]): number {
 
 type IconType = typeof Network;
 
-function Field({ label, children, error, errorId }: {
+// `status` renders outside the <label> so it does not become part of the field's accessible name.
+function Field({ label, children, error, errorId, status }: {
   label: string;
   children: React.ReactNode;
   error?: string;
   errorId?: string;
+  status?: React.ReactNode;
 }) {
-  return (
+  const field = (
     <label className="ac-field">
       <span className="ac-field__label">{label}</span>
       {children}
       {error && <span id={errorId} className="ac-field__error">{error}</span>}
     </label>
   );
+  return status ? <div className="ac-field-group">{field}{status}</div> : field;
 }
 
 interface TextInputProps {
@@ -482,6 +486,7 @@ export function AutoconfigSection() {
             <Field
               label={t('settings.autoconfig.rootKeyUrl')}
               error={c.rootKeyUrl && !isHttpUrl(c.rootKeyUrl) ? t('settings.autoconfig.keyUrlInvalid') : undefined}
+              status={<SshKeyUrlCheck url={c.rootKeyUrl} />}
             >
               <TextInput
                 icon={Link2}
@@ -509,6 +514,7 @@ export function AutoconfigSection() {
             <Field
               label={t('settings.autoconfig.userKeyUrl')}
               error={c.userKeyUrl && !isHttpUrl(c.userKeyUrl) ? t('settings.autoconfig.keyUrlInvalid') : undefined}
+              status={<SshKeyUrlCheck url={c.userKeyUrl} />}
             >
               <TextInput
                 icon={Link2}

@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { localeForLanguage, staticIpConfigErrors } from '../config/autoconfig';
+import { keyLookupSource, localeForLanguage, staticIpConfigErrors } from '../config/autoconfig';
 import {
   WIZARD_ERROR, WIZARD_STEPS, emptyWizardDraft, isWizardItem, wizardConfig, wizardStaticIp, wizardStepError,
   type WizardDraft, type WizardStep,
@@ -11,6 +11,7 @@ import {
 import type { AutoconfigProfile } from '../types';
 import type { StaticIpErrors } from '../utils';
 import { upsertAutoconfigProfile } from './useSettings';
+import { useSshKeyCheck } from './useSshKeyCheck';
 import { logWarn } from './useTauri';
 import { useToasts } from './useToasts';
 
@@ -36,6 +37,14 @@ export function useProfileWizard(onSaved: (profile: AutoconfigProfile) => void) 
   const ipErrors: StaticIpErrors = fixedIp ? staticIpConfigErrors(wizardStaticIp(draft.network)) : {};
   const stepError = wizardStepError(step, draft);
   const blocked = !!stepError || (step === 'network' && Object.keys(ipErrors).length > 0);
+
+  const access = draft.access;
+  const keyCheck = useSshKeyCheck(
+    keyLookupSource(access.source),
+    access.source === 'link' ? access.keyLink : access.keyUser,
+    access.mode === 'keys' && wizardStepError('access', draft) === null
+  );
+  const keyCount = keyCheck.status === 'found' ? keyCheck.lookup.total : null;
 
   function patch<K extends DraftGroup>(key: K, value: Partial<WizardDraft[K]>) {
     setDraft((d) => ({ ...d, [key]: { ...d[key], ...value } }));
@@ -89,7 +98,7 @@ export function useProfileWizard(onSaved: (profile: AutoconfigProfile) => void) 
 
   return {
     draft, step, stepIndex, more, attempted, saving, blocked, stepError, ipErrors, ipMessages, addressMissing,
-    patch, setName, toggleMore, go, next, skip, create, shownError,
+    keyCheck, keyCount, patch, setName, toggleMore, go, next, skip, create, shownError,
   };
 }
 

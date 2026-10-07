@@ -12,6 +12,7 @@ pub mod progress;
 pub mod qdl_operations;
 pub mod scraping;
 pub mod settings;
+pub mod ssh_keys;
 mod state;
 pub mod system;
 pub mod update;

@@ -144,14 +144,20 @@ export function wizardConfig(d: WizardDraft): AutoconfigConfig {
   return config;
 }
 
-function keysSummary(access: WizardDraft['access'], t: TFn): string {
-  return access.source === 'link'
+function keysSummary(access: WizardDraft['access'], keyCount: number | null, t: TFn): string {
+  if (access.source !== 'link') {
+    const forge = SSH_KEY_FORGES[access.source].label;
+    return keyCount === null
+      ? t('settings.autoconfig.wizard.sum.keysFrom', { forge })
+      : t('settings.autoconfig.wizard.sum.keysFromCount', { forge, n: keyCount });
+  }
+  return keyCount === null
     ? t('settings.autoconfig.wizard.sum.keysLink')
-    : t('settings.autoconfig.wizard.sum.keysFrom', { forge: SSH_KEY_FORGES[access.source].label });
+    : t('settings.autoconfig.wizard.sum.keysLinkCount', { n: keyCount });
 }
 
 /** What a step sets, as the left column and the review list it; empty when it keeps Armbian's defaults. */
-export function wizardItemSummary(item: WizardItem, d: WizardDraft, t: TFn): string[] {
+export function wizardItemSummary(item: WizardItem, d: WizardDraft, keyCount: number | null, t: TFn): string[] {
   if (d.skipped[item]) return [];
   const parts = (values: (string | false)[]) => values.filter((v): v is string => !!v);
   switch (item) {
@@ -171,7 +177,7 @@ export function wizardItemSummary(item: WizardItem, d: WizardDraft, t: TFn): str
         : parts([d.locale.timezone, d.locale.locale.split('.')[0]]);
     case 'access':
       return parts([
-        d.access.mode === 'keys' ? keysSummary(d.access, t) : t('settings.autoconfig.wizard.sum.passwordOnly'),
+        d.access.mode === 'keys' ? keysSummary(d.access, keyCount, t) : t('settings.autoconfig.wizard.sum.passwordOnly'),
         !!d.access.rootPassword && t('settings.autoconfig.wizard.sum.rootSet'),
       ]);
   }

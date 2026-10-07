@@ -860,6 +860,13 @@
   gap: 6px;
 }
 
+.ac-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
 .ac-field__label {
   font-size: 12px;
   font-weight: 500;

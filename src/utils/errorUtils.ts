@@ -70,3 +70,27 @@ export function translateQdlError(error: string, t: TFn): string {
   if (error.includes(QDL_ERROR_TAG)) return error.replace(`${QDL_ERROR_TAG} `, '');
   return error;
 }
+
+/** Key lookup failures the person can act on, worded for a forge account or for a link */
+const SSH_KEYS_ERROR_KEYS = {
+  '[SSH_KEYS_NOT_FOUND]': { forge: 'settings.autoconfig.keys.notFoundForge', link: 'settings.autoconfig.keys.notFoundLink' },
+  '[SSH_KEYS_NONE]': { forge: 'settings.autoconfig.keys.noneForge', link: 'settings.autoconfig.keys.noneLink' },
+  '[SSH_KEYS_TOO_LARGE]': { forge: 'settings.autoconfig.keys.tooLarge', link: 'settings.autoconfig.keys.tooLarge' },
+  '[SSH_KEYS_INVALID_INPUT]': { forge: 'settings.autoconfig.keys.invalidForge', link: 'settings.autoconfig.keys.invalidLink' },
+} as const;
+
+function findSshKeysError(error: string) {
+  return Object.entries(SSH_KEYS_ERROR_KEYS).find(([tag]) => error.includes(tag))?.[1];
+}
+
+/** True when the key source itself looks wrong; anything else ([SSH_KEYS_NETWORK] included) only means it could not be checked */
+export function isSshKeysSourceError(error: string): boolean {
+  return findSshKeysError(error) !== undefined;
+}
+
+/** Map an [SSH_KEYS_*] lookup error to a hint; `forge` is the brand label, or null for a link. Never shown verbatim. */
+export function translateSshKeysError(error: string, t: TFn, forge: string | null): string {
+  const keys = findSshKeysError(error);
+  if (!keys) return t('settings.autoconfig.keys.unreachable');
+  return forge ? t(keys.forge, { forge }) : t(keys.link);
+}
