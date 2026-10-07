@@ -208,9 +208,16 @@ pub async fn flash_image(
     let path = PathBuf::from(&image_path);
     let flash_state = state.flash_state.clone();
 
-    // Reset shared progress before auth/copy/unmount: frontend polls on invoke, so without an early
-    // reset it reads the previous flash's stale state (is_verifying=true, verified=100%) and latches onto it.
-    flash_state.reset();
+    // One flash at a time: a cancelled one still unwinding keeps its cancel, and this one waits for it.
+    // The session also resets progress, so the frontend never latches onto the previous flash's state.
+    let session = match flash_state.begin_session().await {
+        Ok(session) => session,
+        Err(refusal) => {
+            discard_saved_authorization(refusal.generation());
+            log_error!("operations", "Flash not started: {}", refusal.message());
+            return Err(refusal.message());
+        }
+    };
 
     #[cfg(debug_assertions)]
     if let Some(result) = super::dev_scenarios::intercept_flash(
@@ -238,7 +245,8 @@ pub async fn flash_image(
     )
     .await;
     // The writer consumes the authorization; any earlier exit leaves it saved.
-    discard_saved_authorization();
+    discard_saved_authorization(session.generation());
+    drop(session);
 
     match &result {
         Ok(_) => {

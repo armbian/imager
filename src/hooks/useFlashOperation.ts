@@ -353,6 +353,7 @@ export function useFlashOperation({
     intervalRef.current = window.setInterval(async () => {
       try {
         const prog = await getFlashProgress();
+        if (prog.is_waiting) return;
 
         if (prepRef.current !== 'none') {
           if (prog.prep_stage) {
