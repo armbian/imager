@@ -93,6 +93,9 @@ pub mod autoconfig {
     /// Where the preset lands in the rootfs; Armbian's first login sources it
     pub const PRESET_PATH: &str = "/root/.not_logged_in_yet";
 
+    /// Script that consumes the preset on first boot; a custom image without it cannot take a profile
+    pub const FIRSTLOGIN_MARKER: &str = "/usr/lib/armbian/armbian-firstlogin";
+
     /// Cache subdirectory for per-flash copies with the preset injected
     pub const TEMP_DIR: &str = "autoconfig-temp";
 
@@ -202,6 +205,12 @@ pub mod images {
         "LPT\u{b2}",
         "LPT\u{b3}",
     ];
+
+    /// Raw disk image extension; only these custom images are probed for the first-login marker
+    pub const RAW_IMAGE_EXTENSION: &str = ".img";
+
+    /// Custom image names that can take a profile without a board match (lowercase suffixes)
+    pub const AUTOCONFIG_CUSTOM_EXTENSIONS: &[&str] = &[".img", ".img.xz"];
 }
 
 /// Cache management settings

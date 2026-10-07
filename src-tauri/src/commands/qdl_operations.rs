@@ -150,6 +150,14 @@ pub async fn flash_qdl_ufs_image(
     let flash_state = state.flash_state.clone();
     flash_state.reset();
 
+    let image_path = PathBuf::from(&image_path);
+    // Catalog images always carry the script, so this only refuses custom images built without it.
+    let require_marker = autoconfig.is_some();
+    if require_marker {
+        crate::autoconfig::require_firstlogin_marker(&image_path)
+            .map_err(|e| format!("{} {e}", qdl::TAG_QDL_AUTOCONFIG_FAILED))?;
+    }
+
     #[cfg(debug_assertions)]
     if let Some(result) = super::dev_scenarios::intercept_qdl_flash(
         crate::dev_scenarios::flash_sim::QdlKind::Ufs,
@@ -190,15 +198,19 @@ pub async fn flash_qdl_ufs_image(
         log_warn!("qdl_operations", "Provision XML unavailable: {}", reason);
     }
 
-    let image_path = PathBuf::from(&image_path);
     // Inject into a per-flash copy before connecting, so the cached image stays pristine.
     let working_copy = match autoconfig {
         Some(cfg) => Some(
-            crate::autoconfig::prepare_working_copy(&image_path, &autoconfig_temp_dir(), &cfg)
-                .map_err(|e| {
-                    log_error!("qdl_operations", "Autoconfig preparation failed: {}", e);
-                    format!("{} {e}", qdl::TAG_QDL_AUTOCONFIG_FAILED)
-                })?,
+            crate::autoconfig::prepare_working_copy(
+                &image_path,
+                &autoconfig_temp_dir(),
+                &cfg,
+                require_marker,
+            )
+            .map_err(|e| {
+                log_error!("qdl_operations", "Autoconfig preparation failed: {}", e);
+                format!("{} {e}", qdl::TAG_QDL_AUTOCONFIG_FAILED)
+            })?,
         ),
         None => None,
     };

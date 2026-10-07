@@ -10,6 +10,8 @@ type TFn = (key: string, opts?: Record<string, unknown>) => string;
 const WRITE_FAILED_PATTERN = /\[WRITE_FAILED:(\d+)\]/;
 const DEVICE_TOO_SMALL_PATTERN = /\[DEVICE_TOO_SMALL:(\d+):(\d+)\]/;
 const QDL_ERROR_TAG = '[QDL_ERROR]';
+/** Twin of autoconfig::TAG_NOT_ARMBIAN in src-tauri/src/autoconfig.rs */
+const AUTOCONFIG_NOT_ARMBIAN_TAG = '[AUTOCONFIG_NOT_ARMBIAN]';
 
 const DEVICE_ERROR_KEYS = {
   '[DEVICE_INVALID_PATH]': 'error.deviceInvalidPath',
@@ -43,8 +45,10 @@ export function isDeviceRefusalError(error: string): boolean {
   return DEVICE_TOO_SMALL_PATTERN.test(error) || findTaggedKey(error, DEVICE_ERROR_KEYS) !== undefined;
 }
 
-/** Map tagged backend flash errors ([DEVICE_*], [WRITE_FAILED:offset], [QDL_*]) to translated messages */
+/** Map tagged backend flash errors ([AUTOCONFIG_NOT_ARMBIAN], [DEVICE_*], [WRITE_FAILED:offset], [QDL_*]) to translated messages */
 export function translateFlashError(error: string, t: TFn): string {
+  // Block and QDL flashes both refuse a profile this way; the UFS path wraps it in [QDL_AUTOCONFIG_FAILED].
+  if (error.includes(AUTOCONFIG_NOT_ARMBIAN_TAG)) return t('error.autoconfigNotArmbian');
   const tooSmall = error.match(DEVICE_TOO_SMALL_PATTERN);
   if (tooSmall) {
     return t('error.deviceTooSmall', {

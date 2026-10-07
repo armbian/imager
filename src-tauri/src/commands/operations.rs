@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use tauri::{AppHandle, State};
 use tauri_plugin_store::StoreExt;
 
-use crate::autoconfig::{prepare_working_copy, AutoconfigConfig};
+use crate::autoconfig::{prepare_working_copy, require_firstlogin_marker, AutoconfigConfig};
 use crate::config;
 use crate::devices::target::TAG_NOT_FOUND;
 use crate::devices::{get_block_devices, select_flash_target, FlashTarget, TargetRefusal};
@@ -210,6 +210,12 @@ pub async fn flash_image(
     // reset it reads the previous flash's stale state (is_verifying=true, verified=100%) and latches onto it.
     flash_state.reset();
 
+    // Catalog images always carry the script, so this only refuses custom images built without it.
+    let require_marker = autoconfig.is_some();
+    if require_marker {
+        require_firstlogin_marker(&path)?;
+    }
+
     #[cfg(debug_assertions)]
     if let Some(result) = super::dev_scenarios::intercept_flash(
         &app,
@@ -239,6 +245,7 @@ pub async fn flash_image(
             &path,
             &autoconfig_temp_dir(),
             &config,
+            require_marker,
         )?),
         None => None,
     };

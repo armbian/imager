@@ -367,13 +367,18 @@ function AppContent() {
   }
 
   async function applyCustomImage(result: CustomImageInfo) {
-    // One backend call classifies the picked file: matched board, QDL TAR, and UFS build slug.
-    const { board: detectedBoard, is_qdl: isQdl, ufs_board_slug: ufsBoardSlug } =
-      await classifyCustomImage(result.path).catch(() => ({
-        board: null,
-        is_qdl: false,
-        ufs_board_slug: null,
-      }));
+    // One backend call classifies the picked file: matched board, QDL TAR, UFS build slug and profile support.
+    const {
+      board: detectedBoard,
+      is_qdl: isQdl,
+      ufs_board_slug: ufsBoardSlug,
+      supports_autoconfig: supportsAutoconfig,
+    } = await classifyCustomImage(result.path).catch(() => ({
+      board: null,
+      is_qdl: false,
+      ufs_board_slug: null,
+      supports_autoconfig: false,
+    }));
     if (detectedBoard) {
       logInfo('app', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
     }
@@ -392,6 +397,7 @@ function AppContent() {
       path: result.path,
       format,
       storage: ufsBoardSlug ? IMAGE_STORAGE.UFS : null,
+      supportsAutoconfig,
     });
 
     resetSelectionsFrom('manufacturer');

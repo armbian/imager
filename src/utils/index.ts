@@ -253,13 +253,14 @@ export function getErrorMessage(error: unknown, fallback: string = 'An error occ
 type LocalImageVariant = (typeof IMAGE_VARIANT)[keyof typeof IMAGE_VARIANT];
 
 /** Synthetic ImageInfo for a local (cached or custom) image file; `storage` is set only when given. */
-export function buildLocalImage({ variant, name, size, path, format, storage }: {
+export function buildLocalImage({ variant, name, size, path, format, storage, supportsAutoconfig }: {
   variant: LocalImageVariant;
   name: string;
   size: number;
   path: string;
   format: string;
   storage?: string | null;
+  supportsAutoconfig?: boolean;
 }): ImageInfo {
   return {
     release: LOCAL_SOURCE_LABEL[variant],
@@ -280,6 +281,7 @@ export function buildLocalImage({ variant, name, size, path, format, storage }: 
     display_variants: [],
     is_custom: true,
     custom_path: path,
+    ...(supportsAutoconfig !== undefined && { supports_autoconfig: supportsAutoconfig }),
   };
 }
 

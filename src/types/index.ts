@@ -63,6 +63,8 @@ export interface ImageInfo {
   // Custom image fields
   is_custom?: boolean;
   custom_path?: string;
+  /** Custom files only: classify_custom_image found an Armbian first-boot setup a profile can use */
+  supports_autoconfig?: boolean;
 }
 
 /** API image formats the app writes; mirrors the allowlist in src-tauri/src/images/filters.rs */
@@ -209,12 +211,14 @@ export interface CustomImageInfo {
   size: number;
 }
 
-/** One-shot classification of a picked custom image (board + QDL TAR + UFS build slug) */
+/** One-shot classification of a picked custom image (board + QDL TAR + UFS build slug + profiles) */
 export interface CustomImageClassification {
   board: BoardInfo | null;
   is_qdl: boolean;
   /** Board slug when the file is a UFS build of a UFS-capable QDL board, else null */
   ufs_board_slug: string | null;
+  /** Matched board, Armbian file name (.img/.img.xz), or a raw .img with the first-login script */
+  supports_autoconfig: boolean;
 }
 
 /** Cached image metadata from the backend cache directory */

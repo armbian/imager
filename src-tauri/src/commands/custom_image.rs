@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Component, Path, PathBuf};
 use tauri::State;
 
+use crate::config;
 use crate::decompress::{decompress_local_file, needs_decompression};
 use crate::images::{fetch_boards, map_board, BoardInfo};
 use crate::qdl::extract::open_tar_reader;
@@ -221,13 +222,40 @@ fn is_qdl_image_path(image_path: &str) -> bool {
     false
 }
 
-/// One-shot classification of a picked image: matched board, whether it's a QDL TAR, and the
-/// slug for a UFS build. Lets the frontend read the file once instead of three round-trips.
+/// Everything the frontend needs about a picked image, from a single read of the file.
 #[derive(Debug, Serialize)]
 pub struct CustomImageClassification {
     pub board: Option<BoardInfo>,
     pub is_qdl: bool,
     pub ufs_board_slug: Option<String>,
+    pub supports_autoconfig: bool,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum AutoconfigRule {
+    Allowed,
+    Refused,
+    ProbeMarker,
+}
+
+// Without a board match, only a named Armbian build in an injectable format or a raw `.img` (probed) qualifies.
+fn autoconfig_rule(filename: &str, is_qdl: bool, board_matched: bool) -> AutoconfigRule {
+    if board_matched {
+        return AutoconfigRule::Allowed;
+    }
+    let lower = filename.to_lowercase();
+    let injectable = config::images::AUTOCONFIG_CUSTOM_EXTENSIONS
+        .iter()
+        .any(|ext| lower.ends_with(ext));
+    if is_qdl || !injectable {
+        AutoconfigRule::Refused
+    } else if parse_armbian_filename(filename).is_some() {
+        AutoconfigRule::Allowed
+    } else if lower.ends_with(config::images::RAW_IMAGE_EXTENSION) {
+        AutoconfigRule::ProbeMarker
+    } else {
+        AutoconfigRule::Refused
+    }
 }
 
 #[tauri::command]
@@ -245,10 +273,32 @@ pub async fn classify_custom_image(
         .await
         .unwrap_or(None);
 
+    let is_qdl = is_qdl_image_path(&path);
+    let supports_autoconfig = match autoconfig_rule(filename, is_qdl, board.is_some()) {
+        AutoconfigRule::Allowed => true,
+        AutoconfigRule::Refused => false,
+        AutoconfigRule::ProbeMarker => {
+            let probe_path = PathBuf::from(&path);
+            // A failed probe hides the picker; it never fails the classification.
+            tokio::task::spawn_blocking(move || {
+                crate::autoconfig::require_firstlogin_marker(&probe_path).is_ok()
+            })
+            .await
+            .unwrap_or(false)
+        }
+    };
+    log_info!(
+        "custom_image",
+        "Autoconfig profiles for {}: {}",
+        filename,
+        supports_autoconfig
+    );
+
     Ok(CustomImageClassification {
         board,
-        is_qdl: is_qdl_image_path(&path),
+        is_qdl,
         ufs_board_slug: crate::qdl::boards::ufs_board_slug_for_filename(filename),
+        supports_autoconfig,
     })
 }
 
@@ -390,7 +440,10 @@ async fn match_board_from_filename(
 
 #[cfg(test)]
 mod tests {
-    use super::{check_tar_for_qdl, remove_decompressed_image, OUTSIDE_DECOMPRESS_DIR};
+    use super::{
+        autoconfig_rule, check_tar_for_qdl, remove_decompressed_image, AutoconfigRule,
+        OUTSIDE_DECOMPRESS_DIR,
+    };
 
     fn decompress_fixture() -> (tempfile::TempDir, std::path::PathBuf, std::path::PathBuf) {
         let root = tempfile::tempdir().unwrap();
@@ -473,6 +526,37 @@ mod tests {
         assert!(!image.exists());
         assert_eq!(remove_decompressed_image(&image, &dir), Ok(false));
         assert!(outside.exists());
+    }
+
+    #[test]
+    fn custom_profiles_follow_name_format_and_board() {
+        use AutoconfigRule::*;
+        let armbian = "Armbian-unofficial_26.05.0-trunk_Nanopi-r76s_trixie_edge_7.0.10_minimal";
+        assert_eq!(
+            autoconfig_rule(&format!("{armbian}.img"), false, false),
+            Allowed
+        );
+        assert_eq!(
+            autoconfig_rule(&format!("{armbian}.img.xz"), false, false),
+            Allowed
+        );
+        assert_eq!(
+            autoconfig_rule(&format!("{armbian}.img.gz"), false, false),
+            Refused
+        );
+        assert_eq!(
+            autoconfig_rule(&format!("{armbian}.img.qcow2"), false, false),
+            Refused
+        );
+        assert_eq!(autoconfig_rule("my-build.IMG", false, false), ProbeMarker);
+        assert_eq!(autoconfig_rule("my-build.img.xz", false, false), Refused);
+        assert_eq!(autoconfig_rule("rootfs.tar.xz", false, false), Refused);
+        assert_eq!(
+            autoconfig_rule(&format!("{armbian}.tar.xz"), true, false),
+            Refused
+        );
+        assert_eq!(autoconfig_rule("anything.tar.xz", true, true), Allowed);
+        assert_eq!(autoconfig_rule("renamed.img.gz", false, true), Allowed);
     }
 
     /// Build an in-memory uncompressed tar from `(path, contents)` entries.
