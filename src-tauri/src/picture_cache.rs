@@ -14,6 +14,7 @@ use tokio::sync::Mutex;
 use base64::Engine;
 
 use crate::config;
+use crate::utils::validate_file_name;
 use crate::{log_debug, log_info, log_warn};
 
 const MODULE: &str = "picture_cache";
@@ -123,17 +124,23 @@ async fn update_entry(key: &str, entry: AssetEntry) {
     persist_meta_to_disk(meta);
 }
 
+// `kind` and `key` come from the frontend or meta.json, so both must stay single plain names.
+fn asset_path(assets_dir: &Path, kind: &str, key: &str) -> Option<PathBuf> {
+    let file_name = format!("{key}.png");
+    match validate_file_name(kind).and_then(|_| validate_file_name(&file_name)) {
+        Ok(_) => Some(assets_dir.join(kind).join(file_name)),
+        Err(e) => {
+            log_warn!(MODULE, "Rejected invalid asset key {}/{}: {}", kind, key, e);
+            None
+        }
+    }
+}
+
 /// Get a cached asset, downloading on miss; serves fresh local immediately, refreshes stale in background.
 /// `kind` is the category dir ("boards"/"vendors"), `key` the slug/id. `None` on failure.
 pub async fn get_asset(kind: &str, key: &str, remote_url: &str) -> Option<PathBuf> {
-    if key.contains('/') || key.contains('\\') || key.contains("..") {
-        log_warn!(MODULE, "Rejected invalid asset key: {}", key);
-        return None;
-    }
-
-    let assets_dir = get_assets_dir();
-    let asset_dir = assets_dir.join(kind);
-    let file_path = asset_dir.join(format!("{}.png", key));
+    let file_path = asset_path(&get_assets_dir(), kind, key)?;
+    let asset_dir = file_path.parent()?.to_path_buf();
     let meta_key = format!("{}/{}", kind, key);
 
     if file_path.exists() {
@@ -499,7 +506,9 @@ pub async fn refresh_stale_assets() {
             }
             let kind = parts[0];
             let asset_key = parts[1];
-            let file_path = assets_dir.join(kind).join(format!("{}.png", asset_key));
+            let Some(file_path) = asset_path(&assets_dir, kind, asset_key) else {
+                return;
+            };
 
             if !file_path.exists() {
                 return;
@@ -542,4 +551,35 @@ pub async fn refresh_stale_assets() {
         "Background refresh complete: {} assets processed",
         processed
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn asset_path_keeps_real_slugs_inside_their_folder() {
+        let base = Path::new("assets");
+        for slug in [
+            "radxa-dragon-q6a",
+            "arduino-uno-q",
+            "rock-5b",
+            "orangepi5-plus",
+        ] {
+            assert_eq!(
+                asset_path(base, "boards", slug),
+                Some(base.join("boards").join(format!("{slug}.png")))
+            );
+        }
+    }
+
+    #[test]
+    fn asset_path_refuses_keys_that_escape_or_name_a_device() {
+        let base = Path::new("assets");
+        for key in ["C:x", "CON", "nul", "../x", "a/b", "..\\x", "x\0"] {
+            assert_eq!(asset_path(base, "boards", key), None, "{key:?}");
+        }
+        assert_eq!(asset_path(base, "..", "rock-5b"), None);
+        assert_eq!(asset_path(base, "C:", "rock-5b"), None);
+    }
 }
