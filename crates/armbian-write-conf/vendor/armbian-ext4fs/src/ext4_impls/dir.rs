@@ -48,11 +48,13 @@ impl Ext4 {
                     Block::load(&self.block_device, fblock as usize * BLOCK_SIZE);
 
                 // find entry in block
-                let r = self.dir_find_in_block(&ext4block, name, result);
-
-                if r.is_ok() {
-                    result.pblock_id = fblock as usize;
-                    return Ok(EOK);
+                match self.dir_find_in_block(&ext4block, name, result) {
+                    Ok(_) => {
+                        result.pblock_id = fblock as usize;
+                        return Ok(EOK);
+                    }
+                    Err(e) if e.error() != Errno::ENOENT => return Err(e),
+                    Err(_) => {}
                 }
             } else {
                 return_errno_with_message!(Errno::ENOENT, "dir search fail")
@@ -83,8 +85,13 @@ impl Ext4 {
 
         // start from the first entry
         while offset < BLOCK_SIZE - core::mem::size_of::<Ext4DirEntryTail>() {
-            let de: Ext4DirEntry = block.read_offset_as(offset);
-            if !de.unused() && de.compare_name(name) {
+            let (inode, rec_len, name_len) = dir_entry_header(&block.data, offset)?;
+            let name_start = offset + size_of::<Ext4FakeDirEntry>();
+            if inode != 0 && block.data[name_start..name_start + name_len] == *name.as_bytes() {
+                let mut raw = [0u8; size_of::<Ext4DirEntry>()];
+                let n = min(raw.len(), BLOCK_SIZE - offset);
+                raw[..n].copy_from_slice(&block.data[offset..offset + n]);
+                let de: Ext4DirEntry = unsafe { core::ptr::read_unaligned(raw.as_ptr() as *const _) };
                 result.dentry = de;
                 result.offset = offset;
                 result.prev_offset = prev_de_offset;
@@ -92,8 +99,7 @@ impl Ext4 {
             }
 
             prev_de_offset = offset;
-            // go to next entry
-            offset += de.entry_len() as usize;
+            offset += rec_len;
         }
         return_errno_with_message!(Errno::ENOENT, "dir find in block failed");
     }
@@ -152,8 +158,10 @@ impl Ext4 {
         entries
     }
 
-    pub fn dir_set_csum(&self, dst_blk: &mut Block, ino_gen: u32) {
-        let parent_de: Ext4DirEntry = dst_blk.read_offset_as(0);
+    pub fn dir_set_csum(&self, dst_blk: &mut Block, dir_ino: u32, ino_gen: u32) {
+        // The checksum covers the directory's own inode; only block 0 starts with its "." entry.
+        let mut parent_de = Ext4DirEntry::default();
+        parent_de.inode = dir_ino;
 
         let tail_offset = BLOCK_SIZE - size_of::<Ext4DirEntryTail>();
         let mut tail: Ext4DirEntryTail = *dst_blk.read_offset_as_mut(tail_offset);
@@ -196,9 +204,13 @@ impl Ext4 {
 
             let result = self.try_insert_to_existing_block(&mut ext4block, name, child.inode_num, de_type);
 
-            if result.is_ok() {
+            if let Err(e) = result {
+                if e.error() != Errno::ENOSPC {
+                    return Err(e);
+                }
+            } else {
                 // set checksum
-                self.dir_set_csum(&mut ext4block, parent.inode.generation());
+                self.dir_set_csum(&mut ext4block, parent.inode_num, parent.inode.generation());
                 ext4block.sync_blk_to_disk(&self.block_device);
 
                 return Ok(EOK);
@@ -220,7 +232,7 @@ impl Ext4 {
         self.insert_to_new_block(&mut new_ext4block, child.inode_num, name, de_type);
 
         // set checksum
-        self.dir_set_csum(&mut new_ext4block, parent.inode.generation());
+        self.dir_set_csum(&mut new_ext4block, parent.inode_num, parent.inode.generation());
         new_ext4block.sync_blk_to_disk(&self.block_device);
 
         Ok(EOK)
@@ -253,47 +265,25 @@ impl Ext4 {
 
         let mut offset = 0;
 
-        // Start from the first entry
         while offset < BLOCK_SIZE - size_of::<Ext4DirEntryTail>() {
-            let mut de = Ext4DirEntry::try_from(&block.data[offset..]).unwrap();
+            let (inode, rec_len, name_len) = dir_entry_header(&block.data, offset)?;
+            let used = (size_of::<Ext4FakeDirEntry>() + name_len + 3) & !3;
 
-            if de.unused() {
-                continue;
-            }
-
-            let inode = de.inode;
-            let rec_len = de.entry_len;
-
-            let used_len = de.name_len as usize;
-            let mut sz = core::mem::size_of::<Ext4FakeDirEntry>() + used_len;
-            if used_len % 4 != 0 {
-                sz += 4 - used_len % 4;
-            }
-
-            let free_space = rec_len as usize - sz;
-
-            // If there is enough free space
-            if free_space >= required_len {
-                // Create new directory entry
+            // A deleted entry (inode 0) is skipped, not reused.
+            if inode != 0 && rec_len - used >= required_len {
+                let free_space = rec_len - used;
                 let mut new_entry = Ext4DirEntry::default();
-
-                // Update existing entry length and copy both entries back to block data
-                de.entry_len = sz as u16;
-
                 new_entry.write_entry(free_space as u16, child_inode, name, de_type);
 
-                // update parent_de and new_de to blk_data
-                de.copy_to_slice(&mut block.data, offset);
-                new_entry.copy_to_slice(&mut block.data, offset + sz);
+                block.data[offset + 4..offset + 6].copy_from_slice(&(used as u16).to_le_bytes());
+                new_entry.copy_to_slice(&mut block.data, offset + used);
 
-                // Sync to disk
                 block.sync_blk_to_disk(&self.block_device);
 
                 return Ok(EOK);
             }
 
-            // Move to the next entry
-            offset += de.entry_len() as usize;
+            offset += rec_len;
         }
 
         return_errno_with_message!(Errno::ENOSPC, "No space in block for new entry");
@@ -363,7 +353,7 @@ impl Ext4 {
             tmp_de_mut.entry_len = de_len + del_len;
         }
 
-        self.dir_set_csum(&mut ext4block, parent.inode.generation());
+        self.dir_set_csum(&mut ext4block, parent.inode_num, parent.inode.generation());
         ext4block.sync_blk_to_disk(&self.block_device);
 
         Ok(EOK)
@@ -454,4 +444,23 @@ pub fn copy_dir_entry_to_array(header: &Ext4DirEntry, array: &mut [u8], offset: 
         let count = core::mem::size_of::<Ext4DirEntry>() / core::mem::size_of::<u8>();
         core::ptr::copy_nonoverlapping(de_ptr, array_ptr.add(offset), count);
     }
+}
+
+/// (inode, rec_len, name_len) of the entry at `offset`, refusing a record that loops or leaves the block.
+fn dir_entry_header(data: &[u8], offset: usize) -> Result<(u32, usize, usize)> {
+    let header_len = size_of::<Ext4FakeDirEntry>();
+    if offset + header_len > BLOCK_SIZE {
+        return_errno_with_message!(Errno::EIO, "Corrupt directory entry");
+    }
+    let inode = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap());
+    let rec_len = u16::from_le_bytes(data[offset + 4..offset + 6].try_into().unwrap()) as usize;
+    let name_len = data[offset + 6] as usize;
+    if rec_len < header_len
+        || rec_len % 4 != 0
+        || offset + rec_len > BLOCK_SIZE
+        || header_len + name_len > rec_len
+    {
+        return_errno_with_message!(Errno::EIO, "Corrupt directory entry");
+    }
+    Ok((inode, rec_len, name_len))
 }

@@ -159,7 +159,8 @@ impl Ext4 {
             bgid = self.get_bgid_of_block(goal);
             idx_in_bg = self.addr_to_idx_bg(goal);
         } else {
-            bgid = 1;
+            // Group 1 does not exist on a single-group filesystem.
+            bgid = 1 % super_block.block_group_count();
             idx_in_bg = 0;
         }
 

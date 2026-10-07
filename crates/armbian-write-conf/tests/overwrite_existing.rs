@@ -2,7 +2,6 @@ mod common;
 
 use std::path::Path;
 
-use armbian_write_conf::write_file_into_bare_ext4_image;
 use tempfile::tempdir;
 
 const IMAGE_SIZE: u64 = 16 * 1024 * 1024;
@@ -14,7 +13,7 @@ const LARGE: [u8; 9000] = [b'x'; 9000];
 /// Writes every payload in turn to DEST and checks each result with validate, a read-back and e2fsck.
 fn write_sequence(image: &Path, payloads: &[&[u8]]) {
     for payload in payloads {
-        let report = write_file_into_bare_ext4_image(image, DEST, payload).unwrap();
+        let report = common::bounded_write(image, DEST, payload).unwrap();
         assert_eq!(report.bytes_written, payload.len());
         assert!(report.validated);
         assert_eq!(common::read_back(image, 0, DEST), *payload);
@@ -92,7 +91,7 @@ fn overwrite_of_fragmented_file_frees_its_extent_tree() {
     }
     common::assert_e2fsck_clean(&image, 0);
 
-    let report = write_file_into_bare_ext4_image(&image, PRESET, &SMALL).unwrap();
+    let report = common::bounded_write(&image, PRESET, &SMALL).unwrap();
 
     assert!(report.validated);
     common::assert_e2fsck_clean(&image, 0);
@@ -109,7 +108,7 @@ fn directory_at_destination_is_refused_untouched() {
     }
     let before = std::fs::read(&image).unwrap();
 
-    assert!(write_file_into_bare_ext4_image(&image, DEST, &SMALL).is_err());
+    assert!(common::bounded_write(&image, DEST, &SMALL).is_err());
 
     assert!(std::fs::read(&image).unwrap() == before);
 }
