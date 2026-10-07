@@ -5,16 +5,10 @@ use crate::utils::bitmap::*;
 
 impl Ext4 {
     pub fn ialloc_alloc_inode(&self, is_dir: bool) -> Result<u32> {
-        let mut bgid = 0;
         let bg_count = self.super_block.block_group_count();
         let mut super_block = self.load_super_block();
 
-        while bgid <= bg_count {
-            if bgid == bg_count {
-                bgid = 0;
-                continue;
-            }
-
+        for bgid in 0..bg_count {
             let mut bg =
                 Ext4BlockGroup::load_new(&self.block_device, &super_block, bgid as usize);
 
@@ -33,7 +27,9 @@ impl Ext4 {
 
                 let mut idx_in_bg = 0;
 
-                ext4_bmap_bit_find_clr(bitmap_data, 0, inodes_in_bg, &mut idx_in_bg);
+                if !ext4_bmap_bit_find_clr(bitmap_data, 0, inodes_in_bg, &mut idx_in_bg) {
+                    return_errno_with_message!(Errno::EIO, "Inode bitmap is full but the group reports free inodes");
+                }
                 ext4_bmap_bit_set(bitmap_data, idx_in_bg);
 
                 // update bitmap in disk
@@ -72,8 +68,6 @@ impl Ext4 {
 
                 return Ok(inode_num);
             }
-
-            bgid += 1;
         }
 
         return_errno_with_message!(Errno::ENOSPC, "alloc inode fail");

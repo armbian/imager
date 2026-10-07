@@ -36,5 +36,8 @@ Modifications made to the upstream source
    (htree) directory, and `generic_open` returns the lookup's own error
    instead of reporting every failure as "No such file or directory".
 
+7. `ialloc_alloc_inode` scans each group once and returns ENOSPC instead of
+   wrapping forever, and refuses a group whose bitmap has no clear bit.
+
 The upstream binary (src/main.rs) and its [[bin]] target were removed; only
 the library is retained.
