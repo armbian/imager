@@ -4,7 +4,7 @@ use crate::utils::*;
 use super::*;
 
 bitflags! {
-    #[derive(PartialEq, Eq)]
+    #[derive(Clone, Copy, PartialEq, Eq)]
     pub struct DirEntryType: u8 {
         const EXT4_DE_UNKNOWN = 0;
         const EXT4_DE_REG_FILE = 1;
@@ -14,6 +14,21 @@ bitflags! {
         const EXT4_DE_FIFO = 5;
         const EXT4_DE_SOCK = 6;
         const EXT4_DE_SYMLINK = 7;
+    }
+}
+
+impl DirEntryType {
+    pub fn from_inode(inode: &Ext4Inode) -> Self {
+        match inode.file_type() {
+            InodeFileType::S_IFREG => DirEntryType::EXT4_DE_REG_FILE,
+            InodeFileType::S_IFDIR => DirEntryType::EXT4_DE_DIR,
+            InodeFileType::S_IFCHR => DirEntryType::EXT4_DE_CHRDEV,
+            InodeFileType::S_IFBLK => DirEntryType::EXT4_DE_BLKDEV,
+            InodeFileType::S_IFIFO => DirEntryType::EXT4_DE_FIFO,
+            InodeFileType::S_IFSOCK => DirEntryType::EXT4_DE_SOCK,
+            InodeFileType::S_IFLNK => DirEntryType::EXT4_DE_SYMLINK,
+            _ => DirEntryType::EXT4_DE_UNKNOWN,
+        }
     }
 }
 
