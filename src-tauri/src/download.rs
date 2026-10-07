@@ -15,7 +15,7 @@ use tokio::sync::Mutex;
 
 use crate::config;
 use crate::decompress::decompress_with_rust_xz;
-use crate::utils::{bytes_to_mb, validate_cache_path, ProgressTracker};
+use crate::utils::{bytes_to_mb, validate_cache_path, validate_file_name, ProgressTracker};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "download";
@@ -62,17 +62,26 @@ impl Default for DownloadState {
     }
 }
 
+fn cache_file_name(name: &str) -> Result<&str, String> {
+    validate_file_name(name).inspect_err(|e| log_warn!(MODULE, "{}", e))
+}
+
+// Re-checked after stripping: "...xz" is a valid name whose stem is "..".
+fn decompressed_name(filename: &str) -> Result<&str, String> {
+    cache_file_name(filename.trim_end_matches(".xz"))
+}
+
 /// Extract filename from URL
 fn extract_filename(url: &str) -> Result<&str, String> {
     log_debug!(MODULE, "Extracting filename from URL: {}", url);
-    let url_path = url.split('?').next().unwrap_or(url);
+    let url_path = url.split(['?', '#']).next().unwrap_or(url);
     let filename = url_path
         .split('/')
         .next_back()
         .filter(|s| !s.is_empty())
         .ok_or_else(|| "Invalid URL: no filename".to_string())?;
     log_debug!(MODULE, "Extracted filename: {}", filename);
-    Ok(filename)
+    cache_file_name(filename)
 }
 
 /// Fetch the expected SHA256. Errors are prefixed [SHA_UNAVAILABLE] to
@@ -215,7 +224,7 @@ pub async fn download_image(
 
     let filename = extract_filename(url)?;
 
-    let output_filename = filename.trim_end_matches(".xz");
+    let output_filename = decompressed_name(filename)?;
     let output_path = output_dir.join(output_filename);
 
     log_info!(MODULE, "Download requested: {}", url);
@@ -420,8 +429,9 @@ pub async fn continue_without_sha(
         .ok_or("Invalid temp path")?;
 
     // temp_path is "<name>.downloading"; strip that, then the .xz if present.
-    let original_filename = filename.trim_end_matches(config::images::DOWNLOAD_SUFFIX);
-    let output_filename = original_filename.trim_end_matches(".xz");
+    let original_filename =
+        cache_file_name(filename.trim_end_matches(config::images::DOWNLOAD_SUFFIX))?;
+    let output_filename = decompressed_name(original_filename)?;
     let output_path = output_dir.join(output_filename);
 
     log_info!(MODULE, "Output path: {}", output_path.display());
@@ -464,5 +474,59 @@ pub async fn cleanup_pending_download(state: Arc<DownloadState>) {
             temp_path.display()
         );
         let _ = std::fs::remove_file(&temp_path);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::TAG_INVALID_FILE_NAME;
+
+    fn refused(r: Result<&str, String>) -> bool {
+        r.is_err_and(|e| e.starts_with(TAG_INVALID_FILE_NAME))
+    }
+
+    #[test]
+    fn filename_is_the_last_url_segment() {
+        assert_eq!(
+            extract_filename("https://dl.armbian.com/a/b/x.img.xz?mirror=1"),
+            Ok("x.img.xz")
+        );
+        assert_eq!(
+            extract_filename("https://dl.armbian.com/a/x%5C..img.xz"),
+            Ok("x%5C..img.xz")
+        );
+        assert_eq!(
+            extract_filename("https://dl.armbian.com/a/x.img.xz#..\\y"),
+            Ok("x.img.xz")
+        );
+        assert_eq!(
+            extract_filename("https://dl.armbian.com/a/x.img.xz#frag?q=1"),
+            Ok("x.img.xz")
+        );
+        assert!(extract_filename("https://dl.armbian.com/a/").is_err());
+    }
+
+    #[test]
+    fn filename_with_windows_separators_is_refused() {
+        assert!(refused(extract_filename(
+            "https://dl.armbian.com/a/..\\..\\x.img.xz"
+        )));
+        assert!(refused(extract_filename(
+            "https://dl.armbian.com/a/C:\\x.img.xz"
+        )));
+        assert!(refused(extract_filename("https://dl.armbian.com/a/..")));
+        assert!(refused(extract_filename(
+            "https://dl.armbian.com/a/x\0.img"
+        )));
+    }
+
+    #[test]
+    fn decompressed_name_cannot_collapse_to_a_dot_entry() {
+        assert_eq!(decompressed_name("x.img.xz"), Ok("x.img"));
+        assert_eq!(decompressed_name("x.img"), Ok("x.img"));
+        assert!(refused(decompressed_name("...xz")));
+        assert!(refused(decompressed_name("..xz")));
+        assert!(refused(decompressed_name(".xz")));
     }
 }
