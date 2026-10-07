@@ -456,7 +456,7 @@ fn verify_with_sector_alignment(
         }
 
         // Round the device read up to a whole sector (no-buffering requirement).
-        let device_read_size = ((image_read + sector_size - 1) / sector_size) * sector_size;
+        let device_read_size = image_read.div_ceil(sector_size) * sector_size;
 
         let mut total_read = 0;
         while total_read < device_read_size {
@@ -575,7 +575,7 @@ fn get_device_sector_size(device: &std::fs::File) -> Result<usize, String> {
 
         let sector_size = geometry.bytes_per_sector as usize;
 
-        if sector_size < 512 || sector_size > 8192 || (sector_size & (sector_size - 1)) != 0 {
+        if !(512..=8192).contains(&sector_size) || (sector_size & (sector_size - 1)) != 0 {
             log_warn!(
                 MODULE,
                 "Invalid sector size {}, using default 512",
