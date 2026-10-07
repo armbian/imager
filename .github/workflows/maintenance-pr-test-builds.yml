@@ -1,0 +1,301 @@
+name: "Maintenance: PR test builds"
+
+on:
+  workflow_run:
+    workflows: ["Maintenance: PR check"]
+    types: [requested, completed]
+
+permissions:
+  pull-requests: write
+  issues: write
+  actions: read
+
+concurrency:
+  group: pr-test-builds-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  handle-pr-builds:
+    name: Post PR test build artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event.workflow_run.event == 'pull_request'
+    steps:
+      - name: Map PR and post comment
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const action = context.payload.action;
+            const repoOwner = context.repo.owner;
+            const repoName = context.repo.repo;
+
+            // Single verify function for all PR candidates
+            async function verify(prNumber) {
+              try {
+                const { data: pr } = await github.rest.pulls.get({
+                  owner: repoOwner,
+                  repo: repoName,
+                  pull_number: prNumber
+                });
+
+                return pr.state === 'open' &&
+                       pr.base.repo.full_name === `${repoOwner}/${repoName}` &&
+                       pr.head.sha === run.head_sha &&
+                       pr.head.repo?.full_name === run.head_repository?.full_name;
+              } catch (e) {
+                return false;
+              }
+            }
+
+            // =====================================================
+            // Step 1: Map workflow_run to its PR
+            // =====================================================
+            let prNumber = null;
+
+            // Try direct mapping from pull_requests array
+            if (run.pull_requests && run.pull_requests.length > 0) {
+              const candidate = run.pull_requests[0].number;
+              if (await verify(candidate)) {
+                prNumber = candidate;
+                core.info(`Mapped to PR #${prNumber} via pull_requests array`);
+              }
+            }
+
+            // Fallback: search by head repo and branch
+            if (!prNumber) {
+              const headRepoFullName = run.head_repository?.full_name;
+              const headBranch = run.head_branch;
+
+              if (headRepoFullName && headBranch) {
+                try {
+                  const { data: pulls } = await github.rest.pulls.list({
+                    owner: repoOwner,
+                    repo: repoName,
+                    state: 'open',
+                    head: `${headRepoFullName.split('/')[0]}:${headBranch}`
+                  });
+
+                  for (const pr of pulls) {
+                    if (await verify(pr.number)) {
+                      prNumber = pr.number;
+                      core.info(`Found PR #${prNumber} via head repo/branch search`);
+                      break;
+                    }
+                  }
+                } catch (e) {
+                  core.debug(`Head search failed: ${e.message}`);
+                }
+              }
+            }
+
+            // Last fallback: search issues by commit sha
+            if (!prNumber) {
+              try {
+                const query = `${run.head_sha} repo:${repoOwner}/${repoName} is:pr is:open`;
+                const { data: issues } = await github.rest.search.issuesAndPullRequests({
+                  q: query,
+                  per_page: 10
+                });
+
+                for (const issue of issues.items) {
+                  if (await verify(issue.number)) {
+                    prNumber = issue.number;
+                    core.info(`Found PR #${prNumber} via sha search`);
+                    break;
+                  }
+                }
+              } catch (e) {
+                core.debug(`Sha search failed: ${e.message}`);
+              }
+            }
+
+            if (!prNumber) {
+              core.info('No matching PR found; skipping');
+              return;
+            }
+
+            // =====================================================
+            // Step 2: Find existing comment by marker or old heading
+            // =====================================================
+            const marker = '<!-- imager-test-builds -->';
+            const successHeading = '## 🧪 Test Builds';
+            const failureHeading = '## ❌ Test Builds';
+            let existingComment = null;
+
+            // Paginate through comments (returns flat array, not async iterable)
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: repoOwner,
+              repo: repoName,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            existingComment = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              ((c.body || '').includes(marker) || (c.body || '').includes(successHeading) || (c.body || '').includes(failureHeading))
+            );
+
+            // =====================================================
+            // Step 3: Post placeholder (on requested action)
+            // =====================================================
+            if (action === 'requested') {
+              const placeholderBody = [
+                marker,
+                '## ⏳ Test Builds',
+                '',
+                'Test builds will appear here when the build finishes.',
+                '',
+                '| Platform | Status |',
+                '|----------|--------|',
+                '| Linux x64 | ⏳ Building |',
+                '| Windows x64 | ⏳ Building |',
+                '| macOS ARM64 | ⏳ Building |'
+              ].join('\n');
+
+              const commentParams = {
+                owner: repoOwner,
+                repo: repoName,
+                body: placeholderBody
+              };
+
+              if (existingComment) {
+                await github.rest.issues.updateComment({
+                  ...commentParams,
+                  comment_id: existingComment.id
+                });
+                core.info(`Updated placeholder comment ${existingComment.id}`);
+              } else {
+                await github.rest.issues.createComment({
+                  ...commentParams,
+                  issue_number: prNumber
+                });
+                core.info('Created placeholder comment');
+              }
+              return;
+            }
+
+            // =====================================================
+            // Step 4: Post artifact links (on completed action)
+            // =====================================================
+            const shortSha = run.head_sha.slice(0, 7);
+            const version = `0.0.0-pr.${prNumber}`;
+            const runId = run.id;
+            const workflowSuccess = run.conclusion === 'success';
+
+            // Get artifacts
+            const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: repoOwner,
+              repo: repoName,
+              run_id: runId
+            });
+
+            const artifactNames = new Set(artifacts.map(a => a.name));
+            const platforms = [
+              { name: 'linux-x64', label: 'Linux x64', files: '.deb / .AppImage' },
+              { name: 'windows-x64', label: 'Windows x64', files: '.exe' },
+              { name: 'macos-arm', label: 'macOS ARM64', files: '.dmg' }
+            ];
+
+            const allBuildsSucceeded = platforms.every(p => artifactNames.has(p.name));
+
+            let body;
+            if (!workflowSuccess || !allBuildsSucceeded) {
+              // Build failed or incomplete
+              const statusIcon = '❌';
+              const statusText = run.conclusion === 'failure' ? 'failed' : run.conclusion === 'cancelled' ? 'cancelled' : 'incomplete';
+
+              body = [
+                marker,
+                `## ${statusIcon} Test Builds`,
+                '',
+                `**Version:** \`${version}\` | **PR:** #${prNumber} | **Commit:** \`${shortSha}\` | **Status:** ${statusText}`,
+                '',
+                `[View workflow run](${run.html_url})`
+              ].join('\n');
+            } else {
+              // Build succeeded
+              const nightlyBase = `https://nightly.link/${repoOwner}/${repoName}/actions/runs/${runId}`;
+
+              const rows = platforms.map(({ name, label, files }) => {
+                if (artifactNames.has(name)) {
+                  return `| ${label} | [📦 ${files}](${nightlyBase}/${name}.zip) |`;
+                }
+                // No skipped row if all platforms should succeed
+                return null;
+              }).filter(Boolean).join('\n');
+
+              body = [
+                marker,
+                '## 🧪 Test Builds',
+                '',
+                `**Version:** \`${version}\` | **PR:** #${prNumber} | **Commit:** \`${shortSha}\` | **Status:** ready for testing`,
+                '',
+                '| Platform | Download |',
+                '|----------|----------|',
+                rows,
+                '',
+                '<details>',
+                '<summary>How to run these test builds</summary>',
+                '',
+                '**macOS (Apple Silicon):**',
+                'The app is ad-hoc signed; you may see a quarantine warning. Go to System Settings > Privacy & Security, scroll to the Security section at the bottom, find Armbian Imager, and click "Open Anyway". Or use:',
+                '```bash',
+                'xattr -dr com.apple.quarantine /Applications/Armbian\\ Imager.app',
+                '```',
+                '',
+                '**Windows:**',
+                'Windows Defender SmartScreen may warn. Click "More info" then "Run anyway", and grant Administrator when prompted.',
+                '',
+                '**Linux:**',
+                'Make AppImage executable and run, or install the .deb:',
+                '```bash',
+                'chmod +x ./*.AppImage && ./*.AppImage',
+                '# or',
+                'sudo apt install ./*.deb',
+                '```',
+                '',
+                'Updates are disabled in these test builds. Artifacts expire in 14 days.',
+                'Built from this PR\'s code: read the changes before running it.',
+                '',
+                '</details>',
+                '',
+                `[Full workflow run](${run.html_url})`
+              ].join('\n');
+            }
+
+            const commentParams = {
+              owner: repoOwner,
+              repo: repoName,
+              body
+            };
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                ...commentParams,
+                comment_id: existingComment.id
+              });
+              core.info(`Updated artifact comment ${existingComment.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                ...commentParams,
+                issue_number: prNumber
+              });
+              core.info('Created artifact comment');
+            }
+
+            // Add label only if workflow succeeded and all artifacts exist
+            if (allBuildsSucceeded && workflowSuccess) {
+              const labelName = 'status: ready for review';
+              try {
+                await github.rest.issues.addLabels({
+                  owner: repoOwner,
+                  repo: repoName,
+                  issue_number: prNumber,
+                  labels: [labelName]
+                });
+                core.info(`Added label: ${labelName}`);
+              } catch (e) {
+                core.warning(`Failed to add label: ${e.message}`);
+              }
+            }
