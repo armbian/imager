@@ -46,7 +46,7 @@
     "dataWarning": "Todos os dados no dispositivo selecionado serão apagados",
     "successHint": "O seu cartão SD está pronto! Pode remover o dispositivo em segurança e inseri-lo no seu {{boardName}}.",
     "successHintCustom": "O seu cartão SD está pronto! Pode remover o dispositivo em segurança.",
-    "successHintQdl": "Gravação concluída! O dispositivo está pronto para arrancar.",
+    "successHintQdlReady": "O dispositivo está pronto para arrancar.",
     "successHintVerifySkipped": "Verificação interrompida: a gravação não foi conferida.",
     "noShaTitle": "Sem checksum disponível",
     "noShaMessage": "Esta imagem não tem checksum SHA, por isso não é possível verificar os dados gravados. A gravação prossegue mesmo assim.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Este é um disco do sistema. Ative «Permitir discos do sistema» nas Definições para escrever nele.",
     "deviceTooSmall": "A imagem precisa de {{needed}}, mas o dispositivo tem apenas {{available}}. Utilize um dispositivo maior.",
     "qdlDeviceNotFound": "O dispositivo EDL selecionado já não está ligado. Volte a ligá-lo em modo EDL e selecione-o novamente.",
-    "qdlMultipleDevices": "Estão ligados vários dispositivos EDL e não é possível identificar o selecionado. Ligue apenas a placa que pretende gravar."
+    "qdlMultipleDevices": "Estão ligados vários dispositivos EDL e não é possível identificar o selecionado. Ligue apenas a placa que pretende gravar.",
+    "shaMismatch": "A imagem transferida está danificada: a soma de verificação não corresponde. Tente transferi-la novamente para obter uma cópia nova.",
+    "verifyMismatch": "O que foi gravado no dispositivo não corresponde à imagem. O cartão pode estar com defeito. Tente outro cartão.",
+    "verifyReadFailed": "Não foi possível reler o dispositivo para verificar a gravação. Volte a ligá-lo e tente novamente, ou experimente outro cartão ou leitor.",
+    "imageDecompressFailed": "Não foi possível descomprimir a imagem. O ficheiro pode estar danificado ou incompleto. Transfira-o novamente ou escolha outro ficheiro."
   },
   "custom": {
     "customImage": "Imagem personalizada",

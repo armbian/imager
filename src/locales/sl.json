@@ -46,7 +46,7 @@
     "dataWarning": "Vsi podatki na izbrani napravi bodo izbrisani",
     "successHint": "Vaša kartica SD je pripravljena! Lahko jo varno odstranite in vstavite v napravo {{boardName}}.",
     "successHintCustom": "Vaša kartica SD je pripravljena! Lahko jo varno odstranite.",
-    "successHintQdl": "Zapisovanje končano! Naprava je pripravljena za zagon.",
+    "successHintQdlReady": "Naprava je pripravljena za zagon.",
     "successHintVerifySkipped": "Preverjanje prekinjeno: zapis ni bil preverjen.",
     "noShaTitle": "Preverjanje celovitosti ni na voljo",
     "noShaMessage": "Kontrolna vsota SHA za to sliko ni na voljo. Zapisovanje bo nadaljevalo brez preverjanja celovitosti.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "To je sistemski disk. Za pisanje nanj v Nastavitvah vklopite „Dovoli sistemske diske“.",
     "deviceTooSmall": "Slika potrebuje {{needed}}, naprava pa ima samo {{available}}. Uporabite večjo napravo.",
     "qdlDeviceNotFound": "Izbrana naprava EDL ni več povezana. Ponovno jo povežite v načinu EDL in znova izberite.",
-    "qdlMultipleDevices": "Povezanih je več naprav EDL in izbrane ni mogoče prepoznati. Povežite samo ploščo, ki jo želite zapisati."
+    "qdlMultipleDevices": "Povezanih je več naprav EDL in izbrane ni mogoče prepoznati. Povežite samo ploščo, ki jo želite zapisati.",
+    "shaMismatch": "Prenesena slika je poškodovana: njena nadzorna vsota se ne ujema. Poskusite jo znova prenesti, da dobite svežo kopijo.",
+    "verifyMismatch": "Zapisano na napravi se ne ujema s sliko. Kartica je morda okvarjena. Poskusite z drugo kartico.",
+    "verifyReadFailed": "Naprave ni bilo mogoče znova prebrati za preverjanje zapisa. Znova jo povežite in poskusite ponovno ali poskusite z drugo kartico ali čitalnikom.",
+    "imageDecompressFailed": "Slike ni bilo mogoče razširiti. Datoteka je morda poškodovana ali nepopolna. Znova jo prenesite ali izberite drugo datoteko."
   },
   "custom": {
     "customImage": "Slika po meri",

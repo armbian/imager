@@ -46,7 +46,7 @@
     "dataWarning": "Seçili cihazdaki tüm veriler silinecek",
     "successHint": "SD kartınız hazır! Cihazı güvenle çıkarabilir ve {{boardName}} cihazınıza takabilirsiniz.",
     "successHintCustom": "SD kartınız hazır! Cihazı güvenle çıkarabilirsiniz.",
-    "successHintQdl": "Yazma tamamlandı! Cihaz önyüklemeye hazır.",
+    "successHintQdlReady": "Cihaz önyüklemeye hazır.",
     "successHintVerifySkipped": "Doğrulama durduruldu: yazma denetlenmedi.",
     "noShaTitle": "Sağlama toplamı yok",
     "noShaMessage": "Bu imajın SHA sağlama toplamı yok, bu nedenle yazılan veriler doğrulanamaz. Yazma işlemi yine de sürecek.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Bu bir sistem sürücüsü. Üzerine yazmak için Ayarlar'da “Sistem sürücülerine izin ver” seçeneğini açın.",
     "deviceTooSmall": "İmaj için {{needed}} gerekiyor ancak cihazın kapasitesi yalnızca {{available}}. Daha büyük bir cihaz kullanın.",
     "qdlDeviceNotFound": "Seçilen EDL cihazı artık bağlı değil. EDL modunda yeniden bağlayıp tekrar seçin.",
-    "qdlMultipleDevices": "Birden fazla EDL cihazı bağlı ve seçilen cihaz belirlenemiyor. Yalnızca yazmak istediğiniz geliştirme kartını bağlayın."
+    "qdlMultipleDevices": "Birden fazla EDL cihazı bağlı ve seçilen cihaz belirlenemiyor. Yalnızca yazmak istediğiniz geliştirme kartını bağlayın.",
+    "shaMismatch": "İndirilen imaj bozuk: sağlama toplamı eşleşmiyor. Yeni bir kopya almak için yeniden indirmeyi deneyin.",
+    "verifyMismatch": "Cihaza yazılanlar imajla eşleşmiyor. Kart arızalı olabilir. Başka bir kart deneyin.",
+    "verifyReadFailed": "Yazma işlemini doğrulamak için cihaz geri okunamadı. Yeniden bağlayıp tekrar deneyin ya da başka bir kart veya okuyucu deneyin.",
+    "imageDecompressFailed": "İmaj açılamadı. Dosya bozuk veya eksik olabilir. Yeniden indirin veya başka bir dosya seçin."
   },
   "custom": {
     "customImage": "Özel İmaj",

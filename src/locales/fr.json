@@ -46,7 +46,7 @@
     "dataWarning": "Toutes les données sur le périphérique sélectionné seront effacées",
     "successHint": "Votre carte SD est prête ! Vous pouvez la retirer en toute sécurité et l'insérer dans votre {{boardName}}.",
     "successHintCustom": "Votre carte SD est prête ! Vous pouvez la retirer en toute sécurité.",
-    "successHintQdl": "Flash terminé ! L'appareil est prêt à démarrer.",
+    "successHintQdlReady": "L'appareil est prêt à démarrer.",
     "successHintVerifySkipped": "Vérification interrompue : l'écriture n'a pas été contrôlée.",
     "noShaTitle": "Aucune somme de contrôle disponible",
     "noShaMessage": "Cette image n'a pas de somme de contrôle SHA, les données écrites ne peuvent donc pas être vérifiées. Le flash se poursuivra malgré tout.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Il s'agit d'un disque système. Activez « Autoriser les disques système » dans les Réglages pour y écrire.",
     "deviceTooSmall": "L'image nécessite {{needed}}, mais le périphérique n'a que {{available}}. Utilisez un périphérique plus grand.",
     "qdlDeviceNotFound": "L'appareil EDL sélectionné n'est plus connecté. Reconnectez-le en mode EDL et sélectionnez-le à nouveau.",
-    "qdlMultipleDevices": "Plusieurs appareils EDL sont connectés et celui sélectionné ne peut pas être identifié. Connectez uniquement la carte que vous voulez flasher."
+    "qdlMultipleDevices": "Plusieurs appareils EDL sont connectés et celui sélectionné ne peut pas être identifié. Connectez uniquement la carte que vous voulez flasher.",
+    "shaMismatch": "L'image téléchargée est corrompue : sa somme de contrôle ne correspond pas. Réessayez de la télécharger pour obtenir une copie saine.",
+    "verifyMismatch": "Les données écrites sur le périphérique ne correspondent pas à l'image. La carte est peut-être défaillante. Essayez une autre carte.",
+    "verifyReadFailed": "Le périphérique n'a pas pu être relu pour vérifier l'écriture. Reconnectez-le et réessayez, ou essayez une autre carte ou un autre lecteur.",
+    "imageDecompressFailed": "L'image n'a pas pu être décompressée. Le fichier est peut-être corrompu ou incomplet. Téléchargez-le à nouveau ou choisissez un autre fichier."
   },
   "custom": {
     "customImage": "Image personnalisée",

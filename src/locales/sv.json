@@ -46,7 +46,7 @@
     "dataWarning": "All data på den valda enheten raderas",
     "successHint": "Ditt SD-kort är klart! Du kan ta ut det och sätta in det i din {{boardName}}.",
     "successHintCustom": "Ditt SD-kort är klart! Du kan ta ut det när du vill.",
-    "successHintQdl": "Flashningen är klar! Enheten är redo att starta.",
+    "successHintQdlReady": "Enheten är redo att starta.",
     "successHintVerifySkipped": "Kontrollen avbröts: skrivningen kontrollerades inte.",
     "noShaTitle": "Ingen kontrollsumma tillgänglig",
     "noShaMessage": "Den här avbildningen saknar SHA-kontrollsumma, så den skrivna datan kan inte verifieras. Flashningen fortsätter ändå.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Det här är en systemdisk. Aktivera ”Tillåt systemdiskar” i inställningarna för att skriva till den.",
     "deviceTooSmall": "Avbildningen behöver {{needed}} men enheten rymmer bara {{available}}. Använd en större enhet.",
     "qdlDeviceNotFound": "Den valda EDL-enheten är inte längre ansluten. Anslut den igen i EDL-läge och välj den på nytt.",
-    "qdlMultipleDevices": "Flera EDL-enheter är anslutna och den valda går inte att identifiera. Anslut bara det kort du vill flasha."
+    "qdlMultipleDevices": "Flera EDL-enheter är anslutna och den valda går inte att identifiera. Anslut bara det kort du vill flasha.",
+    "shaMismatch": "Den nedladdade avbildningen är skadad: kontrollsumman stämmer inte. Försök ladda ner den igen för att få en ny kopia.",
+    "verifyMismatch": "Det som skrevs till enheten stämmer inte med avbildningen. Kortet kan vara trasigt. Prova ett annat kort.",
+    "verifyReadFailed": "Enheten gick inte att läsa tillbaka för att verifiera skrivningen. Anslut den igen och försök på nytt, eller prova ett annat kort eller en annan läsare.",
+    "imageDecompressFailed": "Avbildningen gick inte att packa upp. Filen kan vara skadad eller ofullständig. Ladda ner den igen eller välj en annan fil."
   },
   "custom": {
     "customImage": "Egen avbildning",

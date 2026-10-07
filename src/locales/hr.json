@@ -46,7 +46,7 @@
     "dataWarning": "Svi podaci na odabranom uređaju bit će izbrisani",
     "successHint": "Vaša SD kartica je spremna! Možete je sigurno izvaditi i umetnuti u {{boardName}}.",
     "successHintCustom": "Vaša SD kartica je spremna! Možete je sigurno izvaditi.",
-    "successHintQdl": "Snimanje je dovršeno! Uređaj je spreman za pokretanje.",
+    "successHintQdlReady": "Uređaj je spreman za pokretanje.",
     "successHintVerifySkipped": "Provjera je prekinuta: zapisivanje nije provjereno.",
     "noShaTitle": "Kontrolna suma nije dostupna",
     "noShaMessage": "Ova slika nema SHA kontrolnu sumu, pa se zapisani podaci ne mogu provjeriti. Snimanje će se svejedno nastaviti.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Ovo je sistemski disk. Uključite „Dopusti sistemske diskove“ u Postavkama da biste pisali na njega.",
     "deviceTooSmall": "Slika zahtijeva {{needed}}, a uređaj ima samo {{available}}. Koristite veći uređaj.",
     "qdlDeviceNotFound": "Odabrani EDL uređaj više nije spojen. Ponovno ga spojite u EDL načinu rada i odaberite.",
-    "qdlMultipleDevices": "Spojeno je više EDL uređaja i odabrani se ne može prepoznati. Spojite samo ploču koju želite snimiti."
+    "qdlMultipleDevices": "Spojeno je više EDL uređaja i odabrani se ne može prepoznati. Spojite samo ploču koju želite snimiti.",
+    "shaMismatch": "Preuzeta slika je oštećena: njezin se kontrolni zbroj ne podudara. Pokušajte je ponovno preuzeti da dobijete novu kopiju.",
+    "verifyMismatch": "Ono što je zapisano na uređaj ne podudara se sa slikom. Kartica je možda neispravna. Pokušajte s drugom karticom.",
+    "verifyReadFailed": "Uređaj nije bilo moguće ponovno pročitati radi provjere zapisa. Ponovno ga spojite i pokušajte opet ili pokušajte s drugom karticom ili čitačem.",
+    "imageDecompressFailed": "Sliku nije bilo moguće raspakirati. Datoteka je možda oštećena ili nepotpuna. Ponovno je preuzmite ili odaberite drugu datoteku."
   },
   "custom": {
     "customImage": "Prilagođena slika",
