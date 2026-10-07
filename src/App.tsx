@@ -14,7 +14,7 @@ import { ToastProvider, useToasts } from './hooks/useToasts';
 import { UpdateProvider } from './contexts/UpdateContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
 import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, PLATFORM } from './config';
-import { IMAGE_FORMAT, IMAGE_STORAGE } from './types';
+import { IMAGE_FORMAT, IMAGE_STORAGE, isEdlImage } from './types';
 import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer } from './utils';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig } from './types';
 import './styles/index.css';
@@ -86,6 +86,7 @@ function AppContent() {
   // Clear selected device if disconnected, only when not flashing
   useDeviceMonitor(
     selectedDevice,
+    !!selectedImage && isEdlImage(selectedImage),
     useCallback(() => setSelectedDevice(null), []),
     !isFlashing
   );
