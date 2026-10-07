@@ -95,6 +95,14 @@ jobs:
       - name: Build Tauri app
         run: cargo tauri build --bundles deb,appimage
 
+      - name: Check release binary has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-binary.sh src-tauri/target/release/armbian-imager
+
+      - name: Check frontend bundle has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-dist.sh dist
+
       # See scripts/build/appimage-unbundle-wayland.sh — bundled libwayland aborts
       # EGL init on the user's Wayland session (issue #67).
       - name: Un-bundle libwayland from AppImage (#67)
@@ -164,6 +172,14 @@ jobs:
 
       - name: Build Tauri app
         run: cargo tauri build --bundles deb,appimage
+
+      - name: Check release binary has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-binary.sh src-tauri/target/release/armbian-imager
+
+      - name: Check frontend bundle has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-dist.sh dist
 
       # See scripts/build/appimage-unbundle-wayland.sh — bundled libwayland aborts
       # EGL init on the user's Wayland session (issue #67).
@@ -267,6 +283,14 @@ jobs:
         run: |
           cargo tauri build --target "${{ matrix.target }}" --bundles dmg,app
 
+      - name: Check release binary has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-binary.sh "src-tauri/target/${{ matrix.target }}/release/armbian-imager"
+
+      - name: Check frontend bundle has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-dist.sh dist
+
       - name: Zip .app bundle
         shell: bash
         env:
@@ -366,6 +390,14 @@ jobs:
       - name: Build Tauri app
         run: cargo tauri build --target x86_64-pc-windows-msvc --bundles msi,nsis
 
+      - name: Check release binary has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-binary.sh src-tauri/target/x86_64-pc-windows-msvc/release/armbian-imager.exe
+
+      - name: Check frontend bundle has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-dist.sh dist
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -421,6 +453,14 @@ jobs:
 
       - name: Build Tauri app
         run: cargo tauri build --target aarch64-pc-windows-msvc --bundles msi,nsis
+
+      - name: Check release binary has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-binary.sh src-tauri/target/aarch64-pc-windows-msvc/release/armbian-imager.exe
+
+      - name: Check frontend bundle has no dev scenarios
+        shell: bash
+        run: ./scripts/build/check-release-dist.sh dist
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
