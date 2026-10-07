@@ -46,7 +46,7 @@
     "dataWarning": "All data on the selected device will be erased",
     "successHint": "Your SD card is ready! You can safely remove it and insert it into your {{boardName}}.",
     "successHintCustom": "Your SD card is ready! You can safely remove it.",
-    "successHintQdl": "Flash complete! The device is ready to boot.",
+    "successHintQdlReady": "The device is ready to boot.",
     "successHintVerifySkipped": "Verification stopped, so the write wasn't checked.",
     "noShaTitle": "No checksum available",
     "noShaMessage": "This image has no SHA checksum, so the written data can't be verified. Flashing will continue anyway.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "This is a system drive. Turn on \"Allow system drives\" in Settings to write to it.",
     "deviceTooSmall": "The image needs {{needed}} but the device holds only {{available}}. Use a larger device.",
     "qdlDeviceNotFound": "The selected EDL device is no longer connected. Reconnect it in EDL mode and select it again.",
-    "qdlMultipleDevices": "Several EDL devices are connected and the selected one can't be identified. Connect only the board you want to flash."
+    "qdlMultipleDevices": "Several EDL devices are connected and the selected one can't be identified. Connect only the board you want to flash.",
+    "shaMismatch": "The downloaded image is damaged: its checksum doesn't match. Try again to download a fresh copy.",
+    "verifyMismatch": "What was written to the device doesn't match the image. The card may be failing. Try another card.",
+    "verifyReadFailed": "The device couldn't be read back to verify the write. Reconnect it and try again, or try another card or reader.",
+    "imageDecompressFailed": "The image couldn't be decompressed. The file may be damaged or incomplete. Download it again or pick another file."
   },
   "custom": {
     "customImage": "Custom Image",
