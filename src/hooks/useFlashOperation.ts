@@ -86,7 +86,7 @@ function buildPhases(opts: { download: boolean; prepare: boolean; verify: boolea
   return phases;
 }
 
-// 'pending' until a poll proves it belongs to this run: a reset (idle) state or a live prep stage.
+// 'pending' until a poll shows an idle or live prep state that belongs to this run.
 type PrepTracking = 'none' | 'pending' | 'idle' | 'active';
 
 export function useFlashOperation({
@@ -119,10 +119,14 @@ export function useFlashOperation({
   const hasStartedRef = useRef<boolean>(false);
   const deviceDisconnectedRef = useRef<boolean>(false);
   const userCancelledRef = useRef<boolean>(false);
+  const mountedRef = useRef<boolean>(false);
+  const retryInFlightRef = useRef<boolean>(false);
   // Precedence latch: a specific error (real write failure) beats the generic
   // "device disconnected", never the reverse, regardless of which path fires first.
   const shownErrorRef = useRef<null | 'generic' | 'specific'>(null);
   const pendingCleanupRef = useRef<Promise<void> | null>(null);
+  // The whole current run (auth -> download -> write); Retry awaits it so two runs never overlap.
+  const runRef = useRef<Promise<void> | null>(null);
   const skipVerifyRef = useRef<boolean>(false);
   // Keep the latest opt-in profile config for the event-driven flash flow.
   const autoconfigRef = useRef<AutoconfigConfig | null>(autoconfig ?? null);
@@ -176,6 +180,9 @@ export function useFlashOperation({
     },
     [t]
   );
+
+  // Cancel or unmount during an await must not start the next step, above all the write.
+  const isAborted = () => userCancelledRef.current || !mountedRef.current;
 
   // Write path: TAR-based QDL ('qdl'), raw UFS over QDL ('qdl-ufs'), or block dd.
   const flashMethod = deriveFlashMethod(image);
@@ -255,22 +262,24 @@ export function useFlashOperation({
       if (isQdlMode) {
         setPhases(buildPhases({ download: false, prepare: true, verify: false }));
         setImagePath(customPath);
-        startFlash(customPath);
+        await startFlash(customPath);
         return;
       }
 
       const needsDecompress = await checkNeedsDecompression(customPath);
+      if (isAborted()) return;
       setPhases(buildPhases({ download: false, prepare: needsDecompress || hasProfile, verify: !skipVerifyRef.current }));
 
       if (needsDecompress) {
         setStage('decompressing');
         setProgress(0);
         const decompressedPath = await decompressCustomImage(customPath);
+        if (isAborted()) return;
         setImagePath(decompressedPath);
-        startFlash(decompressedPath);
+        await startFlash(decompressedPath);
       } else {
         setImagePath(customPath);
-        startFlash(customPath);
+        await startFlash(customPath);
       }
     } catch (err) {
       const raw = getErrorMessage(err, '');
@@ -281,6 +290,7 @@ export function useFlashOperation({
 
   /** Start download with progress polling */
   async function startDownload() {
+    if (isAborted()) return;
     setStage('downloading');
     setProgress(0);
     setError(null);
@@ -320,9 +330,10 @@ export function useFlashOperation({
     try {
       // Use direct_url: it carries the full filename, unlike the extensionless mirror-selector file_url.
       const path = await downloadImage(image.direct_url, image.sha_url);
-      setImagePath(path);
       if (intervalRef.current) clearInterval(intervalRef.current);
-      startFlash(path);
+      if (isAborted()) return;
+      setImagePath(path);
+      await startFlash(path);
     } catch (err) {
       if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -341,6 +352,7 @@ export function useFlashOperation({
 
   /** Start flash with progress polling */
   async function startFlash(path: string) {
+    if (isAborted()) return;
     const writeStage: FlashStage = isQdlMode ? 'extracting' : 'flashing';
     // The TAR path injects the profile during extraction, so only block and UFS flashes prep first.
     const awaitPrep = !isQdlMode && hasProfile;
@@ -490,10 +502,12 @@ export function useFlashOperation({
       } catch {
         skipVerifyRef.current = false;
       }
+      if (isAborted()) return;
 
       // EDL (QDL/UFS) skips block-device authorization (USB access handled by OS)
       if (!isEdlFlash) {
         const authorized = await requestWriteAuthorization(device.path, device.size);
+        if (isAborted()) return;
         if (!authorized) {
           failFlash(t('error.authCancelled'));
           return;
@@ -515,6 +529,7 @@ export function useFlashOperation({
           } catch {
             cached = false;
           }
+          if (isAborted()) return;
         }
         setPhases(
           buildPhases({
@@ -523,19 +538,26 @@ export function useFlashOperation({
             verify: !isEdlFlash && !skipVerifyRef.current,
           })
         );
-        startDownload();
+        await startDownload();
       }
     } catch (err) {
       failFlash(translateFlashError(getErrorMessage(err, t('error.authFailed')), t));
     }
   }
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Start operation on mount (once)
   useEffect(() => {
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
 
-    handleAuthorization();
+    runRef.current = handleAuthorization();
 
     return () => {
       if (intervalRef.current) {
@@ -577,29 +599,13 @@ export function useFlashOperation({
     }
   };
 
-  const handleRetry = async () => {
-    // Let the disconnect handler's cancel/cleanup land before restarting,
-    // so a stale is_cancelled can't race the new flash's reset.
-    if (pendingCleanupRef.current) {
-      try {
-        await pendingCleanupRef.current;
-      } catch {
-        // Ignore
-      }
-      pendingCleanupRef.current = null;
-    }
-    setError(null);
-    setVerifyAborted(false);
-    deviceDisconnectedRef.current = false;
-    userCancelledRef.current = false;
-    shownErrorRef.current = null;
-
+  const restartRun = async () => {
     if (imagePath) {
       // EDL: skip block-device authorization (USB access handled by OS). The TAR path
       // re-extracts (prepare), but a UFS .img is already decompressed and ready.
       if (isEdlFlash) {
         setPhases(buildPhases({ download: false, prepare: isQdlMode || hasProfile, verify: false }));
-        startFlash(imagePath);
+        await startFlash(imagePath);
         return;
       }
       // The image is already downloaded/decompressed: only the profile prep, write and verify remain.
@@ -608,16 +614,54 @@ export function useFlashOperation({
       setStage('authorizing');
       try {
         const authorized = await requestWriteAuthorization(device.path, device.size);
+        if (isAborted()) return;
         if (!authorized) {
           failFlash(t('error.authCancelled'));
           return;
         }
-        startFlash(imagePath);
+        await startFlash(imagePath);
       } catch (err) {
         failFlash(translateFlashError(getErrorMessage(err, t('error.authFailed')), t));
       }
     } else {
-      handleAuthorization();
+      await handleAuthorization();
+    }
+  };
+
+  const handleRetry = async () => {
+    // Held until the new run settles, so a double click starts one flash.
+    if (retryInFlightRef.current) return;
+    retryInFlightRef.current = true;
+    try {
+      // Let the disconnect handler's cancel/cleanup land before restarting,
+      // so a stale is_cancelled can't race the new flash's reset.
+      if (pendingCleanupRef.current) {
+        try {
+          await pendingCleanupRef.current;
+        } catch {
+          // Ignore
+        }
+        pendingCleanupRef.current = null;
+      }
+      // A cancelled or disconnected run may still be unwinding; its late catch must not land on this one.
+      if (runRef.current) {
+        try {
+          await runRef.current;
+        } catch {
+          // Ignore
+        }
+      }
+      if (!mountedRef.current) return;
+      setError(null);
+      setVerifyAborted(false);
+      deviceDisconnectedRef.current = false;
+      userCancelledRef.current = false;
+      shownErrorRef.current = null;
+
+      runRef.current = restartRun();
+      await runRef.current;
+    } finally {
+      retryInFlightRef.current = false;
     }
   };
 
@@ -629,15 +673,16 @@ export function useFlashOperation({
   const handleShaWarningConfirm = async () => {
     setShowShaWarning(false);
 
-    if (!(await checkDeviceOrDisconnect())) return;
+    if (!(await checkDeviceOrDisconnect()) || isAborted()) return;
 
     setStage('decompressing');
     setProgress(0);
 
     try {
       const path = await continueDownloadWithoutSha();
+      if (isAborted()) return;
       setImagePath(path);
-      startFlash(path);
+      runRef.current = startFlash(path);
     } catch (err) {
       const raw = getErrorMessage(err, '');
       if (deviceDisconnectedRef.current && /cancel/i.test(raw)) return;
