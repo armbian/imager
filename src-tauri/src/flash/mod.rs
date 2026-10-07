@@ -4,7 +4,7 @@
 //! Platform-specific image flashing: privilege escalation + raw device writing.
 //! macOS uses authopen (Touch ID), Linux uses pkexec, Windows needs Administrator.
 
-mod verify;
+pub(crate) mod verify;
 
 #[cfg(target_os = "linux")]
 mod linux;

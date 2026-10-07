@@ -9,6 +9,7 @@ use super::model::{ApiFault, DownloadFault, NetworkSim};
 use super::state;
 use super::MODULE;
 use crate::config::dev::SIM_EXPECTED_SHA;
+use crate::download::sha_mismatch_err;
 use crate::log_warn;
 use crate::utils::KB;
 
@@ -73,8 +74,9 @@ impl Throttle {
 /// The caller then deletes only its temp file.
 pub fn override_sha(net: &NetworkSim, verified: Result<(), String>) -> Result<(), String> {
     match verified {
-        Ok(()) if net.download == DownloadFault::ShaMismatch => Err(format!(
-            "SHA256 mismatch: expected {SIM_EXPECTED_SHA}, got a different hash (simulated)"
+        Ok(()) if net.download == DownloadFault::ShaMismatch => Err(sha_mismatch_err(
+            SIM_EXPECTED_SHA,
+            "a different hash (simulated)",
         )),
         other => other,
     }
@@ -156,7 +158,7 @@ mod tests {
         let bad = net(ApiFault::Normal, DownloadFault::ShaMismatch);
         assert!(override_sha(&bad, Ok(()))
             .unwrap_err()
-            .starts_with("SHA256 mismatch"));
+            .starts_with(crate::download::TAG_SHA_MISMATCH));
         let unavailable = Err("[SHA_UNAVAILABLE] x".to_string());
         assert_eq!(override_sha(&bad, unavailable.clone()), unavailable);
         assert!(override_sha(&NetworkSim::default(), Ok(())).is_ok());

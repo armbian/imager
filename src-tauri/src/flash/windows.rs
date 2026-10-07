@@ -3,10 +3,11 @@
 
 //! Windows-specific flash implementation. Requires Administrator for raw disk access.
 
+use super::verify::{data_mismatch_err, verify_cancelled_err, TAG_VERIFY_READ_FAILED};
 use super::{reject_simulated, FlashState};
 use crate::config;
 use crate::devices::{device_changed_error, FlashTarget};
-use crate::utils::{bytes_to_gb, ProgressTracker};
+use crate::utils::{bytes_to_gb, tagged, ProgressTracker};
 use crate::{log_debug, log_error, log_info, log_warn};
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -405,8 +406,12 @@ fn verify_with_sector_alignment(
     state.is_verifying.store(true, Ordering::SeqCst);
     state.verified_bytes.store(0, Ordering::SeqCst);
 
-    let mut image_file =
-        std::fs::File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+    let mut image_file = std::fs::File::open(image_path).map_err(|e| {
+        tagged(
+            TAG_VERIFY_READ_FAILED,
+            format!("Failed to open image: {}", e),
+        )
+    })?;
 
     let image_size = state.total_bytes.load(Ordering::SeqCst);
 
@@ -441,7 +446,7 @@ fn verify_with_sector_alignment(
 
     while verified < image_size {
         if state.is_cancelled.load(Ordering::SeqCst) {
-            return Err("Verification cancelled".to_string());
+            return Err(verify_cancelled_err());
         }
 
         let remaining = image_size - verified;
@@ -449,7 +454,12 @@ fn verify_with_sector_alignment(
 
         let image_read = image_file
             .read(&mut image_buffer[..read_size])
-            .map_err(|e| format!("Failed to read image: {}", e))?;
+            .map_err(|e| {
+                tagged(
+                    TAG_VERIFY_READ_FAILED,
+                    format!("Failed to read image: {}", e),
+                )
+            })?;
 
         if image_read == 0 {
             break;
@@ -463,10 +473,13 @@ fn verify_with_sector_alignment(
             let n = device
                 .read(&mut device_buffer[total_read..device_read_size])
                 .map_err(|e| {
-                    format!(
-                        "Failed to read device at byte {}: {}",
-                        verified + total_read as u64,
-                        e
+                    tagged(
+                        TAG_VERIFY_READ_FAILED,
+                        format!(
+                            "Failed to read device at byte {}: {}",
+                            verified + total_read as u64,
+                            e
+                        ),
                     )
                 })?;
             if n == 0 {
@@ -491,7 +504,7 @@ fn verify_with_sector_alignment(
                 }
             }
 
-            return Err(format!("Verification failed at byte {}", verified));
+            return Err(data_mismatch_err(verified));
         }
 
         verified += image_read as u64;
