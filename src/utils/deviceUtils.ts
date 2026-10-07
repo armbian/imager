@@ -20,13 +20,6 @@ export function sortDevices(devices: BlockDevice[]): BlockDevice[] {
   });
 }
 
-/** Prefix of the backend-provided QdlDevice.path (`qdl://<bus_id>/<address>`) */
-export const QDL_PATH_PREFIX = 'qdl://';
-
-export function isQdlDevicePath(path: string): boolean {
-  return path.startsWith(QDL_PATH_PREFIX);
-}
-
 /** Map a QDL device onto BlockDevice so it flows through the same selection UI. */
 export function qdlToBlockDevice(qdl: QdlDevice): BlockDevice {
   return {

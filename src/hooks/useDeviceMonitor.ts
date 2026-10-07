@@ -5,11 +5,11 @@ import { useEffect, useCallback } from 'react';
 import { isTargetConnected } from './useTauri';
 import { POLLING } from '../config';
 import type { BlockDevice } from '../types';
-import { isQdlDevicePath } from '../utils/deviceUtils';
 
-/** Monitor the selected device and clear it if it disconnects */
+/** Clears the selected device once it disconnects; `edl` follows the image's flash method, never the path. */
 export function useDeviceMonitor(
   selectedDevice: BlockDevice | null,
+  edl: boolean,
   onDeviceDisconnected: () => void,
   enabled: boolean = true
 ) {
@@ -17,13 +17,13 @@ export function useDeviceMonitor(
     if (!selectedDevice) return;
 
     try {
-      if (!(await isTargetConnected(selectedDevice, isQdlDevicePath(selectedDevice.path)))) {
+      if (!(await isTargetConnected(selectedDevice, edl))) {
         onDeviceDisconnected();
       }
     } catch {
       // Silently ignore polling errors
     }
-  }, [selectedDevice, onDeviceDisconnected]);
+  }, [selectedDevice, edl, onDeviceDisconnected]);
 
   useEffect(() => {
     if (!enabled || !selectedDevice) return;
