@@ -165,7 +165,9 @@
   "common": {
     "unknown": "未知",
     "confirm": "确认",
-    "cancel": "取消"
+    "cancel": "取消",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码"
   },
   "settings": {
     "title": "设置",
@@ -354,7 +356,116 @@
       "previewReveal": "显示",
       "previewHide": "隐藏",
       "previewEmpty": "尚未设置任何内容。填写上方字段以创建首次启动文件。",
-      "settingsCount": "项设置"
+      "settingsCount": "项设置",
+      "guided": "引导式设置",
+      "wifiKeyFits": "适用于 Wi-Fi（8 到 63 个字符）",
+      "wifiKeyLength": "Wi-Fi 密码通常为 8 到 63 个字符",
+      "wizard": {
+        "eyebrow": "新建配置文件",
+        "unnamed": "尚未命名",
+        "forBoard": "适用于 {{board}}",
+        "forAnyBoard": "适用于任意开发板",
+        "stepOf": "第 <b>{{current}}</b> 步，共 {{total}} 步",
+        "close": "关闭",
+        "skip": "跳过此步骤",
+        "back": "上一步",
+        "next": "下一步",
+        "create": "创建配置文件",
+        "noMatch": "没有匹配项",
+        "password": "密码",
+        "nameHint": "之后的每一步都是可选的。不需要的可以跳过。",
+        "ssidRequired": "请输入网络名称，或选择“网线”。",
+        "addressRequired": "请输入地址，或选择“自动”。",
+        "usernameRequired": "请输入用户名，或选择“首次登录时”。",
+        "keyUserInvalid": "这不是有效的用户名。",
+        "steps": {
+          "name": "名称",
+          "network": "网络",
+          "user": "用户",
+          "locale": "语言和时间",
+          "access": "访问",
+          "review": "检查"
+        },
+        "pending": {
+          "network": "保持 Armbian 默认设置",
+          "user": "首次启动时询问",
+          "locale": "Armbian 默认设置",
+          "access": "仅密码登录"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "以太网",
+          "location": "根据位置",
+          "keysFrom": "来自 {{forge}} 的 SSH 密钥",
+          "keysLink": "来自链接的 SSH 密钥",
+          "passwordOnly": "仅密码",
+          "rootSet": "已设置 root 密码"
+        },
+        "name": {
+          "title": "给它起个什么名字？",
+          "sub": "你会在摘要页按名称选择它。"
+        },
+        "network": {
+          "title": "如何连接？",
+          "sub": "之后可以在设置中更改。",
+          "cable": "网线",
+          "wifi": "Wi-Fi",
+          "both": "两者",
+          "ssid": "网络名称",
+          "country": "国家/地区",
+          "cableLine": "首次启动前请插好网线。开发板会从你的路由器获取地址。",
+          "moreWifi": "国家/地区和 IP 地址",
+          "moreCable": "IP 地址",
+          "searchCountry": "搜索国家/地区",
+          "ip": "IP 地址",
+          "ipAuto": "自动",
+          "ipFixed": "固定",
+          "address": "地址",
+          "netmask": "子网掩码",
+          "gateway": "网关",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "谁来登录？",
+          "sub": "你在开发板上使用的账户，用于登录和 sudo。",
+          "now": "现在创建",
+          "later": "首次登录时",
+          "more": "全名和登录 Shell",
+          "shellDefault": "Armbian 默认",
+          "laterLine": "首次登录时，无论通过 SSH 还是键盘和显示器，Armbian 都会要求你创建用户。此时不会应用此配置文件中的语言和时间。"
+        },
+        "locale": {
+          "title": "语言和时间",
+          "sub": "在开发板创建你的用户时应用。",
+          "location": "根据位置",
+          "choose": "我自己选",
+          "language": "语言",
+          "searchTimezone": "搜索时区",
+          "locationLine": "Armbian 会根据开发板连接互联网的位置设置语言和时区。",
+          "userComplete": "你的用户信息完整，因此 Armbian 会应用这些设置。",
+          "userIncomplete": "仅当配置文件创建了带密码和全名的用户时，Armbian 才会应用这些设置。"
+        },
+        "access": {
+          "title": "如何登录？",
+          "sub": "使用 SSH 密钥，无需输入密码即可登录。",
+          "keys": "SSH 密钥",
+          "passwordOnly": "仅密码",
+          "source": "密钥来源",
+          "link": "链接",
+          "forgeUser": "{{forge}} 用户名",
+          "linkLabel": "公钥链接",
+          "fetchHint": "开发板会在首次启动时获取。",
+          "linkHint": "任何提供公钥的 https 地址，每行一个。",
+          "passwordLine": "你用密码登录，通过 SSH 或键盘和显示器。",
+          "rootHint": "留空，Armbian 会在首次登录时要求你更改。"
+        },
+        "review": {
+          "title": "准备创建 {{name}}",
+          "sub": "检查一次。之后它会在摘要页被选中。",
+          "subSettings": "检查一次。之后它会显示在你的配置文件列表中。",
+          "later": "你随时可以在“设置”的“自动配置”中更改。"
+        }
+      }
     }
   },
   "update": {

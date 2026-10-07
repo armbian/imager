@@ -6,3 +6,4 @@ export * from './settings';
 export * from './modals';
 export * from './flash';
 export * from './shared';
+export * from './autoconfig';

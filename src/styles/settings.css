@@ -656,6 +656,12 @@
   flex-shrink: 0;
 }
 
+.autoconfig-list-actions {
+  display: flex;
+  flex: none;
+  gap: var(--space-sm);
+}
+
 .autoconfig-list-header .btn,
 .autoconfig-item-actions .btn,
 .autoconfig-editor-header .btn {

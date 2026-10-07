@@ -237,7 +237,23 @@ export const UI = {
     FLASH_STAGE: 32,
     EMPTY_STATE: 30,
     EMPTY_STATE_ACTION: 15,
+    WIZARD_ITEM: 14,
+    WIZARD_TILE: 22,
+    WIZARD_SEG: 15,
+    WIZARD_HINT: 13,
   },
+  /** Minimum margin between an anchored popover and the window edge */
+  POPOVER_EDGE: 12,
+  PICKER: {
+    GAP: 6,
+  },
+} as const;
+
+/** Autoconfig limits the profile forms check locally */
+export const AUTOCONFIG = {
+  /** WPA passphrase length; a 64-character hex PSK also works, so the check never blocks */
+  WIFI_KEY_MIN: 8,
+  WIFI_KEY_MAX: 63,
 } as const;
 
 /** Vendor/manufacturer constants */

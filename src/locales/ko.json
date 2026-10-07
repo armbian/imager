@@ -165,7 +165,9 @@
   "common": {
     "unknown": "알 수 없음",
     "confirm": "확인",
-    "cancel": "취소"
+    "cancel": "취소",
+    "showPassword": "비밀번호 표시",
+    "hidePassword": "비밀번호 숨기기"
   },
   "settings": {
     "title": "설정",
@@ -354,7 +356,116 @@
       "previewReveal": "표시",
       "previewHide": "숨기기",
       "previewEmpty": "아직 설정된 항목이 없습니다. 위 필드를 입력하여 첫 부팅 파일을 만드세요.",
-      "settingsCount": "개 설정"
+      "settingsCount": "개 설정",
+      "guided": "단계별 설정",
+      "wifiKeyFits": "Wi-Fi에 적합합니다(8자에서 63자)",
+      "wifiKeyLength": "Wi-Fi 비밀번호는 보통 8자에서 63자입니다",
+      "wizard": {
+        "eyebrow": "새 프로필",
+        "unnamed": "아직 이름 없음",
+        "forBoard": "{{board}}용",
+        "forAnyBoard": "모든 보드용",
+        "stepOf": "<b>{{current}}</b> / {{total}} 단계",
+        "close": "닫기",
+        "skip": "이 단계 건너뛰기",
+        "back": "이전",
+        "next": "다음",
+        "create": "프로필 만들기",
+        "noMatch": "일치하는 항목 없음",
+        "password": "비밀번호",
+        "nameHint": "이후 단계는 모두 선택 사항입니다. 필요 없는 단계는 건너뛰세요.",
+        "ssidRequired": "네트워크 이름을 입력하거나 케이블을 선택하세요.",
+        "addressRequired": "주소를 입력하거나 자동을 선택하세요.",
+        "usernameRequired": "사용자 이름을 입력하거나 첫 로그인 시를 선택하세요.",
+        "keyUserInvalid": "올바른 사용자 이름이 아닙니다.",
+        "steps": {
+          "name": "이름",
+          "network": "네트워크",
+          "user": "사용자",
+          "locale": "언어 및 시간",
+          "access": "접속",
+          "review": "검토"
+        },
+        "pending": {
+          "network": "Armbian 기본값 유지",
+          "user": "첫 부팅 시 질문",
+          "locale": "Armbian 기본값",
+          "access": "비밀번호 로그인만"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "이더넷",
+          "location": "위치 기반",
+          "keysFrom": "{{forge}}의 SSH 키",
+          "keysLink": "링크의 SSH 키",
+          "passwordOnly": "비밀번호만",
+          "rootSet": "root 비밀번호 설정됨"
+        },
+        "name": {
+          "title": "이름을 무엇으로 할까요?",
+          "sub": "요약 화면에서 이름으로 선택합니다."
+        },
+        "network": {
+          "title": "어떻게 연결하나요?",
+          "sub": "나중에 설정에서 변경할 수 있습니다.",
+          "cable": "케이블",
+          "wifi": "Wi-Fi",
+          "both": "둘 다",
+          "ssid": "네트워크 이름",
+          "country": "국가",
+          "cableLine": "첫 부팅 전에 케이블을 연결하세요. 보드는 공유기에서 주소를 받습니다.",
+          "moreWifi": "국가 및 IP 주소",
+          "moreCable": "IP 주소",
+          "searchCountry": "국가 검색",
+          "ip": "IP 주소",
+          "ipAuto": "자동",
+          "ipFixed": "고정",
+          "address": "주소",
+          "netmask": "넷마스크",
+          "gateway": "게이트웨이",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "누가 로그인하나요?",
+          "sub": "보드에서 로그인과 sudo에 사용하는 계정입니다.",
+          "now": "지금 만들기",
+          "later": "첫 로그인 시",
+          "more": "전체 이름 및 로그인 셸",
+          "shellDefault": "Armbian 기본값",
+          "laterLine": "SSH 또는 키보드와 모니터로 처음 로그인할 때 Armbian이 사용자 생성을 요청합니다. 이때 이 프로필의 언어와 시간은 적용되지 않습니다."
+        },
+        "locale": {
+          "title": "언어 및 시간",
+          "sub": "보드가 사용자를 만들 때 적용됩니다.",
+          "location": "위치 기반",
+          "choose": "직접 선택",
+          "language": "언어",
+          "searchTimezone": "시간대 검색",
+          "locationLine": "Armbian은 보드가 인터넷에 연결되는 위치를 기준으로 언어와 시간대를 설정합니다.",
+          "userComplete": "사용자 정보가 완전하므로 Armbian이 이를 적용합니다.",
+          "userIncomplete": "Armbian은 프로필이 비밀번호와 전체 이름이 있는 사용자를 만들 때만 이를 적용합니다."
+        },
+        "access": {
+          "title": "어떻게 접속하나요?",
+          "sub": "SSH 키를 사용하면 비밀번호를 입력하지 않고 로그인할 수 있습니다.",
+          "keys": "SSH 키",
+          "passwordOnly": "비밀번호만",
+          "source": "키를 가져올 곳",
+          "link": "링크",
+          "forgeUser": "{{forge}} 사용자 이름",
+          "linkLabel": "공개 키 링크",
+          "fetchHint": "보드가 첫 부팅 때 가져옵니다.",
+          "linkHint": "공개 키를 한 줄에 하나씩 제공하는 모든 https 주소.",
+          "passwordLine": "SSH 또는 키보드와 모니터로 비밀번호를 입력해 로그인합니다.",
+          "rootHint": "비워 두면 Armbian이 첫 로그인 시 변경을 요청합니다."
+        },
+        "review": {
+          "title": "{{name}} 만들 준비가 되었습니다",
+          "sub": "한 번 확인하세요. 그러면 요약 화면에서 선택됩니다.",
+          "subSettings": "한 번 확인하세요. 그러면 프로필 목록에 표시됩니다.",
+          "later": "설정의 자동 구성에서 언제든지 변경할 수 있습니다."
+        }
+      }
     }
   },
   "update": {

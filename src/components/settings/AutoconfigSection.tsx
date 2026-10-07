@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect, useCallback, useMemo, useId } from 'react';
+import { useState, useEffect, useCallback, useMemo, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Plus, Pencil, Trash2, FileCog, ChevronLeft, ChevronDown,
   Network, Globe, KeyRound, User, SlidersHorizontal,
-  Wifi, Lock, Eye, EyeOff, Link2, Clock, MapPin, Router, Server, Cable,
-  Terminal, ShieldAlert, UserCircle, Info,
+  Wifi, Eye, EyeOff, Link2, Clock, MapPin, Router, Server, Cable,
+  Terminal, ShieldAlert, UserCircle, Info, Wand2,
 } from 'lucide-react';
 import type { AutoconfigConfig, AutoconfigProfile } from '../../types';
 import { isHttpUrl, type StaticIpErrors } from '../../utils';
@@ -18,6 +18,8 @@ import {
 } from '../../hooks/useSettings';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
 import { ErrorDisplay } from '../shared/ErrorDisplay';
+import { PasswordInput } from '../shared/PasswordInput';
+import { ProfileWizard } from '../autoconfig/ProfileWizard';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { logWarn } from '../../hooks/useTauri';
 import { useToasts } from '../../hooks/useToasts';
@@ -28,6 +30,7 @@ import {
   WIFI_COUNTRY_CODES,
   STATIC_IP_FIELDS,
   getTimezones,
+  hasCompleteUser,
   renderPresetPreview,
   staticIpBlockingErrors,
   trimStaticIp,
@@ -82,31 +85,6 @@ function TextInput({ id, icon: Icon, value, onChange, placeholder, mono, list, i
         aria-invalid={invalid || undefined}
         onChange={(e) => onChange(e.target.value)}
       />
-    </div>
-  );
-}
-
-/** Password input with a reveal toggle. */
-function PasswordInput({ value, onChange, placeholder }: { value: string | undefined; onChange: (v: string) => void; placeholder?: string }) {
-  const [show, setShow] = useState(false);
-  return (
-    <div className="ac-input">
-      <Lock size={15} className="ac-input__icon" />
-      <input
-        type={show ? 'text' : 'password'}
-        value={value ?? ''}
-        placeholder={placeholder}
-        autoComplete="new-password"
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <button
-        type="button"
-        className="ac-input__btn"
-        onClick={() => setShow((s) => !s)}
-        aria-label={show ? 'Hide' : 'Show'}
-      >
-        {show ? <EyeOff size={15} /> : <Eye size={15} />}
-      </button>
     </div>
   );
 }
@@ -239,6 +217,8 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
   const [revealSecrets, setRevealSecrets] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [nameMissing, setNameMissing] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const guidedRef = useRef<HTMLButtonElement>(null);
   const [networkOpen, setNetworkOpen] = useState(false);
   const ipFieldId = useId();
   const ipInputId = (field: keyof StaticIpErrors) => `${ipFieldId}-${field}`;
@@ -338,7 +318,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
 
     // Locale/timezone are applied by Armbian only during first-user creation,
     // so they stay locked until the first user is fully defined (name + password + full name).
-    const hasUser = !!(c.userName?.trim() && c.userPassword?.trim() && c.userRealName?.trim());
+    const hasUser = hasCompleteUser(c);
     const ipErr = staticIpBlockingErrors(c);
     const ipErrFields = STATIC_IP_FIELDS.filter((field) => ipErr[field]);
     const ipBlocked = ipErrFields.length > 0;
@@ -630,10 +610,16 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
             <div className="settings-group__title">{t('settings.autoconfig.title')}</div>
             <div className="settings-row__desc">{t('settings.autoconfig.description')}</div>
           </div>
-          <button className="btn btn-primary btn-sm" onClick={handleNew}>
-            <Plus size={16} />
-            {t('settings.autoconfig.newProfile')}
-          </button>
+          <div className="autoconfig-list-actions">
+            <button ref={guidedRef} className="btn btn-secondary btn-sm" onClick={() => setWizardOpen(true)}>
+              <Wand2 size={16} />
+              {t('settings.autoconfig.guided')}
+            </button>
+            <button className="btn btn-primary btn-sm" onClick={handleNew}>
+              <Plus size={16} />
+              {t('settings.autoconfig.newProfile')}
+            </button>
+          </div>
         </div>
 
         {loadError ? (
@@ -691,6 +677,16 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
         onCancel={() => setPendingDelete(null)}
         onConfirm={handleDeleteConfirm}
       />
+
+      {wizardOpen && (
+        <ProfileWizard
+          boardName={null}
+          boardImage={null}
+          returnFocusRef={guidedRef}
+          onClose={() => setWizardOpen(false)}
+          onCreated={() => loadProfiles()}
+        />
+      )}
     </div>
   );
 }

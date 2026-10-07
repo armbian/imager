@@ -165,7 +165,9 @@
   "common": {
     "unknown": "不明",
     "confirm": "確認",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "showPassword": "パスワードを表示",
+    "hidePassword": "パスワードを非表示"
   },
   "settings": {
     "title": "設定",
@@ -354,7 +356,116 @@
       "previewReveal": "表示",
       "previewHide": "非表示",
       "previewEmpty": "まだ何も設定されていません。上のフィールドを入力して初回起動ファイルを作成してください。",
-      "settingsCount": "項目"
+      "settingsCount": "項目",
+      "guided": "ガイド付きセットアップ",
+      "wifiKeyFits": "Wi-Fiに使えます（8文字から63文字）",
+      "wifiKeyLength": "Wi-Fiのパスワードは通常8文字から63文字です",
+      "wizard": {
+        "eyebrow": "新しいプロファイル",
+        "unnamed": "名前未設定",
+        "forBoard": "{{board}}用",
+        "forAnyBoard": "すべてのボード用",
+        "stepOf": "ステップ <b>{{current}}</b> / {{total}}",
+        "close": "閉じる",
+        "skip": "このステップをスキップ",
+        "back": "戻る",
+        "next": "次へ",
+        "create": "プロファイルを作成",
+        "noMatch": "一致するものはありません",
+        "password": "パスワード",
+        "nameHint": "以降のステップはすべて任意です。不要なものはスキップしてください。",
+        "ssidRequired": "ネットワーク名を入力するか、「ケーブル」を選んでください。",
+        "addressRequired": "アドレスを入力するか、「自動」を選んでください。",
+        "usernameRequired": "ユーザー名を入力するか、「初回ログイン時」を選んでください。",
+        "keyUserInvalid": "有効なユーザー名ではありません。",
+        "steps": {
+          "name": "名前",
+          "network": "ネットワーク",
+          "user": "ユーザー",
+          "locale": "言語と時刻",
+          "access": "アクセス",
+          "review": "確認"
+        },
+        "pending": {
+          "network": "Armbianの既定値のまま",
+          "user": "初回起動時に確認",
+          "locale": "Armbianの既定値",
+          "access": "パスワードログインのみ"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "イーサネット",
+          "location": "位置情報から",
+          "keysFrom": "{{forge}}のSSHキー",
+          "keysLink": "リンク先のSSHキー",
+          "passwordOnly": "パスワードのみ",
+          "rootSet": "rootパスワード設定済み"
+        },
+        "name": {
+          "title": "名前を付けましょう",
+          "sub": "概要画面では、この名前で選べます。"
+        },
+        "network": {
+          "title": "どうやって接続しますか？",
+          "sub": "あとから設定で変更できます。",
+          "cable": "ケーブル",
+          "wifi": "Wi-Fi",
+          "both": "両方",
+          "ssid": "ネットワーク名",
+          "country": "国",
+          "cableLine": "初回起動の前にケーブルを接続してください。ボードはルーターからアドレスを取得します。",
+          "moreWifi": "国とIPアドレス",
+          "moreCable": "IPアドレス",
+          "searchCountry": "国を検索",
+          "ip": "IPアドレス",
+          "ipAuto": "自動",
+          "ipFixed": "固定",
+          "address": "アドレス",
+          "netmask": "ネットマスク",
+          "gateway": "ゲートウェイ",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "誰がログインしますか？",
+          "sub": "ボードで使うアカウントです。ログインとsudoに使います。",
+          "now": "今すぐ作成",
+          "later": "初回ログイン時",
+          "more": "フルネームとログインシェル",
+          "shellDefault": "Armbianの既定",
+          "laterLine": "初回ログイン時に、SSH、またはキーボードとモニターで、Armbianがユーザーの作成を求めます。そのとき、このプロファイルの言語と時刻は適用されません。"
+        },
+        "locale": {
+          "title": "言語と時刻",
+          "sub": "ボードがユーザーを作成するときに適用されます。",
+          "location": "位置情報から",
+          "choose": "自分で選ぶ",
+          "language": "言語",
+          "searchTimezone": "タイムゾーンを検索",
+          "locationLine": "Armbianは、ボードがインターネットに接続した場所から言語とタイムゾーンを設定します。",
+          "userComplete": "ユーザーの情報がそろっているため、Armbianはこれらを適用します。",
+          "userIncomplete": "Armbianは、プロファイルがパスワードとフルネームを持つユーザーを作成する場合にのみ、これらを適用します。"
+        },
+        "access": {
+          "title": "どうやって入りますか？",
+          "sub": "SSHキーがあれば、パスワードを入力せずにログインできます。",
+          "keys": "SSHキー",
+          "passwordOnly": "パスワードのみ",
+          "source": "キーの取得元",
+          "link": "リンク",
+          "forgeUser": "{{forge}}のユーザー名",
+          "linkLabel": "公開キーへのリンク",
+          "fetchHint": "ボードが初回起動時に取得します。",
+          "linkHint": "公開キーを1行に1つずつ返す、任意のhttpsアドレス。",
+          "passwordLine": "パスワードでログインします。SSH、またはキーボードとモニターを使います。",
+          "rootHint": "空欄のままにすると、Armbianが初回ログイン時に変更を求めます。"
+        },
+        "review": {
+          "title": "{{name}}を作成する準備ができました",
+          "sub": "一度確認してください。そのあと概要画面で選択されます。",
+          "subSettings": "一度確認してください。そのあとプロファイル一覧に表示されます。",
+          "later": "設定の「自動構成」からいつでも変更できます。"
+        }
+      }
     }
   },
   "update": {

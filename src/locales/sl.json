@@ -165,7 +165,9 @@
   "common": {
     "unknown": "Neznano",
     "confirm": "Potrdi",
-    "cancel": "Prekliči"
+    "cancel": "Prekliči",
+    "showPassword": "Pokaži geslo",
+    "hidePassword": "Skrij geslo"
   },
   "settings": {
     "title": "Nastavitve",
@@ -354,7 +356,116 @@
       "previewReveal": "Razkrij",
       "previewHide": "Skrij",
       "previewEmpty": "Nič še ni nastavljeno. Izpolnite polja zgoraj, da ustvarite datoteko prvega zagona.",
-      "settingsCount": "nastavitev"
+      "settingsCount": "nastavitev",
+      "guided": "Vodena nastavitev",
+      "wifiKeyFits": "Primerno za Wi-Fi (od 8 do 63 znakov)",
+      "wifiKeyLength": "Gesla Wi-Fi imajo običajno od 8 do 63 znakov",
+      "wizard": {
+        "eyebrow": "Nov profil",
+        "unnamed": "Še brez imena",
+        "forBoard": "Za {{board}}",
+        "forAnyBoard": "Za katero koli ploščo",
+        "stepOf": "Korak <b>{{current}}</b> od {{total}}",
+        "close": "Zapri",
+        "skip": "Preskoči ta korak",
+        "back": "Nazaj",
+        "next": "Naprej",
+        "create": "Ustvari profil",
+        "noMatch": "Ni zadetkov",
+        "password": "Geslo",
+        "nameHint": "Vsi naslednji koraki so neobvezni. Preskočite, česar ne potrebujete.",
+        "ssidRequired": "Vnesite ime omrežja ali izberite Kabel.",
+        "addressRequired": "Vnesite naslov ali izberite Samodejno.",
+        "usernameRequired": "Vnesite uporabniško ime ali izberite Ob prvi prijavi.",
+        "keyUserInvalid": "To ni veljavno uporabniško ime.",
+        "steps": {
+          "name": "Ime",
+          "network": "Omrežje",
+          "user": "Uporabnik",
+          "locale": "Jezik in čas",
+          "access": "Dostop",
+          "review": "Pregled"
+        },
+        "pending": {
+          "network": "Ohrani privzete nastavitve Armbiana",
+          "user": "Vpraša se ob prvem zagonu",
+          "locale": "Privzete nastavitve Armbiana",
+          "access": "Prijava samo z geslom"
+        },
+        "sum": {
+          "wifi": "Wi-Fi {{ssid}}",
+          "cable": "Ethernet",
+          "location": "Glede na lokacijo",
+          "keysFrom": "Ključi SSH z {{forge}}",
+          "keysLink": "Ključi SSH s povezave",
+          "passwordOnly": "Samo geslo",
+          "rootSet": "geslo root nastavljeno"
+        },
+        "name": {
+          "title": "Kako ga poimenujemo?",
+          "sub": "Na povzetku ga izberete po imenu."
+        },
+        "network": {
+          "title": "Kako se poveže?",
+          "sub": "To lahko pozneje spremenite v Nastavitvah.",
+          "cable": "Kabel",
+          "wifi": "Wi-Fi",
+          "both": "Oboje",
+          "ssid": "Ime omrežja",
+          "country": "Država",
+          "cableLine": "Kabel priključite pred prvim zagonom. Plošča dobi naslov od vašega usmerjevalnika.",
+          "moreWifi": "Država in naslov IP",
+          "moreCable": "Naslov IP",
+          "searchCountry": "Išči države",
+          "ip": "Naslov IP",
+          "ipAuto": "Samodejno",
+          "ipFixed": "Stalni",
+          "address": "Naslov",
+          "netmask": "Omrežna maska",
+          "gateway": "Prehod",
+          "dns": "DNS"
+        },
+        "user": {
+          "title": "Kdo se prijavlja?",
+          "sub": "Račun, ki ga uporabljate na plošči, za prijavo in za sudo.",
+          "now": "Ustvari zdaj",
+          "later": "Ob prvi prijavi",
+          "more": "Polno ime in lupina za prijavo",
+          "shellDefault": "Privzeto v Armbianu",
+          "laterLine": "Ob prvi prijavi, prek SSH ali s tipkovnico in zaslonom, vas Armbian pozove, da ustvarite uporabnika. Jezik in čas iz tega profila se takrat ne uporabita."
+        },
+        "locale": {
+          "title": "Jezik in čas",
+          "sub": "Uporabita se, ko plošča ustvari vašega uporabnika.",
+          "location": "Glede na lokacijo",
+          "choose": "Izberem sam",
+          "language": "Jezik",
+          "searchTimezone": "Išči časovne pasove",
+          "locationLine": "Armbian nastavi jezik in časovni pas glede na kraj, od koder se plošča poveže v internet.",
+          "userComplete": "Vaš uporabnik je popoln, zato ju Armbian uporabi.",
+          "userIncomplete": "Armbian ju uporabi le, ko profil ustvari uporabnika z geslom in polnim imenom."
+        },
+        "access": {
+          "title": "Kako vstopate?",
+          "sub": "S ključi SSH se prijavite brez vnosa gesla.",
+          "keys": "Ključi SSH",
+          "passwordOnly": "Samo geslo",
+          "source": "Od kod so ključi",
+          "link": "Povezava",
+          "forgeUser": "Uporabniško ime na {{forge}}",
+          "linkLabel": "Povezava do javnih ključev",
+          "fetchHint": "Plošča jih prenese ob prvem zagonu.",
+          "linkHint": "Kateri koli naslov https, ki streže javne ključe, po eden v vrstici.",
+          "passwordLine": "Prijavite se z geslom, prek SSH ali s tipkovnico in zaslonom.",
+          "rootHint": "Pustite prazno in Armbian vas bo ob prvi prijavi pozval k spremembi."
+        },
+        "review": {
+          "title": "Pripravljeno za ustvarjanje: {{name}}",
+          "sub": "Preverite enkrat. Nato bo izbran na povzetku.",
+          "subSettings": "Preverite enkrat. Nato se prikaže na vašem seznamu profilov.",
+          "later": "Spremenite ga lahko kadar koli v Nastavitvah, Samodejna nastavitev."
+        }
+      }
     }
   },
   "update": {

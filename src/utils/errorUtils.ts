@@ -5,7 +5,7 @@
 
 import { formatBytes } from './index';
 
-type TFn = (key: string, opts?: Record<string, unknown>) => string;
+export type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
 const WRITE_FAILED_PATTERN = /\[WRITE_FAILED:(\d+)\]/;
 const DEVICE_TOO_SMALL_PATTERN = /\[DEVICE_TOO_SMALL:(\d+):(\d+)\]/;
