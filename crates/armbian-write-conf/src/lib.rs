@@ -107,6 +107,7 @@ pub fn write_file_into_image(
     content: &[u8],
 ) -> Result<WriteConfReport, WriteConfError> {
     let part = detect::detect_rootfs(image_path)?;
+    detect::verify_supported_ext4(image_path, part.offset)?;
 
     // Open the image read+write and wrap the rootfs window for ext4-rs.
     let file = OpenOptions::new().read(true).write(true).open(image_path)?;
@@ -154,6 +155,7 @@ pub fn write_file_into_bare_ext4_image(
 ) -> Result<WriteConfReport, WriteConfError> {
     // The filesystem starts at file byte 0 (no partition table).
     detect::verify_ext4(image_path, 0)?;
+    detect::verify_supported_ext4(image_path, 0)?;
 
     // Open the image read+write; the ext4-rs window covers the whole file.
     let file = OpenOptions::new().read(true).write(true).open(image_path)?;

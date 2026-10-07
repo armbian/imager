@@ -18,6 +18,23 @@ const GPT_SIG: &[u8; 8] = b"EFI PART";
 /// Offset of the ext4 superblock within a partition, and its magic value.
 const EXT4_SB_OFFSET: u64 = 0x438;
 const EXT4_MAGIC: [u8; 2] = [0x53, 0xEF];
+/// Superblock start and the fields the write path depends on.
+const EXT4_SB_START: u64 = 0x400;
+const EXT4_SB_LEN: usize = 0x400;
+const SB_LOG_BLOCK_SIZE: usize = 0x18;
+const SB_FEATURE_INCOMPAT: usize = 0x60;
+const SB_FEATURE_RO_COMPAT: usize = 0x64;
+const SB_DESC_SIZE: usize = 0xFE;
+/// armbian-ext4fs hard-codes 4 KiB blocks: log2(4096 / 1024).
+const SUPPORTED_LOG_BLOCK_SIZE: u32 = 2;
+const INCOMPAT_RECOVER: u32 = 0x4;
+const INCOMPAT_64BIT: u32 = 0x80;
+const INCOMPAT_INLINE_DATA: u32 = 0x8000;
+const RO_COMPAT_BIGALLOC: u32 = 0x200;
+const RO_COMPAT_METADATA_CSUM: u32 = 0x400;
+/// armbian-ext4fs reads s_desc_size raw, so it must match the size the descriptors really have.
+const DESC_SIZE_32BIT: u16 = 32;
+const DESC_SIZE_64BIT: u16 = 64;
 
 /// Partition scheme of a RAW disk image.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -195,6 +212,59 @@ pub(crate) fn verify_ext4(image_path: &Path, base: u64) -> Result<(), WriteConfE
     ))
 }
 
+/// Refuse filesystems armbian-ext4fs would damage or panic on: block size other than 4 KiB, no metadata_csum,
+/// a journal waiting for replay, an unusable group descriptor size, bigalloc or inline_data.
+/// Read-only, so a refusal leaves the image untouched.
+pub(crate) fn verify_supported_ext4(image_path: &Path, base: u64) -> Result<(), WriteConfError> {
+    let mut f = File::open(image_path)?;
+    f.seek(SeekFrom::Start(base + EXT4_SB_START))?;
+    let mut sb = [0u8; EXT4_SB_LEN];
+    f.read_exact(&mut sb)?;
+    let field = |at: usize| u32::from_le_bytes(sb[at..at + 4].try_into().unwrap());
+
+    let log_block_size = field(SB_LOG_BLOCK_SIZE);
+    if log_block_size != SUPPORTED_LOG_BLOCK_SIZE {
+        return Err(WriteConfError::UnsupportedImage(format!(
+            "ext4 block size {} is not supported, only 4096",
+            1024u64.checked_shl(log_block_size).unwrap_or(0)
+        )));
+    }
+    if field(SB_FEATURE_RO_COMPAT) & RO_COMPAT_METADATA_CSUM == 0 {
+        return Err(WriteConfError::UnsupportedImage(
+            "ext4 without metadata_csum is not supported".into(),
+        ));
+    }
+    if field(SB_FEATURE_INCOMPAT) & INCOMPAT_RECOVER != 0 {
+        return Err(WriteConfError::UnsupportedImage(
+            "ext4 journal needs recovery; run e2fsck on the image first".into(),
+        ));
+    }
+    let desc_size = u16::from_le_bytes([sb[SB_DESC_SIZE], sb[SB_DESC_SIZE + 1]]);
+    if field(SB_FEATURE_INCOMPAT) & INCOMPAT_64BIT == 0 {
+        // A plain mkfs without 64bit leaves s_desc_size at 0, which the writer divides by.
+        if desc_size != DESC_SIZE_32BIT {
+            return Err(WriteConfError::UnsupportedImage(format!(
+                "ext4 without the 64bit feature is not supported (group descriptor size {desc_size})"
+            )));
+        }
+    } else if desc_size != DESC_SIZE_64BIT {
+        return Err(WriteConfError::UnsupportedImage(format!(
+            "ext4 group descriptor size {desc_size} is not supported, only 64"
+        )));
+    }
+    if field(SB_FEATURE_RO_COMPAT) & RO_COMPAT_BIGALLOC != 0 {
+        return Err(WriteConfError::UnsupportedImage(
+            "ext4 with bigalloc is not supported".into(),
+        ));
+    }
+    if field(SB_FEATURE_INCOMPAT) & INCOMPAT_INLINE_DATA != 0 {
+        return Err(WriteConfError::UnsupportedImage(
+            "ext4 with inline_data is not supported".into(),
+        ));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -239,6 +309,43 @@ mod tests {
         tf.write_all(bytes).unwrap();
         tf.flush().unwrap();
         tf
+    }
+
+    /// A bare superblock with 4K blocks and metadata_csum plus the given 64bit flag and s_desc_size.
+    fn superblock_image(sixty_four_bit: bool, desc_size: u16) -> tempfile::NamedTempFile {
+        let mut bytes = vec![0u8; (EXT4_SB_START as usize) + EXT4_SB_LEN];
+        let sb = EXT4_SB_START as usize;
+        let put = |bytes: &mut Vec<u8>, at: usize, v: &[u8]| {
+            bytes[sb + at..sb + at + v.len()].copy_from_slice(v)
+        };
+        put(
+            &mut bytes,
+            SB_LOG_BLOCK_SIZE,
+            &SUPPORTED_LOG_BLOCK_SIZE.to_le_bytes(),
+        );
+        put(
+            &mut bytes,
+            SB_FEATURE_RO_COMPAT,
+            &RO_COMPAT_METADATA_CSUM.to_le_bytes(),
+        );
+        let incompat = if sixty_four_bit { INCOMPAT_64BIT } else { 0 };
+        put(&mut bytes, SB_FEATURE_INCOMPAT, &incompat.to_le_bytes());
+        put(&mut bytes, SB_DESC_SIZE, &desc_size.to_le_bytes());
+        write_temp(&bytes)
+    }
+
+    #[test]
+    fn descriptor_size_must_match_the_64bit_flag() {
+        let accepted = |sixty_four_bit, desc_size| {
+            verify_supported_ext4(superblock_image(sixty_four_bit, desc_size).path(), 0).is_ok()
+        };
+        assert!(accepted(true, DESC_SIZE_64BIT));
+        assert!(accepted(false, DESC_SIZE_32BIT));
+        assert!(!accepted(false, 0));
+        assert!(!accepted(false, DESC_SIZE_64BIT));
+        assert!(!accepted(true, 0));
+        assert!(!accepted(true, DESC_SIZE_32BIT));
+        assert!(!accepted(true, 128));
     }
 
     #[test]
