@@ -33,6 +33,9 @@ export const TIMING = {
   COVERFLOW_ADVANCE: 3600,
 } as const;
 
+export const BYTES_PER_KB = 1024;
+export const BYTES_PER_MB = BYTES_PER_KB * BYTES_PER_KB;
+
 export const CACHE = {
   /** Auto-delete a cached image after this many consecutive flash failures */
   MAX_FLASH_FAILURES: 3,
@@ -58,6 +61,7 @@ export const EVENTS = {
   OPEN_SETTINGS: 'armbian-open-settings',
   /** Carries the opt-in autoconfig profile id (or null) picked at flash time */
   AUTOCONFIG_PROFILE_SELECTED: 'armbian-autoconfig-profile-selected',
+  CONNECTIVITY_RECHECK: 'armbian-connectivity-recheck',
 } as const;
 
 /** Storage key prefixes for sessionStorage/localStorage */
@@ -123,6 +127,15 @@ export const PLATFORM = {
   LINUX: 'linux',
   MACOS: 'macos',
   WINDOWS: 'windows',
+} as const;
+
+export const PLATFORM_UA = {
+  MACOS: 'Mac',
+  WINDOWS: 'Windows',
+} as const;
+
+export const PLATFORM_CLASS = {
+  MACOS: 'is-macos',
 } as const;
 
 export const PLATFORM_LABEL: Record<string, string> = {

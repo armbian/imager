@@ -292,3 +292,6 @@ export interface AutoconfigProfilesChangedDetail {
   id: string;
   action: AutoconfigProfileChangeAction;
 }
+
+/** How a settled flash screen leaves: Back on error, Flash another on done */
+export type FlashExit = () => void | Promise<void>;

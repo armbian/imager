@@ -3,6 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { check, type Update } from '@tauri-apps/plugin-updater';
+import { relaunch as relaunchProcess } from '@tauri-apps/plugin-process';
 import { logInfo } from '../hooks/useTauri';
 import { getShowUpdaterModal } from '../hooks/useSettings';
 
@@ -15,6 +16,9 @@ interface UpdateContextType {
   isOpen: boolean;
   open: () => void;
   close: () => void;
+  /** A simulated update clears itself instead of restarting the app */
+  relaunch: () => Promise<void>;
+  simulate?: (update: Update | null) => void;
 }
 
 const UpdateContext = createContext<UpdateContextType | undefined>(undefined);
@@ -25,6 +29,7 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
   const [update, setUpdate] = useState<Update | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const hasCheckedRef = useRef(false);
+  const simulatedRef = useRef(false);
 
   useEffect(() => {
     if (hasCheckedRef.current) return;
@@ -57,8 +62,35 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
 
+  const relaunch = useCallback(async () => {
+    if (!simulatedRef.current) {
+      await relaunchProcess();
+      return;
+    }
+    logInfo('updater', 'Simulated update installed, relaunch skipped');
+    simulatedRef.current = false;
+    setUpdate(null);
+    setIsOpen(false);
+  }, []);
+
+  const simulate = useCallback((next: Update | null) => {
+    simulatedRef.current = next !== null;
+    setUpdate(next);
+    setIsOpen(false);
+  }, []);
+
   return (
-    <UpdateContext.Provider value={{ update, available: update !== null, isOpen, open, close }}>
+    <UpdateContext.Provider
+      value={{
+        update,
+        available: update !== null,
+        isOpen,
+        open,
+        close,
+        relaunch,
+        simulate: __DEV_SCENARIOS__ ? simulate : undefined,
+      }}
+    >
       {children}
     </UpdateContext.Provider>
   );

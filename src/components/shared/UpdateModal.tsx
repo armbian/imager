@@ -4,7 +4,6 @@
 import { useState } from 'react';
 import { Download, RefreshCw, CircleCheck, CircleAlert, X, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { relaunch } from '@tauri-apps/plugin-process';
 import { isAppInApplications } from '../../hooks/useTauri';
 import { formatFileSize, getErrorMessage } from '../../utils';
 import { ChangelogModal } from './ChangelogModal';
@@ -19,11 +18,19 @@ interface DownloadProgress {
 
 export function UpdateModal() {
   const { t } = useTranslation();
-  const { update, isOpen, close } = useUpdate();
+  const { update, isOpen, close, relaunch } = useUpdate();
   const [state, setState] = useState<UpdateState>('available');
   const [progress, setProgress] = useState<DownloadProgress>({ downloaded: 0, total: null });
   const [error, setError] = useState<string | null>(null);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [shownUpdate, setShownUpdate] = useState(update);
+
+  // A replaced update (a dev simulation) starts over instead of reopening at its old state
+  if (update !== shownUpdate) {
+    setShownUpdate(update);
+    setState('available');
+    setError(null);
+  }
 
   const dismissError = () => {
     setState('available');

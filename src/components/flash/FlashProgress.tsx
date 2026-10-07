@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useEffectEvent } from 'react';
 import { HardDrive, Usb, Disc, FileImage, ShieldOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { BoardInfo, ImageInfo, BlockDevice, AutoconfigConfig } from '../../types';
+import type { BoardInfo, ImageInfo, BlockDevice, AutoconfigConfig, FlashExit } from '../../types';
 import { isEdlImage } from '../../types';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
@@ -25,6 +25,7 @@ interface FlashProgressProps {
   autoconfig?: AutoconfigConfig | null;
   onComplete: () => void;
   onBack: () => void;
+  onSettledChange?: (exit: FlashExit | null) => void;
 }
 
 export function FlashProgress({
@@ -34,6 +35,7 @@ export function FlashProgress({
   autoconfig,
   onComplete,
   onBack,
+  onSettledChange,
 }: FlashProgressProps) {
   const { t } = useTranslation();
   const [boardImageUrl, setBoardImageUrl] = useState<string | null>(null);
@@ -71,6 +73,15 @@ export function FlashProgress({
   const showHeader = stage !== 'authorizing' && stage !== 'error';
   const isError = stage === 'error';
   const isComplete = stage === 'complete';
+  const settled = isError || isComplete;
+  const settledExit = useEffectEvent(() => (isError ? handleBack : onComplete));
+
+  useEffect(() => {
+    if (!settled || !onSettledChange) return;
+    onSettledChange(settledExit());
+    return () => onSettledChange(null);
+  }, [settled, onSettledChange]);
+
   const isCustomIcon = image.is_custom && board.slug === SLUGS.CUSTOM;
   const isEdl = isEdlImage(image);
 
