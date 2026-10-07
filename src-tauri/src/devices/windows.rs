@@ -447,7 +447,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
 
             let has_c_drive = drive_letters
                 .as_ref()
-                .map_or(false, |letters| letters.iter().any(|l| l == "C:"));
+                .is_some_and(|letters| letters.iter().any(|l| l == "C:"));
 
             // Internal fixed disks are system; USB stays selectable; C: always wins.
             let is_internal = !is_removable && bus_type.as_deref() != Some("USB");
