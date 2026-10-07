@@ -270,7 +270,7 @@ export function useFlashOperation({
     } catch (err) {
       const raw = getErrorMessage(err, '');
       if (deviceDisconnectedRef.current && /cancel/i.test(raw)) return;
-      failFlash(raw || t('error.decompressionFailed'));
+      failFlash(raw ? translateFlashError(raw, t) : t('error.decompressionFailed'));
     }
   }
 
@@ -304,7 +304,7 @@ export function useFlashOperation({
         }
 
         if (prog.error && !deviceDisconnectedRef.current) {
-          failFlash(prog.error);
+          failFlash(translateFlashError(prog.error, t));
           if (intervalRef.current) clearInterval(intervalRef.current);
         }
       } catch {
@@ -330,7 +330,7 @@ export function useFlashOperation({
       }
 
       if (deviceDisconnectedRef.current && /cancel/i.test(errorMsg)) return;
-      failFlash(errorMsg.trim() ? errorMsg : t('error.downloadFailed'));
+      failFlash(errorMsg.trim() ? translateFlashError(errorMsg, t) : t('error.downloadFailed'));
     }
   }
 
@@ -384,7 +384,7 @@ export function useFlashOperation({
           }
         }
         if (prog.error && !deviceDisconnectedRef.current) {
-          failFlash(prog.error);
+          failFlash(translateFlashError(prog.error, t));
           if (intervalRef.current) clearInterval(intervalRef.current);
         }
       } catch {
@@ -618,7 +618,7 @@ export function useFlashOperation({
     } catch (err) {
       const raw = getErrorMessage(err, '');
       if (deviceDisconnectedRef.current && /cancel/i.test(raw)) return;
-      failFlash(raw || t('error.decompressionFailed'));
+      failFlash(raw ? translateFlashError(raw, t) : t('error.decompressionFailed'));
     }
   };
 

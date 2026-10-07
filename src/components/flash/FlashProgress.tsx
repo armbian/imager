@@ -175,7 +175,7 @@ export function FlashProgress({
                 <>
                   <p className="flash-success-hint">
                     {isEdl
-                      ? t('flash.successHintQdl')
+                      ? t('flash.successHintQdlReady')
                       : image.is_custom
                         ? t('flash.successHintCustom')
                         : t('flash.successHint', { boardName: board.name })}
