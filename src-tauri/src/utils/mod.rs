@@ -4,12 +4,14 @@
 //! Shared helpers for formatting, system info, path management, and progress
 //! tracking.
 
+mod errors;
 mod format;
 mod http;
 mod path;
 mod progress;
 mod system;
 
+pub use errors::*;
 pub use format::*;
 pub use http::*;
 pub use path::*;

@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::config::dev;
+use crate::flash::verify::{data_mismatch_err, verify_cancelled_err};
 use crate::flash::{write_failed_err, FlashState};
 use crate::qdl::flash::{check_cancelled, update_qdl_stage};
 use crate::qdl::{
@@ -127,8 +128,8 @@ pub async fn simulate_block_flash(
     .await
     {
         Ok(()) => Ok(()),
-        Err(Stop::Cancelled) => Err("Verification cancelled".to_string()),
-        Err(Stop::FailedAt(at)) => Err(format!("Verification failed: data mismatch at byte {at}")),
+        Err(Stop::Cancelled) => Err(verify_cancelled_err()),
+        Err(Stop::FailedAt(at)) => Err(data_mismatch_err(at)),
     }
 }
 
@@ -282,10 +283,7 @@ mod tests {
     #[tokio::test]
     async fn verify_mismatch_only_when_verifying() {
         let (result, state, _) = run(FlashOutcome::VerifyMismatch, true).await;
-        assert_eq!(
-            result.unwrap_err(),
-            format!("Verification failed: data mismatch at byte {}", 4 * MB)
-        );
+        assert_eq!(result.unwrap_err(), data_mismatch_err(4 * MB));
         assert_eq!(state.written_bytes.load(Ordering::SeqCst), 8 * MB);
         let (result, _, _) = run(FlashOutcome::VerifyMismatch, false).await;
         assert!(result.is_ok());

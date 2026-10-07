@@ -15,10 +15,31 @@ use tokio::sync::Mutex;
 
 use crate::config;
 use crate::decompress::decompress_with_rust_xz;
-use crate::utils::{bytes_to_mb, validate_cache_path, validate_file_name, ProgressTracker};
+use crate::utils::{
+    bytes_to_mb, tagged, validate_cache_path, validate_file_name, ProgressTracker, TAG_CANCELLED,
+};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "download";
+
+pub(crate) const TAG_SHA_MISMATCH: &str = "[SHA_MISMATCH]";
+const SHA_CANCELLED: &str = "SHA256 verification cancelled";
+
+pub(crate) fn sha_mismatch_err(expected: &str, actual: impl std::fmt::Display) -> String {
+    tagged(
+        TAG_SHA_MISMATCH,
+        format!("SHA256 mismatch: expected {}, got {}", expected, actual),
+    )
+}
+
+// A mismatch keeps its tag at the start; other SHA failures keep the legacy wording.
+fn sha_failure_err(e: &str) -> String {
+    if e.starts_with(TAG_SHA_MISMATCH) {
+        e.to_string()
+    } else {
+        format!("SHA256 verification failed: {}", e)
+    }
+}
 
 /// Download progress state
 pub struct DownloadState {
@@ -148,7 +169,7 @@ fn calculate_file_sha256(path: &Path, state: &Arc<DownloadState>) -> Result<Stri
     loop {
         if state.is_cancelled.load(Ordering::SeqCst) {
             log_info!(MODULE, "SHA256 calculation cancelled by user");
-            return Err("SHA256 verification cancelled".to_string());
+            return Err(tagged(TAG_CANCELLED, SHA_CANCELLED));
         }
 
         let bytes_read = file
@@ -183,13 +204,13 @@ async fn verify_sha256(
     state: &Arc<DownloadState>,
 ) -> Result<(), String> {
     if state.is_cancelled.load(Ordering::SeqCst) {
-        return Err("SHA256 verification cancelled".to_string());
+        return Err(tagged(TAG_CANCELLED, SHA_CANCELLED));
     }
 
     let expected = fetch_expected_sha(client, sha_url).await?;
 
     if state.is_cancelled.load(Ordering::SeqCst) {
-        return Err("SHA256 verification cancelled".to_string());
+        return Err(tagged(TAG_CANCELLED, SHA_CANCELLED));
     }
 
     let actual = calculate_file_sha256(file_path, state)?;
@@ -204,10 +225,7 @@ async fn verify_sha256(
             expected,
             actual
         );
-        Err(format!(
-            "SHA256 mismatch: expected {}, got {}",
-            expected, actual
-        ))
+        Err(sha_mismatch_err(&expected, actual))
     }
 }
 
@@ -358,7 +376,7 @@ pub async fn download_image(
 
                 // Genuine mismatch means a corrupted image: delete it.
                 let _ = std::fs::remove_file(&temp_path);
-                return Err(format!("SHA256 verification failed: {}", e));
+                return Err(sha_failure_err(&e));
             }
         }
         state.is_verifying_sha.store(false, Ordering::SeqCst);
@@ -528,5 +546,21 @@ mod tests {
         assert!(refused(decompressed_name("...xz")));
         assert!(refused(decompressed_name("..xz")));
         assert!(refused(decompressed_name(".xz")));
+    }
+
+    #[test]
+    fn sha_mismatch_keeps_tag_at_start_of_final_error() {
+        let e = sha_mismatch_err("aa", "bb");
+        assert_eq!(e, "[SHA_MISMATCH] SHA256 mismatch: expected aa, got bb");
+        assert_eq!(sha_failure_err(&e), e);
+    }
+
+    #[test]
+    fn sha_unavailable_wording_is_unchanged() {
+        let e = "[SHA_UNAVAILABLE] Invalid SHA file format";
+        assert_eq!(
+            sha_failure_err(e),
+            "SHA256 verification failed: [SHA_UNAVAILABLE] Invalid SHA file format"
+        );
     }
 }

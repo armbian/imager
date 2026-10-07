@@ -19,9 +19,19 @@ use zstd::stream::read::Decoder as ZstdDecoder;
 use crate::config;
 use crate::download::DownloadState;
 use crate::log_info;
-use crate::utils::{get_recommended_threads, strip_compression_ext, ProgressTracker};
+use crate::utils::{
+    get_recommended_threads, strip_compression_ext, tagged, ProgressTracker, TAG_CANCELLED,
+};
 
 const MODULE: &str = "decompress";
+
+pub(crate) const TAG_DECOMPRESS_FAILED: &str = "[DECOMPRESS_FAILED]";
+const DECOMPRESS_CANCELLED: &str = "Decompression cancelled";
+const OPEN_INPUT_FAILED: &str = "Failed to open input file";
+
+fn decompress_err(what: &str, e: impl std::fmt::Display) -> String {
+    tagged(TAG_DECOMPRESS_FAILED, format!("{}: {}", what, e))
+}
 
 /// Check if a file needs decompression based on extension
 pub fn needs_decompression(path: &Path) -> bool {
@@ -38,8 +48,7 @@ pub fn decompress_with_rust_xz(
 ) -> Result<(), String> {
     // Multi-threaded decoder is faster but can't handle multi-stream XZ.
     let threads = get_recommended_threads();
-    let input_file =
-        File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+    let input_file = File::open(input_path).map_err(|e| decompress_err(OPEN_INPUT_FAILED, e))?;
 
     match XzReaderMt::new(input_file, true, threads as u32) {
         Ok(decoder) => {
@@ -58,7 +67,7 @@ pub fn decompress_with_rust_xz(
                 mt_err
             );
             let input_file =
-                File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+                File::open(input_path).map_err(|e| decompress_err(OPEN_INPUT_FAILED, e))?;
             let buf_reader =
                 BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
             let decoder = XzDecoder::new_multi_decoder(buf_reader);
@@ -73,8 +82,7 @@ pub fn decompress_with_gz(
     output_path: &Path,
     state: &Arc<DownloadState>,
 ) -> Result<(), String> {
-    let input_file =
-        File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+    let input_file = File::open(input_path).map_err(|e| decompress_err(OPEN_INPUT_FAILED, e))?;
     let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
     let decoder = GzDecoder::new(buf_reader);
     decompress_with_reader_mt(decoder, output_path, state, "gz")
@@ -86,8 +94,7 @@ pub fn decompress_with_bz2(
     output_path: &Path,
     state: &Arc<DownloadState>,
 ) -> Result<(), String> {
-    let input_file =
-        File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+    let input_file = File::open(input_path).map_err(|e| decompress_err(OPEN_INPUT_FAILED, e))?;
     let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
     let decoder = BzDecoder::new(buf_reader);
     decompress_with_reader_mt(decoder, output_path, state, "bz2")
@@ -99,11 +106,10 @@ pub fn decompress_with_zstd(
     output_path: &Path,
     state: &Arc<DownloadState>,
 ) -> Result<(), String> {
-    let input_file =
-        File::open(input_path).map_err(|e| format!("Failed to open input file: {}", e))?;
+    let input_file = File::open(input_path).map_err(|e| decompress_err(OPEN_INPUT_FAILED, e))?;
     let buf_reader = BufReader::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, input_file);
     let decoder = ZstdDecoder::new(buf_reader)
-        .map_err(|e| format!("Failed to create zstd decoder: {}", e))?;
+        .map_err(|e| decompress_err("Failed to create zstd decoder", e))?;
     decompress_with_reader_mt(decoder, output_path, state, "zstd")
 }
 
@@ -116,7 +122,7 @@ fn decompress_with_reader_mt<R: Read>(
     format_name: &str,
 ) -> Result<(), String> {
     let output_file =
-        File::create(output_path).map_err(|e| format!("Failed to create output file: {}", e))?;
+        File::create(output_path).map_err(|e| decompress_err("Failed to create output file", e))?;
 
     let mut buf_writer =
         BufWriter::with_capacity(config::download::DECOMPRESS_BUFFER_SIZE, output_file);
@@ -135,12 +141,12 @@ fn decompress_with_reader_mt<R: Read>(
         if state.is_cancelled.load(Ordering::SeqCst) {
             drop(buf_writer);
             let _ = std::fs::remove_file(output_path);
-            return Err("Decompression cancelled".to_string());
+            return Err(tagged(TAG_CANCELLED, DECOMPRESS_CANCELLED));
         }
 
         let bytes_read = decoder
             .read(&mut buffer)
-            .map_err(|e| format!("{} decompression error: {}", format_name, e))?;
+            .map_err(|e| decompress_err(&format!("{} decompression error", format_name), e))?;
 
         if bytes_read == 0 {
             break;
@@ -148,14 +154,14 @@ fn decompress_with_reader_mt<R: Read>(
 
         buf_writer
             .write_all(&buffer[..bytes_read])
-            .map_err(|e| format!("Failed to write decompressed data: {}", e))?;
+            .map_err(|e| decompress_err("Failed to write decompressed data", e))?;
 
         tracker.update(bytes_read as u64);
     }
 
     buf_writer
         .flush()
-        .map_err(|e| format!("Failed to flush output: {}", e))?;
+        .map_err(|e| decompress_err("Failed to flush output", e))?;
 
     tracker.finish();
 
@@ -237,4 +243,47 @@ pub fn decompress_local_file(
     log_info!(MODULE, "Decompression complete: {}", output_path.display());
 
     Ok(output_path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn state() -> Arc<DownloadState> {
+        Arc::new(DownloadState::new())
+    }
+
+    #[test]
+    fn missing_input_is_tagged() {
+        let tmp = tempfile::tempdir().unwrap();
+        let out = tmp.path().join("out.img");
+        let err = decompress_with_gz(&tmp.path().join("missing.gz"), &out, &state()).unwrap_err();
+        assert!(
+            err.starts_with(&format!("{TAG_DECOMPRESS_FAILED} {OPEN_INPUT_FAILED}: ")),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn corrupt_archive_is_tagged() {
+        let tmp = tempfile::tempdir().unwrap();
+        let input = tmp.path().join("bad.gz");
+        std::fs::write(&input, b"not a gzip stream at all").unwrap();
+        let err = decompress_with_gz(&input, &tmp.path().join("out.img"), &state()).unwrap_err();
+        assert!(
+            err.starts_with("[DECOMPRESS_FAILED] gz decompression error: "),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn cancel_is_tagged_and_still_says_cancelled() {
+        let tmp = tempfile::tempdir().unwrap();
+        let input = tmp.path().join("bad.gz");
+        std::fs::write(&input, b"x").unwrap();
+        let st = state();
+        st.is_cancelled.store(true, Ordering::SeqCst);
+        let err = decompress_with_gz(&input, &tmp.path().join("out.img"), &st).unwrap_err();
+        assert_eq!(err, "[CANCELLED] Decompression cancelled");
+    }
 }
