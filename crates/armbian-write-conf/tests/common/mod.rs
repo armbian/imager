@@ -4,6 +4,11 @@ use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
+
+use armbian_write_conf::{write_file_into_bare_ext4_image, WriteConfError, WriteConfReport};
 
 use ext4_view::{Ext4, Ext4Read};
 use mkext4::sink::VecSink;
@@ -13,6 +18,7 @@ const SUPERBLOCK_OFFSET: usize = 1024;
 const SUPERBLOCK_SIZE: usize = 1024;
 const GROUP_DESCRIPTOR_SIZE_OFFSET: usize = 0xfe;
 const SUPERBLOCK_CHECKSUM_OFFSET: usize = 0x3fc;
+const WRITE_TIMEOUT: Duration = Duration::from_secs(30);
 const E2FSPROGS_DIRS: &[&str] = &[
     "",
     "/sbin/",
@@ -176,4 +182,33 @@ pub fn debugfs_write(image: &Path, commands: &str) -> Option<()> {
         .unwrap();
     assert!(out.status.success(), "debugfs failed: {out:?}");
     Some(())
+}
+
+/// Output of one read-only debugfs request against `image`; None when debugfs is missing.
+pub fn debugfs_read(image: &Path, request: &str) -> Option<String> {
+    let bin = e2fsprogs_tool("debugfs")?;
+    let out = Command::new(bin)
+        .arg("-R")
+        .arg(request)
+        .arg(image)
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "debugfs failed: {out:?}");
+    Some(String::from_utf8_lossy(&out.stdout).into_owned())
+}
+
+/// Runs the write on a worker thread and fails the test instead of spinning if it never returns.
+pub fn bounded_write(
+    image: &Path,
+    dest: &str,
+    content: &[u8],
+) -> Result<WriteConfReport, WriteConfError> {
+    let (image, dest, content) = (image.to_path_buf(), dest.to_string(), content.to_vec());
+    let (done, outcome) = mpsc::channel();
+    thread::spawn(move || {
+        let _ = done.send(write_file_into_bare_ext4_image(&image, &dest, &content));
+    });
+    outcome
+        .recv_timeout(WRITE_TIMEOUT)
+        .expect("write did not finish in time")
 }

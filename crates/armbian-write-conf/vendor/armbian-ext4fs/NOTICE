@@ -26,5 +26,11 @@ Modifications made to the upstream source
    instead of from the snapshot taken at open; truncating to zero frees the
    whole extent tree (any depth) after detaching it from the inode.
 
+5. Directory walks (`dir_find_in_block`, `try_insert_to_existing_block`)
+   read entry headers from bytes, skip deleted entries and refuse records
+   that would loop or leave the block. Directory block checksums use the
+   directory inode instead of the block's first entry, and a block
+   allocation without a goal no longer starts at a missing group 1.
+
 The upstream binary (src/main.rs) and its [[bin]] target were removed; only
 the library is retained.
