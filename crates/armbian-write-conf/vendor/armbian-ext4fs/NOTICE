@@ -17,5 +17,8 @@ Modifications made to the upstream source
    newly opened files as directories; regular files must be S_IFREG.
    The S_IFDIR values in `ext4_dir_mk` and `ext4_dir_open` are unchanged.
 
+3. `dir_add_entry` writes the directory entry file type from the child
+   inode mode instead of always "directory".
+
 The upstream binary (src/main.rs) and its [[bin]] target were removed; only
 the library is retained.
