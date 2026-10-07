@@ -29,6 +29,7 @@
 
   --accent: var(--armbian-orange);
   --accent-hover: #e55a1c;
+  --text-on-accent: #ffffff;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -56,6 +57,8 @@
   --color-info-dark: #2563eb;
   --color-warning-bg: #fef3c7;
   --color-warning-text: #92400e;
+  /* Amber text that keeps contrast on neutral surfaces (the plain amber fails on white) */
+  --color-warning-ink: #b45309;
 
   /* RGB channels for alpha compositing */
   --accent-rgb: 242, 101, 34;
@@ -111,6 +114,7 @@
 
 /* Dark Theme */
 .theme-dark {
+  --color-warning-ink: #fbbf24;
   --bg-app: #1a1a1a;
   --bg-secondary: #252525;
   --bg-card: #2a2a2a;
@@ -159,6 +163,7 @@
 /* Auto Theme - System Preference */
 @media (prefers-color-scheme: dark) {
   :root:not(.theme-light):not(.theme-dark) {
+    --color-warning-ink: #fbbf24;
     --bg-app: #1a1a1a;
     --bg-secondary: #252525;
     --bg-card: #2a2a2a;

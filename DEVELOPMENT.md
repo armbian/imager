@@ -101,6 +101,10 @@ npm run tauri:dev
 3. Test changes
 4. Run quality checks before committing (see [Quality Checks](#quality-checks))
 
+### Dev Scenarios Panel
+
+Debug builds (`npm run tauri:dev`, `npm run tauri:build:dev`) show a flask button in the bottom-right corner; `Cmd/Ctrl+Shift+D` toggles it. It drives a backend emulator: fake SD, USB, system and EDL devices with hot-plug, flash outcomes (write error, verify mismatch, unplug, denied authorization, slow card), network faults (offline, slow, empty lists, HTTP 500, SHA mismatch), file-backed virtual disks on macOS, generated test images, and session-only theme, motion, language and update previews. While anything is simulated the window gets an amber frame and a SIMULATED pill. Release builds contain none of it.
+
 ---
 
 ## Building for Distribution

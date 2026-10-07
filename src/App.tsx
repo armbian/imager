@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Header, HomePage, WelcomePage } from './components/layout';
 import { ArmbianBoardModal } from './components/modals';
@@ -16,8 +16,11 @@ import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from '
 import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, PLATFORM } from './config';
 import { IMAGE_FORMAT, IMAGE_STORAGE, isEdlImage } from './types';
 import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer } from './utils';
-import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig } from './types';
+import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig, CustomImageInfo, FlashExit } from './types';
 import './styles/index.css';
+
+// Debug-only panel; the define folds to false in release builds, which drops the chunk.
+const DevScenarios = __DEV_SCENARIOS__ ? lazy(() => import('./components/dev/DevScenarios')) : null;
 
 function App() {
   return (
@@ -33,6 +36,8 @@ function App() {
 function AppContent() {
   const { t } = useTranslation();
   const [isFlashing, setIsFlashing] = useState(false);
+  const [settledFlashExit, setSettledFlashExit] = useState<FlashExit | null>(null);
+  const [selectionEpoch, setSelectionEpoch] = useState(0);
   // Shown on every launch until the user hits "Start now"
   const [showWelcome, setShowWelcome] = useState(true);
   // One-shot entrance animation window: true only while the main UI staggers in
@@ -353,53 +358,56 @@ function AppContent() {
     try {
       const result = await selectCustomImage();
       if (result) {
-        // One backend call classifies the picked file: matched board, QDL TAR, and UFS build slug.
-        const { board: detectedBoard, is_qdl: isQdl, ufs_board_slug: ufsBoardSlug } =
-          await classifyCustomImage(result.path).catch(() => ({
-            board: null,
-            is_qdl: false,
-            ufs_board_slug: null,
-          }));
-        if (detectedBoard) {
-          logInfo('app', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
-        }
-        if (isQdl) {
-          logInfo('app', `Custom image detected as QDL archive: ${result.name}`);
-        }
-        if (ufsBoardSlug) {
-          logInfo('app', `Custom image detected as UFS: ${result.name} (board ${ufsBoardSlug})`);
-        }
-        const format = isQdl ? IMAGE_FORMAT.QDL : IMAGE_FORMAT.BLOCK;
-
-        const customImage = buildLocalImage({
-          variant: IMAGE_VARIANT.CUSTOM,
-          name: result.name,
-          size: result.size,
-          path: result.path,
-          format,
-          storage: ufsBoardSlug ? IMAGE_STORAGE.UFS : null,
-        });
-
-        resetSelectionsFrom('manufacturer');
-
-        // API-matched board, else a generic one carrying the UFS registry slug (backend resolves the rest).
-        const displayBoard: BoardInfo = detectedBoard ?? buildLocalBoard({
-          slug: ufsBoardSlug ?? SLUGS.CUSTOM,
-          name: t('custom.customImage'),
-          vendor: SLUGS.CUSTOM,
-          vendorName: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CUSTOM],
-        });
-
-        setSelectedManufacturer(localManufacturer(displayBoard));
-        setSelectedBoard(displayBoard);
-        setSelectedImage(customImage);
-        // A custom image bypasses the landing and enters the flow directly
-        setShowWelcome(false);
+        await applyCustomImage(result);
       }
     } catch (err) {
       logWarn('app', `Failed to select custom image: ${err}`);
       showError(t('custom.selectError'));
     }
+  }
+
+  async function applyCustomImage(result: CustomImageInfo) {
+    // One backend call classifies the picked file: matched board, QDL TAR, and UFS build slug.
+    const { board: detectedBoard, is_qdl: isQdl, ufs_board_slug: ufsBoardSlug } =
+      await classifyCustomImage(result.path).catch(() => ({
+        board: null,
+        is_qdl: false,
+        ufs_board_slug: null,
+      }));
+    if (detectedBoard) {
+      logInfo('app', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
+    }
+    if (isQdl) {
+      logInfo('app', `Custom image detected as QDL archive: ${result.name}`);
+    }
+    if (ufsBoardSlug) {
+      logInfo('app', `Custom image detected as UFS: ${result.name} (board ${ufsBoardSlug})`);
+    }
+    const format = isQdl ? IMAGE_FORMAT.QDL : IMAGE_FORMAT.BLOCK;
+
+    const customImage = buildLocalImage({
+      variant: IMAGE_VARIANT.CUSTOM,
+      name: result.name,
+      size: result.size,
+      path: result.path,
+      format,
+      storage: ufsBoardSlug ? IMAGE_STORAGE.UFS : null,
+    });
+
+    resetSelectionsFrom('manufacturer');
+
+    // API-matched board, else a generic one carrying the UFS registry slug (backend resolves the rest).
+    const displayBoard: BoardInfo = detectedBoard ?? buildLocalBoard({
+      slug: ufsBoardSlug ?? SLUGS.CUSTOM,
+      name: t('custom.customImage'),
+      vendor: SLUGS.CUSTOM,
+      vendorName: LOCAL_SOURCE_LABEL[IMAGE_VARIANT.CUSTOM],
+    });
+
+    setSelectedManufacturer(localManufacturer(displayBoard));
+    setSelectedBoard(displayBoard);
+    setSelectedImage(customImage);
+    setShowWelcome(false);
   }
 
   function handleComplete() {
@@ -415,6 +423,19 @@ function AppContent() {
 
   function handleReset() {
     resetSelectionsFrom('manufacturer');
+  }
+
+  const handleFlashSettled = useCallback((exit: FlashExit | null) => {
+    setSettledFlashExit(() => exit);
+  }, []);
+
+  async function handleRestartSelection() {
+    if (isFlashing) {
+      if (!settledFlashExit) return;
+      await settledFlashExit();
+    }
+    resetSelectionsFrom('manufacturer');
+    setSelectionEpoch((epoch) => epoch + 1);
   }
 
   function handleNavigateToStep(step: SelectionStep) {
@@ -478,12 +499,14 @@ function AppContent() {
               autoconfig={autoconfig}
               onComplete={handleComplete}
               onBack={handleBackFromFlash}
+              onSettledChange={DevScenarios ? handleFlashSettled : undefined}
             />
           )
         ) : showWelcome ? (
           <WelcomePage onStart={() => setShowWelcome(false)} />
         ) : (
           <HomePage
+            key={selectionEpoch}
             selectedManufacturer={selectedManufacturer}
             selectedBoard={selectedBoard}
             selectedImage={selectedImage}
@@ -523,6 +546,18 @@ function AppContent() {
         isOpen={showCacheManager}
         onClose={() => setShowCacheManager(false)}
       />
+
+      {DevScenarios && (
+        <Suspense fallback={null}>
+          <DevScenarios
+            hidden={showWelcome}
+            isFlashing={isFlashing}
+            isConfirming={!isFlashing && selectedDevice !== null}
+            onUseCustomImage={applyCustomImage}
+            onResetFlow={isFlashing && !settledFlashExit ? null : handleRestartSelection}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
