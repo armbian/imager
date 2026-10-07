@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "자동 구성 프로필 적용(선택 사항)",
       "none": "없음",
-      "createNew": "새 프로필 만들기",
-      "rowLabel": "자동 구성 프로필"
+      "rowLabel": "자동 구성 프로필",
+      "newProfile": "새 프로필",
+      "glyphsLabel": "설정 항목: {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "이더넷",
+        "user": "사용자",
+        "timezone": "시간대",
+        "keys": "SSH 키"
+      }
     }
   },
   "modal": {

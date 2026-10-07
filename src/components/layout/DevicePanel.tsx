@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-  RefreshCw, TriangleAlert, Shield, Usb, Lock, Cpu, ArrowRight, ChevronDown, Plus,
+  RefreshCw, TriangleAlert, Shield, Usb, Lock, Cpu, ArrowRight, ChevronDown,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText, EmptyState } from '../shared';
@@ -14,6 +14,7 @@ import { getAutoconfigProfiles, getAllowSystemDevices } from '../../hooks/useSet
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { POLLING, UI, EVENTS, qdlInstructionsKey } from '../../config';
+import { ProfileMenu, ProfileWizard } from '../autoconfig';
 import { getDeviceColors } from '../../config/deviceColors';
 import { getDeviceType, devicesChanged, sortDevices } from '../../utils/deviceUtils';
 
@@ -34,6 +35,7 @@ interface DevicePanelProps {
   summary?: { label: string; value: string; sub?: string | null }[];
   /** Cached board photo shown at the top of the confirm summary. */
   boardImage?: string | null;
+  boardName?: string | null;
   /** Whether autoconfig profiles apply (Armbian images only; hidden for generic custom images). */
   supportsAutoconfig?: boolean;
 }
@@ -48,6 +50,7 @@ export function DevicePanel({
   edlEntry,
   summary = [],
   boardImage,
+  boardName = null,
   supportsAutoconfig = true,
 }: DevicePanelProps) {
   const { t } = useTranslation();
@@ -74,20 +77,22 @@ export function DevicePanel({
   const showAutoconfig = supportsAutoconfig;
 
   // Opt-in autoconfig profile picker (flash-time only, Armbian images).
-  const [showProfilePicker, setShowProfilePicker] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState('');
+  const profileRowRef = useRef<HTMLButtonElement>(null);
 
   const { data: profilesData, reload: reloadProfiles } = useAsyncData<AutoconfigProfile[]>(
     () => (showAutoconfig ? getAutoconfigProfiles() : Promise.resolve([])),
     [showAutoconfig]
   );
   const profiles = profilesData ?? [];
+  const selectedProfile = profiles.find((p) => p.id === selectedProfileId) ?? null;
 
   // Notify App of the opt-in selection; default "" means no profile (unchanged behaviour).
   const handleProfileChange = useCallback((id: string) => {
     setSelectedProfileId(id);
-    // Collapse the picker once a choice is made — the row already shows the result.
-    setShowProfilePicker(false);
+    setMenuOpen(false);
     window.dispatchEvent(
       new CustomEvent(EVENTS.AUTOCONFIG_PROFILE_SELECTED, { detail: { id: id || null } })
     );
@@ -107,22 +112,9 @@ export function DevicePanel({
     return () => window.removeEventListener(EVENTS.PROFILES_CHANGED, onProfilesChanged);
   }, [showAutoconfig, selectedProfileId, reloadProfiles, handleProfileChange]);
 
-  // Auto-select only a profile created from this panel's "Create new" shortcut.
-  useEffect(() => {
-    const onCreated = (e: Event) => {
-      const id = (e as CustomEvent<{ id: string }>).detail?.id;
-      if (id) handleProfileChange(id);
-    };
-    window.addEventListener(EVENTS.AUTOCONFIG_PROFILE_CREATED, onCreated);
-    return () => window.removeEventListener(EVENTS.AUTOCONFIG_PROFILE_CREATED, onCreated);
-  }, [handleProfileChange]);
-
-  // Open Settings on the profiles tab with the new-profile editor already open.
-  const openProfileCreator = useCallback(() => {
-    setShowProfilePicker(false);
-    window.dispatchEvent(
-      new CustomEvent(EVENTS.OPEN_SETTINGS, { detail: { view: 'profiles', createProfile: true } })
-    );
+  const openWizard = useCallback(() => {
+    setMenuOpen(false);
+    setWizardOpen(true);
   }, []);
 
   const { data: rawDevices, loading, error, reload } = useAsyncData<BlockDevice[]>(
@@ -241,17 +233,17 @@ export function DevicePanel({
                 {showAutoconfig && (
                   <li className="device-summary__profile">
                     <button
+                      ref={profileRowRef}
                       type="button"
-                      className={`device-summary__profilerow ${showProfilePicker ? 'is-open' : ''}`}
-                      onClick={() => setShowProfilePicker((v) => !v)}
-                      aria-expanded={showProfilePicker}
+                      className={`device-summary__profilerow ${menuOpen ? 'is-open' : ''}`}
+                      onClick={() => setMenuOpen((v) => !v)}
+                      aria-haspopup="listbox"
+                      aria-expanded={menuOpen}
                     >
                       <span className="device-summary__label">{t('flash.profile.rowLabel')}</span>
                       <span className="device-summary__profileval">
-                        {selectedProfileId ? (
-                          <span className="device-summary__profilename">
-                            {profiles.find((p) => p.id === selectedProfileId)?.name ?? ''}
-                          </span>
+                        {selectedProfile ? (
+                          <span className="device-summary__profilename">{selectedProfile.name}</span>
                         ) : (
                           <span className="device-summary__profilenone">{t('flash.profile.none')}</span>
                         )}
@@ -259,31 +251,24 @@ export function DevicePanel({
                       </span>
                     </button>
 
-                    {showProfilePicker && (
-                      <div className="device-summary__profilebody">
-                        {profiles.length > 0 && (
-                          <div className="device-profile__select-wrap">
-                            <select
-                              className="device-profile__select"
-                              value={selectedProfileId}
-                              onChange={(e) => handleProfileChange(e.target.value)}
-                            >
-                              {/* First option is the opt-out default (no profile applied). */}
-                              <option value="">{t('flash.profile.none')}</option>
-                              {profiles.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown size={16} className="device-profile__select-chevron" />
-                          </div>
-                        )}
-                        <button type="button" className="device-profile__create" onClick={openProfileCreator}>
-                          <Plus size={14} strokeWidth={2.25} />
-                          {t('flash.profile.createNew')}
-                        </button>
-                      </div>
+                    {menuOpen && (
+                      <ProfileMenu
+                        anchorRef={profileRowRef}
+                        profiles={profiles}
+                        selectedId={selectedProfileId}
+                        onSelect={handleProfileChange}
+                        onNewProfile={openWizard}
+                        onClose={() => setMenuOpen(false)}
+                      />
+                    )}
+                    {wizardOpen && (
+                      <ProfileWizard
+                        boardName={boardName}
+                        boardImage={boardImage ?? null}
+                        returnFocusRef={profileRowRef}
+                        onClose={() => setWizardOpen(false)}
+                        onCreated={(profile) => handleProfileChange(profile.id)}
+                      />
                     )}
                   </li>
                 )}

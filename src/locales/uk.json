@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "Застосувати профіль автоналаштування (необов'язково)",
       "none": "Немає",
-      "createNew": "Створити новий профіль",
-      "rowLabel": "Профіль автоналаштування"
+      "rowLabel": "Профіль автоналаштування",
+      "newProfile": "Новий профіль",
+      "glyphsLabel": "Задає: {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "Ethernet",
+        "user": "Користувач",
+        "timezone": "Часовий пояс",
+        "keys": "Ключі SSH"
+      }
     }
   },
   "modal": {

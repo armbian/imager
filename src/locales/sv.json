@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "Tillämpa en autokonfigurationsprofil (valfritt)",
       "none": "Ingen",
-      "createNew": "Skapa ny profil",
-      "rowLabel": "Autokonfigurationsprofil"
+      "rowLabel": "Autokonfigurationsprofil",
+      "newProfile": "Ny profil",
+      "glyphsLabel": "Ställer in {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "Ethernet",
+        "user": "Användare",
+        "timezone": "Tidszon",
+        "keys": "SSH-nycklar"
+      }
     }
   },
   "modal": {

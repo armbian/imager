@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "应用自动配置文件（可选）",
       "none": "无",
-      "createNew": "新建配置文件",
-      "rowLabel": "自动配置文件"
+      "rowLabel": "自动配置文件",
+      "newProfile": "新建配置文件",
+      "glyphsLabel": "包含设置：{{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "以太网",
+        "user": "用户",
+        "timezone": "时区",
+        "keys": "SSH 密钥"
+      }
     }
   },
   "modal": {

@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "Otomatik yapılandırma profili uygula (isteğe bağlı)",
       "none": "Yok",
-      "createNew": "Yeni profil oluştur",
-      "rowLabel": "Otomatik yapılandırma profili"
+      "rowLabel": "Otomatik yapılandırma profili",
+      "newProfile": "Yeni profil",
+      "glyphsLabel": "Şunları ayarlar: {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "Ethernet",
+        "user": "Kullanıcı",
+        "timezone": "Saat dilimi",
+        "keys": "SSH anahtarları"
+      }
     }
   },
   "modal": {

@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "Primijeni profil automatske konfiguracije (neobavezno)",
       "none": "Nijedan",
-      "createNew": "Stvori novi profil",
-      "rowLabel": "Profil automatske konfiguracije"
+      "rowLabel": "Profil automatske konfiguracije",
+      "newProfile": "Novi profil",
+      "glyphsLabel": "Postavlja: {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "Ethernet",
+        "user": "Korisnik",
+        "timezone": "Vremenska zona",
+        "keys": "SSH ključevi"
+      }
     }
   },
   "modal": {

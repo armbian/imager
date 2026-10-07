@@ -57,8 +57,6 @@ export const EVENTS = {
   SETTINGS_CHANGED: 'armbian-settings-changed',
   CACHE_IMAGE_REUSE: 'armbian-cache-image-reuse',
   PROFILES_CHANGED: 'armbian-autoconfig-profiles-changed',
-  AUTOCONFIG_PROFILE_CREATED: 'armbian-autoconfig-profile-created',
-  OPEN_SETTINGS: 'armbian-open-settings',
   /** Carries the opt-in autoconfig profile id (or null) picked at flash time */
   AUTOCONFIG_PROFILE_SELECTED: 'armbian-autoconfig-profile-selected',
   CONNECTIVITY_RECHECK: 'armbian-connectivity-recheck',
@@ -237,6 +235,7 @@ export const UI = {
     FLASH_STAGE: 32,
     EMPTY_STATE: 30,
     EMPTY_STATE_ACTION: 15,
+    PROFILE_GLYPH: 11,
     WIZARD_ITEM: 14,
     WIZARD_TILE: 22,
     WIZARD_SEG: 15,
@@ -244,6 +243,10 @@ export const UI = {
   },
   /** Minimum margin between an anchored popover and the window edge */
   POPOVER_EDGE: 12,
+  PROFILE_MENU: {
+    WIDTH: 320,
+    GAP: 8,
+  },
   PICKER: {
     GAP: 6,
   },

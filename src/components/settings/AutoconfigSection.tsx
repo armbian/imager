@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect, useCallback, useMemo, useId, useRef } from 'react';
+import { useState, useCallback, useMemo, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Plus, Pencil, Trash2, FileCog, ChevronLeft, ChevronDown,
@@ -23,7 +23,6 @@ import { ProfileWizard } from '../autoconfig/ProfileWizard';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { logWarn } from '../../hooks/useTauri';
 import { useToasts } from '../../hooks/useToasts';
-import { EVENTS } from '../../config';
 import {
   USER_SHELLS,
   COMMON_LOCALES,
@@ -193,13 +192,8 @@ function SectionCard({
   );
 }
 
-interface AutoconfigSectionProps {
-  autoCreate?: boolean;
-  onSaved?: () => void;
-}
-
 // Profiles tab: lists saved autoconfig profiles (master) and edits one (detail).
-export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSectionProps) {
+export function AutoconfigSection() {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToasts();
 
@@ -225,11 +219,6 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
   const ipErrorId = (field: keyof StaticIpErrors) => `${ipFieldId}-${field}-error`;
 
   const timezones = useMemo(() => getTimezones(), []);
-
-  // Opened via the "create new profile" shortcut: jump straight into the editor.
-  useEffect(() => {
-    if (autoCreate) handleNew();
-  }, [autoCreate]);
 
   const handleNew = () => {
     setDraft({ id: crypto.randomUUID(), name: '', updatedAt: Date.now(), config: {} });
@@ -278,11 +267,6 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
       showSuccess(wasNew ? t('settings.autoconfig.toastCreated') : t('settings.autoconfig.toastUpdated'));
       setDraft(null);
       setIsNew(false);
-      // Only a profile created from the flash flow's shortcut should auto-select in the picker.
-      if (autoCreate && wasNew) {
-        window.dispatchEvent(new CustomEvent(EVENTS.AUTOCONFIG_PROFILE_CREATED, { detail: { id: toSave.id } }));
-      }
-      onSaved?.();
     } catch (error) {
       logWarn('autoconfig', `Failed to save profile: ${error}`);
       showError(t('settings.autoconfig.toastError'));

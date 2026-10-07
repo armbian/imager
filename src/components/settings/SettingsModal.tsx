@@ -40,15 +40,13 @@ const NAV_ITEMS: readonly NavItem[] = [
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialView?: SettingsView;
-  startProfileCreation?: boolean;
 }
 
 /** Frosted-glass Settings island: nav rail + active section, mirroring `.split-nav`/`.split-main`. Portaled to `document.body` so the overlay
  * escapes transformed/stacked ancestors and covers the window. `isOpen` controls visibility; `onClose` fires on overlay or close-button activation. */
-export function SettingsModal({ isOpen, onClose, initialView = 'appearance', startProfileCreation = false }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState<SettingsView>(initialView);
+  const [activeSection, setActiveSection] = useState<SettingsView>('appearance');
 
   if (!isOpen) return null;
 
@@ -60,8 +58,7 @@ export function SettingsModal({ isOpen, onClose, initialView = 'appearance', sta
       case 'preferences':
         return <PreferencesSection />;
       case 'profiles':
-        // Launched from the flash flow: return there once the profile is saved.
-        return <AutoconfigSection autoCreate={startProfileCreation} onSaved={startProfileCreation ? onClose : undefined} />;
+        return <AutoconfigSection />;
       case 'storage':
         return <StorageSection />;
       case 'developer':

@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "Εφαρμογή προφίλ αυτόματης ρύθμισης (προαιρετικό)",
       "none": "Κανένα",
-      "createNew": "Δημιουργία νέου προφίλ",
-      "rowLabel": "Προφίλ αυτόματης ρύθμισης"
+      "rowLabel": "Προφίλ αυτόματης ρύθμισης",
+      "newProfile": "Νέο προφίλ",
+      "glyphsLabel": "Ορίζει {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "Ethernet",
+        "user": "Χρήστης",
+        "timezone": "Ζώνη ώρας",
+        "keys": "Κλειδιά SSH"
+      }
     }
   },
   "modal": {
