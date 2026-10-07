@@ -46,6 +46,7 @@ pub const STAGE_COMPLETE: &str = "complete";
 pub const STAGE_PARTITION_PREFIX: &str = "partition:";
 
 pub const UFS_PARTITION_LABEL: &str = "system";
+pub const TAG_QDL_AUTOCONFIG_FAILED: &str = "[QDL_AUTOCONFIG_FAILED]";
 
 pub const SECTOR_SIZE_EMMC: usize = 512;
 pub const SECTOR_SIZE_UFS: usize = 4096;

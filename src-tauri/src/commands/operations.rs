@@ -7,9 +7,7 @@ use std::path::PathBuf;
 use tauri::{AppHandle, State};
 use tauri_plugin_store::StoreExt;
 
-use armbian_write_conf::WriteConfError;
-
-use crate::autoconfig::AutoconfigConfig;
+use crate::autoconfig::{prepare_working_copy, AutoconfigConfig};
 use crate::config;
 use crate::devices::target::TAG_NOT_FOUND;
 use crate::devices::{get_block_devices, select_flash_target, FlashTarget, TargetRefusal};
@@ -17,7 +15,9 @@ use crate::download::download_image as do_download;
 use crate::flash::{
     check_capacity, flash_image as do_flash, reject_simulated, request_authorization,
 };
-use crate::utils::{app_cache_dir, image_size, images_dir, validate_cache_path};
+use crate::utils::{
+    app_cache_dir, autoconfig_temp_dir, image_size, images_dir, validate_cache_path,
+};
 use crate::{log_debug, log_error, log_info, log_warn};
 
 use super::state::AppState;
@@ -233,22 +233,21 @@ pub async fn flash_image(
         return Err(e);
     }
 
-    // With a profile selected, flash a temp copy with the preset injected so the
-    // shared cached/decompressed image stays pristine.
-    let (flash_path, temp_copy) = match autoconfig {
-        Some(config) => {
-            let copy = prepare_autoconfig_copy(&path, &config)?;
-            (copy.clone(), Some(copy))
-        }
-        None => (path, None),
+    // The preset goes into a per-flash copy (removed on drop) so the cached image stays pristine.
+    let working_copy = match autoconfig {
+        Some(config) => Some(prepare_working_copy(
+            &path,
+            &autoconfig_temp_dir(),
+            &config,
+        )?),
+        None => None,
     };
+    let flash_path = working_copy
+        .as_ref()
+        .map_or(path.clone(), |copy| copy.path().to_path_buf());
 
     let result = do_flash(&flash_path, &target, flash_state, verify).await;
-
-    // Always remove the temp copy, regardless of flash outcome.
-    if let Some(copy) = temp_copy {
-        remove_autoconfig_copy(&copy);
-    }
+    drop(working_copy);
 
     match &result {
         Ok(_) => {
@@ -260,68 +259,6 @@ pub async fn flash_image(
     }
 
     result
-}
-
-pub(crate) fn remove_autoconfig_copy(copy: &std::path::Path) {
-    if let Err(e) = std::fs::remove_file(copy) {
-        log_warn!(
-            "operations",
-            "Failed to remove autoconfig temp copy {}: {}",
-            copy.display(),
-            e
-        );
-    }
-}
-
-/// Copy the decompressed image to a per-flash temp file and inject the autoconfig preset into the copy.
-/// Aborts (deleting the copy) if the image has no writable ext4 rootfs, since a profile was requested.
-pub(crate) fn prepare_autoconfig_copy(
-    source: &std::path::Path,
-    config: &AutoconfigConfig,
-) -> Result<PathBuf, String> {
-    let temp_dir = app_cache_dir().join("autoconfig-temp");
-    std::fs::create_dir_all(&temp_dir)
-        .map_err(|e| format!("Failed to create autoconfig temp directory: {}", e))?;
-
-    // Unique per-flash name to avoid collisions across concurrent/repeat flashes.
-    let stem = source
-        .file_name()
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_else(|| "image.img".to_string());
-    let unique = format!(
-        "{}.{}.{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0),
-        stem
-    );
-    let copy_path = temp_dir.join(unique);
-
-    log_info!(
-        "operations",
-        "Copying image for autoconfig injection: {} -> {}",
-        source.display(),
-        copy_path.display()
-    );
-    std::fs::copy(source, &copy_path)
-        .map_err(|e| format!("Failed to copy image for autoconfig: {}", e))?;
-
-    if let Err(e) = crate::autoconfig::inject_into_image(&copy_path, config) {
-        // Clean up the half-prepared copy before bubbling up.
-        let _ = std::fs::remove_file(&copy_path);
-        let message = match e {
-            WriteConfError::UnsupportedImage(_) | WriteConfError::NoExt4Rootfs(_) => format!(
-                "This image does not have a writable ext4 root filesystem, so the selected autoconfig profile cannot be applied: {}",
-                e
-            ),
-            other => format!("Failed to apply autoconfig profile: {}", other),
-        };
-        return Err(message);
-    }
-
-    Ok(copy_path)
 }
 
 /// Force-delete a cached image (bypasses cache_enabled), for when a file looks corrupted

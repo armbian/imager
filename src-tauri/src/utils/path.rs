@@ -42,6 +42,23 @@ pub fn strip_compression_ext(filename: &str) -> &str {
     filename
 }
 
+/// `<pid>.<nanos>`, so concurrent and repeated runs never pick the same temp name.
+pub fn unique_suffix() -> String {
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    format!("{}.{}", std::process::id(), nanos)
+}
+
+/// A fresh, created directory under the system temp dir for one test.
+#[cfg(test)]
+pub fn test_scratch_dir(tag: &str) -> PathBuf {
+    let dir = std::env::temp_dir().join(format!("armbian-imager-{tag}-{}", unique_suffix()));
+    std::fs::create_dir_all(&dir).unwrap();
+    dir
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

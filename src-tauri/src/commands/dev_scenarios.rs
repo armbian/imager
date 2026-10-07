@@ -9,7 +9,7 @@ use std::sync::Arc;
 use serde::Serialize;
 use tauri::AppHandle;
 
-use crate::autoconfig::AutoconfigConfig;
+use crate::autoconfig::{prepare_working_copy, AutoconfigConfig};
 use crate::config::dev;
 #[cfg(target_os = "macos")]
 use crate::config::devices::BUS_USB;
@@ -22,7 +22,7 @@ use crate::devices::target::check_target;
 use crate::devices::BlockDevice;
 use crate::flash::{check_capacity, FlashState};
 use crate::qdl::QdlDevice;
-use crate::utils::{app_cache_dir, image_size};
+use crate::utils::{app_cache_dir, autoconfig_temp_dir, image_size};
 use crate::{log_error, log_info, log_warn};
 
 #[derive(Debug, Serialize)]
@@ -246,10 +246,10 @@ pub(crate) async fn intercept_flash(
         )?;
         check_capacity(image_size(image_path)?, block.size)?;
 
-        let temp_copy = autoconfig
-            .map(|config| super::operations::prepare_autoconfig_copy(image_path, config))
+        let working_copy = autoconfig
+            .map(|config| prepare_working_copy(image_path, &autoconfig_temp_dir(), config))
             .transpose()?;
-        let flash_path = temp_copy.as_deref().unwrap_or(image_path);
+        let flash_path = working_copy.as_ref().map_or(image_path, |copy| copy.path());
         log_info!(
             MODULE,
             "Simulated flash: {} -> {} (verify: {}, outcome: {:?})",
@@ -260,9 +260,7 @@ pub(crate) async fn intercept_flash(
         );
 
         let result = simulated_write(&device, flash_path, verify, flash_state).await;
-        if let Some(copy) = temp_copy {
-            super::operations::remove_autoconfig_copy(&copy);
-        }
+        drop(working_copy);
         result
     }
     .await;
