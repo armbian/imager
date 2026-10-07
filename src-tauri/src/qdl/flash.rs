@@ -22,7 +22,7 @@ use qdl::{
 };
 use xmltree::{Element, XMLNode};
 
-use super::extract::FIREHOSE_ELF;
+use super::extract::{resolve_flash_file, FIREHOSE_ELF, PATCH_XML, RAWPROGRAM_XML};
 use super::provision::ProvisionSource;
 use super::{
     QdlStorage, QDL_CANCELLED_ERROR, STAGE_COMPLETE, STAGE_CONFIGURING, STAGE_CONNECTING,
@@ -32,14 +32,20 @@ use super::{
 use crate::flash::FlashState;
 use crate::{log_error, log_info, log_warn};
 
-/// Execute the full QDL flash: upload firehose, program partitions from `flash_dir`,
-/// targeting the EDL device at `device_path`, reporting progress via `state`.
+/// Full QDL flash of `flash_dir` (inside the extraction `extract_root`) to the EDL device at `device_path`.
 pub fn qdl_flash(
     flash_dir: &Path,
+    extract_root: &Path,
     device_path: &str,
     autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
+    // Every file rawprogram0.xml names must stay inside the extraction, checked before USB is touched.
+    let rawprogram_path = flash_dir.join(RAWPROGRAM_XML);
+    for entry in program_elements(&parse_xml(&rawprogram_path)?) {
+        program_file(extract_root, flash_dir, &entry.attributes)?;
+    }
+
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
     // Connect, upload the firehose programmer, and configure Firehose (eMMC defaults).
@@ -51,18 +57,23 @@ pub fn qdl_flash(
     // Skipped silently when no profile selected or rootfs is not an injectable bare-ext4 image.
     if let Some(cfg) = autoconfig.as_ref() {
         check_cancelled(&state)?;
-        inject_autoconfig(flash_dir, cfg)?;
+        inject_autoconfig(flash_dir, extract_root, cfg)?;
     }
 
     // --- Stage 4: Program partitions from rawprogram0.xml ---
     check_cancelled(&state)?;
     update_qdl_stage(&state, STAGE_FIREHOSE);
 
-    let rawprogram_path = flash_dir.join("rawprogram0.xml");
-    program_from_xml(&mut device, &rawprogram_path, flash_dir, &state)?;
+    program_from_xml(
+        &mut device,
+        &rawprogram_path,
+        flash_dir,
+        extract_root,
+        &state,
+    )?;
 
     // --- Stage 5: Apply patches from patch0.xml ---
-    let patch_path = flash_dir.join("patch0.xml");
+    let patch_path = flash_dir.join(PATCH_XML);
     if patch_path.exists() {
         check_cancelled(&state)?;
         update_qdl_stage(&state, STAGE_PATCHING);
@@ -374,11 +385,14 @@ const EXT4_MAGIC: [u8; 2] = [0x53, 0xEF];
 /// (non-ext4/sparse/readbackverify/file offset/multi-part, B3); ext4 write/validate fail or over window (B2) are fatal "[QDL_AUTOCONFIG_FAILED]".
 fn inject_autoconfig(
     flash_dir: &Path,
+    extract_root: &Path,
     config: &crate::autoconfig::AutoconfigConfig,
 ) -> Result<(), String> {
-    let rawprogram_path = flash_dir.join("rawprogram0.xml");
+    let rawprogram_path = flash_dir.join(RAWPROGRAM_XML);
 
-    let (rootfs_path, window_bytes) = match find_rootfs_image(flash_dir) {
+    let found = find_rootfs_image(extract_root, flash_dir)
+        .map_err(|e| format!("{TAG_QDL_AUTOCONFIG_FAILED} {e}"))?;
+    let (rootfs_path, window_bytes) = match found {
         Some(found) => found,
         None => {
             // B3: non-injectable rootfs -> skip, do not abort.
@@ -399,21 +413,18 @@ fn inject_autoconfig(
 
     // A confirmed-ext4 rootfs that fails to write/validate is fatal.
     crate::autoconfig::inject_into_bare_ext4_image(&rootfs_path, config)
-        .map_err(|e| format!("{} {}", TAG_QDL_AUTOCONFIG_FAILED, e))?;
+        .map_err(|e| format!("{TAG_QDL_AUTOCONFIG_FAILED} {e}"))?;
 
     // B2: the mutated file must still fit within the partition window.
     let file_len = fs::metadata(&rootfs_path)
         .map_err(|e| {
-            format!(
-                "{} failed to stat rootfs after injection: {}",
-                TAG_QDL_AUTOCONFIG_FAILED, e
-            )
+            format!("{TAG_QDL_AUTOCONFIG_FAILED} failed to stat rootfs after injection: {e}")
         })?
         .len();
     if file_len > window_bytes {
         return Err(format!(
-            "{} rootfs grew beyond partition window after injection ({} bytes > {} bytes)",
-            TAG_QDL_AUTOCONFIG_FAILED, file_len, window_bytes
+            "{TAG_QDL_AUTOCONFIG_FAILED} rootfs grew beyond partition window after injection \
+             ({file_len} bytes > {window_bytes} bytes)"
         ));
     }
 
@@ -427,79 +438,107 @@ fn inject_autoconfig(
     Ok(())
 }
 
-/// Resolve injectable rootfs from rawprogram0.xml: `Some((path, window_bytes))` only if exactly one `label="rootfs"` entry is non-sparse,
-/// `readbackverify != true`, `file_sector_offset == 0`, file exists, ext4 magic at 0x438; else `None` (skip, B3/M3). Window = `num_partition_sectors * SECTOR_SIZE_IN_BYTES` (B2).
-fn find_rootfs_image(flash_dir: &Path) -> Option<(PathBuf, u64)> {
-    let xml_path = flash_dir.join("rawprogram0.xml");
-    let xml_data = fs::read(&xml_path).ok()?;
-    let xml = Element::parse(&xml_data[..]).ok()?;
+fn parse_xml(xml_path: &Path) -> Result<Element, String> {
+    let name = xml_path.file_name().unwrap_or_default().to_string_lossy();
+    let xml_data = fs::read(xml_path).map_err(|e| format!("Failed to read {name}: {e}"))?;
+    Element::parse(&xml_data[..]).map_err(|e| format!("Failed to parse {name}: {e}"))
+}
 
-    // Collect all program entries labelled "rootfs".
-    let rootfs_entries: Vec<&Element> = xml
-        .children
-        .iter()
-        .filter_map(|n| {
-            if let XMLNode::Element(e) = n {
-                if e.name.to_lowercase() == "program"
-                    && e.attributes
-                        .get("label")
-                        .map(|s| s.eq_ignore_ascii_case("rootfs"))
-                        .unwrap_or(false)
-                {
-                    return Some(e);
-                }
-            }
-            None
+fn program_elements(xml: &Element) -> impl Iterator<Item = &Element> {
+    xml.children.iter().filter_map(|n| match n {
+        XMLNode::Element(e) if e.name.eq_ignore_ascii_case("program") => Some(e),
+        _ => None,
+    })
+}
+
+// None for an entry with no file or a missing one; an error when the name leaves the extraction.
+fn program_file(
+    extract_root: &Path,
+    flash_dir: &Path,
+    attrs: &IndexMap<String, String>,
+) -> Result<Option<PathBuf>, String> {
+    let filename = attrs.get("filename").map(|s| s.as_str()).unwrap_or("");
+    if filename.is_empty() {
+        return Ok(None);
+    }
+    let path = resolve_flash_file(extract_root, flash_dir, filename)?;
+    Ok(path.exists().then_some(path))
+}
+
+// The rootfs is written in place, so it must be a plain file owned by the extraction alone.
+fn check_plain_file(path: &Path) -> Result<(), String> {
+    let meta = fs::symlink_metadata(path)
+        .map_err(|e| format!("failed to stat rootfs {}: {}", path.display(), e))?;
+    if !meta.is_file() {
+        return Err(format!("rootfs {} is not a regular file", path.display()));
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        if meta.nlink() != 1 {
+            return Err(format!("rootfs {} has other hard links", path.display()));
+        }
+    }
+    Ok(())
+}
+
+// Some((path, window)) only for one non-sparse, offset-0, no-readbackverify ext4 "rootfs" entry (B2/B3/M3), else None.
+// A rootfs outside the extraction, a link or a hard-linked file is an error, never a skip.
+fn find_rootfs_image(
+    extract_root: &Path,
+    flash_dir: &Path,
+) -> Result<Option<(PathBuf, u64)>, String> {
+    let Ok(xml) = parse_xml(&flash_dir.join(RAWPROGRAM_XML)) else {
+        return Ok(None);
+    };
+
+    let rootfs_entries: Vec<&Element> = program_elements(&xml)
+        .filter(|e| {
+            e.attributes
+                .get("label")
+                .is_some_and(|s| s.eq_ignore_ascii_case("rootfs"))
         })
         .collect();
 
     // M3: a multi-part rootfs is not injectable.
-    if rootfs_entries.len() != 1 {
-        return None;
-    }
-    let entry = rootfs_entries[0];
+    let [entry] = rootfs_entries[..] else {
+        return Ok(None);
+    };
     let attrs = &entry.attributes;
 
-    let filename = attrs.get("filename").map(|s| s.as_str()).unwrap_or("");
-    if filename.is_empty() {
-        return None;
-    }
-
     // M3: sparse / readbackverify / non-zero file offset are not injectable.
-    let sparse = attrs
-        .get("sparse")
-        .map(|s| s.eq_ignore_ascii_case("true"))
-        .unwrap_or(false);
-    if sparse {
-        return None;
-    }
-    let readbackverify = attrs
-        .get("readbackverify")
-        .map(|s| s.eq_ignore_ascii_case("true"))
-        .unwrap_or(false);
-    if readbackverify {
-        return None;
+    let is_true = |key: &str| {
+        attrs
+            .get(key)
+            .is_some_and(|s| s.eq_ignore_ascii_case("true"))
+    };
+    if is_true("sparse") || is_true("readbackverify") {
+        return Ok(None);
     }
     let file_sector_offset: u64 = attrs
         .get("file_sector_offset")
         .and_then(|s| s.parse().ok())
         .unwrap_or(0);
     if file_sector_offset != 0 {
-        return None;
+        return Ok(None);
     }
 
-    // M2: resolve as flash_dir.join(filename) + .exists() (no canonicalize).
-    let rootfs_path = flash_dir.join(filename);
-    if !rootfs_path.exists() {
-        return None;
-    }
+    let Some(rootfs_path) = program_file(extract_root, flash_dir, attrs)? else {
+        return Ok(None);
+    };
+    check_plain_file(&rootfs_path)?;
 
     // B3: probe the ext4 superblock magic at offset 0x438; non-ext4 -> skip.
-    let mut file = fs::File::open(&rootfs_path).ok()?;
-    file.seek(SeekFrom::Start(EXT4_SB_OFFSET)).ok()?;
     let mut magic = [0u8; 2];
-    if file.read_exact(&mut magic).is_err() || magic != EXT4_MAGIC {
-        return None;
+    let is_ext4 = fs::File::open(&rootfs_path)
+        .and_then(|mut file| {
+            file.seek(SeekFrom::Start(EXT4_SB_OFFSET))?;
+            file.read_exact(&mut magic)
+        })
+        .is_ok()
+        && magic == EXT4_MAGIC;
+    if !is_ext4 {
+        return Ok(None);
     }
 
     // B2: partition window = num_partition_sectors * SECTOR_SIZE_IN_BYTES.
@@ -513,10 +552,10 @@ fn find_rootfs_image(flash_dir: &Path) -> Option<(PathBuf, u64)> {
         .unwrap_or(512);
     let window_bytes = num_partition_sectors.saturating_mul(sector_size);
     if window_bytes == 0 {
-        return None;
+        return Ok(None);
     }
 
-    Some((rootfs_path, window_bytes))
+    Ok(Some((rootfs_path, window_bytes)))
 }
 
 /// Parse rawprogram0.xml and program each partition
@@ -524,40 +563,23 @@ fn program_from_xml<T: QdlChan>(
     channel: &mut T,
     xml_path: &Path,
     flash_dir: &Path,
+    extract_root: &Path,
     state: &Arc<FlashState>,
 ) -> Result<(), String> {
-    let xml_data =
-        fs::read(xml_path).map_err(|e| format!("Failed to read rawprogram0.xml: {}", e))?;
-
-    let xml = Element::parse(&xml_data[..])
-        .map_err(|e| format!("Failed to parse rawprogram0.xml: {}", e))?;
+    let xml = parse_xml(xml_path)?;
 
     // Pre-count real program entries to size the progress total.
-    let program_entries: Vec<&Element> = xml
-        .children
-        .iter()
-        .filter_map(|n| {
-            if let XMLNode::Element(e) = n {
-                if e.name.to_lowercase() == "program" {
-                    let filename = e
-                        .attributes
-                        .get("filename")
-                        .map(|s| s.as_str())
-                        .unwrap_or("");
-                    let num_sectors: usize = e
-                        .attributes
-                        .get("num_partition_sectors")
-                        .and_then(|s| s.parse().ok())
-                        .unwrap_or(0);
-                    if !filename.is_empty() && num_sectors > 0 && flash_dir.join(filename).exists()
-                    {
-                        return Some(e);
-                    }
-                }
-            }
-            None
-        })
-        .collect();
+    let mut program_entries: Vec<&Element> = Vec::new();
+    for e in program_elements(&xml) {
+        let num_sectors: usize = e
+            .attributes
+            .get("num_partition_sectors")
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(0);
+        if num_sectors > 0 && program_file(extract_root, flash_dir, &e.attributes)?.is_some() {
+            program_entries.push(e);
+        }
+    }
 
     let total_entries = program_entries.len();
     state
@@ -597,6 +619,7 @@ fn program_from_xml<T: QdlChan>(
                     program_single_partition(
                         channel,
                         flash_dir,
+                        extract_root,
                         &e.attributes,
                         state,
                         &mut bytes_written,
@@ -623,6 +646,7 @@ fn program_from_xml<T: QdlChan>(
 fn program_single_partition<T: QdlChan>(
     channel: &mut T,
     flash_dir: &Path,
+    extract_root: &Path,
     attrs: &IndexMap<String, String>,
     state: &Arc<FlashState>,
     bytes_written: &mut u64,
@@ -654,8 +678,7 @@ fn program_single_partition<T: QdlChan>(
         return Ok(());
     }
 
-    let file_path = flash_dir.join(filename);
-    if !file_path.exists() {
+    let Some(file_path) = program_file(extract_root, flash_dir, attrs)? else {
         log_warn!(
             "qdl::flash",
             "Skipping missing file: {} (partition: {})",
@@ -663,7 +686,7 @@ fn program_single_partition<T: QdlChan>(
             label
         );
         return Ok(());
-    }
+    };
 
     check_cancelled(state)?;
 
@@ -729,10 +752,7 @@ fn program_single_partition<T: QdlChan>(
 
 /// Parse patch0.xml and apply patches via Firehose
 fn patch_from_xml<T: QdlChan>(channel: &mut T, patch_path: &Path) -> Result<(), String> {
-    let xml_data = fs::read(patch_path).map_err(|e| format!("Failed to read patch0.xml: {}", e))?;
-
-    let xml =
-        Element::parse(&xml_data[..]).map_err(|e| format!("Failed to parse patch0.xml: {}", e))?;
+    let xml = parse_xml(patch_path)?;
 
     let mut patch_count = 0;
     for node in &xml.children {
@@ -850,6 +870,113 @@ impl<R: Read, F: FnMut(u64)> Read for ProgressReader<R, F> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const ROOTFS_WINDOW_SECTORS: u64 = 20_920_568;
+
+    struct Layout {
+        dir: PathBuf,
+        root: PathBuf,
+        flash_dir: PathBuf,
+    }
+
+    impl Drop for Layout {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    // The real Arduino UNO Q rawprogram0.xml shape, with `filename` for the rootfs entry.
+    fn arduino_layout(tag: &str, rootfs_filename: &str) -> Layout {
+        let dir = crate::utils::test_scratch_dir(tag);
+        let root = super::super::extract::extraction_dir(&dir);
+        let flash_dir = root.join("arduino-images").join("flash");
+        fs::create_dir_all(&flash_dir).unwrap();
+        let mut rootfs = vec![0u8; 4096];
+        rootfs[EXT4_SB_OFFSET as usize..EXT4_SB_OFFSET as usize + 2].copy_from_slice(&EXT4_MAGIC);
+        fs::write(
+            root.join("arduino-images").join("disk-sdcard.img.root"),
+            rootfs,
+        )
+        .unwrap();
+        fs::write(
+            flash_dir.join(RAWPROGRAM_XML),
+            format!(
+                r#"<?xml version="1.0" ?><data><program SECTOR_SIZE_IN_BYTES="512" file_sector_offset="0" filename="{rootfs_filename}" label="rootfs" num_partition_sectors="{ROOTFS_WINDOW_SECTORS}" physical_partition_number="0" readbackverify="false" sparse="false" start_sector="1050624"/></data>"#
+            ),
+        )
+        .unwrap();
+        Layout {
+            dir,
+            root,
+            flash_dir,
+        }
+    }
+
+    #[test]
+    fn the_arduino_rootfs_resolves_inside_the_extraction() {
+        let layout = arduino_layout("ok", "../disk-sdcard.img.root");
+        let (path, window) = find_rootfs_image(&layout.root, &layout.flash_dir)
+            .unwrap()
+            .unwrap();
+        assert!(path.starts_with(layout.root.canonicalize().unwrap()));
+        assert_eq!(window, ROOTFS_WINDOW_SECTORS * 512);
+    }
+
+    #[test]
+    fn a_rootfs_outside_the_extraction_is_an_error_not_a_skip() {
+        for escape in ["../../../user.img", "/etc/hosts"] {
+            let layout = arduino_layout("escape", escape);
+            assert!(
+                find_rootfs_image(&layout.root, &layout.flash_dir).is_err(),
+                "{escape}"
+            );
+        }
+        let missing = arduino_layout("missing", "../absent.root");
+        assert!(find_rootfs_image(&missing.root, &missing.flash_dir)
+            .unwrap()
+            .is_none());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_rootfs_is_never_injected() {
+        let layout = arduino_layout("symlink", "rootfs.link");
+        let real = layout
+            .root
+            .join("arduino-images")
+            .join("disk-sdcard.img.root");
+        std::os::unix::fs::symlink(&real, layout.flash_dir.join("rootfs.link")).unwrap();
+        assert!(find_rootfs_image(&layout.root, &layout.flash_dir).is_err());
+
+        let layout = arduino_layout("hardlink", "../disk-sdcard.img.root");
+        let real = layout
+            .root
+            .join("arduino-images")
+            .join("disk-sdcard.img.root");
+        fs::hard_link(&real, layout.root.join("second-name")).unwrap();
+        assert!(find_rootfs_image(&layout.root, &layout.flash_dir).is_err());
+    }
+
+    #[test]
+    fn every_program_file_must_stay_inside_the_extraction() {
+        let layout = arduino_layout("program", "../disk-sdcard.img.root");
+        let attrs = |filename: &str| {
+            let mut attrs = IndexMap::new();
+            attrs.insert("filename".to_string(), filename.to_string());
+            attrs
+        };
+        assert!(program_file(
+            &layout.root,
+            &layout.flash_dir,
+            &attrs("../disk-sdcard.img.root")
+        )
+        .unwrap()
+        .is_some());
+        assert!(program_file(&layout.root, &layout.flash_dir, &attrs(""))
+            .unwrap()
+            .is_none());
+        assert!(program_file(&layout.root, &layout.flash_dir, &attrs("../../../etc.img")).is_err());
+    }
 
     #[test]
     fn raw_num_sectors_rounds_up() {

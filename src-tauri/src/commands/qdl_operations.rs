@@ -101,8 +101,15 @@ pub async fn flash_qdl_image(
 
     // qdlrs is synchronous, so run the flash off the async runtime.
     let flash_dir_clone = flash_dir.clone();
+    let extract_root = qdl::extract::extraction_dir(&extract_dir);
     let result = tokio::task::spawn_blocking(move || {
-        qdl::flash::qdl_flash(&flash_dir_clone, &device_path, autoconfig, flash_state)
+        qdl::flash::qdl_flash(
+            &flash_dir_clone,
+            &extract_root,
+            &device_path,
+            autoconfig,
+            flash_state,
+        )
     })
     .await
     .map_err(tag_join_error)?;
