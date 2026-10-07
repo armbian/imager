@@ -77,7 +77,7 @@ pub async fn simulate_block_flash(
     state: Arc<FlashState>,
     on_unplug: impl FnOnce(),
 ) -> Result<(), String> {
-    state.reset();
+    state.reset_progress();
     state.total_bytes.store(image_size, Ordering::SeqCst);
     let fail_at = fail_offset(image_size, cfg.fail_at_percent);
 
@@ -94,7 +94,7 @@ pub async fn simulate_block_flash(
     .await
     {
         Ok(()) => {}
-        Err(Stop::Cancelled) => return Err("Flash cancelled".to_string()),
+        Err(Stop::Cancelled) => return Err(crate::flash::cancelled_err()),
         Err(Stop::FailedAt(at)) if cfg.outcome == FlashOutcome::Unplug => {
             on_unplug();
             return Err(write_failed_err(
@@ -146,7 +146,7 @@ pub async fn simulate_qdl_flash(
     state: Arc<FlashState>,
     on_unplug: impl FnOnce(),
 ) -> Result<(), String> {
-    state.reset();
+    state.reset_progress();
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
     for stage in [STAGE_CONNECTING, STAGE_SAHARA, STAGE_CONFIGURING] {

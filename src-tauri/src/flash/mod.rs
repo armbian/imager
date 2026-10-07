@@ -76,13 +76,26 @@ impl FlashState {
         }
     }
 
+    /// Start of a new operation: clears progress and any earlier cancel.
     pub fn reset(&self) {
+        self.reset_progress();
+        self.is_cancelled.store(false, Ordering::SeqCst);
+    }
+
+    /// Writers call this instead of `reset`, so a cancel pressed before the write still stops it.
+    pub fn reset_progress(&self) {
         self.total_bytes.store(0, Ordering::SeqCst);
         self.written_bytes.store(0, Ordering::SeqCst);
         self.verified_bytes.store(0, Ordering::SeqCst);
         self.is_verifying.store(false, Ordering::SeqCst);
-        self.is_cancelled.store(false, Ordering::SeqCst);
         self.qdl.reset();
+    }
+
+    pub fn ensure_not_cancelled(&self) -> Result<(), String> {
+        if self.is_cancelled.load(Ordering::SeqCst) {
+            return Err(cancelled_err());
+        }
+        Ok(())
     }
 }
 
@@ -176,6 +189,13 @@ pub(crate) fn write_failed_err(offset: u64, e: impl std::fmt::Display) -> String
     format!("[WRITE_FAILED:{}] {}", offset, e)
 }
 
+pub(crate) fn cancelled_err() -> String {
+    crate::utils::tagged(
+        crate::utils::TAG_CANCELLED,
+        crate::config::flash::CANCELLED_ERROR,
+    )
+}
+
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 pub(crate) fn fsync_checked(fd: i32, written: u64) -> Result<(), String> {
     if unsafe { libc::fsync(fd) } != 0 {
@@ -246,6 +266,21 @@ mod tests {
         ] {
             assert!(reject_simulated(path).is_ok(), "{path:?} was refused");
         }
+    }
+
+    #[test]
+    fn reset_progress_keeps_a_pending_cancel() {
+        let state = FlashState::new();
+        state.written_bytes.store(42, Ordering::SeqCst);
+        state.is_cancelled.store(true, Ordering::SeqCst);
+        state.reset_progress();
+        assert_eq!(state.written_bytes.load(Ordering::SeqCst), 0);
+        assert_eq!(
+            state.ensure_not_cancelled().unwrap_err(),
+            "[CANCELLED] Flash cancelled"
+        );
+        state.reset();
+        assert!(state.ensure_not_cancelled().is_ok());
     }
 
     #[test]
