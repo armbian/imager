@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "Apply an autoconfig profile (optional)",
       "none": "None",
-      "createNew": "Create new profile",
-      "rowLabel": "Autoconfig profile"
+      "rowLabel": "Autoconfig profile",
+      "newProfile": "New profile",
+      "glyphsLabel": "Sets {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "Ethernet",
+        "user": "User",
+        "timezone": "Time zone",
+        "keys": "SSH keys"
+      }
     }
   },
   "modal": {

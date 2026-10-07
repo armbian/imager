@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "Een autoconfig-profiel toepassen (optioneel)",
       "none": "Geen",
-      "createNew": "Nieuw profiel aanmaken",
-      "rowLabel": "Autoconfig-profiel"
+      "rowLabel": "Autoconfig-profiel",
+      "newProfile": "Nieuw profiel",
+      "glyphsLabel": "Stelt in: {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "Ethernet",
+        "user": "Gebruiker",
+        "timezone": "Tijdzone",
+        "keys": "SSH-sleutels"
+      }
     }
   },
   "modal": {

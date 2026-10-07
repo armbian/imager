@@ -1,4 +1,4 @@
-/* AUTOCONFIG PROFILES - guided wizard and its shared controls */
+/* AUTOCONFIG PROFILES - menu, guided wizard and their shared controls */
 
 /* SEGMENTED CHOICE */
 .seg-choice {
@@ -790,4 +790,119 @@
     opacity: 1;
     transform: none;
   }
+}
+
+/* PROFILE GLYPHS AND MENU */
+.profile-glyphs {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+}
+
+.profile-glyphs i {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.profile-menu {
+  position: fixed;
+  z-index: 1200;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-2xl);
+  background: var(--bg-app);
+  box-shadow: var(--pf-pop-shadow), var(--island-shadow);
+  color: var(--text-primary);
+  animation: pfPopIn var(--dur-medium) var(--ease-out-expo) both;
+}
+
+.profile-menu__list {
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  outline: none;
+}
+
+.profile-menu__list:focus-visible {
+  border-radius: var(--radius-2xl);
+  box-shadow: inset 0 0 0 2px rgba(var(--accent-rgb), 0.35);
+}
+
+.profile-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 38px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-menu__item.is-active {
+  background: var(--bg-hover);
+}
+
+.profile-menu__item.is-sel {
+  background: rgba(var(--accent-rgb), 0.09);
+}
+
+.profile-menu__item.is-sel .profile-menu__name {
+  color: var(--accent);
+}
+
+.profile-menu__item.is-sel .profile-glyphs i {
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+}
+
+.profile-menu__item.is-none .profile-menu__name {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.profile-menu__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-menu__check {
+  display: inline-grid;
+  flex: none;
+  width: 18px;
+  color: var(--accent);
+}
+
+.profile-menu__sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--border-light);
+}
+
+.profile-menu__item.is-new {
+  min-height: 40px;
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.profile-menu__item.is-new.is-active {
+  background: rgba(var(--accent-rgb), 0.08);
+}
+
+.profile-menu__newtile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--accent-rgb), 0.12);
 }

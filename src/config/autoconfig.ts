@@ -133,6 +133,20 @@ export function isWifiKeyLength(key: string): boolean {
   return key.length >= AUTOCONFIG.WIFI_KEY_MIN && key.length <= AUTOCONFIG.WIFI_KEY_MAX;
 }
 
+export type ProfileGlyph = 'wifi' | 'cable' | 'user' | 'timezone' | 'keys';
+
+export function profileGlyphs(c: AutoconfigConfig): ProfileGlyph[] {
+  const glyphs: ProfileGlyph[] = [];
+  if (c.applyNetwork) {
+    if (c.wifiEnabled) glyphs.push('wifi');
+    else if (c.ethernetEnabled) glyphs.push('cable');
+  }
+  if (c.userName?.trim()) glyphs.push('user');
+  if (c.timezone || c.langBasedOnLocation) glyphs.push('timezone');
+  if (c.userKeyUrl || c.rootKeyUrl) glyphs.push('keys');
+  return glyphs;
+}
+
 /** Where public SSH keys come from: a forge account the app turns into a URL, or any link. */
 export type SshKeySource = 'github' | 'gitlab' | 'link';
 

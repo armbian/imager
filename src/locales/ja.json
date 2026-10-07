@@ -56,8 +56,16 @@
     "profile": {
       "applyOptional": "自動構成プロファイルを適用（任意）",
       "none": "なし",
-      "createNew": "新しいプロファイルを作成",
-      "rowLabel": "自動構成プロファイル"
+      "rowLabel": "自動構成プロファイル",
+      "newProfile": "新しいプロファイル",
+      "glyphsLabel": "設定内容: {{list}}",
+      "glyph": {
+        "wifi": "Wi-Fi",
+        "cable": "イーサネット",
+        "user": "ユーザー",
+        "timezone": "タイムゾーン",
+        "keys": "SSHキー"
+      }
     }
   },
   "modal": {
