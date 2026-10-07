@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-//! Read-only validation of an ext4 rootfs after a write, using ext4-view (verifies inode + block-group-descriptor
-//! checksums on access), so reading the dest file back and walking the whole tree acts as an e2fsck proxy.
+//! Read-only ext4 validation after a write, via ext4-view, which verifies the metadata checksums it reads.
 
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
@@ -30,8 +29,7 @@ impl Ext4Read for PartReader {
     }
 }
 
-/// Reload the rootfs read-only, confirm the dest file matches `content`, and
-/// walk the whole tree so any checksum/corruption error surfaces.
+/// Reload read-only, check the dest file matches `content`, and walk directories and inodes; errors never carry content.
 pub fn validate(
     image_path: &Path,
     base: u64,
@@ -42,7 +40,6 @@ pub fn validate(
     let fs = Ext4Ro::load(Box::new(PartReader { file, base }))
         .map_err(|e| WriteConfError::ValidationFailed(format!("ext4-view load failed: {e}")))?;
 
-    // The written file must read back byte-for-byte.
     let got = fs
         .read(dest_path)
         .map_err(|e| WriteConfError::ValidationFailed(format!("re-read {dest_path}: {e}")))?;
@@ -54,9 +51,18 @@ pub fn validate(
         )));
     }
 
-    // Full tree walk forces checksum validation across every inode.
-    walk(&fs, "/")?;
-    Ok(())
+    let md = fs
+        .metadata(dest_path)
+        .map_err(|e| WriteConfError::ValidationFailed(format!("metadata {dest_path}: {e}")))?;
+    if !md.file_type().is_regular_file() || md.len() != content.len() as u64 {
+        return Err(WriteConfError::ValidationFailed(format!(
+            "{dest_path} inode mismatch: expected a {} byte regular file, found {} bytes",
+            content.len(),
+            md.len()
+        )));
+    }
+
+    walk(&fs)
 }
 
 /// Whether `path` is a regular file in the ext4 filesystem at `base`; the image is opened read-only.
@@ -71,35 +77,34 @@ pub fn has_regular_file(image_path: &Path, base: u64, path: &str) -> Result<bool
     }
 }
 
-/// Recursively read every directory and file, propagating the first error.
-fn walk(fs: &Ext4Ro, path: &str) -> Result<(), WriteConfError> {
-    let rd = fs
-        .read_dir(path)
-        .map_err(|e| WriteConfError::ValidationFailed(format!("read_dir {path}: {e}")))?;
-    for entry in rd {
-        let entry =
-            entry.map_err(|e| WriteConfError::ValidationFailed(format!("entry in {path}: {e}")))?;
-        let name = match entry.file_name().as_str() {
-            Ok(s) => s.to_string(),
-            Err(_) => continue, // non-UTF8 name: skip
-        };
-        if name == "." || name == ".." {
-            continue;
-        }
-        let child = if path == "/" {
-            format!("/{name}")
-        } else {
-            format!("{path}/{name}")
-        };
-        let md = entry
-            .metadata()
-            .map_err(|e| WriteConfError::ValidationFailed(format!("metadata {child}: {e}")))?;
-        if md.is_dir() {
-            walk(fs, &child)?;
-        } else if !md.is_symlink() {
-            // Best-effort touch to exercise extent tree + checksum; ignore errors as ext4-view can't resolve every legal name (CA certs with '=' / non-ASCII "…Főtanúsítvány.crt") — a reader limit on pre-existing files, not our corruption.
-            // Structural checks (load/read_dir/metadata) stay fatal; dest file verified byte-for-byte above.
-            let _ = fs.read(&child);
+/// Read every directory and the metadata of every entry, propagating the first error.
+fn walk(fs: &Ext4Ro) -> Result<(), WriteConfError> {
+    let mut pending = vec!["/".to_string()];
+    while let Some(path) = pending.pop() {
+        let rd = fs
+            .read_dir(path.as_str())
+            .map_err(|e| WriteConfError::ValidationFailed(format!("read_dir {path}: {e}")))?;
+        for entry in rd {
+            let entry = entry
+                .map_err(|e| WriteConfError::ValidationFailed(format!("entry in {path}: {e}")))?;
+            let name = match entry.file_name().as_str() {
+                Ok(s) => s.to_string(),
+                Err(_) => continue, // non-UTF8 name: skip
+            };
+            if name == "." || name == ".." {
+                continue;
+            }
+            let child = if path == "/" {
+                format!("/{name}")
+            } else {
+                format!("{path}/{name}")
+            };
+            let md = entry
+                .metadata()
+                .map_err(|e| WriteConfError::ValidationFailed(format!("metadata {child}: {e}")))?;
+            if md.is_dir() {
+                pending.push(child);
+            }
         }
     }
     Ok(())
