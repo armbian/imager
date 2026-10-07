@@ -126,6 +126,12 @@ fn main() {
     // Image cache management happens later in setup, where settings are available.
     cleanup_custom_decompress_cache();
 
+    // Release builds abort on panic, so a crashed flash never ran the Drop that deletes these plaintext presets.
+    autoconfig::sweep_stale_working_copies(&utils::autoconfig_temp_dir());
+    utils::sweep_dir("main", &utils::qdl_temp_dir(), |name, meta| {
+        utils::leftover_is_stale(name, meta.modified().ok())
+    });
+
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())

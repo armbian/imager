@@ -93,6 +93,10 @@ pub mod autoconfig {
     /// Cache subdirectory for per-flash copies with the preset injected
     pub const TEMP_DIR: &str = "autoconfig-temp";
 
+    /// Unix modes of that directory and of each copy: they hold the preset, passwords included
+    pub const DIR_MODE: u32 = 0o700;
+    pub const FILE_MODE: u32 = 0o600;
+
     /// Working copy name when the source path has no file name
     pub const COPY_FALLBACK_NAME: &str = "image.img";
 }
@@ -161,6 +165,9 @@ pub mod images {
 pub mod cache {
     /// Default maximum cache size (20 GB)
     pub const DEFAULT_MAX_SIZE: u64 = 20 * 1024 * 1024 * 1024;
+
+    /// A temp leftover with no live owner pid is removed at startup once older than this
+    pub const STALE_TEMP_SECS: u64 = 12 * 60 * 60;
 }
 
 /// Bus types for the dev scenarios presets, model and vdisk; same strings `devices/types.rs` emits
