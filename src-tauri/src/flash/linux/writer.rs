@@ -118,7 +118,7 @@ pub async fn flash_image(
 ) -> Result<(), String> {
     reject_simulated(target.path())?;
     let device_path = target.path();
-    state.reset();
+    state.reset_progress();
 
     log_info!(
         MODULE,
@@ -165,6 +165,7 @@ pub async fn flash_image(
 
     let device_fd = device.as_raw_fd();
 
+    state.ensure_not_cancelled()?;
     quick_erase(&mut device)?;
 
     let mut image_file =
@@ -187,9 +188,7 @@ pub async fn flash_image(
     let mut bytes_since_sync: u64 = 0;
 
     loop {
-        if state.is_cancelled.load(Ordering::SeqCst) {
-            return Err("Flash cancelled".to_string());
-        }
+        state.ensure_not_cancelled()?;
 
         let bytes_read = image_file
             .read(&mut buffer)

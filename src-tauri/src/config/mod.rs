@@ -86,6 +86,9 @@ pub mod flash {
 
     /// Subdirectory of the QDL temp dir a TAR archive is extracted into
     pub const QDL_EXTRACT_DIR: &str = "qdl-extract";
+
+    /// Detail behind the [CANCELLED] tag a block-device flash returns once the user cancelled it
+    pub const CANCELLED_ERROR: &str = "Flash cancelled";
 }
 
 /// First-boot autoconfig preset injection

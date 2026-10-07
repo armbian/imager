@@ -274,7 +274,7 @@ pub async fn flash_image(
 ) -> Result<(), String> {
     reject_simulated(target.path())?;
     let device_path = target.path();
-    state.reset();
+    state.reset_progress();
 
     let image_size = std::fs::metadata(image_path)
         .map_err(|e| format!("Failed to get image size: {}", e))?
@@ -360,7 +360,7 @@ pub(crate) async fn flash_to_vdisk(
     let needed = padded.saturating_add(config::flash::QUICK_ERASE_SIZE as u64);
     crate::flash::check_capacity(needed, metadata.len())?;
 
-    state.reset();
+    state.reset_progress();
     state.total_bytes.store(image_size, Ordering::SeqCst);
     let fd = file.as_raw_fd();
     log_info!(
@@ -381,6 +381,7 @@ async fn do_flash_work(
     state: Arc<FlashState>,
     verify: bool,
 ) -> Result<(), String> {
+    state.ensure_not_cancelled()?;
     quick_erase(device, device_fd)?;
 
     let mut image_file =
@@ -405,9 +406,7 @@ async fn do_flash_work(
     );
 
     loop {
-        if state.is_cancelled.load(Ordering::SeqCst) {
-            return Err("Flash cancelled".to_string());
-        }
+        state.ensure_not_cancelled()?;
 
         let bytes_read = image_file
             .read(&mut buffer)
@@ -548,6 +547,30 @@ mod tests {
             11 * 1024 * 1024 - 512
         );
         assert!(std::fs::read(&disk).unwrap().iter().all(|b| *b == 0));
+    }
+
+    #[tokio::test]
+    async fn a_cancel_before_the_write_leaves_the_disk_untouched() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let image = image(dir, 1024 * 1024);
+        let (disk, file) = vdisk(dir, 16 * 1024 * 1024);
+        let before: Vec<u8> = (0..16 * 1024 * 1024).map(|i| (i % 7) as u8 + 1).collect();
+        std::fs::write(&disk, &before).unwrap();
+        let state = Arc::new(FlashState::new());
+        state.is_cancelled.store(true, Ordering::SeqCst);
+
+        let err = flash_to_vdisk(&image, "test", file, state.clone(), false)
+            .await
+            .unwrap_err();
+
+        assert_eq!(err, crate::flash::cancelled_err());
+        assert!(state.is_cancelled.load(Ordering::SeqCst));
+        assert_eq!(state.written_bytes.load(Ordering::SeqCst), 0);
+        assert!(
+            std::fs::read(&disk).unwrap() == before,
+            "nothing may be erased"
+        );
     }
 
     #[tokio::test]
