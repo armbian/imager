@@ -102,16 +102,23 @@ fn shell_quote(value: &str) -> String {
     out
 }
 
-/// Push `KEY="value"` if `value` is set and non-empty.
-fn push_str(out: &mut String, key: &str, value: &Option<String>) {
-    if let Some(v) = value {
-        if !v.is_empty() {
-            out.push_str(key);
-            out.push('=');
-            out.push_str(&shell_quote(v));
-            out.push('\n');
-        }
+fn push_value(out: &mut String, key: &str, value: Option<&str>) {
+    if let Some(v) = value.filter(|v| !v.is_empty()) {
+        out.push_str(key);
+        out.push('=');
+        out.push_str(&shell_quote(v));
+        out.push('\n');
     }
+}
+
+// Verbatim: spaces can be meaningful in passwords, the Wi-Fi key and the SSID.
+fn push_str(out: &mut String, key: &str, value: &Option<String>) {
+    push_value(out, key, value.as_deref());
+}
+
+// Older profiles can carry stray spaces ("192.168.1.50 "), which netplan and the first-boot fetches reject.
+fn push_trimmed(out: &mut String, key: &str, value: &Option<String>) {
+    push_value(out, key, value.as_deref().map(str::trim));
 }
 
 /// Push `KEY="1"`/`KEY="0"` if the boolean is set.
@@ -127,7 +134,6 @@ fn push_bool(out: &mut String, key: &str, value: Option<bool>) {
 pub fn render_preset(config: &AutoconfigConfig) -> String {
     let mut out = String::new();
 
-    // Network: gated entirely on apply_network being explicitly true.
     if config.apply_network == Some(true) {
         push_bool(&mut out, "PRESET_NET_CHANGE_DEFAULTS", config.apply_network);
         push_bool(
@@ -136,69 +142,60 @@ pub fn render_preset(config: &AutoconfigConfig) -> String {
             config.ethernet_enabled,
         );
         push_bool(&mut out, "PRESET_NET_WIFI_ENABLED", config.wifi_enabled);
-        // Wi-Fi credentials only when Wi-Fi is enabled, so disabling it does not leave
-        // stale SSID/key/country behind (matches the frontend preview).
+        // Gated so disabling Wi-Fi leaves no stale SSID/key/country behind (matches the preview).
         if config.wifi_enabled == Some(true) {
             push_str(&mut out, "PRESET_NET_WIFI_SSID", &config.wifi_ssid);
             push_str(&mut out, "PRESET_NET_WIFI_KEY", &config.wifi_key);
-            push_str(
+            push_trimmed(
                 &mut out,
                 "PRESET_NET_WIFI_COUNTRYCODE",
                 &config.wifi_country_code,
             );
         }
         push_bool(&mut out, "PRESET_NET_USE_STATIC", config.use_static_ip);
-        // Static address keys only when static IP is enabled, so disabling it does not
-        // leave stale values behind (matches the frontend preview).
+        // Gated so disabling static IP leaves no stale address behind (matches the preview).
         if config.use_static_ip == Some(true) {
-            push_str(&mut out, "PRESET_NET_STATIC_IP", &config.static_ip);
-            push_str(&mut out, "PRESET_NET_STATIC_MASK", &config.static_mask);
-            push_str(
+            push_trimmed(&mut out, "PRESET_NET_STATIC_IP", &config.static_ip);
+            push_trimmed(&mut out, "PRESET_NET_STATIC_MASK", &config.static_mask);
+            push_trimmed(
                 &mut out,
                 "PRESET_NET_STATIC_GATEWAY",
                 &config.static_gateway,
             );
-            push_str(&mut out, "PRESET_NET_STATIC_DNS", &config.static_dns);
+            push_trimmed(&mut out, "PRESET_NET_STATIC_DNS", &config.static_dns);
         }
     }
 
-    // Localization. Armbian applies locale/timezone only during first-user creation,
-    // so emit them only when a full user is defined (matches the locked UI inputs).
+    // Armbian applies locale/timezone only while creating the first user (matches the locked UI inputs).
     let is_set = |v: &Option<String>| v.as_deref().map(|s| !s.trim().is_empty()).unwrap_or(false);
     let has_user = is_set(&config.user_name)
         && is_set(&config.user_password)
         && is_set(&config.user_real_name);
     if has_user {
-        push_str(&mut out, "PRESET_LOCALE", &config.locale);
-        push_str(&mut out, "PRESET_TIMEZONE", &config.timezone);
+        push_trimmed(&mut out, "PRESET_LOCALE", &config.locale);
+        push_trimmed(&mut out, "PRESET_TIMEZONE", &config.timezone);
         if let Some(v) = config.lang_based_on_location {
             out.push_str("SET_LANG_BASED_ON_LOCATION");
             out.push_str(if v { "=\"y\"\n" } else { "=\"n\"\n" });
         }
     }
 
-    // Root account.
     push_str(&mut out, "PRESET_ROOT_PASSWORD", &config.root_password);
-    push_str(&mut out, "PRESET_ROOT_KEY", &config.root_key_url);
+    push_trimmed(&mut out, "PRESET_ROOT_KEY", &config.root_key_url);
 
-    // First user.
-    push_str(&mut out, "PRESET_USER_NAME", &config.user_name);
+    push_trimmed(&mut out, "PRESET_USER_NAME", &config.user_name);
     push_str(&mut out, "PRESET_USER_PASSWORD", &config.user_password);
-    push_str(&mut out, "PRESET_USER_KEY", &config.user_key_url);
+    push_trimmed(&mut out, "PRESET_USER_KEY", &config.user_key_url);
     if let Some(shell) = &config.user_shell {
         out.push_str("PRESET_USER_SHELL=");
         out.push_str(&shell_quote(shell.as_str()));
         out.push('\n');
     }
-    push_str(&mut out, "PRESET_DEFAULT_REALNAME", &config.user_real_name);
+    push_trimmed(&mut out, "PRESET_DEFAULT_REALNAME", &config.user_real_name);
 
-    // Advanced.
-    push_str(&mut out, "PRESET_CONFIGURATION", &config.remote_config_url);
+    push_trimmed(&mut out, "PRESET_CONFIGURATION", &config.remote_config_url);
 
-    // First login runs unattended on the autologin console. Without an internet
-    // connection it would otherwise stop at "Connect via wireless? [Y/n]", which on
-    // a headless board nobody answers, so any preset declines it (wifi, if wanted,
-    // comes from the PRESET_NET_* keys above).
+    // Decline "Connect via wireless? [Y/n]": unattended first login would hang on it offline (#193).
     if !out.is_empty() {
         out.push_str("PRESET_CONNECT_WIRELESS=\"n\"\n");
     }
@@ -511,6 +508,76 @@ mod tests {
         let mut c = empty();
         c.locale = Some(String::new());
         assert_eq!(render_preset(&c), "");
+    }
+
+    fn padded() -> AutoconfigConfig {
+        let s = |v: &str| Some(v.to_string());
+        let mut c = empty();
+        c.apply_network = Some(true);
+        c.wifi_enabled = Some(true);
+        c.wifi_ssid = s(" My Net ");
+        c.wifi_key = s(" k e y ");
+        c.wifi_country_code = s(" IT ");
+        c.use_static_ip = Some(true);
+        c.static_ip = s("192.168.1.50 ");
+        c.static_mask = s(" 255.255.255.0");
+        c.static_gateway = s(" 192.168.1.1 ");
+        c.static_dns = s(" 8.8.8.8, 1.1.1.1 ");
+        c.locale = s(" en_US.UTF-8 ");
+        c.timezone = s("Europe/Rome ");
+        c.root_password = s(" root pw ");
+        c.root_key_url = s(" https://github.com/r.keys ");
+        c.user_name = s(" armbian ");
+        c.user_password = s(" user pw ");
+        c.user_key_url = s("https://github.com/u.keys ");
+        c.user_shell = Some(UserShell::Bash);
+        c.user_real_name = s(" Armbian User ");
+        c.remote_config_url = s(" https://example.com/config.txt ");
+        c
+    }
+
+    // Twin vector: renderPresetPreview(padded, true) in src/config/autoconfig.ts must print the same lines.
+    const PADDED_PRESET: &str = "PRESET_NET_CHANGE_DEFAULTS=\"1\"\n\
+        PRESET_NET_WIFI_ENABLED=\"1\"\n\
+        PRESET_NET_WIFI_SSID=\" My Net \"\n\
+        PRESET_NET_WIFI_KEY=\" k e y \"\n\
+        PRESET_NET_WIFI_COUNTRYCODE=\"IT\"\n\
+        PRESET_NET_USE_STATIC=\"1\"\n\
+        PRESET_NET_STATIC_IP=\"192.168.1.50\"\n\
+        PRESET_NET_STATIC_MASK=\"255.255.255.0\"\n\
+        PRESET_NET_STATIC_GATEWAY=\"192.168.1.1\"\n\
+        PRESET_NET_STATIC_DNS=\"8.8.8.8, 1.1.1.1\"\n\
+        PRESET_LOCALE=\"en_US.UTF-8\"\n\
+        PRESET_TIMEZONE=\"Europe/Rome\"\n\
+        PRESET_ROOT_PASSWORD=\" root pw \"\n\
+        PRESET_ROOT_KEY=\"https://github.com/r.keys\"\n\
+        PRESET_USER_NAME=\"armbian\"\n\
+        PRESET_USER_PASSWORD=\" user pw \"\n\
+        PRESET_USER_KEY=\"https://github.com/u.keys\"\n\
+        PRESET_USER_SHELL=\"bash\"\n\
+        PRESET_DEFAULT_REALNAME=\"Armbian User\"\n\
+        PRESET_CONFIGURATION=\"https://example.com/config.txt\"\n\
+        PRESET_CONNECT_WIRELESS=\"n\"\n";
+
+    #[test]
+    fn structural_values_are_trimmed_and_secrets_kept_verbatim() {
+        assert_eq!(render_preset(&padded()), PADDED_PRESET);
+    }
+
+    #[test]
+    fn a_blank_structural_value_is_skipped_like_an_absent_one() {
+        let mut c = padded();
+        c.static_ip = Some("   ".to_string());
+        c.timezone = Some(" ".to_string());
+        let out = render_preset(&c);
+        assert!(!out.contains("PRESET_NET_STATIC_IP="), "{out}");
+        assert!(!out.contains("PRESET_TIMEZONE="), "{out}");
+        assert!(out.ends_with("PRESET_CONNECT_WIRELESS=\"n\"\n"), "{out}");
+
+        let mut only_blank = empty();
+        only_blank.root_key_url = Some("  ".to_string());
+        only_blank.user_name = Some(" ".to_string());
+        assert_eq!(render_preset(&only_blank), "");
     }
 
     #[test]

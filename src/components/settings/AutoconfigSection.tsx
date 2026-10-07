@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Plus, Pencil, Trash2, FileCog, ChevronLeft, ChevronDown,
@@ -10,7 +10,7 @@ import {
   Terminal, ShieldAlert, UserCircle, Info,
 } from 'lucide-react';
 import type { AutoconfigConfig, AutoconfigProfile } from '../../types';
-import { isHttpUrl, staticIpErrors } from '../../utils';
+import { isHttpUrl, type StaticIpErrors } from '../../utils';
 import {
   getAutoconfigProfiles,
   upsertAutoconfigProfile,
@@ -26,8 +26,11 @@ import {
   USER_SHELLS,
   COMMON_LOCALES,
   WIFI_COUNTRY_CODES,
+  STATIC_IP_FIELDS,
   getTimezones,
   renderPresetPreview,
+  staticIpBlockingErrors,
+  trimStaticIp,
   AUTOCONFIG_PLACEHOLDERS,
 } from '../../config/autoconfig';
 
@@ -38,18 +41,23 @@ function countSet(values: unknown[]): number {
 
 type IconType = typeof Network;
 
-/** Labeled control wrapper (label on top, control below). */
-function Field({ label, children, error }: { label: string; children: React.ReactNode; error?: string }) {
+function Field({ label, children, error, errorId }: {
+  label: string;
+  children: React.ReactNode;
+  error?: string;
+  errorId?: string;
+}) {
   return (
     <label className="ac-field">
       <span className="ac-field__label">{label}</span>
       {children}
-      {error && <span className="ac-field__error">{error}</span>}
+      {error && <span id={errorId} className="ac-field__error">{error}</span>}
     </label>
   );
 }
 
 interface TextInputProps {
+  id?: string;
   icon?: IconType;
   value: string | undefined;
   onChange: (value: string) => void;
@@ -60,12 +68,12 @@ interface TextInputProps {
   disabled?: boolean;
 }
 
-/** Text input with an optional leading icon. */
-function TextInput({ icon: Icon, value, onChange, placeholder, mono, list, invalid, disabled }: TextInputProps) {
+function TextInput({ id, icon: Icon, value, onChange, placeholder, mono, list, invalid, disabled }: TextInputProps) {
   return (
     <div className={`ac-input${mono ? ' is-mono' : ''}${invalid ? ' is-invalid' : ''}${disabled ? ' is-disabled' : ''}`}>
       {Icon && <Icon size={15} className="ac-input__icon" />}
       <input
+        id={id}
         type="text"
         value={value ?? ''}
         placeholder={placeholder}
@@ -176,17 +184,25 @@ function Segmented({ value, options, onChange }: SegmentedProps) {
   );
 }
 
-/** Section card grouping related fields under an icon + title + count badge. */
 function SectionCard({
-  icon: Icon, title, count, children,
-}: { icon: IconType; title: string; count: number; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+  icon: Icon, title, count, children, open: controlledOpen, onOpenChange,
+}: {
+  icon: IconType;
+  title: string;
+  count: number;
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onOpenChange ?? setLocalOpen;
   return (
     <section className="ac-card">
       <button
         type="button"
         className={`ac-card__head ac-card__toggle${open ? ' is-open' : ''}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
         <span className="ac-card__chip"><Icon size={16} /></span>
@@ -223,6 +239,10 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
   const [revealSecrets, setRevealSecrets] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [nameMissing, setNameMissing] = useState(false);
+  const [networkOpen, setNetworkOpen] = useState(false);
+  const ipFieldId = useId();
+  const ipInputId = (field: keyof StaticIpErrors) => `${ipFieldId}-${field}`;
+  const ipErrorId = (field: keyof StaticIpErrors) => `${ipFieldId}-${field}-error`;
 
   const timezones = useMemo(() => getTimezones(), []);
 
@@ -231,13 +251,13 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     if (autoCreate) handleNew();
   }, [autoCreate]);
 
-  /** Opens the editor for a new, empty profile. */
   const handleNew = () => {
     setDraft({ id: crypto.randomUUID(), name: '', updatedAt: Date.now(), config: {} });
     setIsNew(true);
     setShowPreview(false);
     setRevealSecrets(false);
     setNameMissing(false);
+    setNetworkOpen(false);
   };
 
   /** Opens the editor for an existing profile (clone so edits stay local until saved). */
@@ -247,6 +267,7 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     setShowPreview(false);
     setRevealSecrets(false);
     setNameMissing(false);
+    setNetworkOpen(false);
   };
 
   const handleCancel = () => {
@@ -254,7 +275,6 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     setIsNew(false);
   };
 
-  /** Persists the current draft, refreshing the list and notifying listeners. */
   const handleSave = async () => {
     if (!draft || isSaving) return;
     const name = draft.name.trim();
@@ -262,10 +282,17 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
       setNameMissing(true);
       return;
     }
+    const firstIpError = STATIC_IP_FIELDS.find((field) => staticIpBlockingErrors(draft.config)[field]);
+    if (firstIpError) {
+      // The IP fields may sit in a folded card: open it so the reason Save refused is in view.
+      setNetworkOpen(true);
+      requestAnimationFrame(() => document.getElementById(ipInputId(firstIpError))?.focus());
+      return;
+    }
     setIsSaving(true);
     try {
       const wasNew = isNew;
-      const toSave: AutoconfigProfile = { ...draft, name, updatedAt: Date.now() };
+      const toSave: AutoconfigProfile = { ...draft, name, config: trimStaticIp(draft.config), updatedAt: Date.now() };
       await upsertAutoconfigProfile(toSave);
       await loadProfiles();
       showSuccess(wasNew ? t('settings.autoconfig.toastCreated') : t('settings.autoconfig.toastUpdated'));
@@ -284,7 +311,6 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     }
   };
 
-  /** Removes a profile after user confirmation. */
   const handleDeleteConfirm = async () => {
     if (!pendingDelete) return;
     try {
@@ -299,7 +325,6 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     }
   };
 
-  /** Updates a single config field on the current draft. */
   const setConfig = useCallback(<K extends keyof AutoconfigConfig>(key: K, value: AutoconfigConfig[K]) => {
     setDraft((prev) => (prev ? { ...prev, config: { ...prev.config, [key]: value } } : prev));
   }, []);
@@ -314,8 +339,9 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
     // Locale/timezone are applied by Armbian only during first-user creation,
     // so they stay locked until the first user is fully defined (name + password + full name).
     const hasUser = !!(c.userName?.trim() && c.userPassword?.trim() && c.userRealName?.trim());
-    // A bad static address (e.g. the subnet's broadcast .255) leaves a headless board unreachable, so flag it here.
-    const ipErr = c.useStaticIp ? staticIpErrors(c.staticIp, c.staticMask, c.staticGateway, c.staticDns) : {};
+    const ipErr = staticIpBlockingErrors(c);
+    const ipErrFields = STATIC_IP_FIELDS.filter((field) => ipErr[field]);
+    const ipBlocked = ipErrFields.length > 0;
     const ipErrText = (key?: string) => (key ? t(`settings.autoconfig.${key}`) : undefined);
     // Counts mirror what render actually emits: hidden/locked sub-fields don't count.
     const netCount = c.applyNetwork
@@ -339,7 +365,13 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
             {t('settings.autoconfig.cancel')}
           </button>
           <span className="ac-editor__name">{draft.name.trim() || t('settings.autoconfig.newProfile')}</span>
-          <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={isSaving}>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            aria-disabled={ipBlocked || undefined}
+            aria-describedby={ipBlocked ? ipErrFields.map(ipErrorId).join(' ') : undefined}
+          >
             {isSaving ? t('settings.autoconfig.saving') : t('settings.autoconfig.save')}
           </button>
         </div>
@@ -369,7 +401,13 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
           </Field>
         </div>
 
-        <SectionCard icon={Network} title={t('settings.autoconfig.groupNetwork')} count={netCount}>
+        <SectionCard
+          icon={Network}
+          title={t('settings.autoconfig.groupNetwork')}
+          count={netCount}
+          open={networkOpen}
+          onOpenChange={setNetworkOpen}
+        >
           <ToggleRow
             icon={Network}
             label={t('settings.autoconfig.applyNetwork')}
@@ -422,17 +460,17 @@ export function AutoconfigSection({ autoCreate = false, onSaved }: AutoconfigSec
               />
               {c.useStaticIp && (
                 <div className="ac-grid">
-                  <Field label={t('settings.autoconfig.staticIp')} error={ipErrText(ipErr.ip)}>
-                    <TextInput icon={MapPin} value={c.staticIp} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_IP} invalid={!!ipErr.ip} onChange={(v) => setConfig('staticIp', v)} />
+                  <Field label={t('settings.autoconfig.staticIp')} error={ipErrText(ipErr.ip)} errorId={ipErrorId('ip')}>
+                    <TextInput id={ipInputId('ip')} icon={MapPin} value={c.staticIp} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_IP} invalid={!!ipErr.ip} onChange={(v) => setConfig('staticIp', v)} />
                   </Field>
-                  <Field label={t('settings.autoconfig.staticMask')} error={ipErrText(ipErr.mask)}>
-                    <TextInput icon={MapPin} value={c.staticMask} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_MASK} invalid={!!ipErr.mask} onChange={(v) => setConfig('staticMask', v)} />
+                  <Field label={t('settings.autoconfig.staticMask')} error={ipErrText(ipErr.mask)} errorId={ipErrorId('mask')}>
+                    <TextInput id={ipInputId('mask')} icon={MapPin} value={c.staticMask} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_MASK} invalid={!!ipErr.mask} onChange={(v) => setConfig('staticMask', v)} />
                   </Field>
-                  <Field label={t('settings.autoconfig.staticGateway')} error={ipErrText(ipErr.gateway)}>
-                    <TextInput icon={Router} value={c.staticGateway} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_GATEWAY} invalid={!!ipErr.gateway} onChange={(v) => setConfig('staticGateway', v)} />
+                  <Field label={t('settings.autoconfig.staticGateway')} error={ipErrText(ipErr.gateway)} errorId={ipErrorId('gateway')}>
+                    <TextInput id={ipInputId('gateway')} icon={Router} value={c.staticGateway} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_GATEWAY} invalid={!!ipErr.gateway} onChange={(v) => setConfig('staticGateway', v)} />
                   </Field>
-                  <Field label={t('settings.autoconfig.staticDns')} error={ipErrText(ipErr.dns)}>
-                    <TextInput icon={Server} value={c.staticDns} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_DNS} invalid={!!ipErr.dns} onChange={(v) => setConfig('staticDns', v)} />
+                  <Field label={t('settings.autoconfig.staticDns')} error={ipErrText(ipErr.dns)} errorId={ipErrorId('dns')}>
+                    <TextInput id={ipInputId('dns')} icon={Server} value={c.staticDns} placeholder={AUTOCONFIG_PLACEHOLDERS.STATIC_DNS} invalid={!!ipErr.dns} onChange={(v) => setConfig('staticDns', v)} />
                   </Field>
                 </div>
               )}
