@@ -51,6 +51,7 @@
     "noShaTitle": "Nessun checksum disponibile",
     "noShaMessage": "Questa immagine non ha un checksum SHA, quindi non è possibile verificare i dati scritti. La scrittura proseguirà comunque.",
     "extracting": "Estrazione dell'archivio...",
+    "applyingProfile": "Applicazione del profilo...",
     "qdlSahara": "Caricamento del bootloader del firmware...",
     "qdlFirehose": "Scrittura delle partizioni...",
     "profile": {

@@ -51,6 +51,7 @@
     "noShaTitle": "Geen checksum beschikbaar",
     "noShaMessage": "Dit image heeft geen SHA-checksum, dus de geschreven data kan niet worden geverifieerd. Het flashen gaat toch door.",
     "extracting": "Archief uitpakken...",
+    "applyingProfile": "Profiel toepassen...",
     "qdlSahara": "Firmware-loader uploaden...",
     "qdlFirehose": "Partities schrijven...",
     "profile": {

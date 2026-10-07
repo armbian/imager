@@ -32,6 +32,7 @@ export {
 // Constants and polling intervals
 export {
   POLLING,
+  FLASH_PREP_STAGE,
   LINKS,
   TIMING,
   BYTES_PER_KB,

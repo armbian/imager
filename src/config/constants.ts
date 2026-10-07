@@ -3,6 +3,12 @@
 
 /** Application constants and configuration values */
 
+/** `prep_stage` values from get_flash_progress; twin of config::flash::PREP_STAGE_* in Rust */
+export const FLASH_PREP_STAGE = {
+  COPYING: 'copying',
+  APPLYING_PROFILE: 'applying_profile',
+} as const;
+
 /** Polling intervals in milliseconds */
 export const POLLING = {
   DEVICE_CHECK: 2000,

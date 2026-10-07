@@ -51,6 +51,7 @@
     "noShaTitle": "Preverjanje celovitosti ni na voljo",
     "noShaMessage": "Kontrolna vsota SHA za to sliko ni na voljo. Zapisovanje bo nadaljevalo brez preverjanja celovitosti.",
     "extracting": "Razpakiranje arhiva...",
+    "applyingProfile": "Uveljavljanje profila...",
     "qdlSahara": "Nalaganje zaganjalnika strojne programske opreme...",
     "qdlFirehose": "Zapisovanje particij...",
     "profile": {

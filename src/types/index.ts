@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
+import type { FLASH_PREP_STAGE } from '../config/constants';
+
 export interface BoardInfo {
   slug: string;
   name: string;
@@ -178,6 +180,15 @@ export interface FlashProgress {
   partitions_total: number;
   /** Number of partitions programmed so far in QDL mode */
   partitions_written: number;
+  /** Autoconfig work before the write (image copy, then profile injection); null otherwise */
+  prep_stage: FlashPrepStage | null;
+}
+
+export type FlashPrepStage = (typeof FLASH_PREP_STAGE)[keyof typeof FLASH_PREP_STAGE];
+
+/** A freshly reset flash state: nothing prepared, written or verified yet. */
+export function isIdleFlashProgress(prog: FlashProgress): boolean {
+  return !prog.prep_stage && !prog.qdl_stage && !prog.is_verifying && prog.written_bytes === 0;
 }
 
 /** Represents a Qualcomm device in EDL mode detected via USB */

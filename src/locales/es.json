@@ -51,6 +51,7 @@
     "noShaTitle": "No hay suma de verificación",
     "noShaMessage": "Esta imagen no tiene suma de verificación SHA, así que no se pueden comprobar los datos escritos. La escritura continuará de todos modos.",
     "extracting": "Extrayendo archivo...",
+    "applyingProfile": "Aplicando tu perfil...",
     "qdlSahara": "Cargando el cargador de firmware...",
     "qdlFirehose": "Escribiendo particiones...",
     "profile": {

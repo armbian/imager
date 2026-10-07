@@ -51,6 +51,7 @@
     "noShaTitle": "Aucune somme de contrôle disponible",
     "noShaMessage": "Cette image n'a pas de somme de contrôle SHA, les données écrites ne peuvent donc pas être vérifiées. Le flash se poursuivra malgré tout.",
     "extracting": "Extraction de l'archive...",
+    "applyingProfile": "Application du profil...",
     "qdlSahara": "Chargement du chargeur de firmware...",
     "qdlFirehose": "Écriture des partitions...",
     "profile": {

@@ -51,6 +51,7 @@
     "noShaTitle": "Sağlama toplamı yok",
     "noShaMessage": "Bu imajın SHA sağlama toplamı yok, bu nedenle yazılan veriler doğrulanamaz. Yazma işlemi yine de sürecek.",
     "extracting": "Arşiv çıkarılıyor...",
+    "applyingProfile": "Profiliniz uygulanıyor...",
     "qdlSahara": "Donanım yazılımı yükleyicisi gönderiliyor...",
     "qdlFirehose": "Bölümler yazılıyor...",
     "profile": {

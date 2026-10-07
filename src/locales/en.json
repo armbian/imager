@@ -51,6 +51,7 @@
     "noShaTitle": "No checksum available",
     "noShaMessage": "This image has no SHA checksum, so the written data can't be verified. Flashing will continue anyway.",
     "extracting": "Extracting archive...",
+    "applyingProfile": "Applying your profile...",
     "qdlSahara": "Uploading firmware loader...",
     "qdlFirehose": "Writing partitions...",
     "profile": {

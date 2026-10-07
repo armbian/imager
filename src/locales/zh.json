@@ -51,6 +51,7 @@
     "noShaTitle": "没有可用的校验和",
     "noShaMessage": "此镜像没有 SHA 校验和，因此无法校验已写入的数据。烧录仍会继续。",
     "extracting": "正在提取归档文件……",
+    "applyingProfile": "正在应用配置文件……",
     "qdlSahara": "正在上传固件加载器……",
     "qdlFirehose": "正在写入分区……",
     "profile": {

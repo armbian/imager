@@ -51,6 +51,7 @@
     "noShaTitle": "Kontrolna suma nije dostupna",
     "noShaMessage": "Ova slika nema SHA kontrolnu sumu, pa se zapisani podaci ne mogu provjeriti. Snimanje će se svejedno nastaviti.",
     "extracting": "Raspakiravanje arhive...",
+    "applyingProfile": "Primjena profila...",
     "qdlSahara": "Učitavanje pokretača firmvera...",
     "qdlFirehose": "Zapisivanje particija...",
     "profile": {

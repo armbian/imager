@@ -51,6 +51,7 @@
     "noShaTitle": "Brak sumy kontrolnej",
     "noShaMessage": "Ten obraz nie ma sumy kontrolnej SHA, więc nie można zweryfikować zapisanych danych. Zapis i tak będzie kontynuowany.",
     "extracting": "Wyodrębnianie archiwum...",
+    "applyingProfile": "Stosowanie profilu...",
     "qdlSahara": "Przesyłanie programu ładującego firmware...",
     "qdlFirehose": "Zapisywanie partycji...",
     "profile": {
