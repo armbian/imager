@@ -83,6 +83,9 @@ pub mod flash {
 
     /// Delay between those rescans (milliseconds)
     pub const TARGET_RESCAN_INTERVAL_MS: u64 = 100;
+
+    /// Subdirectory of the QDL temp dir a TAR archive is extracted into
+    pub const QDL_EXTRACT_DIR: &str = "qdl-extract";
 }
 
 /// First-boot autoconfig preset injection
