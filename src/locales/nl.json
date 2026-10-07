@@ -165,7 +165,8 @@
     "shaMismatch": "De gedownloade image is beschadigd: de checksum komt niet overeen. Download de image opnieuw voor een verse kopie.",
     "verifyMismatch": "Wat naar het apparaat is geschreven komt niet overeen met de image. De kaart is mogelijk defect. Probeer een andere kaart.",
     "verifyReadFailed": "Het apparaat kon niet worden teruggelezen om het schrijven te verifiëren. Sluit het opnieuw aan en probeer het nog eens, of probeer een andere kaart of lezer.",
-    "imageDecompressFailed": "De image kon niet worden uitgepakt. Het bestand is mogelijk beschadigd of onvolledig. Download het opnieuw of kies een ander bestand."
+    "imageDecompressFailed": "De image kon niet worden uitgepakt. Het bestand is mogelijk beschadigd of onvolledig. Download het opnieuw of kies een ander bestand.",
+    "flashBusy": "De vorige flash wordt nog afgerond. Wacht even en probeer het opnieuw."
   },
   "custom": {
     "customImage": "Aangepaste image",

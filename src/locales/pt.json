@@ -165,7 +165,8 @@
     "shaMismatch": "A imagem transferida está danificada: a soma de verificação não corresponde. Tente transferi-la novamente para obter uma cópia nova.",
     "verifyMismatch": "O que foi gravado no dispositivo não corresponde à imagem. O cartão pode estar com defeito. Tente outro cartão.",
     "verifyReadFailed": "Não foi possível reler o dispositivo para verificar a gravação. Volte a ligá-lo e tente novamente, ou experimente outro cartão ou leitor.",
-    "imageDecompressFailed": "Não foi possível descomprimir a imagem. O ficheiro pode estar danificado ou incompleto. Transfira-o novamente ou escolha outro ficheiro."
+    "imageDecompressFailed": "Não foi possível descomprimir a imagem. O ficheiro pode estar danificado ou incompleto. Transfira-o novamente ou escolha outro ficheiro.",
+    "flashBusy": "A gravação anterior ainda está a terminar. Aguarde um momento e tente novamente."
   },
   "custom": {
     "customImage": "Imagem personalizada",

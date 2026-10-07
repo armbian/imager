@@ -165,7 +165,8 @@
     "shaMismatch": "L'immagine scaricata è danneggiata: il checksum non corrisponde. Riprova a scaricarla per ottenere una copia nuova.",
     "verifyMismatch": "I dati scritti sul dispositivo non corrispondono all'immagine. La scheda potrebbe essere difettosa. Prova un'altra scheda.",
     "verifyReadFailed": "Non è stato possibile rileggere il dispositivo per verificare la scrittura. Ricollegalo e riprova, oppure prova un'altra scheda o un altro lettore.",
-    "imageDecompressFailed": "Non è stato possibile decomprimere l'immagine. Il file potrebbe essere danneggiato o incompleto. Scaricalo di nuovo o scegli un altro file."
+    "imageDecompressFailed": "Non è stato possibile decomprimere l'immagine. Il file potrebbe essere danneggiato o incompleto. Scaricalo di nuovo o scegli un altro file.",
+    "flashBusy": "La scrittura precedente non è ancora terminata. Attendi un momento e riprova."
   },
   "custom": {
     "customImage": "Immagine Personalizzata",

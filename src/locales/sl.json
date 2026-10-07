@@ -165,7 +165,8 @@
     "shaMismatch": "Prenesena slika je poškodovana: njena nadzorna vsota se ne ujema. Poskusite jo znova prenesti, da dobite svežo kopijo.",
     "verifyMismatch": "Zapisano na napravi se ne ujema s sliko. Kartica je morda okvarjena. Poskusite z drugo kartico.",
     "verifyReadFailed": "Naprave ni bilo mogoče znova prebrati za preverjanje zapisa. Znova jo povežite in poskusite ponovno ali poskusite z drugo kartico ali čitalnikom.",
-    "imageDecompressFailed": "Slike ni bilo mogoče razširiti. Datoteka je morda poškodovana ali nepopolna. Znova jo prenesite ali izberite drugo datoteko."
+    "imageDecompressFailed": "Slike ni bilo mogoče razširiti. Datoteka je morda poškodovana ali nepopolna. Znova jo prenesite ali izberite drugo datoteko.",
+    "flashBusy": "Prejšnje zapisovanje se še zaključuje. Počakajte trenutek in poskusite znova."
   },
   "custom": {
     "customImage": "Slika po meri",

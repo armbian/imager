@@ -165,7 +165,8 @@
     "shaMismatch": "Den nedladdade avbildningen är skadad: kontrollsumman stämmer inte. Försök ladda ner den igen för att få en ny kopia.",
     "verifyMismatch": "Det som skrevs till enheten stämmer inte med avbildningen. Kortet kan vara trasigt. Prova ett annat kort.",
     "verifyReadFailed": "Enheten gick inte att läsa tillbaka för att verifiera skrivningen. Anslut den igen och försök på nytt, eller prova ett annat kort eller en annan läsare.",
-    "imageDecompressFailed": "Avbildningen gick inte att packa upp. Filen kan vara skadad eller ofullständig. Ladda ner den igen eller välj en annan fil."
+    "imageDecompressFailed": "Avbildningen gick inte att packa upp. Filen kan vara skadad eller ofullständig. Ladda ner den igen eller välj en annan fil.",
+    "flashBusy": "Den förra flashningen håller fortfarande på att avslutas. Vänta en stund och försök igen."
   },
   "custom": {
     "customImage": "Egen avbildning",

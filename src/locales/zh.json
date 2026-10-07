@@ -165,7 +165,8 @@
     "shaMismatch": "下载的镜像已损坏：校验和不匹配。请重新下载以获取新的副本。",
     "verifyMismatch": "写入设备的内容与镜像不一致。卡可能已损坏。请尝试更换卡。",
     "verifyReadFailed": "无法回读设备以校验写入结果。请重新连接后重试，或更换卡或读卡器。",
-    "imageDecompressFailed": "无法解压镜像。文件可能已损坏或不完整。请重新下载或选择其他文件。"
+    "imageDecompressFailed": "无法解压镜像。文件可能已损坏或不完整。请重新下载或选择其他文件。",
+    "flashBusy": "上一次烧录仍在收尾。请稍等片刻后重试。"
   },
   "custom": {
     "customImage": "自定义镜像",

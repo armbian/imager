@@ -165,7 +165,8 @@
     "shaMismatch": "The downloaded image is damaged: its checksum doesn't match. Try again to download a fresh copy.",
     "verifyMismatch": "What was written to the device doesn't match the image. The card may be failing. Try another card.",
     "verifyReadFailed": "The device couldn't be read back to verify the write. Reconnect it and try again, or try another card or reader.",
-    "imageDecompressFailed": "The image couldn't be decompressed. The file may be damaged or incomplete. Download it again or pick another file."
+    "imageDecompressFailed": "The image couldn't be decompressed. The file may be damaged or incomplete. Download it again or pick another file.",
+    "flashBusy": "The previous flash is still finishing. Wait a moment and try again."
   },
   "custom": {
     "customImage": "Custom Image",
