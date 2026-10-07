@@ -1,0 +1,33 @@
+name: "Maintenance: PR check cleanup"
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  prune-old-runs:
+    name: Prune old PR check and test build runs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Delete old PR check runs
+        uses: Mattraks/delete-workflow-runs@0cf693bc9909e5e867ee8f27b813224ba862939c # v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          delete_workflow_pattern: "maintenance-pr-check.yml"
+          retain_days: 14
+          keep_minimum_runs: 5
+
+      - name: Delete old PR test build runs
+        uses: Mattraks/delete-workflow-runs@0cf693bc9909e5e867ee8f27b813224ba862939c # v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          delete_workflow_pattern: "maintenance-pr-test-builds.yml"
+          retain_days: 14
+          keep_minimum_runs: 5
