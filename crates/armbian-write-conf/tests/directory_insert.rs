@@ -75,8 +75,12 @@ fn zero_record_length_is_refused_untouched() {
     drop(file);
     let before = std::fs::read(&image).unwrap();
 
-    assert!(common::bounded_write(&image, PRESET, CONTENT).is_err());
+    let error = common::bounded_write(&image, PRESET, CONTENT).unwrap_err();
 
+    assert!(
+        error.to_string().contains("Corrupt directory entry"),
+        "{error}"
+    );
     assert!(std::fs::read(&image).unwrap() == before);
 }
 
@@ -91,5 +95,61 @@ fn full_directory_block_gets_a_checksummed_new_block() {
 
     assert!(report.validated);
     assert_ne!(second_root_block(&image), 0);
+    common::assert_e2fsck_clean(&image, 0);
+}
+
+const INDEXED_ENTRIES: usize = 300;
+const EXT4_INDEX_FL: u32 = 0x1000;
+
+/// A /root that e2fsck turned into a hash-indexed directory, optionally holding the preset already.
+fn indexed_root(with_preset: bool) -> Option<(TempDir, PathBuf)> {
+    let directory = tempdir().unwrap();
+    let image = directory.path().join("htree.img");
+    common::mkfs_ext4(&image, IMAGE_SIZE)?;
+    let preset = directory.path().join("preset");
+    std::fs::write(&preset, b"PRESET_USER_SHELL=\"sh\"\n").unwrap();
+    let mut commands = String::from("mkdir /root\ncd /root\n");
+    for i in 1..=INDEXED_ENTRIES {
+        commands += &format!("mknod {} p\n", entry_name(i));
+    }
+    if with_preset {
+        commands += &format!("write {} .not_logged_in_yet\n", preset.display());
+    }
+    common::debugfs_write(&image, &commands)?;
+    common::e2fsck_index_directories(&image)?;
+    common::assert_e2fsck_clean(&image, 0);
+    let stat = common::debugfs_read(&image, "stat /root")?;
+    let flags = stat
+        .split("Flags: 0x")
+        .nth(1)
+        .and_then(|rest| rest.split_whitespace().next())
+        .and_then(|hex| u32::from_str_radix(hex, 16).ok())
+        .unwrap();
+    assert_ne!(flags & EXT4_INDEX_FL, 0, "e2fsck -D did not index /root");
+    Some((directory, image))
+}
+
+#[test]
+fn new_entry_in_indexed_directory_is_refused_untouched() {
+    let Some((_directory, image)) = indexed_root(false) else {
+        return;
+    };
+    let before = std::fs::read(&image).unwrap();
+
+    let error = common::bounded_write(&image, PRESET, CONTENT).unwrap_err();
+
+    assert!(error.to_string().contains("hash-indexed"), "{error}");
+    assert!(std::fs::read(&image).unwrap() == before);
+}
+
+#[test]
+fn existing_file_in_indexed_directory_is_overwritten() {
+    let Some((_directory, image)) = indexed_root(true) else {
+        return;
+    };
+
+    let report = common::bounded_write(&image, PRESET, CONTENT).unwrap();
+
+    assert!(report.validated);
     common::assert_e2fsck_clean(&image, 0);
 }
