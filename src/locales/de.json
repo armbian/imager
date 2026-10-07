@@ -46,7 +46,7 @@
     "dataWarning": "Alle Daten auf dem ausgewählten Gerät werden gelöscht",
     "successHint": "Deine SD-Karte ist fertig! Du kannst sie jetzt sicher entfernen und in dein {{boardName}} einsetzen.",
     "successHintCustom": "Deine SD-Karte ist fertig! Du kannst sie jetzt sicher entfernen.",
-    "successHintQdl": "Flash abgeschlossen! Das Gerät ist startbereit.",
+    "successHintQdlReady": "Das Gerät ist startbereit.",
     "successHintVerifySkipped": "Prüfung abgebrochen: Der Schreibvorgang wurde nicht kontrolliert.",
     "noShaTitle": "Keine Prüfsumme verfügbar",
     "noShaMessage": "Für dieses Image gibt es keine SHA-Prüfsumme, daher lassen sich die geschriebenen Daten nicht überprüfen. Das Flashen wird trotzdem fortgesetzt.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Dies ist ein Systemlaufwerk. Aktiviere „Systemlaufwerke zulassen“ in den Einstellungen, um darauf zu schreiben.",
     "deviceTooSmall": "Das Image benötigt {{needed}}, das Gerät fasst aber nur {{available}}. Verwende ein größeres Gerät.",
     "qdlDeviceNotFound": "Das ausgewählte EDL-Gerät ist nicht mehr verbunden. Verbinde es erneut im EDL-Modus und wähle es noch einmal aus.",
-    "qdlMultipleDevices": "Mehrere EDL-Geräte sind verbunden und das ausgewählte lässt sich nicht erkennen. Verbinde nur das Board, das du flashen möchtest."
+    "qdlMultipleDevices": "Mehrere EDL-Geräte sind verbunden und das ausgewählte lässt sich nicht erkennen. Verbinde nur das Board, das du flashen möchtest.",
+    "shaMismatch": "Das heruntergeladene Image ist beschädigt: Die Prüfsumme stimmt nicht überein. Lade es erneut herunter, um eine frische Kopie zu erhalten.",
+    "verifyMismatch": "Die auf das Gerät geschriebenen Daten stimmen nicht mit dem Image überein. Die Karte ist möglicherweise defekt. Versuche eine andere Karte.",
+    "verifyReadFailed": "Das Gerät konnte zur Überprüfung des Schreibvorgangs nicht zurückgelesen werden. Verbinde es erneut und versuche es noch einmal oder verwende eine andere Karte oder einen anderen Leser.",
+    "imageDecompressFailed": "Das Image konnte nicht entpackt werden. Die Datei ist möglicherweise beschädigt oder unvollständig. Lade sie erneut herunter oder wähle eine andere Datei."
   },
   "custom": {
     "customImage": "Benutzerdefiniertes Image",

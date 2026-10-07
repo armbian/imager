@@ -46,7 +46,7 @@
     "dataWarning": "所选设备上的全部数据将被清除",
     "successHint": "SD 卡已就绪！您可以安全地取出，并插入您的 {{boardName}}。",
     "successHintCustom": "SD 卡已就绪！您可以安全地将其取出。",
-    "successHintQdl": "烧录完成！设备已可正常启动。",
+    "successHintQdlReady": "设备已可正常启动。",
     "successHintVerifySkipped": "校验已中断，未对写入内容进行检查。",
     "noShaTitle": "没有可用的校验和",
     "noShaMessage": "此镜像没有 SHA 校验和，因此无法校验已写入的数据。烧录仍会继续。",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "这是系统磁盘。请在设置中开启“允许系统磁盘”后再写入。",
     "deviceTooSmall": "镜像需要 {{needed}}，但设备只有 {{available}}。请使用容量更大的设备。",
     "qdlDeviceNotFound": "所选 EDL 设备已不再连接。请在 EDL 模式下重新连接后再次选择。",
-    "qdlMultipleDevices": "已连接多个 EDL 设备，无法确定所选设备。请只连接要烧录的开发板。"
+    "qdlMultipleDevices": "已连接多个 EDL 设备，无法确定所选设备。请只连接要烧录的开发板。",
+    "shaMismatch": "下载的镜像已损坏：校验和不匹配。请重新下载以获取新的副本。",
+    "verifyMismatch": "写入设备的内容与镜像不一致。卡可能已损坏。请尝试更换卡。",
+    "verifyReadFailed": "无法回读设备以校验写入结果。请重新连接后重试，或更换卡或读卡器。",
+    "imageDecompressFailed": "无法解压镜像。文件可能已损坏或不完整。请重新下载或选择其他文件。"
   },
   "custom": {
     "customImage": "自定义镜像",

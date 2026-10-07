@@ -46,7 +46,7 @@
     "dataWarning": "Alle data op het geselecteerde apparaat wordt gewist",
     "successHint": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen en in je {{boardName}} plaatsen.",
     "successHintCustom": "Je SD-kaart is klaar! Je kunt het apparaat veilig verwijderen.",
-    "successHintQdl": "Flash voltooid! Het apparaat is klaar om op te starten.",
+    "successHintQdlReady": "Het apparaat is klaar om op te starten.",
     "successHintVerifySkipped": "Controle afgebroken: het schrijven is niet gecontroleerd.",
     "noShaTitle": "Geen checksum beschikbaar",
     "noShaMessage": "Dit image heeft geen SHA-checksum, dus de geschreven data kan niet worden geverifieerd. Het flashen gaat toch door.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Dit is een systeemschijf. Schakel “Systeemschijven toestaan” in bij Instellingen om ernaar te schrijven.",
     "deviceTooSmall": "De image heeft {{needed}} nodig, maar het apparaat biedt slechts {{available}}. Gebruik een groter apparaat.",
     "qdlDeviceNotFound": "Het geselecteerde EDL-apparaat is niet meer aangesloten. Sluit het opnieuw aan in EDL-modus en selecteer het opnieuw.",
-    "qdlMultipleDevices": "Er zijn meerdere EDL-apparaten aangesloten en het geselecteerde apparaat kan niet worden herkend. Sluit alleen het board aan dat je wilt flashen."
+    "qdlMultipleDevices": "Er zijn meerdere EDL-apparaten aangesloten en het geselecteerde apparaat kan niet worden herkend. Sluit alleen het board aan dat je wilt flashen.",
+    "shaMismatch": "De gedownloade image is beschadigd: de checksum komt niet overeen. Download de image opnieuw voor een verse kopie.",
+    "verifyMismatch": "Wat naar het apparaat is geschreven komt niet overeen met de image. De kaart is mogelijk defect. Probeer een andere kaart.",
+    "verifyReadFailed": "Het apparaat kon niet worden teruggelezen om het schrijven te verifiëren. Sluit het opnieuw aan en probeer het nog eens, of probeer een andere kaart of lezer.",
+    "imageDecompressFailed": "De image kon niet worden uitgepakt. Het bestand is mogelijk beschadigd of onvolledig. Download het opnieuw of kies een ander bestand."
   },
   "custom": {
     "customImage": "Aangepaste image",

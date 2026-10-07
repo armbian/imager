@@ -46,7 +46,7 @@
     "dataWarning": "Tutti i dati sul dispositivo selezionato verranno cancellati",
     "successHint": "La tua scheda SD è pronta! Puoi rimuoverla in sicurezza e inserirla nella tua {{boardName}}.",
     "successHintCustom": "La tua scheda SD è pronta! Puoi rimuoverla in sicurezza.",
-    "successHintQdl": "Scrittura completata! Il dispositivo è pronto per l'avvio.",
+    "successHintQdlReady": "Il dispositivo è pronto per l'avvio.",
     "successHintVerifySkipped": "Verifica interrotta: la scrittura non è stata controllata.",
     "noShaTitle": "Nessun checksum disponibile",
     "noShaMessage": "Questa immagine non ha un checksum SHA, quindi non è possibile verificare i dati scritti. La scrittura proseguirà comunque.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Questo è un disco di sistema. Attiva «Consenti dischi di sistema» nelle Impostazioni per scriverci.",
     "deviceTooSmall": "L'immagine richiede {{needed}}, ma il dispositivo ha solo {{available}}. Usa un dispositivo più grande.",
     "qdlDeviceNotFound": "Il dispositivo EDL selezionato non è più collegato. Ricollegalo in modalità EDL e selezionalo di nuovo.",
-    "qdlMultipleDevices": "Sono collegati più dispositivi EDL e non è possibile identificare quello selezionato. Collega solo la scheda su cui vuoi scrivere."
+    "qdlMultipleDevices": "Sono collegati più dispositivi EDL e non è possibile identificare quello selezionato. Collega solo la scheda su cui vuoi scrivere.",
+    "shaMismatch": "L'immagine scaricata è danneggiata: il checksum non corrisponde. Riprova a scaricarla per ottenere una copia nuova.",
+    "verifyMismatch": "I dati scritti sul dispositivo non corrispondono all'immagine. La scheda potrebbe essere difettosa. Prova un'altra scheda.",
+    "verifyReadFailed": "Non è stato possibile rileggere il dispositivo per verificare la scrittura. Ricollegalo e riprova, oppure prova un'altra scheda o un altro lettore.",
+    "imageDecompressFailed": "Non è stato possibile decomprimere l'immagine. Il file potrebbe essere danneggiato o incompleto. Scaricalo di nuovo o scegli un altro file."
   },
   "custom": {
     "customImage": "Immagine Personalizzata",

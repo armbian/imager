@@ -46,7 +46,7 @@
     "dataWarning": "Se borrarán todos los datos del dispositivo seleccionado",
     "successHint": "¡Tu tarjeta SD está lista! Puedes retirarla con seguridad e insertarla en tu {{boardName}}.",
     "successHintCustom": "¡Tu tarjeta SD está lista! Puedes retirarla con seguridad.",
-    "successHintQdl": "¡Escritura completada! El dispositivo está listo para arrancar.",
+    "successHintQdlReady": "El dispositivo está listo para arrancar.",
     "successHintVerifySkipped": "Verificación interrumpida: la escritura no se comprobó.",
     "noShaTitle": "No hay suma de verificación",
     "noShaMessage": "Esta imagen no tiene suma de verificación SHA, así que no se pueden comprobar los datos escritos. La escritura continuará de todos modos.",
@@ -160,7 +160,11 @@
     "deviceSystemBlocked": "Esta es una unidad del sistema. Activa «Permitir unidades del sistema» en Ajustes para escribir en ella.",
     "deviceTooSmall": "La imagen necesita {{needed}}, pero el dispositivo solo tiene {{available}}. Usa un dispositivo más grande.",
     "qdlDeviceNotFound": "El dispositivo EDL seleccionado ya no está conectado. Vuelve a conectarlo en modo EDL y selecciónalo de nuevo.",
-    "qdlMultipleDevices": "Hay varios dispositivos EDL conectados y no se puede identificar el seleccionado. Conecta solo la placa en la que quieras escribir."
+    "qdlMultipleDevices": "Hay varios dispositivos EDL conectados y no se puede identificar el seleccionado. Conecta solo la placa en la que quieras escribir.",
+    "shaMismatch": "La imagen descargada está dañada: su suma de comprobación no coincide. Vuelve a descargarla para obtener una copia nueva.",
+    "verifyMismatch": "Lo escrito en el dispositivo no coincide con la imagen. Puede que la tarjeta esté fallando. Prueba con otra tarjeta.",
+    "verifyReadFailed": "No se pudo leer el dispositivo para verificar la escritura. Vuelve a conectarlo e inténtalo de nuevo, o prueba con otra tarjeta o lector.",
+    "imageDecompressFailed": "No se pudo descomprimir la imagen. El archivo puede estar dañado o incompleto. Descárgalo de nuevo o elige otro archivo."
   },
   "custom": {
     "customImage": "Imagen personalizada",
