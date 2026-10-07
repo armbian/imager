@@ -52,9 +52,9 @@ A PR needs zero lint errors and zero warnings to merge.
 
 ## Translations
 
-The app ships 18 languages: `de`, `en`, `es`, `fr`, `hr`, `it`, `ja`, `ko`, `nl`, `pl`, `pt`, `pt-BR`, `ru`, `sl`, `sv`, `tr`, `uk`, `zh`. Note that `pt` and `pt-BR` are separate locales.
+The app ships 20 languages: `de`, `el`, `en`, `es`, `fr`, `hr`, `it`, `ja`, `ko`, `nl`, `pl`, `pt`, `pt-BR`, `ru`, `sl`, `sr`, `sv`, `tr`, `uk`, `zh`. Note that `pt` and `pt-BR` are separate locales.
 
-When you add or remove a translation key, change all 18 files in `src/locales/` so they keep the same set of keys. PRs that leave keys missing in some files won't pass review.
+When you add or remove a translation key, change all 20 files in `src/locales/` so they keep the same set of keys. PRs that leave keys missing in some files won't pass review.
 
 ## Other ways to contribute
 

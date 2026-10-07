@@ -53,7 +53,7 @@ Prebuilt binaries are available for every supported platform.
 
 - Theme: light, dark, or follow the system setting
 - Developer mode: turn on detailed logging and open the log viewer
-- Language: 18 languages, auto-detected from your system
+- Language: 20 languages, auto-detected from your system
 
 ## Platform Support
 
@@ -68,7 +68,7 @@ Prebuilt binaries are available for every supported platform.
 
 ### Supported Languages
 
-English, Italian, German, French, Spanish, Portuguese, Portuguese (Brazil), Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian
+English, Italian, German, French, Spanish, Portuguese, Portuguese (Brazil), Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian, Greek, Serbian
 
 ## Why We Sign Our Code
 
