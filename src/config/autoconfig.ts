@@ -4,6 +4,7 @@
 // Static option data for the autoconfig profile editor dropdowns.
 
 import type { AutoconfigConfig, UserShell } from '../types';
+import { staticIpErrors, trimmedOrUndefined, type StaticIpErrors } from '../utils';
 
 /** Example values shown as input placeholders in the profile editor */
 export const AUTOCONFIG_PLACEHOLDERS = {
@@ -69,6 +70,31 @@ export function getTimezones(): string[] {
   return ['UTC', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'Asia/Tokyo'];
 }
 
+type StaticIpConfig = Pick<AutoconfigConfig, 'staticIp' | 'staticMask' | 'staticGateway' | 'staticDns'>;
+
+/** The static IP fields as they are saved and checked: trimmed, blank ones dropped. */
+export function trimStaticIp<T extends StaticIpConfig>(c: T): T {
+  return {
+    ...c,
+    staticIp: trimmedOrUndefined(c.staticIp),
+    staticMask: trimmedOrUndefined(c.staticMask),
+    staticGateway: trimmedOrUndefined(c.staticGateway),
+    staticDns: trimmedOrUndefined(c.staticDns),
+  };
+}
+
+export const STATIC_IP_FIELDS: readonly (keyof StaticIpErrors)[] = ['ip', 'mask', 'gateway', 'dns'];
+
+export function staticIpConfigErrors(c: StaticIpConfig): StaticIpErrors {
+  const s = trimStaticIp(c);
+  return staticIpErrors(s.staticIp, s.staticMask, s.staticGateway, s.staticDns);
+}
+
+// A bad static address (e.g. the subnet's broadcast .255) leaves a headless board unreachable.
+export function staticIpBlockingErrors(c: AutoconfigConfig): StaticIpErrors {
+  return c.applyNetwork && c.useStaticIp ? staticIpConfigErrors(c) : {};
+}
+
 /** Placeholder shown for secret values in the live preview. */
 const SECRET_MASK = '••••••••';
 
@@ -88,8 +114,7 @@ export interface PresetPreview {
   count: number;
 }
 
-/** Display-only preview mirroring the Rust `render_preset` (backend output is authoritative); secrets masked
- * unless `revealSecrets`. */
+/** Display-only twin of the Rust `render_preset`, which stays authoritative. */
 export function renderPresetPreview(c: AutoconfigConfig, revealSecrets = false): PresetPreview {
   const lines: string[] = [];
   const push = (key: string, value?: string, secret = false) => {
@@ -97,6 +122,8 @@ export function renderPresetPreview(c: AutoconfigConfig, revealSecrets = false):
     const shown = secret && !revealSecrets ? SECRET_MASK : value;
     lines.push(`${key}=${shellQuote(shown)}`);
   };
+  // Twin of push_trimmed in autoconfig.rs: never used for passwords, the Wi-Fi key or the SSID.
+  const pushTrimmed = (key: string, value?: string) => push(key, trimmedOrUndefined(value));
   const pushBool = (key: string, value?: boolean) => {
     if (value === undefined) return;
     lines.push(`${key}=${value ? '"1"' : '"0"'}`);
@@ -111,38 +138,38 @@ export function renderPresetPreview(c: AutoconfigConfig, revealSecrets = false):
     if (c.wifiEnabled) {
       push('PRESET_NET_WIFI_SSID', c.wifiSsid);
       push('PRESET_NET_WIFI_KEY', c.wifiKey, true);
-      push('PRESET_NET_WIFI_COUNTRYCODE', c.wifiCountryCode);
+      pushTrimmed('PRESET_NET_WIFI_COUNTRYCODE', c.wifiCountryCode);
     }
     pushBool('PRESET_NET_USE_STATIC', c.useStaticIp);
     // Static address keys only when static IP enabled; otherwise stale values linger after toggling off.
     if (c.useStaticIp) {
-      push('PRESET_NET_STATIC_IP', c.staticIp);
-      push('PRESET_NET_STATIC_MASK', c.staticMask);
-      push('PRESET_NET_STATIC_GATEWAY', c.staticGateway);
-      push('PRESET_NET_STATIC_DNS', c.staticDns);
+      pushTrimmed('PRESET_NET_STATIC_IP', c.staticIp);
+      pushTrimmed('PRESET_NET_STATIC_MASK', c.staticMask);
+      pushTrimmed('PRESET_NET_STATIC_GATEWAY', c.staticGateway);
+      pushTrimmed('PRESET_NET_STATIC_DNS', c.staticDns);
     }
   }
 
   // Armbian applies locale/timezone only during first-user creation; emit only when a full user is defined.
   const hasUser = !!(c.userName?.trim() && c.userPassword?.trim() && c.userRealName?.trim());
   if (hasUser) {
-    push('PRESET_LOCALE', c.locale);
-    push('PRESET_TIMEZONE', c.timezone);
+    pushTrimmed('PRESET_LOCALE', c.locale);
+    pushTrimmed('PRESET_TIMEZONE', c.timezone);
     if (c.langBasedOnLocation !== undefined) {
       lines.push(`SET_LANG_BASED_ON_LOCATION=${c.langBasedOnLocation ? '"y"' : '"n"'}`);
     }
   }
 
   push('PRESET_ROOT_PASSWORD', c.rootPassword, true);
-  push('PRESET_ROOT_KEY', c.rootKeyUrl);
+  pushTrimmed('PRESET_ROOT_KEY', c.rootKeyUrl);
 
-  push('PRESET_USER_NAME', c.userName);
+  pushTrimmed('PRESET_USER_NAME', c.userName);
   push('PRESET_USER_PASSWORD', c.userPassword, true);
-  push('PRESET_USER_KEY', c.userKeyUrl);
+  pushTrimmed('PRESET_USER_KEY', c.userKeyUrl);
   if (c.userShell) lines.push(`PRESET_USER_SHELL=${shellQuote(c.userShell)}`);
-  push('PRESET_DEFAULT_REALNAME', c.userRealName);
+  pushTrimmed('PRESET_DEFAULT_REALNAME', c.userRealName);
 
-  push('PRESET_CONFIGURATION', c.remoteConfigUrl);
+  pushTrimmed('PRESET_CONFIGURATION', c.remoteConfigUrl);
 
   // Any preset declines first login's "Connect via wireless?" prompt, which nobody answers on a headless board.
   if (lines.length > 0) lines.push('PRESET_CONNECT_WIRELESS="n"');

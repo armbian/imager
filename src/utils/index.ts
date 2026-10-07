@@ -199,9 +199,13 @@ export function isHttpUrl(value: string): boolean {
   }
 }
 
+export function trimmedOrUndefined(value?: string): string | undefined {
+  return value?.trim() || undefined;
+}
+
 /** Parse a dotted-quad IPv4 address to its 32-bit value, or null when malformed. */
 function parseIpv4(value: string): number | null {
-  const parts = value.trim().split('.');
+  const parts = value.split('.');
   if (parts.length !== 4) return null;
   let n = 0;
   for (const part of parts) {
