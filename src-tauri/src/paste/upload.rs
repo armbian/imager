@@ -4,6 +4,7 @@
 //! Log upload to paste.armbian.com, a Hastebin instance accepting raw text via POST.
 
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use crate::logging::{get_current_log_path, get_log_dir};
 use crate::{log_error, log_info};
@@ -23,6 +24,10 @@ pub struct UploadResult {
 
 /// Collect all relevant log content for upload
 fn collect_logs() -> Result<String, String> {
+    collect_logs_from(&get_log_dir(), get_current_log_path())
+}
+
+fn collect_logs_from(log_dir: &Path, current_log: Option<PathBuf>) -> Result<String, String> {
     let mut content = String::new();
 
     content.push_str("=== Armbian Imager Log Upload ===\n");
@@ -38,9 +43,9 @@ fn collect_logs() -> Result<String, String> {
     ));
     content.push('\n');
 
-    if let Some(log_path) = get_current_log_path() {
+    if let Some(log_path) = &current_log {
         content.push_str("=== Current Session Log ===\n");
-        match fs::read_to_string(&log_path) {
+        match fs::read_to_string(log_path) {
             Ok(log_content) => {
                 content.push_str(&log_content);
             }
@@ -53,9 +58,8 @@ fn collect_logs() -> Result<String, String> {
     }
 
     // Also attach recent prior-session logs, useful after a crash.
-    let log_dir = get_log_dir();
     if log_dir.exists() {
-        let mut log_files: Vec<_> = fs::read_dir(&log_dir)
+        let mut log_files: Vec<_> = fs::read_dir(log_dir)
             .map_err(|e| format!("Failed to read log directory: {}", e))?
             .filter_map(|entry| entry.ok())
             .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "log"))
@@ -69,7 +73,6 @@ fn collect_logs() -> Result<String, String> {
         });
 
         // Include at most 2 previous logs.
-        let current_log = get_current_log_path();
         let mut included = 0;
         for entry in log_files.iter() {
             let path = entry.path();
@@ -182,12 +185,39 @@ pub async fn upload_logs() -> Result<UploadResult, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use filetime::FileTime;
+    use std::time::{Duration, SystemTime};
+
+    fn write_log(dir: &Path, name: &str, body: &str, age_secs: u64) -> PathBuf {
+        let path = dir.join(name);
+        fs::write(&path, body).unwrap();
+        let mtime = SystemTime::now() - Duration::from_secs(age_secs);
+        filetime::set_file_mtime(&path, FileTime::from_system_time(mtime)).unwrap();
+        path
+    }
 
     #[test]
-    fn test_collect_logs() {
-        let result = collect_logs();
-        assert!(result.is_ok());
-        let content = result.unwrap();
+    fn collects_current_log_and_the_two_newest_previous_ones() {
+        let dir = tempfile::tempdir().unwrap();
+        let current = write_log(dir.path(), "current.log", "CURRENT\n", 0);
+        write_log(dir.path(), "prev1.log", "PREV1\n", 10);
+        write_log(dir.path(), "prev2.log", "PREV2\n", 20);
+        write_log(dir.path(), "prev3.log", "PREV3\n", 30);
+        write_log(dir.path(), "notes.txt", "NOTES\n", 5);
+
+        let content = collect_logs_from(dir.path(), Some(current)).unwrap();
+
         assert!(content.contains("Armbian Imager Log Upload"));
+        assert_eq!(content.matches("CURRENT").count(), 1);
+        assert!(content.contains("PREV1") && content.contains("PREV2"));
+        assert!(!content.contains("PREV3"));
+        assert!(!content.contains("NOTES"));
+    }
+
+    #[test]
+    fn missing_log_dir_still_yields_the_header() {
+        let dir = tempfile::tempdir().unwrap();
+        let content = collect_logs_from(&dir.path().join("missing"), None).unwrap();
+        assert!(content.contains("No current log file available."));
     }
 }

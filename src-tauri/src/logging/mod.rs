@@ -83,6 +83,11 @@ impl Logger {
     }
 
     fn create_log_file() -> (Option<File>, Option<PathBuf>) {
+        // Unit tests must not add session logs to the user's real log dir.
+        if cfg!(test) {
+            return (None, None);
+        }
+
         let log_dir = get_log_dir();
 
         if let Err(e) = fs::create_dir_all(&log_dir) {
