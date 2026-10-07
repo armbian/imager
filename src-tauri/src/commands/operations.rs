@@ -4,16 +4,18 @@
 //! Download and flash operations.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use tauri::{AppHandle, State};
 use tauri_plugin_store::StoreExt;
 
-use crate::autoconfig::{prepare_working_copy, require_firstlogin_marker, AutoconfigConfig};
+use crate::autoconfig::{prepare_flash_copy, AutoconfigConfig, PrepError};
 use crate::config;
 use crate::devices::target::TAG_NOT_FOUND;
 use crate::devices::{get_block_devices, select_flash_target, FlashTarget, TargetRefusal};
 use crate::download::download_image as do_download;
 use crate::flash::{
-    check_capacity, flash_image as do_flash, reject_simulated, request_authorization,
+    check_capacity, discard_saved_authorization, flash_image as do_flash, reject_simulated,
+    request_authorization, FlashState,
 };
 use crate::utils::{
     app_cache_dir, autoconfig_temp_dir, image_size, images_dir, validate_cache_path,
@@ -210,12 +212,6 @@ pub async fn flash_image(
     // reset it reads the previous flash's stale state (is_verifying=true, verified=100%) and latches onto it.
     flash_state.reset();
 
-    // Catalog images always carry the script, so this only refuses custom images built without it.
-    let require_marker = autoconfig.is_some();
-    if require_marker {
-        require_firstlogin_marker(&path)?;
-    }
-
     #[cfg(debug_assertions)]
     if let Some(result) = super::dev_scenarios::intercept_flash(
         &app,
@@ -231,30 +227,18 @@ pub async fn flash_image(
         return result;
     }
 
-    let target = resolve_flash_target(&app, &device_path, expected_size).await?;
-
-    let image_size = image_size(&path)?;
-    if let Err(e) = check_capacity(image_size, target.size()) {
-        log_error!("operations", "Refusing target {:?}: {}", device_path, e);
-        return Err(e);
-    }
-
-    // The preset goes into a per-flash copy (removed on drop) so the cached image stays pristine.
-    let working_copy = match autoconfig {
-        Some(config) => Some(prepare_working_copy(
-            &path,
-            &autoconfig_temp_dir(),
-            &config,
-            require_marker,
-        )?),
-        None => None,
-    };
-    let flash_path = working_copy
-        .as_ref()
-        .map_or(path.clone(), |copy| copy.path().to_path_buf());
-
-    let result = do_flash(&flash_path, &target, flash_state, verify).await;
-    drop(working_copy);
+    let result = prepare_and_flash(
+        &app,
+        path,
+        &device_path,
+        expected_size,
+        verify,
+        autoconfig,
+        flash_state,
+    )
+    .await;
+    // The writer consumes the authorization; any earlier exit leaves it saved.
+    discard_saved_authorization();
 
     match &result {
         Ok(_) => {
@@ -265,6 +249,49 @@ pub async fn flash_image(
         }
     }
 
+    result
+}
+
+async fn prepare_and_flash(
+    app: &AppHandle,
+    path: PathBuf,
+    device_path: &str,
+    expected_size: u64,
+    verify: bool,
+    autoconfig: Option<AutoconfigConfig>,
+    flash_state: Arc<FlashState>,
+) -> Result<(), String> {
+    let target = resolve_flash_target(app, device_path, expected_size).await?;
+
+    let image_size = image_size(&path)?;
+    if let Err(e) = check_capacity(image_size, target.size()) {
+        log_error!("operations", "Refusing target {:?}: {}", device_path, e);
+        return Err(e);
+    }
+
+    // The preset goes into a per-flash copy (removed on drop) so the cached image stays pristine.
+    let working_copy = match autoconfig {
+        Some(profile) => Some(
+            // Catalog images always carry the script, so the marker probe only refuses custom images built without it.
+            prepare_flash_copy(
+                path.clone(),
+                autoconfig_temp_dir(),
+                profile,
+                true,
+                flash_state.clone(),
+            )
+            .await
+            .map_err(PrepError::into_flash_error)?,
+        ),
+        None => None,
+    };
+    flash_state.ensure_not_cancelled()?;
+    let flash_path = working_copy
+        .as_ref()
+        .map_or(path, |copy| copy.path().to_path_buf());
+
+    let result = do_flash(&flash_path, &target, flash_state, verify).await;
+    drop(working_copy);
     result
 }
 

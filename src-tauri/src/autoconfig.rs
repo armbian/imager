@@ -5,6 +5,8 @@
 //! [`inject_into_image`] writes it to `/root/.not_logged_in_yet` in the image's ext4 rootfs, consumed on first boot. See https://docs.armbian.com/User-Guide_Autoconfig/.
 
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::Instant;
 
 use armbian_write_conf::{
     rootfs_has_regular_file, write_file_into_bare_ext4_image, write_file_into_image, WriteConfError,
@@ -12,6 +14,7 @@ use armbian_write_conf::{
 use serde::Deserialize;
 
 use crate::config;
+use crate::flash::FlashState;
 use crate::utils::{leftover_is_stale, sweep_dir, unique_suffix};
 use crate::{log_error, log_info, log_warn};
 
@@ -340,7 +343,7 @@ fn marker_verdict(probe: Result<bool, WriteConfError>) -> Result<(), String> {
     }
 }
 
-/// Refuse a profile for a custom image whose rootfs has no first-login script, before any copy or device access.
+/// Refuse a profile for a custom image whose rootfs has no first-login script, before any copy or write.
 pub fn require_firstlogin_marker(image_path: &Path) -> Result<(), String> {
     let probe = has_firstlogin_marker(image_path);
     match &probe {
@@ -392,23 +395,108 @@ fn create_private_copy(source: &Path, temp_dir: &Path) -> Result<WorkingCopy, St
     Ok(copy)
 }
 
-/// Copy `source` into `temp_dir` and inject the preset there; `require_marker` probes the source read-only first.
-pub fn prepare_working_copy(
+fn inject_into_copy(copy: &WorkingCopy, config: &AutoconfigConfig) -> Result<(), String> {
+    inject_into_image(&copy.path, config).map_err(|e| match e {
+        WriteConfError::UnsupportedImage(_) | WriteConfError::NoExt4Rootfs(_) => no_ext4_rootfs(&e),
+        other => format!("Failed to apply autoconfig profile: {}", other),
+    })
+}
+
+/// Why a flash-time preparation produced no copy.
+#[derive(Debug, PartialEq, Eq)]
+pub enum PrepError {
+    Cancelled,
+    Failed(String),
+}
+
+impl PrepError {
+    /// The error a block-device flash returns for this outcome.
+    pub fn into_flash_error(self) -> String {
+        match self {
+            PrepError::Cancelled => crate::flash::cancelled_err(),
+            PrepError::Failed(message) => message,
+        }
+    }
+}
+
+struct PrepStageGuard<'a>(&'a FlashState);
+
+impl Drop for PrepStageGuard<'_> {
+    fn drop(&mut self) {
+        self.0.set_prep_stage(None);
+    }
+}
+
+fn prepare_tracked(
     source: &Path,
     temp_dir: &Path,
     config: &AutoconfigConfig,
     require_marker: bool,
-) -> Result<WorkingCopy, String> {
-    if require_marker {
-        require_firstlogin_marker(source)?;
-    }
-    let copy = create_private_copy(source, temp_dir)?;
-    inject_into_image(&copy.path, config).map_err(|e| match e {
-        WriteConfError::UnsupportedImage(_) | WriteConfError::NoExt4Rootfs(_) => no_ext4_rootfs(&e),
-        other => format!("Failed to apply autoconfig profile: {}", other),
-    })?;
+    state: &FlashState,
+) -> Result<WorkingCopy, PrepError> {
+    let _stage = PrepStageGuard(state);
+    let cancelled = || {
+        state
+            .ensure_not_cancelled()
+            .map_err(|_| PrepError::Cancelled)
+    };
 
+    cancelled()?;
+    if require_marker {
+        require_firstlogin_marker(source).map_err(PrepError::Failed)?;
+        cancelled()?;
+    }
+    state.set_prep_stage(Some(config::flash::PREP_STAGE_COPYING));
+    let copy = create_private_copy(source, temp_dir).map_err(PrepError::Failed)?;
+    cancelled()?;
+    state.set_prep_stage(Some(config::flash::PREP_STAGE_APPLYING_PROFILE));
+    inject_into_copy(&copy, config).map_err(PrepError::Failed)?;
+    cancelled()?;
     Ok(copy)
+}
+
+/// Copy `source` into `temp_dir` and inject the preset there, on a blocking thread, publishing `prep_stage` and stopping at a cancel between steps; `require_marker` probes the source read-only first.
+pub async fn prepare_flash_copy(
+    source: PathBuf,
+    temp_dir: PathBuf,
+    config: AutoconfigConfig,
+    require_marker: bool,
+    state: Arc<FlashState>,
+) -> Result<WorkingCopy, PrepError> {
+    log_info!(
+        "autoconfig",
+        "Preparing autoconfig copy of {}",
+        source.display()
+    );
+    let started = Instant::now();
+    let result = tokio::task::spawn_blocking(move || {
+        prepare_tracked(&source, &temp_dir, &config, require_marker, &state)
+    })
+    .await
+    .unwrap_or_else(|e| {
+        let why = if e.is_panic() {
+            "panicked"
+        } else {
+            "was aborted"
+        };
+        Err(PrepError::Failed(format!("Autoconfig preparation {why}")))
+    });
+    let secs = started.elapsed().as_secs_f64();
+    match &result {
+        Ok(_) => log_info!("autoconfig", "Autoconfig prep done in {:.1} s", secs),
+        Err(PrepError::Cancelled) => {
+            log_info!("autoconfig", "Flash cancelled during autoconfig prep")
+        }
+        Err(PrepError::Failed(e)) => {
+            log_error!(
+                "autoconfig",
+                "Autoconfig prep failed after {:.1} s: {}",
+                secs,
+                e
+            )
+        }
+    }
+    result
 }
 
 /// Remove the working copies a crashed or killed session left in `temp_dir`; subdirectories are kept.
@@ -613,12 +701,52 @@ mod tests {
 
         let mut config = empty();
         config.locale = Some("en_US.UTF-8".to_string());
-        let result = prepare_working_copy(&source, &temp_dir, &config, false);
+        let result = prepare_tracked(&source, &temp_dir, &config, false, &FlashState::new());
 
         assert!(result.is_err(), "a non-ext4 image must be refused");
         assert_eq!(std::fs::read(&source).unwrap(), original);
         assert_eq!(std::fs::read_dir(&temp_dir).unwrap().count(), 0);
         std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    fn profile() -> AutoconfigConfig {
+        let mut config = empty();
+        config.locale = Some("en_US.UTF-8".to_string());
+        config
+    }
+
+    #[test]
+    fn a_cancel_before_prep_makes_no_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source.img");
+        std::fs::write(&source, b"image").unwrap();
+        let temp_dir = dir.path().join("work");
+        let state = FlashState::new();
+        state
+            .is_cancelled
+            .store(true, std::sync::atomic::Ordering::SeqCst);
+
+        let result = prepare_tracked(&source, &temp_dir, &profile(), false, &state);
+
+        assert_eq!(result.err(), Some(PrepError::Cancelled));
+        assert!(!temp_dir.exists());
+        assert_eq!(state.prep_stage(), None);
+    }
+
+    #[tokio::test]
+    async fn a_failed_prep_clears_the_stage_and_the_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("source.img");
+        std::fs::write(&source, vec![0x5au8; 64 * 1024]).unwrap();
+        let temp_dir = dir.path().join("work");
+        let state = Arc::new(FlashState::new());
+
+        let result =
+            prepare_flash_copy(source, temp_dir.clone(), profile(), false, state.clone()).await;
+
+        assert!(matches!(result, Err(PrepError::Failed(_))));
+        assert_eq!(state.prep_stage(), None);
+        assert_eq!(std::fs::read_dir(&temp_dir).unwrap().count(), 0);
     }
 
     #[cfg(unix)]
@@ -702,9 +830,10 @@ mod tests {
         let mut config = empty();
         config.root_password = Some("secret".to_string());
 
-        let err = prepare_working_copy(&source, &temp_dir, &config, true)
-            .map(|_| ())
-            .unwrap_err();
+        let err = match prepare_tracked(&source, &temp_dir, &config, true, &FlashState::new()) {
+            Err(PrepError::Failed(e)) => e,
+            other => panic!("expected a refusal, got {:?}", other.map(|_| ())),
+        };
 
         assert!(err.contains("ext4"), "{err}");
         assert!(!temp_dir.exists(), "the refusal comes before the copy");

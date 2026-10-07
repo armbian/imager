@@ -89,6 +89,10 @@ pub mod flash {
 
     /// Detail behind the [CANCELLED] tag a block-device flash returns once the user cancelled it
     pub const CANCELLED_ERROR: &str = "Flash cancelled";
+
+    /// `prep_stage` values of get_flash_progress; twins of `FlashPrepStage` in src/types/index.ts
+    pub const PREP_STAGE_COPYING: &str = "copying";
+    pub const PREP_STAGE_APPLYING_PROFILE: &str = "applying_profile";
 }
 
 /// First-boot autoconfig preset injection

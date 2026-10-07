@@ -6,6 +6,7 @@
 use std::path::PathBuf;
 use tauri::State;
 
+use crate::autoconfig::{prepare_flash_copy, PrepError};
 use crate::flash::reject_simulated;
 use crate::qdl;
 use crate::qdl::QdlDevice;
@@ -151,12 +152,6 @@ pub async fn flash_qdl_ufs_image(
     flash_state.reset();
 
     let image_path = PathBuf::from(&image_path);
-    // Catalog images always carry the script, so this only refuses custom images built without it.
-    let require_marker = autoconfig.is_some();
-    if require_marker {
-        crate::autoconfig::require_firstlogin_marker(&image_path)
-            .map_err(|e| format!("{} {e}", qdl::TAG_QDL_AUTOCONFIG_FAILED))?;
-    }
 
     #[cfg(debug_assertions)]
     if let Some(result) = super::dev_scenarios::intercept_qdl_flash(
@@ -201,19 +196,25 @@ pub async fn flash_qdl_ufs_image(
     // Inject into a per-flash copy before connecting, so the cached image stays pristine.
     let working_copy = match autoconfig {
         Some(cfg) => Some(
-            crate::autoconfig::prepare_working_copy(
-                &image_path,
-                &autoconfig_temp_dir(),
-                &cfg,
-                require_marker,
+            // Catalog images always carry the script, so the marker probe only refuses custom images built without it.
+            prepare_flash_copy(
+                image_path.clone(),
+                autoconfig_temp_dir(),
+                cfg,
+                true,
+                flash_state.clone(),
             )
-            .map_err(|e| {
-                log_error!("qdl_operations", "Autoconfig preparation failed: {}", e);
-                format!("{} {e}", qdl::TAG_QDL_AUTOCONFIG_FAILED)
+            .await
+            .map_err(|e| match e {
+                PrepError::Cancelled => qdl::QDL_CANCELLED_ERROR.to_string(),
+                PrepError::Failed(message) => {
+                    format!("{} {message}", qdl::TAG_QDL_AUTOCONFIG_FAILED)
+                }
             })?,
         ),
         None => None,
     };
+    qdl::flash::check_cancelled(&flash_state)?;
     let write_path = working_copy
         .as_ref()
         .map_or(image_path, |copy| copy.path().to_path_buf());
