@@ -464,7 +464,7 @@ cargo clippy --all-targets --all-features -- -D warnings  # Linter (zero warning
 ### CI/CD Pipeline
 
 PRs are validated automatically via GitHub Actions:
-1. Frontend lint + type check
+1. Frontend lint, type check, locale parity and version sync
 2. Rust fmt + clippy
 3. Build test on all 3 platforms (Linux, macOS, Windows)
 4. Security audit (`npm audit` + `cargo audit`)
