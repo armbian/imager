@@ -21,25 +21,31 @@ const resources = Object.entries(localeModules).reduce((acc, [path, module]) => 
   return acc;
 }, {} as Record<string, { translation: Record<string, unknown> }>);
 
+const syncDocumentLang = (lng: string) => {
+  document.documentElement.lang = lng;
+};
+
+/** The supported language the system locale resolves to, or the default when it cannot be read */
+export async function getSystemLanguage(): Promise<string> {
+  try {
+    return getLanguageFromLocale(await invoke<string>('get_system_locale'));
+  } catch (localeError) {
+    console.warn('Failed to get system locale, using default:', localeError);
+    return getDefaultLanguage();
+  }
+}
+
 /** Initialize i18n using the saved language, falling back to system locale detection */
 export async function initI18n(): Promise<void> {
-  let language = getDefaultLanguage();
+  let language: string;
 
   try {
-    const savedLanguage = await getLanguage();
-    if (savedLanguage) {
-      language = savedLanguage;
-    }
+    language = (await getLanguage()) ?? (await getSystemLanguage());
   } catch {
-    // If no saved language, detect from system locale
-    try {
-      const systemLocale = await invoke<string>('get_system_locale');
-      language = getLanguageFromLocale(systemLocale);
-    } catch (localeError) {
-      console.warn('Failed to get system locale, using default:', localeError);
-      language = getDefaultLanguage();
-    }
+    language = await getSystemLanguage();
   }
+
+  i18n.on('languageChanged', syncDocumentLang);
 
   await i18n
     .use(initReactI18next)
@@ -54,6 +60,8 @@ export async function initI18n(): Promise<void> {
         useSuspense: false, // Disable suspense for sync initialization
       },
     });
+
+  syncDocumentLang(i18n.language);
 }
 
 /** Change the active language (e.g. 'en', 'it', 'auto') and persist it */
@@ -69,15 +77,7 @@ export async function changeLanguage(lang: string): Promise<void> {
       console.error('Failed to delete language from storage:', error);
     }
 
-    // Detect system locale and change to it
-    try {
-      const systemLocale = await invoke<string>('get_system_locale');
-      const detectedLang = getLanguageFromLocale(systemLocale);
-      await i18n.changeLanguage(detectedLang);
-    } catch (localeError) {
-      console.warn('Failed to get system locale, using default:', localeError);
-      await i18n.changeLanguage(getDefaultLanguage());
-    }
+    await i18n.changeLanguage(await getSystemLanguage());
   } else {
     // Change language in i18next
     await i18n.changeLanguage(lang);
