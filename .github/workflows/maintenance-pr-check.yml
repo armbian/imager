@@ -116,7 +116,8 @@ jobs:
             librsvg2-dev \
             patchelf \
             libssl-dev \
-            libgtk-3-dev
+            libgtk-3-dev \
+            e2fsprogs
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -151,7 +152,9 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "src-tauri -> target"
+          workspaces: |
+            src-tauri -> target
+            crates/armbian-write-conf -> target
           cache-on-failure: true
           save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           shared-key: "v1-linux-x64-lint"
@@ -172,6 +175,12 @@ jobs:
       - name: Run tests (release)
         working-directory: src-tauri
         run: cargo test --release
+
+      # The ext4 writer tests drive mkfs.ext4, debugfs and e2fsck; fail rather than skip without them.
+      - name: Run ext4 writer tests
+        env:
+          ARMBIAN_WRITE_CONF_REQUIRE_E2FSPROGS: "1"
+        run: cargo test --manifest-path crates/armbian-write-conf/Cargo.toml
 
   # cfg(windows) code is never compiled by the Linux lint job.
   rust-lint-windows:

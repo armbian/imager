@@ -19,6 +19,8 @@ const SUPERBLOCK_SIZE: usize = 1024;
 const GROUP_DESCRIPTOR_SIZE_OFFSET: usize = 0xfe;
 const SUPERBLOCK_CHECKSUM_OFFSET: usize = 0x3fc;
 const WRITE_TIMEOUT: Duration = Duration::from_secs(30);
+/// Set to 1 (CI does) to fail instead of skipping when an e2fsprogs tool is missing.
+const REQUIRE_E2FSPROGS: &str = "ARMBIAN_WRITE_CONF_REQUIRE_E2FSPROGS";
 const E2FSPROGS_DIRS: &[&str] = &[
     "",
     "/sbin/",
@@ -110,7 +112,8 @@ pub fn read_back(image: &Path, base: u64, path: &str) -> Vec<u8> {
     fs.read(path).unwrap()
 }
 
-/// An e2fsprogs binary from its env override (E2FSCK, MKFS_EXT4, DEBUGFS) or the usual dirs.
+/// An e2fsprogs binary from its env override (E2FSCK, MKFS_EXT4, DEBUGFS) or the usual dirs; panics
+/// instead of returning None when REQUIRE_E2FSPROGS is set.
 fn e2fsprogs_tool(name: &str) -> Option<PathBuf> {
     let var = name.to_uppercase().replace('.', "_");
     if let Some(path) = std::env::var_os(&var) {
@@ -126,6 +129,10 @@ fn e2fsprogs_tool(name: &str) -> Option<PathBuf> {
                 .is_ok_and(|o| o.status.success())
         });
     if found.is_none() {
+        assert!(
+            std::env::var(REQUIRE_E2FSPROGS).as_deref() != Ok("1"),
+            "{name} not installed and {REQUIRE_E2FSPROGS}=1 (set {var} to its path)"
+        );
         eprintln!("SKIP {name}: not installed (set {var} to its path)");
     }
     found
