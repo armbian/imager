@@ -12,10 +12,11 @@ import { formatImageIdentity } from '../../utils';
 import { SLUGS, getOsName } from '../../config';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { useFlashOperation } from '../../hooks/useFlashOperation';
+import { getDeviceType } from '../../utils/deviceUtils';
 import { FlashStageIcon, getStageKey, isIndeterminateStage } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
 import { FlashPhaseDots } from './FlashPhaseDots';
-import { ErrorDisplay, MarqueeText, ConfirmationDialog, BoardImage } from '../shared';
+import { ErrorDisplay, MarqueeText, ConfirmationDialog, BoardImage, getDeviceBadge } from '../shared';
 
 interface FlashProgressProps {
   board: BoardInfo;
@@ -85,6 +86,11 @@ export function FlashProgress({
   const isCustomIcon = image.is_custom && board.slug === SLUGS.CUSTOM;
   const isEdl = isEdlImage(image);
 
+  // Same detection used at the storage-selection step, surfaced here so the
+  // confirmation/success screen states the flashed device type too (#153).
+  const deviceType = getDeviceType(device);
+  const deviceTypeLabel = getDeviceBadge(deviceType, t);
+
   // Glow brightness tracks progress; indeterminate stages sit at mid-glow.
   const glowProgress = isComplete ? 100 : isIndeterminate ? 50 : progress;
 
@@ -143,6 +149,7 @@ export function FlashProgress({
                 <div className="flash-device-row">
                   {isEdl ? <Usb size={16} /> : <HardDrive size={16} />}
                   <MarqueeText text={device.model || device.name} className="flash-device-name" />
+                  {deviceTypeLabel && <span className={`${deviceType}-badge`}>{deviceTypeLabel}</span>}
                   {device.size_formatted && <span className="flash-device-size">{device.size_formatted}</span>}
                 </div>
               </div>
