@@ -5,6 +5,7 @@
 
 import {
   Ban,
+  Cpu,
   Database,
   Gauge,
   Globe,
@@ -28,10 +29,13 @@ import {
 } from 'lucide-react';
 import { AUTO_LANGUAGE_CODE, SUPPORTED_LANGUAGES } from './i18n';
 import { BYTES_PER_MB, PLATFORM, SETTINGS } from './constants';
+import { SUPPORT_TIER } from './supportTiers';
 import { formatBytes, uiPlatform } from '../utils';
 import type { Theme } from '../contexts/ThemeContext';
 import type { MotionMode } from '../contexts/MotionContext';
 import type {
+  ArmbianDetectionOutcome,
+  BoardInfo,
   DevApiFault,
   DevDownloadFault,
   DevFakeDevice,
@@ -80,6 +84,7 @@ export const DEV_SECTION = {
   FLASH: 'flash',
   VDISKS: 'vdisks',
   NETWORK: 'network',
+  HOST: 'host',
   APP: 'app',
 } as const;
 
@@ -98,6 +103,7 @@ export const DEV_SECTIONS: DevSectionInfo[] = [
   { id: DEV_SECTION.FLASH, label: 'Flash', title: 'Flash outcome', icon: Zap },
   { id: DEV_SECTION.VDISKS, label: 'Disks', title: 'Virtual disks', icon: Database },
   { id: DEV_SECTION.NETWORK, label: 'Network', title: 'Network & API', icon: Globe },
+  { id: DEV_SECTION.HOST, label: 'Host', title: 'Armbian host', icon: Cpu },
   { id: DEV_SECTION.APP, label: 'App', title: 'App', icon: Palette },
 ];
 
@@ -219,11 +225,51 @@ export function devSizeOptions(sizesMb: readonly number[], maxMb: number): DevOp
     .map((mb) => ({ value: mb, label: formatBytes(mb * BYTES_PER_MB) }));
 }
 
-export function devStatusText(active: boolean, presetLabel: string | null, updateSimulated: boolean): string {
-  if (active) return `Simulating: ${presetLabel ?? 'custom scenario'}`;
-  if (updateSimulated) return 'Simulating: an update offer';
-  return 'Idle: real devices, flashing and network';
+export function devStatusText(status: DevScenariosStatus, updateSimulated: boolean): string {
+  const { scenario, presets, active } = status;
+  if (!active) return updateSimulated ? 'Simulating: an update offer' : 'Idle: real devices, flashing and network';
+  const host = scenario.armbianHost;
+  const preset = matchingPreset({ ...scenario, armbianHost: null }, presets);
+  const parts: string[] = [];
+  if (!host || preset?.id !== DEV_DEFAULT_PRESET_ID) parts.push(preset?.label ?? 'custom scenario');
+  if (host) parts.push(`Armbian on ${host.board_name || host.board}`);
+  return `Simulating: ${parts.join(' + ')}`;
 }
+
+export const DEV_ARMBIAN_HOST = {
+  DEFAULT_BOARD: 'rock-5b',
+  /** Tells Settings > Writing to ask getArmbianRelease again */
+  CHANGED_EVENT: 'armbian-dev-host-changed',
+} as const;
+
+export function devDefaultHostBoard(boards: BoardInfo[]): BoardInfo | null {
+  return (
+    boards.find((b) => b.slug === DEV_ARMBIAN_HOST.DEFAULT_BOARD) ??
+    boards.find((b) => b.support_tier === SUPPORT_TIER.PLATINUM) ??
+    boards[0] ??
+    null
+  );
+}
+
+const compactText = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/** Boards whose name or slug holds the query (spaces and dashes ignored), keeping the selected one listed. */
+export function devHostBoardOptions(boards: BoardInfo[], query: string, selectedSlug: string): BoardInfo[] {
+  const q = compactText(query);
+  const sorted = [...boards].sort((a, b) => a.name.localeCompare(b.name));
+  if (!q) return sorted;
+  return sorted.filter((b) => b.slug === selectedSlug || compactText(b.name).includes(q) || compactText(b.slug).includes(q));
+}
+
+export const DEV_DETECTION_NOTES: Record<ArmbianDetectionOutcome, string> = {
+  [SETTINGS.ARMBIAN_DETECTION_MODES.MODAL]: 'Detection window shown, as on an Armbian startup.',
+  [SETTINGS.ARMBIAN_DETECTION_MODES.AUTO]: 'Auto-detect board is Silent: the board was selected without the window.',
+  [SETTINGS.ARMBIAN_DETECTION_MODES.DISABLED]:
+    'Auto-detect board is Disabled in Settings > Writing, so nothing opens. Pick Interactive or Silent there.',
+  notArmbian: 'The backend reported no Armbian host: turn the simulation on first.',
+  unknownBoard: 'The board list has no such slug (an API fault?), so detection stops as it would at startup.',
+  failed: 'Detection failed: see the log.',
+};
 
 export interface DevDeviceTemplate {
   key: string;
@@ -307,6 +353,7 @@ export function changedSections(status: DevScenariosStatus, updateSimulated: boo
     if (!sameJson(scenario.flash, base.flash)) changed.add(DEV_SECTION.FLASH);
     if (!sameJson(scenario.network, base.network)) changed.add(DEV_SECTION.NETWORK);
   }
+  if (scenario.armbianHost) changed.add(DEV_SECTION.HOST);
   if (scenario.devices.some((d) => d.vdisk)) changed.add(DEV_SECTION.VDISKS);
   if (updateSimulated) changed.add(DEV_SECTION.APP);
   return changed;

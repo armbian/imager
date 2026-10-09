@@ -33,6 +33,7 @@ readonly FORBIDDEN=(
     'dev-vdisks'
     'dev-test-images'
     'hideRealDevices'
+    'armbianHost'
 )
 
 log_info() { echo "[check-release-binary] $*"; }

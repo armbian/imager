@@ -16,7 +16,7 @@ import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from '
 import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, PLATFORM } from './config';
 import { IMAGE_FORMAT, IMAGE_STORAGE, isEdlImage } from './types';
 import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer } from './utils';
-import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianReleaseInfo, AutoconfigConfig, CustomImageInfo, FlashExit } from './types';
+import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianDetectionOutcome, ArmbianReleaseInfo, AutoconfigConfig, CustomImageInfo, FlashExit } from './types';
 import './styles/index.css';
 
 // Debug-only panel; the define folds to false in release builds, which drops the chunk.
@@ -182,6 +182,57 @@ function AppContent() {
     }
   }, [showWelcome, pendingAutoSelect, autoSelectBoard]);
 
+  // Read the Armbian host and either show the modal or auto-select, as the detection setting says
+  const detectArmbianBoard = useCallback(async (): Promise<ArmbianDetectionOutcome> => {
+    const { MODAL, AUTO, DISABLED } = SETTINGS.ARMBIAN_DETECTION_MODES;
+    const info = await getArmbianRelease();
+    if (!info) {
+      logInfo('app', 'Not running on Armbian system');
+      return 'notArmbian';
+    }
+
+    setArmbianInfo(info);
+
+    const detectionMode = await getArmbianBoardDetection();
+    if (detectionMode === DISABLED) {
+      return DISABLED;
+    }
+
+    const boards = await getBoards();
+    const matchedBoard = boards.find((b) => b.slug === info.board);
+
+    if (!matchedBoard) {
+      logWarn('app', `Board ${info.board} not found in API, skipping auto-selection`);
+      return 'unknownBoard';
+    }
+
+    logInfo('app', `Found matching board in API: ${matchedBoard.name}`);
+
+    setDetectedBoard(matchedBoard);
+
+    // Load board image from local cache (downloads if online and uncached)
+    try {
+      const cachedDataUri = await getCachedBoardImage(matchedBoard.slug);
+      setArmbianBoardImageUrl(cachedDataUri);
+      if (cachedDataUri) {
+        logInfo('app', 'Board image loaded from cache');
+      }
+    } catch (err) {
+      logWarn('app', `Failed to get board image: ${err}`);
+    }
+
+    if (detectionMode === MODAL) {
+      setShowArmbianModal(true);
+      return MODAL;
+    }
+    if (detectionMode === AUTO) {
+      // Queue the silent auto-selection; it runs after the welcome screen, never skipping it.
+      setPendingAutoSelect(matchedBoard);
+      return AUTO;
+    }
+    return DISABLED;
+  }, []);
+
   // On startup, detect an Armbian host and either show the modal or auto-select
   useEffect(() => {
     const checkArmbianSystem = async () => {
@@ -203,56 +254,27 @@ function AppContent() {
         }
 
         armbianCheckRef.current = true;
-
-        const info = await getArmbianRelease();
-        if (!info) {
-          logInfo('app', 'Not running on Armbian system');
-          return;
-        }
-
-        setArmbianInfo(info);
-
-        const detectionMode = await getArmbianBoardDetection();
-        if (detectionMode === SETTINGS.ARMBIAN_DETECTION_MODES.DISABLED) {
-          return;
-        }
-
-        const boards = await getBoards();
-        const matchedBoard = boards.find((b) => b.slug === info.board);
-
-        if (!matchedBoard) {
-          logWarn('app', `Board ${info.board} not found in API, skipping auto-selection`);
-          return;
-        }
-
-        logInfo('app', `Found matching board in API: ${matchedBoard.name}`);
-
-        setDetectedBoard(matchedBoard);
-
-        // Load board image from local cache (downloads if online and uncached)
-        try {
-          const cachedDataUri = await getCachedBoardImage(matchedBoard.slug);
-          setArmbianBoardImageUrl(cachedDataUri);
-          if (cachedDataUri) {
-            logInfo('app', 'Board image loaded from cache');
-          }
-        } catch (err) {
-          logWarn('app', `Failed to get board image: ${err}`);
-        }
-
-        if (detectionMode === SETTINGS.ARMBIAN_DETECTION_MODES.MODAL) {
-          setShowArmbianModal(true);
-        } else if (detectionMode === SETTINGS.ARMBIAN_DETECTION_MODES.AUTO) {
-          // Queue the silent auto-selection; it runs after the welcome screen, never skipping it.
-          setPendingAutoSelect(matchedBoard);
-        }
+        await detectArmbianBoard();
       } catch (err) {
         logWarn('app', `Failed to check for Armbian system: ${err}`);
       }
     };
 
     checkArmbianSystem();
-  }, [isOnline]);
+  }, [isOnline, detectArmbianBoard]);
+
+  // Dev scenarios only: run detection again for a simulated host, on any platform
+  const rerunArmbianDetection = useCallback(async (): Promise<ArmbianDetectionOutcome> => {
+    armbianCheckRef.current = true;
+    setDetectedBoard(null);
+    setArmbianBoardImageUrl(null);
+    try {
+      return await detectArmbianBoard();
+    } catch (err) {
+      logWarn('app', `Failed to check for Armbian system: ${err}`);
+      return 'failed';
+    }
+  }, [detectArmbianBoard]);
 
   // Reuse a cached image from the Cache Manager: select its board and image
   useEffect(() => {
@@ -565,6 +587,7 @@ function AppContent() {
             isConfirming={!isFlashing && selectedDevice !== null}
             onUseCustomImage={applyCustomImage}
             onResetFlow={isFlashing && !settledFlashExit ? null : handleRestartSelection}
+            onRunArmbianDetection={isOnline ? rerunArmbianDetection : null}
           />
         </Suspense>
       )}

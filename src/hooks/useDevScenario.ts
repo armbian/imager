@@ -13,7 +13,7 @@ import {
   devSetScenario,
 } from './useTauri';
 import { EVENTS } from '../config';
-import { DEV_SCENARIOS } from '../config/devScenarios';
+import { DEV_ARMBIAN_HOST, DEV_SCENARIOS } from '../config/devScenarios';
 import { getErrorMessage } from '../utils';
 import type { DevPreset, DevScenario, DevScenariosStatus, DevTestImage } from '../types';
 
@@ -35,12 +35,17 @@ export function useDevScenario(): DevScenarioApi {
   const { data: status, reload } = useAsyncData(devScenariosStatus, []);
   const [busy, setBusy] = useState(false);
   const available = status !== null;
+  const hostBoard = status?.scenario.armbianHost?.board ?? null;
 
   useEffect(() => {
     if (!available) return;
     const id = setInterval(reload, DEV_SCENARIOS.STATUS_POLL_MS);
     return () => clearInterval(id);
   }, [available, reload]);
+
+  useEffect(() => {
+    window.dispatchEvent(new Event(DEV_ARMBIAN_HOST.CHANGED_EVENT));
+  }, [hostBoard]);
 
   const run = useCallback(
     async <T>(action: () => Promise<T>, success?: string): Promise<T | null> => {

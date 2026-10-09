@@ -7,6 +7,7 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
+use crate::commands::system::ArmbianReleaseInfo;
 use crate::config::dev;
 use crate::config::devices::BUS_TYPES;
 
@@ -18,6 +19,8 @@ pub struct Scenario {
     pub edl_devices: Vec<FakeEdlDevice>,
     pub flash: FlashSim,
     pub network: NetworkSim,
+    /// What `get_armbian_release` reports instead of reading /etc/armbian-release.
+    pub armbian_host: Option<ArmbianReleaseInfo>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -233,6 +236,17 @@ impl FakeEdlDevice {
     }
 }
 
+fn check_armbian_host(host: &ArmbianReleaseInfo) -> Result<(), String> {
+    let board = &host.board;
+    if board.is_empty() || board.chars().any(char::is_whitespace) {
+        return Err(format!(
+            "armbianHost.board {board:?} must be a non-empty slug without spaces"
+        ));
+    }
+    check_label("board", "armbianHost", board)?;
+    check_label("board_name", "armbianHost", &host.board_name)
+}
+
 impl Scenario {
     pub fn is_active(&self) -> bool {
         *self != Self::default()
@@ -295,6 +309,9 @@ impl Scenario {
                 "network.downloadKbPerSec must be between 1 and {}",
                 dev::MAX_DOWNLOAD_KB_PER_SEC
             ));
+        }
+        if let Some(host) = &self.armbian_host {
+            check_armbian_host(host)?;
         }
         Ok(())
     }
@@ -479,6 +496,56 @@ mod tests {
         assert!(s.validate().is_ok());
         s.devices[0].model = "x\n".to_string();
         assert!(s.validate().is_err());
+    }
+
+    fn host(board: &str, board_name: &str) -> Scenario {
+        Scenario {
+            armbian_host: Some(ArmbianReleaseInfo {
+                board: board.to_string(),
+                board_name: board_name.to_string(),
+            }),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn armbian_host_activates_the_scenario() {
+        let s = host("orangepi-5", "Orange Pi 5");
+        assert!(s.is_active());
+        assert!(s.validate().is_ok());
+        assert!(host("rock-5b", "").validate().is_ok());
+    }
+
+    #[test]
+    fn armbian_host_refuses_bad_values() {
+        for (board, name) in [
+            ("", "Orange Pi 5"),
+            ("orange pi", "Orange Pi 5"),
+            ("orangepi-5\n", "Orange Pi 5"),
+            ("orangepi-5", "Orange\u{7}Pi"),
+        ] {
+            assert!(host(board, name).validate().is_err(), "{board:?} accepted");
+        }
+        let long = "x".repeat(dev::MAX_LABEL_LEN + 1);
+        assert!(host(&long, "x").validate().is_err());
+        assert!(host("x", &long).validate().is_err());
+    }
+
+    #[test]
+    fn armbian_host_json_matches_the_release_info_shape() {
+        let parsed: Scenario = serde_json::from_value(json!({
+            "armbianHost": { "board": "rock-5b", "board_name": "Radxa ROCK 5B" }
+        }))
+        .unwrap();
+        assert_eq!(parsed, host("rock-5b", "Radxa ROCK 5B"));
+        assert_eq!(
+            serde_json::to_value(Scenario::default()).unwrap()["armbianHost"],
+            json!(null)
+        );
+        assert!(serde_json::from_value::<Scenario>(
+            json!({ "armbianHost": { "boardName": "Radxa ROCK 5B" } })
+        )
+        .is_err());
     }
 
     #[test]
