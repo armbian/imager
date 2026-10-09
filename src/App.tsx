@@ -15,6 +15,7 @@ import { UpdateProvider } from './contexts/UpdateContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
 import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, PLATFORM } from './config';
 import { IMAGE_FORMAT, IMAGE_STORAGE, isEdlImage } from './types';
+import { presetIsEmpty } from './config/autoconfig';
 import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer } from './utils';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianDetectionOutcome, ArmbianReleaseInfo, AutoconfigConfig, CustomImageInfo, FlashExit } from './types';
 import './styles/index.css';
@@ -119,7 +120,9 @@ function AppContent() {
     let cancelled = false;
     getAutoconfigProfile(selectedProfileId)
       .then((profile) => {
-        if (!cancelled) setAutoconfig(profile?.config ?? null);
+        // An all-defaults profile renders an empty preset: nothing to prepare or inject
+        const config = profile?.config;
+        if (!cancelled) setAutoconfig(config && !presetIsEmpty(config) ? config : null);
       })
       .catch(() => {
         if (!cancelled) setAutoconfig(null);

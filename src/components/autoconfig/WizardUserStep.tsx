@@ -2,48 +2,66 @@
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Monitor, Terminal, User } from 'lucide-react';
-import { UI } from '../../config';
+import { IdCard, Monitor, Terminal, User } from 'lucide-react';
 import { AUTOCONFIG_PLACEHOLDERS, USER_SHELLS } from '../../config/autoconfig';
+import { firstLoginUserName, isValidUserName, type UserMode } from '../../config/profileEditorModel';
 import type { ProfileWizardState } from '../../hooks/useProfileWizard';
 import type { UserShell } from '../../types';
+import { SegmentedControl, SelectMenu } from '../settings/controls';
+import { FieldHint } from '../settings/editor/EditorParts';
 import { PasswordInput } from '../shared/PasswordInput';
-import { SegmentedChoice } from '../shared/SegmentedChoice';
 import { WizardField, WizardMore, WizardTextField } from './WizardFields';
-
-const SEG_ICON = UI.ICON_SIZE.WIZARD_SEG;
 
 export function WizardUserStep({ wizard, uid }: { wizard: ProfileWizardState; uid: string }) {
   const { t } = useTranslation();
-  const { draft, more, attempted, stepError, patch, toggleMore, shownError } = wizard;
-  const user = draft.user;
+  const { model, more, attempted, patch, toggleMore } = wizard;
+  const user = model.user;
+  const named = !!user.name.trim();
+  const createdName = firstLoginUserName(user.name);
+
+  const nameHint = !named ? (
+    attempted ? <FieldHint tone="warn">{t('settings.autoconfig.wizard.usernameRequired')}</FieldHint> : undefined
+  ) : isValidUserName(user.name) ? (
+    <FieldHint tone="ok">
+      {createdName === user.name.trim()
+        ? t('settings.autoconfig.editor.userOk')
+        : t('settings.autoconfig.editor.userCreatedAs', { name: createdName })}
+    </FieldHint>
+  ) : (
+    <FieldHint tone="warn">{t('settings.autoconfig.editor.userInvalid')}</FieldHint>
+  );
+  const passwordMissing = attempted && !user.password;
 
   return (
     <>
-      <SegmentedChoice
+      <SegmentedControl<UserMode>
         value={user.mode}
         ariaLabel={t('settings.autoconfig.wizard.user.title')}
         options={[
-          { value: 'now', label: t('settings.autoconfig.wizard.user.now'), icon: <User size={SEG_ICON} aria-hidden="true" /> },
-          { value: 'later', label: t('settings.autoconfig.wizard.user.later'), icon: <Monitor size={SEG_ICON} aria-hidden="true" /> },
+          { value: 'now', label: t('settings.autoconfig.wizard.user.now'), icon: <User aria-hidden="true" /> },
+          { value: 'later', label: t('settings.autoconfig.wizard.user.later'), icon: <Monitor aria-hidden="true" /> },
         ]}
         onChange={(mode) => patch('user', { mode })}
       />
       {user.mode === 'now' ? (
         <>
           <div className="pw-two">
-            <WizardField label={t('settings.autoconfig.userName')} htmlFor={`${uid}-user`} error={shownError(stepError)}>
+            <WizardField label={t('settings.autoconfig.userName')} htmlFor={`${uid}-user`} hint={nameHint}>
               <WizardTextField
                 id={`${uid}-user`}
                 mono
                 value={user.name}
-                icon={<User size={15} className="ac-input__icon" aria-hidden="true" />}
+                icon={<User size={15} className="pe-input__icon" aria-hidden="true" />}
                 placeholder={AUTOCONFIG_PLACEHOLDERS.USER_NAME}
-                invalid={attempted && !!stepError}
+                invalid={(attempted && !named) || (named && !isValidUserName(user.name))}
                 onChange={(name) => patch('user', { name })}
               />
             </WizardField>
-            <WizardField label={t('settings.autoconfig.wizard.password')} htmlFor={`${uid}-upw`}>
+            <WizardField
+              label={t('settings.autoconfig.wizard.password')}
+              htmlFor={`${uid}-upw`}
+              hint={passwordMissing ? <FieldHint tone="warn">{t('settings.autoconfig.editor.passwordRequired')}</FieldHint> : undefined}
+            >
               <PasswordInput id={`${uid}-upw`} value={user.password} onChange={(password) => patch('user', { password })} />
             </WizardField>
           </div>
@@ -54,25 +72,21 @@ export function WizardUserStep({ wizard, uid }: { wizard: ProfileWizardState; ui
                 <WizardTextField
                   id={`${uid}-real`}
                   value={user.realName}
+                  icon={<IdCard size={15} className="pe-input__icon" aria-hidden="true" />}
                   placeholder={AUTOCONFIG_PLACEHOLDERS.USER_REAL_NAME}
                   onChange={(realName) => patch('user', { realName })}
                 />
               </WizardField>
-              <WizardField label={t('settings.autoconfig.userShell')} htmlFor={`${uid}-shell`}>
-                <div className="ac-input pw-input is-select">
-                  <Terminal size={15} className="ac-input__icon" aria-hidden="true" />
-                  <select
-                    id={`${uid}-shell`}
-                    value={user.shell}
-                    onChange={(e) => patch('user', { shell: e.target.value as UserShell | '' })}
-                  >
-                    <option value="">{t('settings.autoconfig.wizard.user.shellDefault')}</option>
-                    {USER_SHELLS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={15} className="ac-input__chevron" aria-hidden="true" />
-                </div>
+              <WizardField label={t('settings.autoconfig.userShell')}>
+                <SelectMenu<UserShell | ''>
+                  value={user.shell}
+                  options={[
+                    { value: '', label: t('settings.autoconfig.wizard.user.shellDefault'), icon: <Terminal aria-hidden="true" /> },
+                    ...USER_SHELLS.map((s) => ({ value: s, label: s, icon: <Terminal aria-hidden="true" /> })),
+                  ]}
+                  onChange={(shell) => patch('user', { shell })}
+                  ariaLabel={t('settings.autoconfig.userShell')}
+                />
               </WizardField>
             </div>
           )}

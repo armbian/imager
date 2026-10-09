@@ -310,6 +310,13 @@ export interface AutoconfigProfile {
   /** Unix timestamp (ms) of last edit, used for sorting */
   updatedAt: number;
   config: AutoconfigConfig;
+  /** Boards the profile is offered for; empty or missing means every board */
+  boards?: ProfileBoard[];
+}
+
+export interface ProfileBoard {
+  slug: string;
+  name: string;
 }
 
 export type AutoconfigProfileChangeAction = 'created' | 'updated' | 'deleted';
@@ -319,6 +326,13 @@ export interface AutoconfigProfilesChangedDetail {
   id: string;
   action: AutoconfigProfileChangeAction;
 }
+
+export type SettingsView = 'general' | 'writing' | 'profiles' | 'downloads' | 'about';
+
+/** Resolves true when it is OK to leave the current settings view */
+export type LeaveGuard = () => Promise<boolean>;
+
+export type HeroId = 'general' | 'writing' | 'downloads' | 'profiles' | 'profilesEmpty';
 
 /** How a settled flash screen leaves: Back on error, Flash another on done */
 export type FlashExit = () => void | Promise<void>;

@@ -4,8 +4,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { getTheme, setTheme as saveTheme } from '../hooks/useSettings';
 import { SETTINGS } from '../config';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 export type Theme = (typeof SETTINGS.THEME_MODES)[keyof typeof SETTINGS.THEME_MODES];
+export type ResolvedTheme = typeof SETTINGS.THEME_MODES.LIGHT | typeof SETTINGS.THEME_MODES.DARK;
+
+const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 
 export interface ApplyOptions {
   persist?: boolean;
@@ -14,6 +18,8 @@ export interface ApplyOptions {
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme, options?: ApplyOptions) => void;
+  /** What is on screen: the chosen theme, or the OS scheme in auto */
+  resolvedTheme: ResolvedTheme;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -26,8 +32,14 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(SETTINGS.THEME_MODES.AUTO);
   const [isInitialized, setIsInitialized] = useState(false);
+  const osDark = useMediaQuery(DARK_SCHEME_QUERY);
+  const resolvedTheme: ResolvedTheme =
+    theme === SETTINGS.THEME_MODES.AUTO
+      ? osDark
+        ? SETTINGS.THEME_MODES.DARK
+        : SETTINGS.THEME_MODES.LIGHT
+      : theme;
 
-  // Apply theme classes to the document element
   const applyTheme = (selectedTheme: Theme) => {
     const root = document.documentElement;
 
@@ -38,12 +50,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       root.classList.add('theme-dark');
       root.classList.remove('theme-light');
     } else {
-      // auto - remove both classes, let CSS media query handle it
       root.classList.remove('theme-light', 'theme-dark');
     }
   };
 
-  // Load theme from storage on mount
   useEffect(() => {
     const loadTheme = async () => {
       try {
@@ -51,7 +61,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         setThemeState(savedTheme as Theme);
         applyTheme(savedTheme as Theme);
       } catch (error) {
-        // If no saved theme, default to auto
         console.warn('Failed to load theme from storage, using auto:', error);
         setThemeState(SETTINGS.THEME_MODES.AUTO);
         applyTheme(SETTINGS.THEME_MODES.AUTO);
@@ -78,6 +87,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const value = {
     theme,
     setTheme,
+    resolvedTheme,
   };
 
   // Don't render children until theme is loaded to prevent flash

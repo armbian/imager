@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { getReducedMotion, setReducedMotion as saveMotion } from '../hooks/useSettings';
 import { SETTINGS } from '../config';
 import type { ApplyOptions } from './ThemeContext';
@@ -11,7 +12,11 @@ export type MotionMode = (typeof SETTINGS.MOTION_MODES)[keyof typeof SETTINGS.MO
 interface MotionContextType {
   motion: MotionMode;
   setMotion: (mode: MotionMode, options?: ApplyOptions) => void;
+  /** Effective state: the user override, or the OS preference in auto */
+  reduced: boolean;
 }
+
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 const MotionContext = createContext<MotionContextType | undefined>(undefined);
 
@@ -32,6 +37,9 @@ function applyMotion(mode: MotionMode) {
 /** Manages the motion preference, applies it to the document element, and persists it. */
 export function MotionProvider({ children }: { children: ReactNode }) {
   const [motion, setMotionState] = useState<MotionMode>(SETTINGS.MOTION_MODES.AUTO);
+  const osReduced = useMediaQuery(REDUCED_MOTION_QUERY);
+  const reduced =
+    motion === SETTINGS.MOTION_MODES.REDUCE || (motion === SETTINGS.MOTION_MODES.AUTO && osReduced);
 
   useEffect(() => {
     getReducedMotion()
@@ -56,7 +64,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  return <MotionContext.Provider value={{ motion, setMotion }}>{children}</MotionContext.Provider>;
+  return <MotionContext.Provider value={{ motion, setMotion, reduced }}>{children}</MotionContext.Provider>;
 }
 
 /** Access the motion context (throws if used outside MotionProvider) */

@@ -1,0 +1,2481 @@
+/* PROFILE EDITOR: grouped single-page form, header card, floating action pill, board picker sheet */
+
+.pe {
+  --select-w: 280px;
+}
+
+.pe-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  margin: -8px 0 16px -4px;
+  padding: 0 4px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.pe-back:hover {
+  color: var(--accent-hover);
+}
+
+.pe-back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Header card: identity and progress on the left, what happens at first boot on the right */
+.pe-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 248px;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  border-radius: var(--radius-2xl);
+  background: var(--hero-bg);
+  box-shadow: 0 0 0 1px var(--hero-line);
+}
+
+.pe-head__id {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.pe-head__tile {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 1px var(--border-light);
+  font: inherit;
+}
+
+.pe-head__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pe-head__title {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pe-head__scope {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pe-head__progress {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.pe-head__seg {
+  width: 20px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: var(--border-color);
+}
+
+.pe-head__seg.is-set {
+  background: var(--color-success);
+}
+
+.pe-head__seg.is-attn {
+  background: var(--attention);
+}
+
+.pe-head__progress em {
+  margin-left: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.pe-head__boot {
+  min-width: 0;
+  padding-left: 24px;
+  box-shadow: inset 1px 0 0 var(--hero-line);
+}
+
+.pe-head__kicker {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.pe-head__facts {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pe-fact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.pe-fact svg {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.pe-fact span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pe-fact.is-plain {
+  color: var(--text-secondary);
+}
+
+.pe-fact.is-off {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--border-color);
+}
+
+/* Groups: eyebrow and one-line purpose above the card */
+.pe-group + .pe-group {
+  margin-top: 24px;
+}
+
+.pe-group__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 12px;
+  padding: 0 16px 8px;
+}
+
+.pe-group__titles {
+  display: contents;
+}
+
+.pe-group__eyebrow {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.pe-group__desc {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+/* Use Armbian defaults: the Add board link's look, its text flush with the card's right inset */
+.pe-group__head .pe-group__reset {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  margin: 0 -6px 0 0;
+}
+
+.pe-group__eyebrow {
+  margin: 0;
+  letter-spacing: 0.6px;
+}
+
+.pe-group__desc {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* Controls at the prototype's form size: 280px wide, 36px tall */
+.pe .set-seg {
+  height: 36px;
+}
+
+.pe .set-seg__opt {
+  height: 32px;
+  font-weight: 600;
+}
+
+.pe .set-select {
+  height: 36px;
+  padding: 0 10px 0 14px;
+}
+
+.pe-input,
+.pe .ac-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 280px;
+  max-width: 100%;
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-app);
+  box-shadow: inset 0 0 0 1px var(--border-color);
+  transition: box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.pe-input:focus-within,
+.pe .ac-input:focus-within {
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px rgba(var(--accent-rgb), 0.16);
+}
+
+.pe-input.is-invalid {
+  box-shadow: inset 0 0 0 1px var(--attention);
+}
+
+.pe-input input,
+.pe .ac-input input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.pe-input input::placeholder,
+.pe .ac-input input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.pe-input.is-mono input {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+}
+
+.pe-input__icon,
+.pe .ac-input__icon {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.pe .ac-input__btn {
+  display: flex;
+  flex: none;
+  padding: 2px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.pe .ac-input__btn:hover {
+  color: var(--text-primary);
+}
+
+.pe .ac-input__btn:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+/* Field hints in the row description: neutral, ok, needs attention */
+.pe-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.pe-hint svg {
+  flex: none;
+}
+
+.pe-hint__text {
+  min-width: 0;
+}
+
+.pe-hint.is-ok {
+  color: var(--color-success-dark);
+}
+
+.pe-hint.is-warn {
+  color: var(--color-warning-ink);
+}
+
+.theme-dark .pe-hint.is-ok {
+  color: var(--color-success);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light):not(.theme-dark) .pe-hint.is-ok {
+    color: var(--color-success);
+  }
+}
+
+/* "More options": a row that folds the less used fields of its group */
+.pe-more {
+  cursor: pointer;
+}
+
+.pe-more:hover {
+  background: var(--bg-secondary);
+}
+
+.pe-more:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.pe-more__value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pe-more__chev {
+  flex: none;
+  color: var(--text-muted);
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+.pe-more:hover .pe-more__chev {
+  color: var(--accent);
+}
+
+.pe-more.is-open .pe-more__chev {
+  transform: rotate(90deg);
+}
+
+.pe-sub {
+  position: relative;
+  background: rgba(var(--accent-rgb), 0.02);
+}
+
+.pe-sub::before,
+.pe .board-scope::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  height: 1px;
+  background: var(--border-light);
+}
+
+.pe-sub[hidden] {
+  display: none;
+}
+
+/* Offered for: one block, the state in the header and the boards right under it (editor and wizard) */
+.board-scope {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.board-scope__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 40px;
+}
+
+.board-scope__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The count and its Add board text button stay together on one line */
+.board-scope__state {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+}
+
+.board-scope__add,
+.pe-group__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  margin-left: -6px;
+  padding: 0 6px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.board-scope__add:hover,
+.pe-group__reset:hover {
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.board-scope__add:focus-visible,
+.pe-group__reset:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.board-scope__label {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+/* In the editor card it is a row like the others */
+.pe .board-scope {
+  position: relative;
+  padding: 8px 16px 16px;
+}
+
+.pe .board-scope--bare {
+  padding-bottom: 8px;
+}
+
+/* Boards picked for a profile: the Choose boards sheet cards in an even grid, a quiet Add tile closing the row */
+.boards-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+/* A short row of picked boards: the page pill takes its own line under the cards, never over a name */
+.boards-row .mfr-pager {
+  position: relative;
+  bottom: auto;
+}
+
+.boards-row__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.boards-row__list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boards-row__list > li {
+  display: flex;
+  min-width: 0;
+}
+
+.boards-row__card {
+  width: 100%;
+  height: 176px;
+}
+
+/* A display card: only its remove button acts, so it gets no clickable hover ring */
+.boards-row__card {
+  cursor: default;
+  transition: opacity var(--pager-swap-out) var(--ease-standard), transform var(--pager-swap-out) var(--ease-standard);
+}
+
+.boards-row__card:hover {
+  border-color: var(--border-color);
+}
+
+.boards-row__card.is-leaving {
+  opacity: 0;
+  transform: scale(0.94);
+}
+
+/* Same place and shape as the Choose boards check: faint at rest, full on card hover or focus, red on its own hover */
+.boards-row__remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 1px var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
+}
+
+.boards-row__card:hover .boards-row__remove,
+.boards-row__card:focus-within .boards-row__remove {
+  opacity: 1;
+}
+
+.boards-row__remove:hover {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.boards-row__remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.boards-row__card .bps-card__name {
+  display: -webkit-box;
+  white-space: normal;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* The boards stage (no board yet, and the wizard's All boards): a soft accent-lit panel with a faint dot field,
+   the floating board art on a glow plate, and the text column beside it */
+.boards-empty {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: stretch;
+  gap: 40px;
+  min-height: 208px;
+  padding: 28px 36px;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  background:
+    radial-gradient(ellipse 45% 90% at 28% 50%, rgba(var(--accent-rgb), 0.1), transparent 70%),
+    linear-gradient(135deg, rgba(var(--accent-rgb), 0.05), transparent 60%),
+    var(--bg-card);
+  box-shadow: 0 0 0 1px var(--border-light);
+}
+
+/* Dot field, faded towards the edges by a vignette painted in the card colour on top of it */
+.boards-empty::before,
+.boards-empty::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.boards-empty::before {
+  background-image: radial-gradient(var(--border-color) 1px, transparent 1.4px);
+  background-size: 14px 14px;
+  opacity: 0.55;
+}
+
+.boards-empty::after {
+  background: radial-gradient(ellipse 60% 80% at 40% 50%, transparent 30%, var(--bg-card) 85%);
+}
+
+.boards-empty > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Needs a board before it can be saved: an amber hairline with a soft glow */
+.boards-empty.is-warn {
+  box-shadow: 0 0 0 1px rgba(var(--color-warning-rgb), 0.55), 0 0 0 4px rgba(var(--color-warning-rgb), 0.08);
+}
+
+.boards-empty__stage {
+  position: relative;
+  flex: none;
+  width: 152px;
+  height: 152px;
+}
+
+/* A faint warm light under the art; it fades out early so it never reads as a disc */
+.boards-empty__stage::before {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  background: radial-gradient(closest-side, rgba(var(--accent-rgb), 0.1), rgba(var(--accent-rgb), 0.03) 55%, transparent);
+}
+
+/* Floor shadow that breathes with the float */
+.boards-empty__stage::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: 2px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--hero-floor), transparent);
+  animation: boardsFloor var(--boards-float-dur) ease-in-out infinite alternate;
+}
+
+.boards-empty__art {
+  position: absolute;
+  inset: 10%;
+  z-index: 1;
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  filter: var(--pf-board-shadow);
+  animation: boardsFloat var(--boards-float-dur) ease-in-out infinite alternate;
+}
+
+.boards-empty__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 420px;
+  overflow-wrap: anywhere;
+}
+
+.boards-empty__eyebrow {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.boards-empty__title {
+  margin-top: 4px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+}
+
+.boards-empty__line {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  text-wrap: pretty;
+}
+
+.boards-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 16px;
+}
+
+.boards-empty__hint {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+@keyframes boardsFloat {
+  from {
+    transform: translateY(2px);
+  }
+  to {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes boardsFloor {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.5;
+    transform: scale(0.82);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion='false']) .boards-empty__art,
+  :root:not([data-reduced-motion='false']) .boards-empty__stage::after {
+    animation: none;
+  }
+}
+
+:root[data-reduced-motion='true'] .boards-empty__art,
+:root[data-reduced-motion='true'] .boards-empty__stage::after {
+  animation: none;
+}
+
+/* Flags in the country and language menus */
+.pe-flag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.pe-flag--code {
+  width: 22px;
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+  color: var(--text-secondary);
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: 0.3px;
+}
+
+/* Floating action bar: centred over the bottom of the island, the status on the left and Discard / Save on the right.
+   Nearly opaque, so the form scrolling under it never shows through */
+.pe-pill {
+  position: absolute;
+  left: 50%;
+  bottom: var(--float-bottom);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 280px;
+  max-width: calc(100% - var(--settings-pad) * 2);
+  height: 48px;
+  /* 6px all round with the hairline, so the 36px buttons sit evenly; the status gets a matching left inset */
+  padding: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  background: var(--float-solid-bg);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(1.4);
+  backdrop-filter: blur(var(--blur-lg)) saturate(1.4);
+  box-shadow: var(--float-shadow), var(--island-highlight);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* Slides up from below the island edge and back down; only transform and opacity, centred all along */
+.pe-pill.is-in {
+  animation: peBarIn var(--action-bar-in) var(--ease-out-expo) both;
+}
+
+.pe-pill.is-out {
+  animation: peBarOut var(--action-bar-out) var(--ease-standard) both;
+}
+
+/* The status line swaps quickly when it changes (clean to dirty), keyed in ActionPill */
+.pe-pill__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 11px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  animation: peStatusIn var(--pager-swap) var(--ease-standard) both;
+}
+
+.pe-pill__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pe-pill__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--border-color);
+}
+
+.pe-pill__status.is-attn {
+  color: var(--text-secondary);
+}
+
+.pe-pill__status.is-attn .pe-pill__dot {
+  background: var(--accent);
+}
+
+.pe-pill__status.is-ok .pe-pill__dot {
+  background: var(--color-success);
+}
+
+/* Why Save is unavailable: the first field that blocks it, in the warn tone */
+.pe-pill__status.is-warn {
+  color: var(--color-warning-ink);
+}
+
+.pe-pill__status.is-warn .pe-pill__dot {
+  background: var(--attention);
+}
+
+.pe-pill__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  animation: peStatusIn var(--pager-swap) var(--ease-standard) both;
+}
+
+.pe-pill .pe-pill__btn {
+  height: 36px;
+  padding: 0 18px;
+}
+
+/* A proper ghost pill: the same shape as Save, quieter */
+.pe-pill .pe-pill__btn.is-ghost {
+  box-shadow: inset 0 0 0 1px var(--border-color);
+}
+
+@keyframes peStatusIn {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pe-pill__btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), opacity var(--dur-fast) var(--ease-standard);
+}
+
+.pe-pill__btn.is-primary {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.pe-pill__btn.is-primary:hover:not([aria-disabled='true']) {
+  background: var(--accent-hover);
+}
+
+.pe-pill__btn.is-secondary {
+  background: var(--bg-card);
+  box-shadow: inset 0 0 0 1px var(--border-color);
+  color: var(--text-primary);
+}
+
+.pe-pill__btn.is-secondary:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.pe-pill__btn.is-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.pe-pill__btn.is-ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.pe-pill__btn[aria-disabled='true'],
+.pe-pill__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* A disabled primary turns neutral instead of a faded orange, which reads muddy over the frosted pill */
+.pe-pill__btn.is-primary[aria-disabled='true'] {
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.pe-pill__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@keyframes peBarIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(100% + var(--float-bottom)));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes peBarOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, calc(100% + var(--float-bottom)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion='false']) .pe-pill,
+  :root:not([data-reduced-motion='false']) .pe-pill__status,
+  :root:not([data-reduced-motion='false']) .pe-pill__actions {
+    animation: none;
+  }
+}
+
+:root[data-reduced-motion='true'] .pe-pill,
+:root[data-reduced-motion='true'] .pe-pill__status,
+:root[data-reduced-motion='true'] .pe-pill__actions {
+  animation: none;
+}
+
+/* Board card shared by the boards row and the Choose boards sheet */
+.bps-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-2xl);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.bps-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.4);
+}
+
+/* Outer spread, not inset: the photo well paints over an inset ring and the card clips its corners */
+.bps-card.is-on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.bps-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bps-card.is-skeleton {
+  border-color: var(--border-light);
+  cursor: default;
+}
+
+.bps-card__img {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  padding: 12px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+/* Oversized then contained, as in the cache modal: the API photos carry wide transparent margins */
+.bps-card__img > img {
+  flex: none;
+  width: 135%;
+  height: 135%;
+  object-fit: contain;
+}
+
+.bps-card__img .board-image-fallback {
+  width: 64%;
+  height: 64%;
+}
+
+.bps-card__shim {
+  width: 70%;
+  height: 64%;
+  border-radius: var(--radius-lg);
+}
+
+.bps-card__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 12px;
+}
+
+.bps-card__vendor {
+  overflow: hidden;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bps-card__name {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bps-card__sk-vendor {
+  width: 40%;
+  height: 10px;
+  border-radius: var(--radius-sm);
+}
+
+.bps-card__sk-name {
+  width: 70%;
+  height: 14px;
+  margin-top: 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* CHOOSE BOARDS SHEET (BoardPickerSheet.tsx). Fixed geometry, so a page change never reflows: two rows of cards
+   fill the body down to the gutter, running under the floating page pill. The wizard overrides the sizes in profile.css. */
+.bps {
+  --bps-w: 880px;
+  --bps-h: 640px;
+  --bps-head-h: 64px;
+  --bps-bar-h: 40px;
+  --bps-foot-h: 68px;
+  --bps-gutter: 24px;
+  --bps-gap: 12px;
+  --bps-grid-top: 4px;
+  --bps-info-h: 67px;
+  --bps-body-h: calc(var(--bps-h) - var(--bps-head-h) - var(--bps-foot-h));
+  --bps-row-h: calc((var(--bps-body-h) - var(--bps-bar-h) - var(--bps-grid-top) - var(--bps-gap) - var(--bps-gutter)) / 2);
+  --bps-well-h: calc(var(--bps-row-h) - var(--bps-info-h));
+  --bps-cols: 4;
+  --bps-review-cols: 3;
+  --bps-review-pad: 16px;
+  --bps-menu-w: 584px;
+  --bps-menu-max-h: 486px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: var(--bps-w);
+  max-width: 100%;
+  height: var(--bps-h);
+  max-height: 100%;
+  border-radius: var(--radius-2xl);
+  background: var(--bg-app);
+  box-shadow: 0 0 0 1px var(--border-color), var(--pf-card-shadow);
+  color: var(--text-primary);
+  animation: confirmContentIn var(--dur-medium) var(--ease-out-expo) both;
+}
+
+/* Review has no browse bar, so its rows take that height too */
+.bps.is-review {
+  --bps-row-h: calc((var(--bps-body-h) - var(--bps-review-pad) - var(--bps-gap) - var(--bps-gutter)) / 2);
+}
+
+.bps.is-exiting {
+  animation: modalContentSlideOut var(--dur-base) ease-in forwards;
+}
+
+.bps__head {
+  position: relative;
+  z-index: 6;
+  flex: none;
+  height: var(--bps-head-h);
+  box-shadow: inset 0 -1px 0 var(--border-light);
+}
+
+.bps__face {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 100%;
+  padding: 0 14px 0 var(--bps-gutter);
+}
+
+.bps__face.is-review {
+  padding-left: 18px;
+}
+
+/* Browse and review trade places sideways once the user flips between them */
+.bps.is-flipped .bps__face,
+.bps.is-flipped .bps__body {
+  animation: bpsFlipBack var(--dur-base) var(--ease-out-expo) both;
+}
+
+.bps.is-flipped.is-review .bps__face,
+.bps.is-flipped.is-review .bps__body {
+  animation-name: bpsFlipIn;
+}
+
+@keyframes bpsFlipIn {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes bpsFlipBack {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+.bps__title {
+  margin: 0 6px 0 0;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.bps__titles {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bps__sub {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 17px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bps__back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.bps__back:hover {
+  background: var(--bg-hover);
+}
+
+.bps__back:focus-visible,
+.bps__head .modal-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bps__head .modal-close {
+  flex: none;
+  margin-left: auto;
+}
+
+/* Keyboard hint caps: "/", esc, the arrows and Enter */
+.bps-kbd {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  box-shadow: inset 0 0 0 1px var(--border-color), 0 1px 0 var(--border-color);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Search field */
+.bps-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 36px;
+  padding: 0 7px 0 13px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  box-shadow: inset 0 0 0 1px var(--border-color);
+  color: var(--text-muted);
+}
+
+.bps-search:focus-within {
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px rgba(var(--accent-rgb), 0.16);
+}
+
+.bps-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.bps-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.bps-search__clear {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.bps-search__clear:hover {
+  color: var(--text-primary);
+}
+
+/* Vendor logo tile (VendorLogo.tsx): one plate size per use, the mark trimmed and sized by area in JS */
+.vlogo {
+  --vlogo-px: 7px;
+  --vlogo-py: 6px;
+  position: relative;
+  display: block;
+  flex: none;
+  width: 64px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--logo-plate);
+  box-shadow: var(--logo-plate-ring);
+}
+
+.vlogo img {
+  position: absolute;
+  top: var(--vlogo-py);
+  left: var(--vlogo-px);
+  width: calc(100% - var(--vlogo-px) * 2);
+  height: calc(100% - var(--vlogo-py) * 2);
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.vlogo.is-ready img {
+  opacity: 1;
+}
+
+/* White lettering would vanish on the light plate, so it gets a dark one */
+.vlogo.is-light {
+  background: var(--logo-plate-ink);
+  box-shadow: var(--logo-plate-ink-ring);
+}
+
+.vlogo::before {
+  content: attr(data-initials);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--logo-plate-initials);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.vlogo.is-ready::before {
+  content: none;
+}
+
+.vlogo.is-initials,
+.vlogo.is-glyph {
+  display: grid;
+  place-items: center;
+  background: var(--bg-hover);
+  box-shadow: none;
+  color: var(--text-secondary);
+}
+
+.vlogo.is-initials::before {
+  color: var(--text-secondary);
+}
+
+.vlogo.is-glyph::before {
+  content: none;
+}
+
+.vlogo--sm {
+  --vlogo-px: 6px;
+  --vlogo-py: 4px;
+  width: 44px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+}
+
+.vlogo--xs {
+  --vlogo-px: 5px;
+  --vlogo-py: 3px;
+  width: 36px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+}
+
+.vlogo--sm::before,
+.vlogo--xs::before {
+  font-size: 9px;
+}
+
+/* Brand command menu, anchored under the trigger */
+.bps-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% - 4px);
+  left: calc(var(--bps-gutter) - 6px);
+  display: flex;
+  flex-direction: column;
+  width: var(--bps-menu-w);
+  max-height: min(var(--bps-menu-max-h), calc(var(--bps-h) - var(--bps-head-h) - var(--space-lg)));
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--bg-card);
+  box-shadow: 0 0 0 1px var(--border-light), var(--pf-pop-shadow);
+  cursor: default;
+  transform-origin: 70px -12px;
+  animation: bpsMenuIn var(--brand-menu-open) var(--ease-out-expo) both;
+}
+
+.bps-menu.is-exiting {
+  animation: bpsMenuOut var(--brand-menu-close) var(--settings-ease-accel) forwards;
+  pointer-events: none;
+}
+
+@keyframes bpsMenuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes bpsMenuOut {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.bps-menu__field {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  height: 62px;
+  padding: 0 16px 0 21px;
+  box-shadow: inset 0 -1px 0 var(--border-light);
+  color: var(--text-muted);
+}
+
+.bps-menu__field input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 16.5px;
+  font-weight: 500;
+  letter-spacing: -0.15px;
+}
+
+.bps-menu__field input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.bps-menu__scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 0 8px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding: 36px 0 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.bps-menu__section + .bps-menu__section {
+  margin-top: 2px;
+}
+
+.bps-menu__head {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 12px 8px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.bps-menu__head small {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.bps-menu__section--bare:first-child {
+  padding-top: 8px;
+}
+
+.bps-menu__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 56px;
+  padding: 0 14px 0 8px;
+  border-radius: 13px;
+  cursor: pointer;
+}
+
+.bps-menu__row.is-active {
+  background: var(--menu-row-active);
+}
+
+.bps-menu__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bps-menu__name {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 19px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bps-menu__row.is-current .bps-menu__name {
+  color: var(--accent);
+}
+
+.bps-menu__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bps-menu__dot {
+  width: 3px;
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.bps-menu__picked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* The universal partner pill, in the row's flow instead of the card corner */
+.bps-menu__row .mfr-tier {
+  position: static;
+  flex: none;
+}
+
+.bps-menu__current {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.bps-menu__go {
+  display: none;
+}
+
+.bps-menu__row.is-active .bps-menu__go {
+  display: inline-grid;
+}
+
+.bps-menu__peek {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+}
+
+.bps-peek {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: var(--bg-secondary);
+  animation: bpsPeekIn var(--dur-fast) var(--ease-out-expo) calc(var(--i) * var(--brand-peek-step)) backwards;
+}
+
+.bps-peek.is-on::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.bps-peek.is-more {
+  width: auto;
+  min-width: 42px;
+  padding: 0 9px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border-color);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bps-peek__img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes bpsPeekIn {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+}
+
+.bps-menu__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 34px 24px 30px;
+  text-align: center;
+}
+
+.bps-menu__empty-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: 14px;
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.bps-menu__empty-title {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.bps-menu__empty-hint {
+  max-width: 340px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.bps-menu__empty .pe-pill__btn {
+  margin-top: 10px;
+}
+
+.bps-menu__foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  height: 42px;
+  padding: 0 18px 0 21px;
+  box-shadow: inset 0 1px 0 var(--border-light);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.bps-menu__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.bps-menu__foot .bps-kbd {
+  min-width: 18px;
+  height: 18px;
+}
+
+.bps-menu__count {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Body: the context bar and the stage above the footer, clipped to the sheet's lower corners */
+.bps__clip {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+}
+
+.bps__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.bps-bar {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  height: var(--bps-bar-h);
+  padding: 0 var(--bps-gutter);
+}
+
+.bps-bar__info {
+  flex: none;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bps-bar__info b {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bps-hit:focus-visible,
+.bps-hit__clear:focus-visible,
+.bps-link:focus-visible,
+.bps-ledger:focus-visible,
+.bps-sum__row:focus-visible,
+.bps-sum__action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.bps-bar__hits {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Unclipped copy of the hits row that useFitCount measures; never seen or reached */
+.bps-bar__hits.bps-bar__measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  flex: none;
+  width: max-content;
+  overflow: visible;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.bps-bar__label {
+  flex: none;
+  margin-right: 2px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.bps-bar__none {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bps-hit {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 11px 0 3px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  box-shadow: inset 0 0 0 1px var(--border-color);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.bps-hit:hover {
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.bps-hit.is-more {
+  padding: 0 11px;
+  color: var(--text-secondary);
+}
+
+/* The picked brand: the same pill, tinted, with an x back to every brand */
+.bps-hit.is-set {
+  padding-right: 3px;
+  background: rgba(var(--accent-rgb), 0.12);
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.45);
+  cursor: default;
+}
+
+.bps-hit__count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.bps-hit__clear {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.bps-hit__clear:hover {
+  background: rgba(var(--accent-rgb), 0.18);
+  color: var(--accent);
+}
+
+.bps-link {
+  flex: none;
+  height: 28px;
+  margin: 0 -10px 0 auto;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.bps-link:hover {
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+/* The stage holds the page, the outgoing copy during a change, and the floating page pill */
+.bps-stage {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.bps-stage > .device-empty,
+.bps-stage > .error-display-compact {
+  margin: auto;
+  padding-bottom: calc(var(--pager-h) + var(--pager-bottom));
+}
+
+.bps__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--bps-cols), minmax(0, 1fr));
+  grid-template-rows: repeat(2, var(--bps-row-h));
+  align-content: start;
+  gap: var(--bps-gap);
+  padding: var(--bps-grid-top) var(--bps-gutter) 0;
+}
+
+.bps__grid--review {
+  grid-template-columns: repeat(var(--bps-review-cols), minmax(0, 1fr));
+  padding: 0 var(--bps-gutter) 0 0;
+}
+
+/* Sheet cards: the photo fills its well by its visible content, the tier pill sits beside the brand, never on it */
+.bps__grid .bps-card {
+  border-color: var(--border-light);
+  box-shadow: var(--card-shadow);
+}
+
+.bps__grid .bps-card:hover {
+  border-color: rgba(var(--accent-rgb), 0.45);
+}
+
+.bps__grid .bps-card.is-on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.bps__grid .bps-card.is-static:hover {
+  border-color: var(--border-light);
+}
+
+.bps__grid .bps-card__img,
+.bps-ledger__thumb {
+  padding: 0;
+}
+
+.bps__grid .bps-card__img {
+  height: var(--bps-well-h);
+}
+
+.bps__grid .bps-card__img > img,
+.bps-ledger__thumb > img,
+.bps-peek__img > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+}
+
+.bps__grid .bps-card__img > img[data-fit],
+.bps-ledger__thumb > img[data-fit],
+.bps-peek__img > img[data-fit] {
+  opacity: 1;
+}
+
+.bps__grid .bps-card__info {
+  gap: 3px;
+  padding: 0 14px;
+}
+
+.bps-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 18px;
+}
+
+.bps-card__top .bps-card__vendor {
+  flex: 1;
+  min-width: 0;
+}
+
+.bps-card__top .bp-tier {
+  position: static;
+  flex: none;
+  line-height: 12px;
+}
+
+.bps__grid .bps-card__name {
+  font-size: 14px;
+  line-height: 19px;
+}
+
+.bps-card__tick {
+  position: absolute;
+  z-index: 2;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--float-solid-bg);
+  box-shadow: inset 0 0 0 1.5px var(--border-color);
+  color: var(--text-on-accent);
+}
+
+.bps-card__tick::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+}
+
+.bps-card__tick svg {
+  position: relative;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+.bps-card:hover .bps-card__tick {
+  box-shadow: inset 0 0 0 1.5px rgba(var(--accent-rgb), 0.7);
+}
+
+.bps-card.is-on .bps-card__tick::before {
+  opacity: 1;
+  transform: none;
+}
+
+.bps-card.is-on .bps-card__tick svg {
+  opacity: 1;
+}
+
+.bps-card.is-static {
+  cursor: default;
+}
+
+.bps-card.is-leaving {
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity var(--pager-swap-out) var(--ease-standard), transform var(--pager-swap-out) var(--ease-standard);
+}
+
+.bps-card__remove {
+  position: absolute;
+  z-index: 4;
+  top: 9px;
+  right: 9px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--float-solid-bg);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+
+.bps-card__remove:hover {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.bps-card__remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Review: summary card beside the picked boards */
+.bps-review {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 208px minmax(0, 1fr);
+  gap: 20px;
+  min-height: 0;
+  padding: var(--bps-review-pad) 0 0 var(--bps-gutter);
+}
+
+.bps-sum {
+  display: flex;
+  flex-direction: column;
+  height: calc(var(--bps-row-h) * 2 + var(--bps-gap));
+  min-height: 0;
+  padding: 16px 10px 10px;
+  border-radius: var(--radius-2xl);
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+}
+
+.bps-sum__big {
+  padding: 0 8px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 44px;
+  letter-spacing: -1.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bps-sum__cap {
+  margin-top: 2px;
+  padding: 0 8px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.bps-sum__label {
+  flex: none;
+  margin: 10px 8px 4px;
+  padding-top: 10px;
+  box-shadow: inset 0 1px 0 var(--border-light);
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.bps-sum__label-count {
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.bps-sum__row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+
+.bps-sum__row:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.bps-sum__row.is-on {
+  background: rgba(var(--accent-rgb), 0.12);
+  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.4);
+  color: var(--text-primary);
+}
+
+.bps-sum__row .bp-tier {
+  position: static;
+}
+
+.bps-sum__row b {
+  flex: none;
+  margin-left: auto;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bps-sum__row.is-more {
+  color: var(--text-muted);
+}
+
+.bps-sum__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bps-sum__more {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--border-color);
+}
+
+/* Scrolls when the tiers leave it little room; the fade hints at rows below */
+.bps-sum__vendors {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.bps-sum__vendors::-webkit-scrollbar {
+  display: none;
+}
+
+.bps-sum__vendors::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  display: block;
+  height: 16px;
+  background: linear-gradient(to bottom, transparent, var(--bg-secondary));
+  pointer-events: none;
+}
+
+.bps-sum__foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+.bps-sum__action {
+  height: 30px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bps-sum__action:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.bps-sum__action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.bps-sum__action.is-accent {
+  color: var(--accent);
+}
+
+.bps-review__main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.bps-review__empty {
+  margin: auto;
+  padding-bottom: var(--space-4xl);
+}
+
+/* Footer ledger */
+.bps__foot {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  height: var(--bps-foot-h);
+  padding: 0 16px 0 var(--bps-gutter);
+  background: var(--bg-app);
+  box-shadow: inset 0 1px 0 var(--border-light);
+}
+
+.bps-ledger {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  margin-left: -6px;
+  padding: 6px 14px 6px 6px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.bps-ledger:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.bps-ledger:disabled {
+  cursor: default;
+}
+
+.bps-ledger:hover:not(:disabled) .bps-ledger__link {
+  color: var(--accent);
+}
+
+.bps-ledger__stack {
+  display: flex;
+  flex: none;
+}
+
+.bps-ledger__thumb,
+.bps-ledger__more {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 34px;
+  margin-left: -14px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: var(--bg-secondary);
+  box-shadow: 0 0 0 2.5px var(--bg-app);
+}
+
+.bps-ledger__thumb:first-child {
+  margin-left: 0;
+}
+
+.bps-ledger__more {
+  width: 38px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bps-ledger__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.bps-ledger__count {
+  font-size: 13.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bps-ledger__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+
+.bps-ledger__link.is-warn {
+  color: var(--color-warning-ink);
+}
+
+.bps__actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.bps__actions .pe-pill__btn {
+  height: 40px;
+  padding: 0 20px;
+  font-size: 13.5px;
+}
+
+.bps__actions .pe-pill__btn.is-primary {
+  min-width: 92px;
+}
+
+/* Undo after a removal, floating just above the page pill */
+.bps-undo {
+  position: absolute;
+  z-index: 40;
+  right: 0;
+  bottom: calc(var(--bps-foot-h) + var(--float-bottom) * 2 + var(--pager-h));
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  height: 40px;
+  margin: 0 auto;
+  padding: 0 6px 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  box-shadow: var(--float-shadow), inset 0 0 0 1px var(--border-light);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: bpsUndoIn var(--dur-base) var(--ease-out-expo) both;
+}
+
+@keyframes bpsUndoIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.bps-undo__icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent);
+}
+
+.bps-undo__btn {
+  height: 28px;
+  margin-left: 4px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.12);
+  color: var(--accent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bps-undo__btn:hover {
+  background: rgba(var(--accent-rgb), 0.2);
+}

@@ -273,7 +273,8 @@ export function HomePage({
       edlEntry={selectedBoard?.qdl?.edl_entry ?? null}
       summary={deviceSummary}
       boardImage={boardImage}
-      boardName={selectedBoard?.name ?? null}
+      boardSlug={selectedBoard && isDetectedBoard(selectedBoard) ? selectedBoard.slug : null}
+      boardName={selectedBoard && isDetectedBoard(selectedBoard) ? selectedBoard.name : null}
       selectedDevice={selectedDevice}
       onSelect={onSelectDevice}
       onConfirm={onConfirmDevice}

@@ -8,7 +8,7 @@ import { X, Settings, Terminal, HardDrive, FileCog, Sun, Info } from 'lucide-rea
 import type { LucideIcon } from 'lucide-react';
 import { AppearanceSection } from './AppearanceSection';
 import { PreferencesSection } from './PreferencesSection';
-import { AutoconfigSection } from './AutoconfigSection';
+import { ProfilesSection } from './ProfilesSection';
 import { StorageSection } from './StorageSection';
 import { DeveloperSection } from './DeveloperSection';
 import { AboutSection } from './AboutSection';
@@ -58,7 +58,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       case 'preferences':
         return <PreferencesSection />;
       case 'profiles':
-        return <AutoconfigSection />;
+        return <ProfilesSection registerLeaveGuard={() => {}} onEditorChange={() => {}} />;
       case 'storage':
         return <StorageSection />;
       case 'developer':

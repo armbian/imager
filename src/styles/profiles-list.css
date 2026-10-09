@@ -1,0 +1,454 @@
+/* First-boot profiles list: hero, a grid of large cards sized to the window, page pill pinned to the island */
+
+.profiles-hint {
+  margin: 0;
+  padding: 0 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.profiles-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.profiles-page > .settings-hero {
+  flex: none;
+}
+
+/* The page size follows this box (usePagedGrid): whole rows of cards that stretch within their range to fill it,
+   the last row running under the page pill pinned over the island edge */
+.profiles-list {
+  --grid-card-min: 140px;
+  --grid-card-max: 184px;
+  --profile-card-h: var(--grid-card-fill, var(--grid-card-min));
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--profile-col-min), 1fr));
+  grid-auto-rows: var(--profile-card-h);
+  align-content: start;
+  gap: 14px;
+  min-height: var(--profile-card-h);
+  /* Room for the card ring and hover lift */
+  margin: -4px;
+  padding: 4px;
+}
+
+/* Card */
+.profiles-page {
+  /* Mirrors UI.PROFILES.CARD_H, the shortest card */
+  --profile-card-h: 140px;
+}
+
+.profile-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--profile-card-h) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 24px;
+  height: var(--profile-card-h);
+  padding-right: 18px;
+  border-radius: var(--radius-2xl);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 1px var(--border-light), var(--card-shadow);
+  cursor: pointer;
+  transition: transform var(--dur-base) var(--ease-out-expo);
+}
+
+/* Accent ring that fades in on hover; the shadow itself never animates */
+.profile-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.4), var(--card-hover-shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+
+.profile-card:not(.is-skeleton):hover {
+  transform: translateY(-2px);
+}
+
+.profile-card:not(.is-skeleton):hover::before {
+  opacity: 1;
+}
+
+.profile-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.profile-card.is-wide .profile-card__body {
+  gap: 16px;
+}
+
+.profile-card__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-card__open {
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 22px;
+  letter-spacing: -0.01em;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.profile-card__open:focus-visible {
+  outline: none;
+}
+
+.profile-card__open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-2xl);
+  pointer-events: none;
+}
+
+.profile-card__open:focus-visible::after {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.profile-card__scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.profile-card__scope svg {
+  flex: none;
+}
+
+.profile-card__scope span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The four first-boot areas: two by two with the area as an icon chip, or four labelled columns on a wide card */
+.profile-card__spec {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+  margin: 0;
+}
+
+.profile-card__fact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.profile-card__fact dt {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-card__glyph {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+  color: var(--text-secondary);
+}
+
+.profile-card__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.profile-card__fact dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.profile-card__fact.is-plain dd {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.profile-card__fact.is-plain .profile-card__glyph {
+  color: var(--text-muted);
+}
+
+.profile-card__fact.is-off dd {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--border-color);
+}
+
+.profile-card.is-wide .profile-card__spec {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+}
+
+.profile-card.is-wide .profile-card__fact {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 0 16px;
+}
+
+.profile-card.is-wide .profile-card__fact:first-child {
+  padding-left: 0;
+}
+
+.profile-card.is-wide .profile-card__fact + .profile-card__fact {
+  box-shadow: inset 1px 0 0 var(--border-light);
+}
+
+.profile-card.is-wide .profile-card__fact dd {
+  max-width: 100%;
+}
+
+.profile-card.is-wide .profile-card__glyph {
+  width: auto;
+  height: auto;
+  background: none;
+  box-shadow: none;
+  color: var(--text-muted);
+}
+
+.profile-card.is-wide .profile-card__label {
+  position: static;
+  width: auto;
+  height: auto;
+  clip: auto;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 14px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.profile-card__chevron {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  transition: transform var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+
+.profile-card:hover .profile-card__chevron {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+
+/* Board tile: all-boards art, one photo, or a sideways carousel */
+.profile-tile {
+  /* Mirrors UI.PROFILES.CAROUSEL_SLIDE_MS */
+  --profile-slide-dur: 320ms;
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xl);
+  background: var(--hero-bg);
+  overflow: hidden;
+}
+
+.profile-card .profile-tile {
+  width: var(--profile-card-h);
+  height: var(--profile-card-h);
+  border-radius: var(--radius-2xl) 0 0 var(--radius-2xl);
+}
+
+/* Each photo is grown until its visible board, not its transparent canvas, spans TILE_FILL of the tile; until it is
+   measured it stays hidden, and one that cannot be measured falls back to a fixed oversize */
+.profile-tile__frame {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-tile__img {
+  flex: none;
+  width: 140%;
+  height: 140%;
+  object-fit: contain;
+  filter: var(--pf-board-shadow);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+.profile-tile__img.is-measured {
+  opacity: 1;
+}
+
+.profile-tile__img.is-fit {
+  width: 100%;
+  height: 100%;
+  transform: var(--tile-fit);
+}
+
+.profile-tile .board-image-fallback {
+  width: 64%;
+  height: 64%;
+  opacity: 1;
+}
+
+.profile-tile__all {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  filter: var(--pf-board-shadow);
+}
+
+.profile-tile--carousel {
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.profile-tile__viewport {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.profile-tile__track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  transition: transform var(--profile-slide-dur) ease-in-out;
+}
+
+.profile-tile__track.is-instant {
+  transition: none;
+}
+
+.profile-tile__slide {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Skeleton */
+.profile-card.is-skeleton .profile-tile {
+  background: var(--skeleton-base);
+}
+
+.profile-sk-name {
+  width: 40%;
+  height: 18px;
+  margin: 2px 0;
+  border-radius: var(--radius-md);
+}
+
+.profile-sk-scope {
+  width: 18%;
+  height: 12px;
+  margin: 2px 0;
+  border-radius: var(--radius-md);
+}
+
+.profile-sk-value {
+  width: 55%;
+  height: 12px;
+  border-radius: var(--radius-md);
+}
+
+/* Reduced motion: no lift, no chevron nudge, the carousel jumps */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion="false"]) .profile-card:hover,
+  :root:not([data-reduced-motion="false"]) .profile-card:hover .profile-card__chevron {
+    transform: none;
+  }
+
+  :root:not([data-reduced-motion="false"]) .profile-tile__track {
+    transition: none;
+  }
+}
+
+:root[data-reduced-motion="true"] .profile-card:hover,
+:root[data-reduced-motion="true"] .profile-card:hover .profile-card__chevron {
+  transform: none;
+}
+
+:root[data-reduced-motion="true"] .profile-tile__track {
+  transition: none;
+}
+
+.new-profile-chevron {
+  margin-right: -4px;
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+
+.new-profile-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.new-profile-menu__item {
+  min-height: 52px;
+}
+
+.new-profile-menu__text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.new-profile-menu__hint {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,331 @@
+/* Entrances drop off at data-settled so state changes use transitions; keyframes end at rest, so nothing jumps */
+
+.hero-art {
+  --hero-floor-h: 18px;
+  --hero-floor-lift: 10px;
+  --hero-rise-y: 8px;
+  --hero-state-fade: 0.35s;
+  --hero-knob-dur: 0.6s;
+  --hero-knob-ease: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --hero-arc-dur: 0.18s;
+  --hero-arc-step: 26ms;
+  --hero-arc-start: 98ms;
+  --hero-check-dur: 0.38s;
+  --hero-check-delay: 0.9s;
+  --hero-led-dur: 0.22s;
+  --hero-led-step: 150ms;
+  --hero-dot-start: 500ms;
+  --hero-arc-led-start: 150ms;
+  --hero-swing-dur: 0.9s;
+  --hero-plus-dur: 0.35s;
+  --hero-plus-delay: 0.6s;
+  --hero-idle-led: 2.4s;
+  --hero-idle-led-step: 220ms;
+  --hero-idle-wave: 2.8s;
+  --hero-idle-wave-step: 180ms;
+  --hero-idle-bob: 3.2s;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hero-art::before {
+  content: '';
+  position: absolute;
+  left: 12%;
+  width: 76%;
+  top: calc(100% - var(--hero-floor-lift));
+  height: var(--hero-floor-h);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--hero-floor), transparent);
+}
+
+.hero-art__stack {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-art__layer {
+  position: absolute;
+  display: block;
+  max-width: none;
+}
+
+/* Entrance: held on its first frame until the hero is in view */
+.hero-art[data-playing='false'],
+.hero-art[data-playing='false']::before,
+.hero-art[data-playing='false'] .hero-art__stack,
+.hero-art[data-playing='false'] .hero-art__layer {
+  animation-play-state: paused;
+}
+
+.hero-art:not([data-settled])::before {
+  animation: hero-fade-in var(--dur-slower) var(--ease-out-expo) 0.1s both;
+}
+
+/* General: the theme drives the knob, the grey track and the dimmed sun */
+.hero-art--general [data-layer='track'],
+.hero-art--general [data-layer='disc'] {
+  opacity: 0;
+  transition: opacity var(--hero-state-fade) var(--ease-standard);
+}
+
+.hero-art--general [data-layer='knob'] {
+  transition: transform var(--hero-knob-dur) var(--hero-knob-ease);
+}
+
+.hero-art--general[data-theme='dark'] [data-layer='track'],
+.hero-art--general[data-theme='dark'] [data-layer='disc'] {
+  opacity: 1;
+}
+
+/* (-110, -20) source px along the track axis, in percent of the cropped knob */
+.hero-art--general[data-theme='dark'] [data-layer='knob'] {
+  transform: translate(-79.7101%, -14.9254%);
+}
+
+.hero-art--general:not([data-settled]) .hero-art__stack {
+  animation: hero-rise var(--dur-slower) var(--ease-out-expo) 0.1s both;
+}
+
+/* Writing: the arc fills clockwise in 24 slices, then the check pops; verify off greys the shield */
+.hero-art--writing [data-layer='check'] {
+  transform-origin: 48.529% 51.667%;
+  transition:
+    opacity var(--dur-medium) var(--ease-standard),
+    transform var(--hero-check-dur) var(--ease-spring);
+}
+
+.hero-art--writing [data-layer='grey'] {
+  opacity: 0;
+  transition: opacity var(--dur-medium) var(--ease-standard);
+}
+
+.hero-art--writing[data-verify='off'] [data-layer='check'] {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+.hero-art--writing[data-verify='off'] [data-layer='grey'] {
+  opacity: 1;
+}
+
+.hero-art--writing:not([data-settled]) [data-layer^='arc'] {
+  animation: hero-fade-in var(--hero-arc-dur) linear both;
+  animation-delay: calc(var(--hero-arc-start) + var(--i) * var(--hero-arc-step));
+}
+
+.hero-art--writing:not([data-settled]):not([data-verify='off']) [data-layer='check'] {
+  animation: hero-pop-in var(--hero-check-dur) var(--ease-spring) var(--hero-check-delay) both;
+}
+
+/* Downloads: the arrow drops in, the drawer LEDs light top to bottom; offline greys the arrow */
+.hero-art--downloads [data-layer^='dot'] {
+  opacity: 0;
+}
+
+.hero-art--downloads [data-layer='grey'] {
+  opacity: 0;
+  transition: opacity var(--dur-medium) var(--ease-standard);
+}
+
+.hero-art--downloads[data-offline='true'] [data-layer='grey'] {
+  opacity: 1;
+}
+
+.hero-art--downloads:not([data-settled]) [data-layer='arrow'] {
+  animation: hero-drop-arrow var(--dur-slower) var(--ease-out-expo) 0.1s both;
+}
+
+.hero-art--downloads:not([data-settled]) [data-layer='grey'] {
+  animation: hero-drop-grey var(--dur-slower) var(--ease-out-expo) 0.1s both;
+}
+
+.hero-art--downloads:not([data-settled]) [data-layer^='dot'] {
+  animation: hero-light-up var(--dur-base) var(--ease-out-expo) both;
+  animation-delay: calc(var(--hero-dot-start) + var(--i) * var(--hero-led-step));
+}
+
+/* Profiles: the Wi-Fi arcs light up from the dot outwards */
+.hero-art--profiles [data-layer^='arc'] {
+  opacity: 0;
+}
+
+.hero-art--profiles:not([data-settled]) [data-layer^='arc'] {
+  animation: hero-light-up var(--hero-led-dur) var(--ease-out-expo) both;
+  animation-delay: calc(var(--hero-arc-led-start) + var(--i) * var(--hero-led-step));
+}
+
+/* Idle loops once the entrance has settled: the drawer LEDs blink in turn, the arrow drifts, the Wi-Fi arcs sweep
+   outwards. Off overlays only change opacity, so the lit art underneath stays untouched. */
+.hero-art--downloads[data-settled] [data-layer^='dot'] {
+  animation: hero-idle-led var(--hero-idle-led) var(--ease-standard) infinite;
+  animation-delay: calc(var(--i) * var(--hero-idle-led-step));
+}
+
+.hero-art--downloads[data-settled] :is([data-layer='arrow'], [data-layer='grey']) {
+  animation: hero-idle-bob var(--hero-idle-bob) var(--ease-standard) infinite;
+}
+
+.hero-art--profiles[data-settled] [data-layer^='arc'] {
+  animation: hero-idle-wave var(--hero-idle-wave) var(--ease-standard) infinite;
+  animation-delay: calc(var(--i) * var(--hero-idle-wave-step));
+}
+
+/* Profiles empty: the badge swings from its clip, then the plus pops */
+.hero-art--profilesEmpty .hero-art__stack {
+  transform-origin: 47.3077% 1.9531%;
+}
+
+.hero-art--profilesEmpty [data-layer='plus'] {
+  transform-origin: 50.495% 50.459%;
+}
+
+.hero-art--profilesEmpty:not([data-settled]) .hero-art__stack {
+  animation: hero-swing var(--hero-swing-dur) var(--ease-standard) both;
+}
+
+.hero-art--profilesEmpty:not([data-settled]) [data-layer='plus'] {
+  animation: hero-pop-in var(--hero-plus-dur) var(--ease-spring) var(--hero-plus-delay) both;
+}
+
+@keyframes hero-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--hero-rise-y));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The "off" overlays fade out, so the LED underneath lights up */
+@keyframes hero-light-up {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Translate percentages are 6% and 0.4% of the full source canvas, rescaled to each cropped layer */
+@keyframes hero-drop-arrow {
+  from {
+    opacity: 0;
+    transform: translateY(-21.558%);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(1.437%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-drop-grey {
+  from {
+    transform: translateY(-21.865%);
+  }
+  80% {
+    transform: translateY(1.458%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes hero-swing {
+  0% {
+    transform: rotate(7deg);
+  }
+  30% {
+    transform: rotate(-4deg);
+  }
+  55% {
+    transform: rotate(2deg);
+  }
+  78% {
+    transform: rotate(-1deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes hero-idle-led {
+  0%,
+  30%,
+  100% {
+    opacity: 0;
+  }
+  42% {
+    opacity: 0.85;
+  }
+  54% {
+    opacity: 0;
+  }
+}
+
+/* A few px of the arrow layer (about 2.5% of its height): enough to read as motion, never a bounce */
+@keyframes hero-idle-bob {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translateY(2.5%);
+  }
+}
+
+/* Starts lit, where the entrance leaves it: the arcs dim from the dot outwards, then light up again in the same order */
+@keyframes hero-idle-wave {
+  0%,
+  46%,
+  100% {
+    opacity: 0;
+  }
+  62%,
+  76% {
+    opacity: 0.9;
+  }
+}
+
+/* Reduced motion shows the resting frame at once: base.css shortens durations but keeps delays */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion='false']) .hero-art::before,
+  :root:not([data-reduced-motion='false']) .hero-art__stack,
+  :root:not([data-reduced-motion='false']) .hero-art__layer {
+    animation: none !important;
+  }
+}
+
+:root[data-reduced-motion='true'] .hero-art::before,
+:root[data-reduced-motion='true'] .hero-art__stack,
+:root[data-reduced-motion='true'] .hero-art__layer {
+  animation: none !important;
+}

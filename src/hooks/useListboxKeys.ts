@@ -11,8 +11,13 @@ interface ListboxKeys {
   onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
 }
 
-export function useListboxKeys(count: number, onPick: (index: number) => void, onClose: () => void): ListboxKeys {
-  const [rawActive, setActive] = useState(0);
+export function useListboxKeys(
+  count: number,
+  onPick: (index: number) => void,
+  onClose: () => void,
+  initial = 0
+): ListboxKeys {
+  const [rawActive, setActive] = useState(initial);
   const active = count === 0 ? -1 : Math.min(Math.max(rawActive, 0), count - 1);
 
   function onKeyDown(event: KeyboardEvent<HTMLElement>) {
