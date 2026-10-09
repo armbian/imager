@@ -7,6 +7,7 @@
   /* Armbian Brand */
   --armbian-orange: #f26522;
   --armbian-red: #cc3333;
+  --macos-titlebar-h: 52px;
 
   /* Light Theme */
   --bg-app: #f8f9fa;
@@ -59,6 +60,7 @@
   --color-warning-text: #92400e;
   /* Amber text that keeps contrast on neutral surfaces (the plain amber fails on white) */
   --color-warning-ink: #b45309;
+  --color-success-ink: #059669;
 
   /* RGB channels for alpha compositing */
   --accent-rgb: 242, 101, 34;
@@ -111,17 +113,108 @@
   --header-step-bg: #e0e3e6;
   --header-step-color: #666666;
 
-  /* Profile wizard and profile menu */
-  --pf-overlay-bg: rgba(240, 240, 244, 0.45);
+  /* Profile menu and wizard */
   --pf-card-shadow: 0 40px 90px -30px rgba(15, 23, 42, 0.35);
   --pf-pop-shadow: 0 28px 60px -24px rgba(15, 23, 42, 0.28);
   --pf-seg-shadow: 0 1px 3px rgba(15, 23, 42, 0.14);
   --pf-board-shadow: drop-shadow(0 14px 20px rgba(15, 23, 42, 0.25));
+  /* Action pill over content: nearly the card surface, so photos behind do not show through */
+  --float-solid-bg: rgba(255, 255, 255, 0.94);
+
+  /* Settings page (theme-agnostic sizes) */
+  --header-control-h: 48px;
+  --radius-island: 22px;
+  /* Floating capsules over content: the page pill and the editor action pill */
+  --float-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.28), 0 2px 6px -2px rgba(0, 0, 0, 0.12);
+  --float-bottom: 16px;
+  /* The page pill has its own offset, apart from the editor action bar */
+  --pager-bottom: 4px;
+  /* Height of the page pill (.mfr-pager): 28px pages, 4px padding, 1px border */
+  --pager-h: 38px;
+  /* Home selection cards: resting heights (mirrored by UI.GRID.CARD_ROW), the fixed info area under the media
+     band, and the range usePagedGrid stretches them in so whole rows fill the grid */
+  --mfr-card-h: 206px;
+  --mfr-info-h: 82px;
+  --board-card-h: 250px;
+  --board-info-h: 92px;
+  --home-card-min: 185px;
+  --home-card-max: 300px;
+  /* The API board photos carry wide transparent margins; this trims them inside the photo box */
+  --board-photo-zoom: 130%;
+  --mfr-logo-max-h: 140px;
+  --mfr-initials: 76px;
+  /* Quick in and out swaps shared by the editor's floating controls */
+  --pager-swap: 120ms;
+  --pager-swap-out: 100ms;
+  /* Compact page pill: hover margin, the wait before it folds back, the stretch open and closed on one curve, the page
+     and count fades with their stagger, how far hidden pages gather toward the disc and how small, and the clip
+     bleed around each half of its lift */
+  --pager-hit: 8px;
+  --pager-collapse-delay: 250ms;
+  --pager-open: 300ms;
+  --pager-close: 220ms;
+  --ease-pager: cubic-bezier(0.32, 0.72, 0, 1);
+  --pager-fade: 150ms;
+  --pager-fade-out: 70ms;
+  --pager-stagger: 18ms;
+  --pager-label-delay: 40ms;
+  --pager-gather: 0.35;
+  --pager-peek-scale: 0.6;
+  --pager-bleed: 24px;
+  /* Page change (components/shared/PageSwap.tsx): the old page drifts out against the travel, the new one slides in
+     column by column from the leading edge; a filter change only fades */
+  --page-swap-dur: 380ms;
+  --page-swap-gap: 24px;
+  --page-swap-out-opacity: 0.4;
+  --page-swap-clip: 12px;
+  --page-swap-fade: 140ms;
+  --ease-page: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Choose boards brand menu: opens from its trigger, folds away quicker (UI.BOARD_SHEET.MENU_CLOSE_MS) */
+  --brand-menu-open: 140ms;
+  /* Board art drifting over its floor shadow in the boards empty panel */
+  --boards-float-dur: 4.8s;
+  --brand-menu-close: 100ms;
+  --brand-peek-step: 25ms;
+  /* Editor action bar: slides up when the profile turns dirty, down once clean (UI.ACTION_BAR.OUT_MS) */
+  --action-bar-in: 200ms;
+  --action-bar-out: 160ms;
+  /* Page transition timings: twins of UI.SETTINGS_PAGE in src/config/constants.ts */
+  --settings-exit: 200ms;
+  --settings-enter-delay: 200ms;
+  --settings-enter: 390ms;
+  --settings-header-out: 140ms;
+  --settings-header-in: 260ms;
+  --settings-ring-delay: 200ms;
+  --settings-ease-accel: cubic-bezier(0.4, 0, 1, 1);
+  --settings-ease-decel: cubic-bezier(0, 0, 0.2, 1);
+  --settings-ease-emph: cubic-bezier(0.2, 0, 0, 1);
+  /* Settings sections stop widening here and centre in the island, like a system settings pane */
+  --settings-content-max: 960px;
+
+  /* Settings page: hero cards, danger zone, attention dots, cache meter */
+  --hero-bg: #f3eee8;
+  --hero-line: rgba(120, 90, 60, 0.12);
+  --hero-floor: rgba(60, 40, 20, 0.22);
+  --danger-row-bg: rgba(var(--color-error-rgb), 0.05);
+  --danger-row-line: rgba(var(--color-error-rgb), 0.45);
+  --danger-ink: var(--color-error-dark);
+  --attention: var(--color-warning);
+  --cache-seg-assets: #8c8c8c;
+  /* Vendor logos are drawn for white; dark mode dims the plate a touch so it does not glare */
+  --logo-plate: #ffffff;
+  --logo-plate-ring: inset 0 0 0 1px var(--border-light);
+  --logo-plate-ink: #1b1b1c;
+  --logo-plate-ink-ring: none;
+  --logo-plate-initials: rgba(0, 0, 0, 0.25);
+  --menu-row-active: #f0f2f4;
+  --match-bg: rgba(var(--accent-rgb), 0.16);
 }
 
 /* Dark Theme */
 .theme-dark {
+  --text-on-accent: #ffffff;
   --color-warning-ink: #fbbf24;
+  --color-success-ink: #10b981;
   --bg-app: #1a1a1a;
   --bg-secondary: #252525;
   --bg-card: #2a2a2a;
@@ -166,17 +259,35 @@
   --header-step-bg: rgba(255, 255, 255, 0.1);
   --header-step-color: #888888;
 
-  --pf-overlay-bg: rgba(8, 8, 10, 0.42);
   --pf-card-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7);
   --pf-pop-shadow: 0 28px 60px -24px rgba(0, 0, 0, 0.55);
   --pf-seg-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   --pf-board-shadow: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.35));
+  --float-solid-bg: rgba(42, 42, 42, 0.94);
+
+  --hero-bg: #2a2623;
+  --hero-line: rgba(255, 255, 255, 0.07);
+  --hero-floor: rgba(0, 0, 0, 0.55);
+  --danger-row-bg: rgba(var(--color-error-rgb), 0.05);
+  --danger-row-line: rgba(var(--color-error-rgb), 0.45);
+  --danger-ink: var(--color-error);
+  --attention: var(--color-warning);
+  --cache-seg-assets: #8c8c8c;
+  --logo-plate: #ececed;
+  --logo-plate-ring: none;
+  --logo-plate-ink: #141415;
+  --logo-plate-ink-ring: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --logo-plate-initials: rgba(0, 0, 0, 0.25);
+  --menu-row-active: rgba(255, 255, 255, 0.065);
+  --match-bg: rgba(var(--accent-rgb), 0.24);
 }
 
 /* Auto Theme - System Preference */
 @media (prefers-color-scheme: dark) {
   :root:not(.theme-light):not(.theme-dark) {
+    --text-on-accent: #ffffff;
     --color-warning-ink: #fbbf24;
+    --color-success-ink: #10b981;
     --bg-app: #1a1a1a;
     --bg-secondary: #252525;
     --bg-card: #2a2a2a;
@@ -218,10 +329,26 @@
     --header-steps-border: rgba(255, 255, 255, 0.1);
     --header-step-bg: rgba(255, 255, 255, 0.1);
     --header-step-color: #888888;
-    --pf-overlay-bg: rgba(8, 8, 10, 0.42);
     --pf-card-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7);
     --pf-pop-shadow: 0 28px 60px -24px rgba(0, 0, 0, 0.55);
     --pf-seg-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     --pf-board-shadow: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.35));
+    --float-solid-bg: rgba(42, 42, 42, 0.94);
+
+    --hero-bg: #2a2623;
+    --hero-line: rgba(255, 255, 255, 0.07);
+    --hero-floor: rgba(0, 0, 0, 0.55);
+    --danger-row-bg: rgba(var(--color-error-rgb), 0.05);
+    --danger-row-line: rgba(var(--color-error-rgb), 0.45);
+    --danger-ink: var(--color-error);
+    --attention: var(--color-warning);
+    --cache-seg-assets: #8c8c8c;
+    --logo-plate: #ececed;
+    --logo-plate-ring: none;
+    --logo-plate-ink: #141415;
+    --logo-plate-ink-ring: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --logo-plate-initials: rgba(0, 0, 0, 0.25);
+    --menu-row-active: rgba(255, 255, 255, 0.065);
+    --match-bg: rgba(var(--accent-rgb), 0.24);
   }
 }

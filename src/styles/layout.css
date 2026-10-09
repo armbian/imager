@@ -955,7 +955,10 @@
   left: 18px;
 }
 
+/* usePagedGrid reads the card range and writes --grid-card-fill, the height that makes whole rows fill the grid */
 .mfr-grid {
+  --grid-card-min: var(--home-card-min);
+  --grid-card-max: var(--home-card-max);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -967,42 +970,56 @@
   align-content: start;
 }
 
-/* Board grid with floating pager: clear the pill and soft-fade the bottom edge so rows dissolve under it; fades sit inside the padding so first/last rows stay crisp. */
+/* Rows run under the floating page pill; the fades sit inside the padding, so whole rows stay crisp */
 .mfr-grid--paged {
-  padding-bottom: 96px;
-  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 48px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 48px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
 }
 
-/* Board pager: floating rounded capsule of numbered pills, self-centered (doesn't stretch) and lifted off the surface so the transition from the grid reads as intentional. */
+/* Page pill: a floating frosted capsule of numbered pages, centred over the bottom of its container.
+   Centred without a transform and without its own z-index: a stacking context on the shell would become
+   the capsule's backdrop root in WebKit and leave its blur with nothing to sample. */
 .mfr-pager {
   position: absolute;
-  left: 50%;
-  bottom: 16px;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  bottom: var(--pager-bottom);
+  display: grid;
+  place-items: center;
+  width: max-content;
+  margin: 0 auto;
+  white-space: nowrap;
+}
+
+.mfr-pager__row,
+.mfr-pager__mini {
+  position: relative;
   z-index: 5;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 5px;
+  grid-area: 1 / 1;
+}
+
+.mfr-pager__row,
+.mfr-pager__glass {
   border-radius: var(--radius-pill);
   background: var(--island-bg);
   /* Real hairline + lift so the capsule reads as a distinct pill even in light mode, where a white-on-white island border would vanish. */
   border: 1px solid var(--border-color);
-  box-shadow:
-    0 10px 28px -10px rgba(0, 0, 0, 0.28),
-    0 2px 6px -2px rgba(0, 0, 0, 0.12),
-    var(--island-highlight);
+  box-shadow: var(--float-shadow), var(--island-highlight);
   backdrop-filter: blur(var(--blur-lg)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(1.4);
 }
 
+.mfr-pager__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+}
+
 .mfr-pager__page {
-  min-width: 34px;
-  height: 34px;
-  padding: 0 10px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1010,7 +1027,7 @@
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -1029,12 +1046,197 @@
   cursor: default;
 }
 
+/* An inset ring, so it never reaches the neighbouring disc; on the orange disc it is white */
+.mfr-pager__page:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.mfr-pager__page.is-active:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px var(--text-on-accent);
+}
+
 .mfr-pager__gap {
-  min-width: 20px;
+  min-width: 16px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 12px;
   user-select: none;
+}
+
+/* Compact pill, for one that floats over content: at rest only the active page disc and the count, opening into
+   the full row on hover or keyboard focus as one capsule that stretches with round ends at every frame. Its lift
+   is the full capsule twice, each half clipped at the centre line, slid in and scaled, so it stays on transforms;
+   the glass is a single layer resized by its insets, since blur split in pieces or clipped by clip-path shows seams.
+   The real active page travels between its slot and the row (offsets measured by GridPager) and the other pages
+   grow out of it. Folding back waits a moment so a passing pointer does not make it flicker. */
+.mfr-pager--compact::before {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  inset: calc(var(--pager-hit) * -1);
+}
+
+.mfr-pager--compact .mfr-pager__row {
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.mfr-pager__glass {
+  position: absolute;
+  z-index: 5;
+  inset: var(--pager-inset-y, 0px) var(--pager-inset-x, 0px);
+  box-shadow: var(--island-highlight);
+  pointer-events: none;
+  transition-property: top, right, bottom, left;
+  transition-duration: var(--pager-close);
+  transition-timing-function: var(--ease-pager);
+  transition-delay: var(--pager-collapse-delay);
+}
+
+/* Clipped on x only so the shadow still spills above and below; engines without overflow: clip get a taller box */
+.mfr-pager__door {
+  --door-y: var(--pager-bleed);
+  position: absolute;
+  top: calc(var(--door-y) * -1);
+  bottom: calc(var(--door-y) * -1);
+  left: calc(var(--pager-bleed) * -1);
+  right: 50%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mfr-pager__door + .mfr-pager__door {
+  left: 50%;
+  right: calc(var(--pager-bleed) * -1);
+}
+
+@supports (overflow: clip) {
+  .mfr-pager__door {
+    --door-y: 0px;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+}
+
+.mfr-pager__cap {
+  position: absolute;
+  z-index: 5;
+  top: var(--door-y);
+  bottom: var(--door-y);
+  left: var(--pager-bleed);
+  width: calc(200% - var(--pager-bleed) * 2);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--float-shadow);
+  transform: translateX(var(--pager-fold, 0px)) scale(var(--pager-shrink, 1));
+  transition: transform var(--pager-close) var(--ease-pager) var(--pager-collapse-delay);
+}
+
+.mfr-pager__door + .mfr-pager__door .mfr-pager__cap {
+  left: auto;
+  right: var(--pager-bleed);
+  transform: translateX(calc(var(--pager-fold, 0px) * -1)) scale(var(--pager-shrink, 1));
+}
+
+/* Holds the compact layout: its disc is only a slot the real active page lands in */
+.mfr-pager__mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 3px;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  transition: opacity var(--pager-fade) var(--ease-standard) calc(var(--pager-collapse-delay) + var(--pager-label-delay));
+}
+
+.mfr-pager__mini b {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  font-weight: 600;
+  visibility: hidden;
+}
+
+.mfr-pager--compact :is(.mfr-pager__page, .mfr-pager__gap) {
+  opacity: 0;
+  transform: translateX(calc(var(--pager-lead, 0px) + var(--pager-off, 0px) * (var(--pager-gather) - 1)))
+    scale(var(--pager-peek-scale));
+  transition:
+    transform var(--pager-close) var(--ease-pager) var(--pager-collapse-delay),
+    opacity var(--pager-fade-out) var(--ease-standard) var(--pager-collapse-delay),
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.mfr-pager--compact .mfr-pager__page.is-active {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  transform: translateX(var(--pager-lead, 0px)) scale(var(--pager-disc, 1));
+}
+
+/* Keeps the number at full size on the scaled-down disc */
+.mfr-pager--compact .mfr-pager__num {
+  transition: transform var(--pager-close) var(--ease-pager) var(--pager-collapse-delay);
+}
+
+.mfr-pager--compact .is-active .mfr-pager__num {
+  transform: scale(calc(1 / var(--pager-disc, 1)));
+}
+
+.mfr-pager--compact:is(:hover, :focus-within) .mfr-pager__glass {
+  inset: 0;
+  transition-duration: var(--pager-open);
+  transition-delay: 0s;
+}
+
+.mfr-pager--compact:is(:hover, :focus-within) .mfr-pager__cap {
+  transform: translateX(0) scale(1);
+  transition: transform var(--pager-open) var(--ease-pager);
+}
+
+.mfr-pager--compact:is(:hover, :focus-within) :is(.mfr-pager__page, .mfr-pager__gap) {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  transition:
+    transform var(--pager-open) var(--ease-pager),
+    opacity var(--pager-fade) var(--ease-standard) calc(var(--pager-rank, 0) * var(--pager-stagger)),
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.mfr-pager--compact:is(:hover, :focus-within) .mfr-pager__num {
+  transform: scale(1);
+  transition: transform var(--pager-open) var(--ease-pager);
+}
+
+.mfr-pager--compact:is(:hover, :focus-within) .mfr-pager__mini {
+  opacity: 0;
+  transition: opacity var(--pager-fade-out) var(--ease-standard);
+}
+
+/* GridPager rewrites the offsets without animating them */
+.mfr-pager[data-measuring],
+.mfr-pager[data-measuring] * {
+  transition: none !important;
+}
+
+/* Reduced motion: durations are already zeroed in base.css; the delay goes too, so the swap is instant */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion='false']) .mfr-pager * {
+    transition-delay: 0s !important;
+  }
+}
+
+:root[data-reduced-motion='true'] .mfr-pager * {
+  transition-delay: 0s !important;
 }
 
 .mfr-card {
@@ -1042,7 +1244,8 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  min-height: 206px;
+  --mfr-head: calc(var(--grid-card-fill, var(--mfr-card-h)) - var(--mfr-info-h));
+  min-height: var(--grid-card-fill, var(--mfr-card-h));
   width: 100%;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -1105,7 +1308,7 @@
 .mfr-card.is-skeleton {
   cursor: default;
   border-color: var(--border-light);
-  min-height: 206px;
+  min-height: var(--grid-card-fill, var(--mfr-card-h));
 }
 
 .mfr-card.is-skeleton:hover {
@@ -1121,7 +1324,7 @@
 .mfr-card__head {
   position: relative;
   flex-shrink: 0;
-  height: 124px;
+  height: var(--mfr-head);
   display: grid;
   place-items: center;
   padding: 16px;
@@ -1131,7 +1334,8 @@
 
 .mfr-card__logo {
   max-width: 200px;
-  max-height: 92px;
+  /* Grows with the band: 92px at the resting 124px band, capped for very tall ones */
+  max-height: min(var(--mfr-logo-max-h), calc(var(--mfr-head) * 0.74));
   object-fit: contain;
   transition: transform 0.6s var(--ease-out-expo), filter 0.6s var(--ease-out-expo);
 }
@@ -1146,8 +1350,8 @@
 }
 
 .mfr-card__initials {
-  width: 76px;
-  height: 76px;
+  width: min(var(--mfr-initials), calc(var(--mfr-head) - 32px));
+  height: min(var(--mfr-initials), calc(var(--mfr-head) - 32px));
   border-radius: var(--radius-2xl);
   display: grid;
   place-items: center;
@@ -1917,7 +2121,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  min-height: 250px;
+  min-height: var(--grid-card-fill, var(--board-card-h));
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-2xl);
@@ -1967,7 +2171,7 @@
 .board-card.is-skeleton {
   cursor: default;
   border-color: var(--border-light);
-  min-height: 232px;
+  min-height: var(--grid-card-fill, var(--board-card-h));
 }
 
 .board-card.is-skeleton:hover {
@@ -1978,19 +2182,31 @@
 .board-card__img {
   position: relative;
   flex-shrink: 0;
-  height: 158px;
+  height: calc(var(--grid-card-fill, var(--board-card-h)) - var(--board-info-h));
   background: var(--bg-secondary);
   /* Flex centering keeps the photo centered at any card width (grid place-items drifted vertically on very wide cards). */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  /* The top band clears the tier badge (10px offset + 18px pill) with a gap, so a photo never meets it */
+  padding: 34px 8px 4px;
   overflow: hidden;
 }
 
-.board-card__img img {
-  max-width: 100%;
-  max-height: 100%;
+/* The photo's own clipped box, below the badge band: the oversized image only loses its transparent margins */
+.board-card__photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.board-card__photo > img {
+  flex: none;
+  width: var(--board-photo-zoom);
+  height: var(--board-photo-zoom);
   object-fit: contain;
   transition: transform 0.6s var(--ease-out-expo), filter 0.6s var(--ease-out-expo);
 }

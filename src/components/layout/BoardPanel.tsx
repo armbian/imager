@@ -137,7 +137,9 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
                     {img === undefined ? (
                       <div className="skeleton board-card__imgskeleton" />
                     ) : (
-                      <BoardImage src={img} alt={board.name} />
+                      <span className="board-card__photo">
+                        <BoardImage src={img} alt={board.name} />
+                      </span>
                     )}
                     {tierLabel && !needsUpdate && (
                       <span className={`bp-tier is-${tier}`}>{tierLabel}</span>
@@ -156,7 +158,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
             })}
           </div>
 
-          <GridPager pageCount={pageCount} page={safePage} onChange={setPage} />
+          <GridPager compact pageCount={pageCount} page={safePage} onChange={setPage} />
         </>
       )}
     </div>

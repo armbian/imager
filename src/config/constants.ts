@@ -208,19 +208,17 @@ export const UI = {
     SUMMARY_VALUE_WIDTH: 340,
     SUMMARY_TARGET_WIDTH: 300,
   },
-  /** Paged card grid fit; COL_MIN, GAP and PAD mirror .mfr-grid in styles/layout.css */
+  /** Paged card grid fit; COL_MIN and GAP mirror .mfr-grid in styles/layout.css */
   GRID: {
     COL_MIN: 220,
     GAP: 18,
-    PAD: 24,
-    /** Always show at least this many full rows so a short window isn't left with a lonely row */
-    MIN_ROWS: 2,
+    MIN_ROWS: 1,
     /** Default page cap, sized to avoid loading too many heavy cards (board photos) at once */
     MAX_PER_PAGE: 40,
     INITIAL_PAGE_SIZE: 15,
     /** Logos are light and preloaded, so a high cap fills large monitors without splitting a screenful */
     MANUFACTURER_MAX_PER_PAGE: 120,
-    /** Card min-height plus row gap: .mfr-card 206 + 18, .board-card 250 + 18 */
+    /** Card row (resting height plus gap) for a grid without --grid-card-min/max; mirrors theme.css */
     CARD_ROW: {
       MANUFACTURER: 224,
       BOARD: 268,
@@ -249,6 +247,81 @@ export const UI = {
   },
   PICKER: {
     GAP: 6,
+  },
+  /** Depth zoom-through page transition; twins of the --settings-* custom properties in settings-page.css */
+  SETTINGS_PAGE: {
+    EXIT_MS: 200,
+    ENTER_DELAY_MS: 200,
+    ENTER_MS: 390,
+    HEADER_OUT_MS: 140,
+    HEADER_IN_MS: 260,
+    RING_DELAY_MS: 200,
+  },
+  /** Share of the hero that must be visible before its entrance plays */
+  SETTINGS_HERO: {
+    PLAY_THRESHOLD: 0.4,
+  },
+  /** Profile list grid; CARD_H and GAP mirror .profile-card and .profiles-list in styles/profiles-list.css */
+  PROFILES: {
+    /** Narrowest card that keeps the square tile and two readable fact columns; two columns from twice this */
+    MIN_CARD_WIDTH: 520,
+    /** From this card width the four areas sit in labelled columns, wide enough for a fixed address */
+    WIDE_CARD_MIN: 900,
+    /** Two rows fit under the hero on a 700px window */
+    CARD_H: 140,
+    GAP: 14,
+    MIN_ROWS: 1,
+    MAX_PER_PAGE: 24,
+    /** Network, user, language and time, access: the facts a card's spec strip lists */
+    SPEC_AREAS: 4,
+    CAROUSEL_INTERVAL_MS: 2400,
+    CAROUSEL_SLIDE_MS: 320,
+    /** Share of the square tile a board photo's visible content spans */
+    TILE_FILL: 0.84,
+  },
+  /** Fitting a photo by its opaque pixels (utils/imageFit.ts) */
+  IMAGE_FIT: {
+    /** Alpha above which a pixel counts as content; drop shadows fade below it */
+    ALPHA_MIN: 16,
+    /** Upscale cap, so a tiny or nearly empty photo does not blow up */
+    MAX_SCALE: 2.4,
+    /** Longest side the pixels are sampled at; plenty for a bounding box and cheap for a menu of logos */
+    SAMPLE_MAX: 160,
+    /** Mean luminance above which a logo's ink counts as light and is darkened for the light plate */
+    LIGHT_INK: 0.8,
+    /** Ink covering more of its own box than this is an opaque plate, not light lettering */
+    PLATE_COVERAGE: 0.9,
+  },
+  /** Editor action bar slide-down; mirrors --action-bar-out in styles/theme.css */
+  ACTION_BAR: {
+    OUT_MS: 160,
+  },
+  /** Marks focus moved by code after a mouse action, so base.css hides the keyboard ring there */
+  POINTER_FOCUS_ATTR: 'data-pointer-focus',
+  /** Choose boards sheet: page sizes, list caps, and timings twinned with styles/theme.css */
+  BOARD_SHEET: {
+    PER_PAGE: 8,
+    REVIEW_PER_PAGE: 6,
+    RECENT_BRANDS: 4,
+    /** Photos in the footer stack, the last one turning into "+N" when more are picked */
+    LEDGER_THUMBS: 4,
+    REVIEW_VENDORS: 4,
+    PEEK_PHOTOS: 3,
+    BRAND_HITS: 5,
+    UNDO_MS: 4200,
+    /** Share of the photo well a board's visible content spans */
+    PHOTO_FILL: 0.72,
+    /** Share of a logo tile's inner area a vendor mark covers, so wordmarks and square marks weigh alike */
+    LOGO_AREA: 0.5,
+    /** Mirrors --brand-menu-close in styles/theme.css */
+    MENU_CLOSE_MS: 100,
+    SEARCH_KEY: '/',
+  },
+  /** Soft tag fill and ring alphas on a cached image's colour chip (CacheManagerModal) */
+  TAG_ALPHA: { SOFT: 0.14, RING: 0.36 },
+  /** Page change animation (components/shared/PageSwap.tsx); outlasts --page-swap-dur in case animationend never fires */
+  PAGE_SWAP: {
+    OUT_FALLBACK_MS: 400,
   },
 } as const;
 
