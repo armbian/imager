@@ -279,7 +279,9 @@ export function staticIpErrors(ip?: string, mask?: string, gateway?: string, dns
 /** Strip a leading vendor name from a board name so a vendor kicker and the name don't repeat it. */
 export function stripVendorPrefix(name: string, vendorName: string): string {
   if (!vendorName || !name.toLowerCase().startsWith(vendorName.toLowerCase())) return name;
-  return name.slice(vendorName.length).trim() || name;
+  const rest = name.slice(vendorName.length).trim();
+  // "Orange Pi 5" would shrink to a bare "5", so a model that starts with a digit keeps the full name
+  return /^\p{L}/u.test(rest) ? rest : name;
 }
 
 /** How well `text` matches a lowercase needle: 0 at the start, 1 at a word start, 2 inside, -1 no match. */
