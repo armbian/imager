@@ -429,11 +429,6 @@
   object-fit: contain;
 }
 
-.list-item-content {
-  flex: 1;
-  min-width: 0;
-}
-
 .list-item-title {
   font-size: 14px;
   font-weight: 600;
@@ -447,11 +442,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.list-item-meta {
-  font-size: 11px;
-  color: var(--text-muted);
 }
 
 .list-item-right {
@@ -508,34 +498,6 @@ button.list-item:disabled:hover {
   flex-shrink: 0;
 }
 
-/* IMAGE CARD SIDE PANEL */
-.image-info-side-panel {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-
-.side-info-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: var(--radius-md);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.side-info-badge img {
-  flex-shrink: 0;
-}
-
-.side-info-badge__ver {
-  opacity: 0.8;
-  margin-left: 1px;
-}
-
 /* BADGES */
 .badge {
   font-size: 11px;
@@ -550,22 +512,6 @@ button.list-item:disabled:hover {
   box-sizing: border-box;
   letter-spacing: 0.3px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.badge-desktop {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
-}
-
-.badge-cli {
-  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-  color: white;
-  box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);
-}
-
-.badge-kernel {
-  color: white;
 }
 
 /* Gradient tinted per badge via --badge-from, --badge-to and --badge-glow (solidBadgeVars) */
@@ -1233,13 +1179,17 @@ button.list-item:disabled:hover {
 
 .toast-container {
   position: fixed;
-  top: 20px;
+  top: calc(var(--header-control-h) + 32px);
   right: 20px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
   gap: 10px;
   pointer-events: none;
+}
+
+.is-macos .toast-container {
+  top: calc(var(--header-control-h) + var(--macos-titlebar-h) + 16px);
 }
 
 .toast {

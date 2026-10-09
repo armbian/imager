@@ -1,0 +1,247 @@
+/* SETTINGS PAGE: two glass islands over the home layer, same frame as .split so they land on the home islands */
+
+.settings-page {
+  /* One hero height for every section: shorter on a 700px window, full on a tall one */
+  --settings-hero-h: clamp(152px, 20vh, 200px);
+  /* Room under the last card for a floating pill: its 48px, its offset, and the usual 32px gap */
+  --settings-pad: 24px;
+  --settings-float-clear: calc(48px + var(--float-bottom) + var(--settings-pad));
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  padding: 4px 18px 18px 24px;
+  min-height: 0;
+}
+
+.settings-page__island {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--island-bg);
+  -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(1.5);
+  backdrop-filter: blur(var(--blur-lg)) saturate(1.5);
+  border: 1px solid var(--island-border);
+  border-radius: var(--radius-island);
+  box-shadow: var(--island-shadow), var(--island-highlight);
+}
+
+/* Nav island */
+.settings-side__title {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 32px 24px 16px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.settings-side__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 16px;
+  scrollbar-width: none;
+}
+
+.settings-side__list::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-side__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 32px);
+  /* Grows for a two-line label; the 8px padding keeps the same rhythm as the one-line rows */
+  min-height: 56px;
+  margin: 0 16px 4px;
+  padding: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-side__item:hover {
+  background: var(--bg-hover);
+}
+
+.settings-side__item.is-active {
+  background: var(--bg-card);
+  box-shadow: 0 0 0 1px var(--border-light), var(--card-shadow);
+  cursor: default;
+}
+
+/* Selection bar sits inside the selected row, on its left inner edge */
+.settings-side__item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.settings-side__item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.settings-side__icon {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+
+.settings-side__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.settings-side__label,
+.settings-side__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-side__sub {
+  white-space: nowrap;
+}
+
+/* Long translations wrap to two lines instead of truncating */
+.settings-side__label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+/* Reserves its line while the summary loads so the rows do not jump */
+.settings-side__sub {
+  min-height: 16px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-muted);
+}
+
+/* Backwards fill only: a resting animated transform would make the scroller the containing block of the editor pill */
+/* Content island: the scroller is keyed by section, so a switch starts at the top and fades in */
+.settings-page__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* % padding resolves against the island, so past the max width the side padding takes the rest */
+  padding: var(--settings-pad) max(var(--settings-pad), (100% - var(--settings-content-max)) / 2);
+  scrollbar-width: none;
+  animation: settingsViewIn var(--dur-base) var(--ease-standard) backwards;
+}
+
+.settings-page__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Content runs to the island edge under the floating action pill; no mask: it would hide the pill and eat card borders */
+.settings-page__scroll--editor {
+  padding-bottom: var(--settings-float-clear);
+}
+
+/* Page transition: the plate arrives from in front on open and passes the viewer on the way back */
+.settings-page.is-entering {
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  animation: settingsPlateIn var(--settings-enter) var(--settings-ease-emph) var(--settings-enter-delay) backwards;
+}
+
+.settings-page.is-exiting {
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: settingsPlateOut var(--settings-exit) var(--settings-ease-accel) both;
+}
+
+@keyframes settingsPlateIn {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The page unmounts at the end, so the resting transform never outlives the run */
+@keyframes settingsPlateOut {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes settingsViewIn {
+  from {
+    opacity: 0.55;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Reduced motion: the base rule zeroes durations; delays go too, so the swap is instant */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion='false']) .settings-page,
+  :root:not([data-reduced-motion='false']) .home-layer,
+  :root:not([data-reduced-motion='false']) .header-steps,
+  :root:not([data-reduced-motion='false']) .header-back,
+  :root:not([data-reduced-motion='false']) .header-gear::after {
+    animation-delay: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
+
+:root[data-reduced-motion='true'] .settings-page,
+:root[data-reduced-motion='true'] .home-layer,
+:root[data-reduced-motion='true'] .header-steps,
+:root[data-reduced-motion='true'] .header-back,
+:root[data-reduced-motion='true'] .header-gear::after {
+  animation-delay: 0s !important;
+  transition-delay: 0s !important;
+}
+
+/* Reduced motion: the home layer leaves in the frame the settings page appears */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion='false']) .home-layer.is-covered {
+    transition: none !important;
+  }
+}
+
+:root[data-reduced-motion='true'] .home-layer.is-covered {
+  transition: none !important;
+}

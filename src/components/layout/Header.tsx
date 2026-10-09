@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { Check } from 'lucide-react';
+import type { Ref } from 'react';
+import { ArrowLeft, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import armbianLogoWhite from '../../assets/armbian-logo-white.png';
 import armbianLogoBlack from '../../assets/armbian-logo-black.png';
@@ -28,6 +29,11 @@ interface HeaderProps {
   hideLogo?: boolean;
   /** True briefly after leaving the welcome screen to drive the one-shot entrance animation. */
   entering?: boolean;
+  /** The settings page shows: the step capsule gives way to the "Back to flashing" pill. */
+  settingsOpen?: boolean;
+  onOpenSettings?: () => void;
+  onCloseSettings?: () => void;
+  settingsButtonRef?: Ref<HTMLButtonElement>;
 }
 
 export function Header({
@@ -43,6 +49,10 @@ export function Header({
   hideSettings = false,
   hideLogo = false,
   entering = false,
+  settingsOpen = false,
+  onOpenSettings,
+  onCloseSettings,
+  settingsButtonRef,
 }: HeaderProps) {
   const { t } = useTranslation();
   const isCustomImage = selectedImage?.is_custom;
@@ -65,15 +75,16 @@ export function Header({
         { key: 'device' as SelectionStep, label: targetLabel, completed: !!selectedDevice },
       ];
 
+  const canReset = !isFlashing && !settingsOpen && !!onReset;
+
   function handleLogoClick() {
-    if (!isFlashing && onReset) {
-      onReset();
-    }
+    if (canReset) onReset?.();
   }
 
   // Back-navigation reopens API-driven panels (manufacturer/board/OS), so it's disabled offline:
   // there the only entry is a custom/cached image and those panels can't load without the network.
-  const canNavigateSteps = !isFlashing && !!onNavigateToStep && isOnline;
+  const canNavigateSteps = !isFlashing && !settingsOpen && !!onNavigateToStep && isOnline;
+  const showSteps = !hideSteps && (isOnline || !!selectedManufacturer);
 
   function handleStepClick(step: SelectionStep, completed: boolean) {
     if (canNavigateSteps && completed) {
@@ -90,9 +101,9 @@ export function Header({
           <div className="header-left" />
         ) : (
           <div
-            className={`header-left ${!isFlashing && onReset ? 'clickable' : ''}`}
+            className={`header-left ${canReset ? 'clickable' : ''}`}
             onClick={handleLogoClick}
-            title={!isFlashing ? t('header.resetTooltip') : undefined}
+            title={canReset ? t('header.resetTooltip') : undefined}
           >
             {/* Black wordmark on light theme, white on dark; toggled via CSS to also cover 'auto'. */}
             <img src={armbianLogoBlack} alt="Armbian" className="logo-main logo-main--light" />
@@ -100,26 +111,45 @@ export function Header({
           </div>
         )}
         <div className="header-right">
-          {/* Steps hidden on the welcome landing and the offline entry (banner already says it) */}
-          {hideSteps || (!isOnline && !selectedManufacturer) ? null : (
-            <div className="header-steps">
-              {steps.map((step, index) => (
-                <div
-                  key={step.key}
-                  className={`header-step ${step.completed ? 'completed' : ''} ${canNavigateSteps && step.completed ? 'clickable' : ''}`}
-                  onClick={() => handleStepClick(step.key, step.completed)}
-                  title={canNavigateSteps && step.completed ? t('header.stepTooltip', { step: step.label }) : undefined}
-                >
-                  <span className="header-step-indicator">
-                    {step.completed ? <Check size={14} /> : (index + 1)}
-                  </span>
-                  <span className="header-step-label">{step.label}</span>
-                </div>
-              ))}
-            </div>
+          <div className={`header-controls${settingsOpen ? ' is-settings' : ''}`}>
+            {/* Steps hidden on the welcome landing and the offline entry (banner already says it) */}
+            {showSteps && (
+              <div className="header-steps" aria-hidden={settingsOpen || undefined} inert={settingsOpen || undefined}>
+                {steps.map((step, index) => (
+                  <div
+                    key={step.key}
+                    className={`header-step ${step.completed ? 'completed' : ''} ${canNavigateSteps && step.completed ? 'clickable' : ''}`}
+                    onClick={() => handleStepClick(step.key, step.completed)}
+                    title={canNavigateSteps && step.completed ? t('header.stepTooltip', { step: step.label }) : undefined}
+                  >
+                    <span className="header-step-indicator">
+                      {step.completed ? <Check size={14} /> : (index + 1)}
+                    </span>
+                    <span className="header-step-label">{step.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!hideSettings && (
+              <button
+                type="button"
+                className="header-back"
+                onClick={onCloseSettings}
+                aria-hidden={!settingsOpen || undefined}
+                inert={!settingsOpen || undefined}
+              >
+                <ArrowLeft size={16} aria-hidden="true" />
+                {t('settings.backToFlashing')}
+              </button>
+            )}
+          </div>
+          {!hideSettings && (
+            <SettingsButton
+              ref={settingsButtonRef}
+              active={settingsOpen}
+              onClick={() => (settingsOpen ? onCloseSettings?.() : onOpenSettings?.())}
+            />
           )}
-          {/* Settings lives top-right, freeing the sidebar */}
-          {!hideSettings && <SettingsButton />}
         </div>
       </header>
     </>

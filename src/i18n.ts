@@ -90,9 +90,4 @@ export async function changeLanguage(lang: string): Promise<void> {
   }
 }
 
-/** Get the current language */
-export function getCurrentLanguage(): string {
-  return i18n.language;
-}
-
 export default i18n;

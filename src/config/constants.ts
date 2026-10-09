@@ -23,6 +23,10 @@ export const LINKS = {
   DOCS: 'https://docs.armbian.com',
   FORUM: 'https://forum.armbian.com',
   MOTD: 'https://raw.githubusercontent.com/armbian/os/main/motd.json',
+  WEBSITE: 'https://www.armbian.com',
+  DONATE: 'https://www.armbian.com/donate',
+  /** Shown in the log upload description; the upload endpoint itself lives in the backend config */
+  PASTE_HOST: 'paste.armbian.com',
 } as const;
 
 /** Timing constants in milliseconds */
@@ -60,6 +64,14 @@ export const EVENTS = {
   /** Carries the opt-in autoconfig profile id (or null) picked at flash time */
   AUTOCONFIG_PROFILE_SELECTED: 'armbian-autoconfig-profile-selected',
   CONNECTIVITY_RECHECK: 'armbian-connectivity-recheck',
+} as const;
+
+export const SETTINGS_VIEW = {
+  GENERAL: 'general',
+  WRITING: 'writing',
+  PROFILES: 'profiles',
+  DOWNLOADS: 'downloads',
+  ABOUT: 'about',
 } as const;
 
 /** Storage key prefixes for sessionStorage/localStorage */
