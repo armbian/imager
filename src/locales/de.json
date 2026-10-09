@@ -220,7 +220,7 @@
     },
     "cache": {
       "usageTitle": "Cache-Nutzung",
-      "legendImages": "Abbilder",
+      "legendImages": "Images",
       "legendData": "Daten",
       "enable": "Image-Cache aktivieren",
       "enableDescription": "Heruntergeladene Images behalten, damit ein erneuter Versuch nach einem fehlgeschlagenen Flash schneller geht",

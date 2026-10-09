@@ -92,7 +92,7 @@
     "noDevices": "Naprav ni mogoče najti",
     "promoted": "Priporočeno",
     "stable": "Stabilna",
-    "rolling": "Rolling Release",
+    "rolling": "Sprotna izdaja",
     "apps": "Aplikacije",
     "minimal": "Minimalna",
     "allImages": "Vse slike",
@@ -100,7 +100,7 @@
     "refreshDevices": "Osveži naprave",
     "loading": "Nalaganje...",
     "imageStatusTitle": "Preden nadaljujete",
-    "rollingBuildMessage": "Slike rolling release se samodejno zgradijo iz najnovejše kode. Lahko vsebujejo nepreizkušene spremembe in napake, zato se morda ne bodo zagnale ali delovale pravilno.",
+    "rollingBuildMessage": "Slike sprotnih izdaj se samodejno zgradijo iz najnovejše kode. Lahko vsebujejo nepreizkušene spremembe in napake, zato se morda ne bodo zagnale ali delovale pravilno.",
     "communityBoardMessage": "To ploščo vzdržuje skupnost, zato se njene slike morda ne bodo zagnale ali delovale pravilno, podpora pa je omejena. Kadar je mogoče, uporabite uradne gradnje.",
     "cachedTooltip": "Slika je na voljo v predpomnilniku"
   },

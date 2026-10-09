@@ -92,7 +92,7 @@
     "noDevices": "Cihaz bulunamadı",
     "promoted": "Önerilen",
     "stable": "Kararlı",
-    "rolling": "Rolling Release",
+    "rolling": "Sürekli sürüm",
     "apps": "Uygulamalar",
     "minimal": "Minimal",
     "allImages": "Tüm İmajlar",
@@ -100,9 +100,9 @@
     "refreshDevices": "Cihazları Yenile",
     "loading": "Yükleniyor...",
     "imageStatusTitle": "Devam etmeden önce",
-    "rollingBuildMessage": "Rolling release imajları en güncel koddan otomatik olarak derlenir. Test edilmemiş değişiklikler ve hatalar içerebilir, bu yüzden önyükleme yapmayabilir veya düzgün çalışmayabilir.",
+    "rollingBuildMessage": "Sürekli sürüm imajları en güncel koddan otomatik olarak derlenir. Test edilmemiş değişiklikler ve hatalar içerebilir, bu yüzden önyükleme yapmayabilir veya düzgün çalışmayabilir.",
     "communityBoardMessage": "Bu kart topluluk tarafından sürdürülüyor; imajları önyükleme yapmayabilir veya düzgün çalışmayabilir, üstelik destek sınırlıdır. Mümkün olduğunda resmi yapıları tercih edin.",
-    "cachedTooltip": "Görüntü önbellekte mevcut"
+    "cachedTooltip": "İmaj önbellekte mevcut"
   },
   "device": {
     "system": "Sistem",
@@ -206,7 +206,7 @@
     "developerModeDescription": "Detaylı günlük kaydı ve hata ayıklama bilgilerini etkinleştir",
     "viewLogs": "Günlükleri Görüntüle",
     "forceOffline": "Çevrimdışı mod",
-    "forceOfflineDescription": "Her zaman çevrimdışı çalış: bağlantı kontrolünü atla ve yalnızca yerel ve önbelleğe alınmış görüntüleri kullan.",
+    "forceOfflineDescription": "Her zaman çevrimdışı çalış: bağlantı kontrolünü atla ve yalnızca yerel ve önbelleğe alınmış imajları kullan.",
     "noLogsAvailable": "Kullanılabilir günlük yok",
     "copyLogs": "Günlükleri kopyala",
     "copied": "Kopyalandı!",
@@ -220,7 +220,7 @@
     },
     "cache": {
       "usageTitle": "Önbellek kullanımı",
-      "legendImages": "Görüntüler",
+      "legendImages": "İmajlar",
       "legendData": "Veriler",
       "enable": "İmaj önbelleğini etkinleştir",
       "enableDescription": "Yazma başarısız olursa yeniden deneme daha hızlı olsun diye indirilen imajları sakla",

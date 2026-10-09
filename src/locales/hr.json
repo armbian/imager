@@ -92,7 +92,7 @@
     "noDevices": "Nema pronađenih uređaja",
     "promoted": "Preporučeno",
     "stable": "Stabilno",
-    "rolling": "Rolling Release",
+    "rolling": "Rolling izdanje",
     "apps": "Aplikacije",
     "minimal": "Minimalno",
     "allImages": "Sve slike",
@@ -100,7 +100,7 @@
     "refreshDevices": "Osvježi uređaje",
     "loading": "Učitavanje...",
     "imageStatusTitle": "Prije nego nastavite",
-    "rollingBuildMessage": "Rolling-release slike automatski se grade iz najnovijeg koda. Mogu sadržavati neispitane promjene i greške, pa se možda neće pokrenuti ili ispravno raditi.",
+    "rollingBuildMessage": "Slike rolling izdanja automatski se grade iz najnovijeg koda. Mogu sadržavati neispitane promjene i greške, pa se možda neće pokrenuti ili ispravno raditi.",
     "communityBoardMessage": "Ovu ploču održava zajednica, pa se njezine slike možda neće pokrenuti ili ispravno raditi, a podrška je ograničena. Kad god je moguće, koristite službene verzije.",
     "cachedTooltip": "Slika je dostupna u predmemoriji"
   },

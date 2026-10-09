@@ -92,7 +92,7 @@
     "noDevices": "Nie znaleziono urządzeń",
     "promoted": "Polecane",
     "stable": "Stabilna",
-    "rolling": "Rolling Release",
+    "rolling": "Wydanie kroczące",
     "apps": "Aplikacje",
     "minimal": "Minimalna",
     "allImages": "Wszystkie obrazy",
@@ -100,7 +100,7 @@
     "refreshDevices": "Odśwież urządzenia",
     "loading": "Ładowanie...",
     "imageStatusTitle": "Zanim przejdziesz dalej",
-    "rollingBuildMessage": "Obrazy rolling release są budowane automatycznie z najnowszego kodu. Mogą zawierać nieprzetestowane zmiany i błędy, więc mogą się nie uruchomić lub działać niepoprawnie.",
+    "rollingBuildMessage": "Obrazy wydań kroczących są budowane automatycznie z najnowszego kodu. Mogą zawierać nieprzetestowane zmiany i błędy, więc mogą się nie uruchomić lub działać niepoprawnie.",
     "communityBoardMessage": "Ta płytka jest utrzymywana przez społeczność, więc jej obrazy mogą się nie uruchomić lub działać niepoprawnie, a wsparcie jest ograniczone. Gdy to możliwe, korzystaj z oficjalnych kompilacji.",
     "cachedTooltip": "Obraz dostępny w pamięci podręcznej"
   },
