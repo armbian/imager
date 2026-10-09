@@ -100,7 +100,7 @@
     "refreshDevices": "Uppdatera enheter",
     "loading": "Laddar...",
     "imageStatusTitle": "Innan du fortsätter",
-    "rollingBuildMessage": "Rolling release-avbildningar byggs automatiskt från den senaste koden. De kan innehålla otestade ändringar och buggar och kanske inte startar eller fungerar korrekt.",
+    "rollingBuildMessage": "Avbildningar av rullande utgåvor byggs automatiskt från den senaste koden. De kan innehålla otestade ändringar och buggar och kanske inte startar eller fungerar korrekt.",
     "communityBoardMessage": "Det här kortet underhålls av gemenskapen, så dess avbildningar kanske inte startar eller fungerar korrekt, och supporten är begränsad. Använd de officiella versionerna när du kan.",
     "cachedTooltip": "Avbildningen finns i cachen"
   },
