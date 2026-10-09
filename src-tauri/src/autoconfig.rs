@@ -131,6 +131,7 @@ fn push_bool(out: &mut String, key: &str, value: Option<bool>) {
 
 /// Render the preset to a bash-sourced `KEY="value"` document, emitting only set/non-empty fields. Booleans become
 /// "1"/"0", the language-from-location flag "y"/"n"; no PRESET_NET_* key emitted unless `apply_network` is true.
+// Twin of presetIsEmpty in src/config/autoconfig.ts: a field written here must count there.
 pub fn render_preset(config: &AutoconfigConfig) -> String {
     let mut out = String::new();
 
@@ -166,18 +167,12 @@ pub fn render_preset(config: &AutoconfigConfig) -> String {
         }
     }
 
-    // Armbian applies locale/timezone only while creating the first user (matches the locked UI inputs).
-    let is_set = |v: &Option<String>| v.as_deref().map(|s| !s.trim().is_empty()).unwrap_or(false);
-    let has_user = is_set(&config.user_name)
-        && is_set(&config.user_password)
-        && is_set(&config.user_real_name);
-    if has_user {
-        push_trimmed(&mut out, "PRESET_LOCALE", &config.locale);
-        push_trimmed(&mut out, "PRESET_TIMEZONE", &config.timezone);
-        if let Some(v) = config.lang_based_on_location {
-            out.push_str("SET_LANG_BASED_ON_LOCATION");
-            out.push_str(if v { "=\"y\"\n" } else { "=\"n\"\n" });
-        }
+    // armbian-firstlogin applies these after any first user, preset or typed at the console.
+    push_trimmed(&mut out, "PRESET_LOCALE", &config.locale);
+    push_trimmed(&mut out, "PRESET_TIMEZONE", &config.timezone);
+    if let Some(v) = config.lang_based_on_location {
+        out.push_str("SET_LANG_BASED_ON_LOCATION");
+        out.push_str(if v { "=\"y\"\n" } else { "=\"n\"\n" });
     }
 
     push_str(&mut out, "PRESET_ROOT_PASSWORD", &config.root_password);
@@ -478,14 +473,36 @@ mod tests {
     #[test]
     fn lang_flag_uses_y_n() {
         let mut c = empty();
-        // Localization keys are only emitted once a full first user is defined.
-        c.user_name = Some("u".to_string());
-        c.user_password = Some("p".to_string());
-        c.user_real_name = Some("User".to_string());
         c.lang_based_on_location = Some(true);
         assert!(render_preset(&c).contains("SET_LANG_BASED_ON_LOCATION=\"y\"\n"));
         c.lang_based_on_location = Some(false);
         assert!(render_preset(&c).contains("SET_LANG_BASED_ON_LOCATION=\"n\"\n"));
+    }
+
+    #[test]
+    fn locale_is_written_without_a_preset_user() {
+        let mut c = empty();
+        c.locale = Some("it_IT.UTF-8".to_string());
+        c.timezone = Some("Europe/Rome".to_string());
+        assert_eq!(
+            render_preset(&c),
+            "PRESET_LOCALE=\"it_IT.UTF-8\"\n\
+             PRESET_TIMEZONE=\"Europe/Rome\"\n\
+             PRESET_CONNECT_WIRELESS=\"n\"\n"
+        );
+    }
+
+    #[test]
+    fn locale_is_written_for_a_user_without_a_real_name() {
+        let mut c = empty();
+        c.user_name = Some("u".to_string());
+        c.user_password = Some("p".to_string());
+        c.locale = Some("de_DE.UTF-8".to_string());
+        c.timezone = Some("Europe/Berlin".to_string());
+        let out = render_preset(&c);
+        assert!(out.contains("PRESET_LOCALE=\"de_DE.UTF-8\"\n"), "{out}");
+        assert!(out.contains("PRESET_TIMEZONE=\"Europe/Berlin\"\n"), "{out}");
+        assert!(!out.contains("PRESET_DEFAULT_REALNAME="), "{out}");
     }
 
     #[test]
@@ -536,7 +553,6 @@ mod tests {
         c
     }
 
-    // Twin vector: renderPresetPreview(padded, true) in src/config/autoconfig.ts must print the same lines.
     const PADDED_PRESET: &str = "PRESET_NET_CHANGE_DEFAULTS=\"1\"\n\
         PRESET_NET_WIFI_ENABLED=\"1\"\n\
         PRESET_NET_WIFI_SSID=\" My Net \"\n\
