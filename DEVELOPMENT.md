@@ -160,15 +160,19 @@ armbian-imager/
 │   │   │   ├── ImageModal.tsx        # Step 3: OS image selection (filters)
 │   │   │   ├── DeviceModal.tsx       # Step 4: Device selection (polling)
 │   │   │   └── ArmbianBoardModal.tsx # Auto-detect when running on Armbian
-│   │   ├── settings/                 # 5-tab settings modal
-│   │   │   ├── SettingsModal.tsx     # Container with sidebar navigation
-│   │   │   ├── AppearanceSection.tsx # Theme + language
-│   │   │   ├── PreferencesSection.tsx# MOTD, skip verify, board detection
-│   │   │   ├── StorageSection.tsx    # Cache management
-│   │   │   ├── DeveloperSection.tsx  # Dev mode + logs viewer
-│   │   │   ├── AboutSection.tsx      # Version, credits, links
+│   │   ├── settings/                 # Full-window settings page
+│   │   │   ├── SettingsPage.tsx      # Page shell (nav + active section, Esc, leave guard)
+│   │   │   ├── SettingsNav.tsx       # Section nav (NAV_ORDER) with live sub-lines
+│   │   │   ├── GeneralSection.tsx    # Theme, motion, language
+│   │   │   ├── WritingSection.tsx    # Skip verify, board detection, system drives
+│   │   │   ├── ProfilesSection.tsx   # First-boot profiles list
+│   │   │   ├── ProfileEditor.tsx     # Profile editor (groups in editor/)
+│   │   │   ├── BoardPickerSheet.tsx  # Board scope picker for a profile
+│   │   │   ├── DownloadsSection.tsx  # Cache toggle, size limit, offline
+│   │   │   ├── AboutSection.tsx      # Version, links, dev mode, logs
 │   │   │   ├── CacheManagerModal.tsx # Cached images browser with delete
-│   │   │   └── LogsModal.tsx         # Log viewer + paste.armbian.com upload
+│   │   │   ├── LogsModal.tsx         # Log viewer + paste.armbian.com upload
+│   │   │   └── controls/             # SettingsGroup, SettingsRow, ToggleRow, SegmentedControl, SelectMenu
 │   │   ├── layout/
 │   │   │   ├── Header.tsx            # App header with step indicators
 │   │   │   └── HomePage.tsx          # Main selection buttons / flash view
@@ -190,7 +194,9 @@ armbian-imager/
 │   │   ├── useFlashOperation.ts     # Full flash lifecycle orchestration
 │   │   ├── useVendorLogos.ts        # Logo preloading + manufacturer grouping
 │   │   ├── useSettings.ts           # Tauri Store get/set (20+ settings)
-│   │   ├── useSettingsGroup.ts      # Batch parallel settings loader
+│   │   ├── useSettingToggle.ts      # One setting, optimistic save + rollback
+│   │   ├── useSettingsSummary.ts    # Settings nav sub-lines
+│   │   ├── useProfileWizard.ts      # New Profile wizard state
 │   │   ├── useSkeletonLoading.ts    # Min-duration skeleton display
 │   │   ├── useModalExitAnimation.ts # Exit animation with double-trigger guard
 │   │   ├── useDeviceMonitor.ts      # Device connection polling
@@ -211,7 +217,11 @@ armbian-imager/
 │   │   ├── base.css                 # Reset, scrollbar, spinner, states
 │   │   ├── layout.css               # Page layout and containers
 │   │   ├── components.css           # Buttons, badges, cards, inputs
-│   │   ├── modal.css                # Modal animations and settings UI
+│   │   ├── modal.css                # Modal animations
+│   │   ├── settings-*.css           # Settings page: page, hero, controls, general, sections, about
+│   │   ├── profile-editor.css       # Profile editor
+│   │   ├── profiles-list.css        # Profiles list
+│   │   ├── cache-modal.css          # Cached images modal
 │   │   ├── flash.css                # Progress bar, stage icons, errors
 │   │   └── responsive.css           # Breakpoints (600-1400px)
 │   │

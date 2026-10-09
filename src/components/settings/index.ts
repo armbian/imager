@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-export { SettingsModal } from './SettingsModal';
+export { SettingsPage } from './SettingsPage';
 export { SettingsButton } from './SettingsButton';
-export { AppearanceSection } from './AppearanceSection';
-export { PreferencesSection } from './PreferencesSection';
-export { ProfilesSection } from './ProfilesSection';
-export { StorageSection } from './StorageSection';
-export { DeveloperSection } from './DeveloperSection';
-export { AboutSection } from './AboutSection';
 export { LogsModal } from './LogsModal';
 export { CacheManagerModal } from './CacheManagerModal';

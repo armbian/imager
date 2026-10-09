@@ -8,7 +8,6 @@ import { SETTINGS } from './constants';
 
 // Twemoji flag SVGs from the maintained @twemoji/svg package; Vite bundles only these
 // (offline-safe, no runtime CDN, no assets in the repo).
-import flagAuto from '@twemoji/svg/1f310.svg';
 import flagEn from '@twemoji/svg/1f1ec-1f1e7.svg';
 import flagDe from '@twemoji/svg/1f1e9-1f1ea.svg';
 import flagEl from '@twemoji/svg/1f1ec-1f1f7.svg';
@@ -95,7 +94,7 @@ export function getLanguageFromLocale(locale: string): string {
 
 /** Language code -> bundled twemoji flag SVG URL. */
 const FLAG_URLS: Record<string, string> = {
-  auto: flagAuto, en: flagEn, de: flagDe, es: flagEs, fr: flagFr, hr: flagHr,
+  en: flagEn, de: flagDe, es: flagEs, fr: flagFr, hr: flagHr,
   it: flagIt, ja: flagJa, ko: flagKo, nl: flagNl, pl: flagPl, pt: flagPt,
   'pt-BR': flagPtBr, ru: flagRu, sl: flagSl, sv: flagSv, tr: flagTr, uk: flagUk, zh: flagZh,
   el: flagEl, sr: flagSr,

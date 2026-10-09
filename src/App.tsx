@@ -6,18 +6,20 @@ import { useTranslation } from 'react-i18next';
 import { Header, HomePage, WelcomePage } from './components/layout';
 import { ArmbianBoardModal } from './components/modals';
 import { FlashProgress } from './components/flash';
-import { CacheManagerModal } from './components/settings';
+import { CacheManagerModal, SettingsPage } from './components/settings';
 import { selectCustomImage, detectBoardFromFilename, classifyCustomImage, logInfo, logWarn, getArmbianRelease, getBoards, getSystemInfo, getCachedBoardImage, checkNeedsDecompression, decompressCustomImage } from './hooks/useTauri';
 import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import { useConnectivity } from './hooks/useConnectivity';
 import { ToastProvider, useToasts } from './hooks/useToasts';
+import { useModalExitAnimation } from './hooks/useModalExitAnimation';
 import { UpdateProvider } from './contexts/UpdateContext';
+import { useMotion } from './contexts/MotionContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
-import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, PLATFORM } from './config';
+import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, SETTINGS_VIEW, PLATFORM } from './config';
 import { IMAGE_FORMAT, IMAGE_STORAGE, isEdlImage } from './types';
 import { presetIsEmpty } from './config/autoconfig';
-import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer } from './utils';
-import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianDetectionOutcome, ArmbianReleaseInfo, AutoconfigConfig, CustomImageInfo, FlashExit } from './types';
+import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer, focusAfterInput } from './utils';
+import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianDetectionOutcome, ArmbianReleaseInfo, AutoconfigConfig, CustomImageInfo, FlashExit, LeaveGuard, SettingsView } from './types';
 import './styles/index.css';
 
 // Debug-only panel; the define folds to false in release builds, which drops the chunk.
@@ -68,6 +70,105 @@ function AppContent() {
   const [pendingAutoSelect, setPendingAutoSelect] = useState<BoardInfo | null>(null);
   const [showCacheManager, setShowCacheManager] = useState(false);
   const armbianCheckRef = useRef(false); // Prevent double execution in Strict Mode
+
+  const { reduced } = useMotion();
+  const [settings, setSettings] = useState<SettingsView | null>(null);
+  const leaveGuardRef = useRef<LeaveGuard | null>(null);
+  const gearRef = useRef<HTMLButtonElement>(null);
+  const focusReturnRef = useRef<HTMLElement | null>(null);
+  const restoreFocusRef = useRef(false);
+  const pointerInputRef = useRef(false);
+
+  const [homeReturning, setHomeReturning] = useState(false);
+
+  const dropSettings = useCallback(() => {
+    leaveGuardRef.current = null;
+    setSettings(null);
+  }, []);
+  const startHomeReturn = useCallback(() => setHomeReturning(!reduced), [reduced]);
+  const { isExiting: settingsExiting, handleClose: closeSettingsNow } = useModalExitAnimation({
+    onClose: dropSettings,
+    onExiting: startHomeReturn,
+    duration: reduced ? 0 : UI.SETTINGS_PAGE.EXIT_MS,
+  });
+
+  // The guard shows the editor's own "Discard changes?" dialog and resolves false on Cancel.
+  const guardedLeave = useCallback(async (leave: () => void) => {
+    const guard = leaveGuardRef.current;
+    if (guard && !(await guard())) return;
+    leave();
+  }, []);
+
+  const registerLeaveGuard = useCallback((guard: LeaveGuard | null) => {
+    leaveGuardRef.current = guard;
+  }, []);
+
+  const openSettings = useCallback(
+    (view: SettingsView) => {
+      if (!settings) {
+        focusReturnRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        restoreFocusRef.current = true;
+        setHomeReturning(false);
+        setSettings(view);
+        return;
+      }
+      guardedLeave(() => {
+        leaveGuardRef.current = null;
+        setSettings(view);
+      });
+    },
+    [settings, guardedLeave]
+  );
+
+  const requestCloseSettings = useCallback(() => {
+    guardedLeave(closeSettingsNow);
+  }, [guardedLeave, closeSettingsNow]);
+
+  const requestSettingsView = useCallback(
+    (view: SettingsView) => {
+      guardedLeave(() => {
+        leaveGuardRef.current = null;
+        setSettings((current) => (current ? view : current));
+      });
+    },
+    [guardedLeave]
+  );
+
+  // Picking a cached image to reuse sends the user straight back to the flow.
+  useEffect(() => {
+    if (!settings) return;
+    window.addEventListener(EVENTS.CACHE_IMAGE_REUSE, closeSettingsNow);
+    return () => window.removeEventListener(EVENTS.CACHE_IMAGE_REUSE, closeSettingsNow);
+  }, [settings, closeSettingsNow]);
+
+  const settingsCovering = !!settings && !settingsExiting;
+
+  // Last input modality, so focus returned after a mouse close does not draw a keyboard ring.
+  useEffect(() => {
+    const onPointer = () => {
+      pointerInputRef.current = true;
+    };
+    const onKey = () => {
+      pointerInputRef.current = false;
+    };
+    window.addEventListener('pointerdown', onPointer, true);
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.removeEventListener('pointerdown', onPointer, true);
+      window.removeEventListener('keydown', onKey, true);
+    };
+  }, []);
+
+  // Runs after the commit that lifts inert from the home layer, so its controls can take focus again.
+  useEffect(() => {
+    if (settings || !restoreFocusRef.current) return;
+    restoreFocusRef.current = false;
+    const target = focusReturnRef.current;
+    focusReturnRef.current = null;
+    const next = target?.isConnected && target !== document.body ? target : gearRef.current;
+    if (!next) return;
+    focusAfterInput(next, pointerInputRef.current);
+  }, [settings]);
 
   // Skip the landing page on startup when the user disabled it; defaults to showing it
   useEffect(() => {
@@ -503,7 +604,7 @@ function AppContent() {
 
   return (
     <div className="app">
-      {/* macOS overlay titlebar drag strip; reserved 42px stays clear of the traffic-light controls */}
+      {/* macOS overlay titlebar drag strip; reserved --macos-titlebar-h stays clear of the traffic-light controls */}
       <div className="titlebar-drag" data-tauri-drag-region />
       <Header
         selectedManufacturer={selectedManufacturer}
@@ -518,6 +619,10 @@ function AppContent() {
         hideSettings={showWelcome || isFlashing}
         hideLogo={showWelcome}
         entering={entering}
+        settingsOpen={!!settings && !settingsExiting}
+        onOpenSettings={() => openSettings(SETTINGS_VIEW.GENERAL)}
+        onCloseSettings={requestCloseSettings}
+        settingsButtonRef={gearRef}
       />
 
       <main
@@ -540,6 +645,18 @@ function AppContent() {
         ) : showWelcome ? (
           <WelcomePage onStart={() => setShowWelcome(false)} />
         ) : (
+          <>
+          <div
+            className={`home-layer${settingsCovering ? ' is-covered' : homeReturning ? ' is-returning' : ''}`}
+            onTransitionEnd={(e) => {
+              if (e.target === e.currentTarget && e.propertyName === 'transform') setHomeReturning(false);
+            }}
+            onTransitionCancel={(e) => {
+              if (e.target === e.currentTarget && e.propertyName === 'transform') setHomeReturning(false);
+            }}
+            inert={settingsCovering || undefined}
+            aria-hidden={settingsCovering || undefined}
+          >
           <HomePage
             key={selectionEpoch}
             selectedManufacturer={selectedManufacturer}
@@ -561,6 +678,17 @@ function AppContent() {
             isOnline={isOnline}
             entering={entering}
           />
+          </div>
+          {settings && (
+            <SettingsPage
+              view={settings}
+              exiting={settingsExiting}
+              onViewChange={requestSettingsView}
+              onClose={requestCloseSettings}
+              registerLeaveGuard={registerLeaveGuard}
+            />
+          )}
+          </>
         )}
       </main>
 

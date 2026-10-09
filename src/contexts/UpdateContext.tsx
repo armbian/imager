@@ -4,8 +4,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { check, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch as relaunchProcess } from '@tauri-apps/plugin-process';
-import { logInfo } from '../hooks/useTauri';
+import { logInfo, logWarn } from '../hooks/useTauri';
 import { getShowUpdaterModal } from '../hooks/useSettings';
+
+export type UpdateCheckState = 'unchecked' | 'done' | 'failed';
 
 interface UpdateContextType {
   /** Pending update, or null when none is available. */
@@ -19,6 +21,11 @@ interface UpdateContextType {
   /** A simulated update clears itself instead of restarting the app */
   relaunch: () => Promise<void>;
   simulate?: (update: Update | null) => void;
+  /** Checks again on demand, even when update notifications are off */
+  recheck: () => Promise<void>;
+  checking: boolean;
+  /** Launch check skipped (notifications off) stays 'unchecked' until a recheck */
+  checkState: UpdateCheckState;
 }
 
 const UpdateContext = createContext<UpdateContextType | undefined>(undefined);
@@ -28,36 +35,46 @@ const UpdateContext = createContext<UpdateContextType | undefined>(undefined);
 export function UpdateProvider({ children }: { children: ReactNode }) {
   const [update, setUpdate] = useState<Update | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [checkState, setCheckState] = useState<UpdateCheckState>('unchecked');
   const hasCheckedRef = useRef(false);
   const simulatedRef = useRef(false);
+
+  const runCheck = useCallback(async () => {
+    setChecking(true);
+    try {
+      const result = await check();
+      setCheckState('done');
+      // A simulated update stays until the dev panel clears it
+      if (simulatedRef.current) return;
+      setUpdate(result);
+      logInfo(
+        'updater',
+        result ? `Update available: ${result.currentVersion} -> ${result.version}` : 'No updates available'
+      );
+    } catch (err) {
+      setCheckState('failed');
+      logWarn('updater', `Failed to check for updates: ${err}`);
+    } finally {
+      setChecking(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (hasCheckedRef.current) return;
     hasCheckedRef.current = true;
 
     const run = async () => {
-      // Honour the "notify about updates" setting; skip the check when disabled.
       const notify = await getShowUpdaterModal();
       if (!notify) {
         logInfo('updater', 'Update notifications disabled in settings, skipping check');
         return;
       }
-      try {
-        const result = await check();
-        if (result) {
-          setUpdate(result);
-          logInfo('updater', `Update available: ${result.currentVersion} -> ${result.version}`);
-        } else {
-          logInfo('updater', 'No updates available');
-        }
-      } catch (err) {
-        // Non-critical: the user can keep using the current version.
-        console.error('Failed to check for updates:', err);
-      }
+      await runCheck();
     };
 
     run();
-  }, []);
+  }, [runCheck]);
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
@@ -89,6 +106,9 @@ export function UpdateProvider({ children }: { children: ReactNode }) {
         close,
         relaunch,
         simulate: __DEV_SCENARIOS__ ? simulate : undefined,
+        recheck: runCheck,
+        checking,
+        checkState,
       }}
     >
       {children}

@@ -17,6 +17,5 @@ export { MotdTip } from './MotdTip';
 export { PageSwap } from './PageSwap';
 export { PasswordInput } from './PasswordInput';
 export { SearchBox } from './SearchBox';
-export { SegmentedChoice, type SegmentedOption } from './SegmentedChoice';
 export { UpdateEntry } from './UpdateEntry';
 export { UpdateModal } from './UpdateModal';

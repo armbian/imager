@@ -1,0 +1,174 @@
+/* SETTINGS SECTIONS: Writing and Downloads */
+
+/* Writing: Download, Write, Verify chips */
+.writing-flow,
+.writing-flow__tail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.writing-flow__tail {
+  transition: opacity var(--dur-medium) var(--ease-standard);
+}
+
+.writing-flow__tail.is-off {
+  opacity: 0.35;
+}
+
+.writing-flow__chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.writing-flow__chip svg {
+  flex: none;
+}
+
+.writing-flow__chip--ok {
+  background: rgba(var(--color-success-rgb), 0.08);
+  box-shadow: inset 0 0 0 1px rgba(var(--color-success-rgb), 0.45);
+  color: var(--color-success-ink);
+}
+
+.writing-flow__arrow {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.writing-desc {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Why the control is unavailable: a quiet status chip under the description, not a third text line */
+.writing-desc__hint {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  margin-top: 6px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* Downloads: cache usage bar and legend */
+.downloads-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 280px;
+  max-width: 100%;
+}
+
+.downloads-usage__bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+}
+
+.downloads-usage__seg {
+  display: block;
+  flex: 0 0 var(--w);
+  height: 100%;
+  background: var(--seg-color);
+  transition: opacity var(--dur-medium) var(--ease-standard);
+}
+
+.downloads-usage__seg--images,
+.downloads-usage__key--images {
+  --seg-color: var(--accent);
+}
+
+.downloads-usage__seg--assets,
+.downloads-usage__key--assets {
+  --seg-color: var(--cache-seg-assets);
+}
+
+.downloads-usage__key--empty {
+  --seg-color: var(--border-color);
+}
+
+.downloads-usage.is-muted .downloads-usage__seg {
+  opacity: 0.4;
+}
+
+.downloads-usage__legend {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.downloads-usage__key {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.downloads-usage__key::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--seg-color);
+}
+
+.downloads-usage-error {
+  padding: 8px 16px;
+}
+
+.downloads-value {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .writing-flow__chip {
+    padding: 0 8px;
+  }
+
+  .downloads-usage {
+    width: 200px;
+  }
+}
+
+/* Holds the row's final height while the stored value loads, so the page below does not move */
+.writing-flow-row.is-pending {
+  opacity: 0;
+}

@@ -1,39 +1,37 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-// Cache manager sub-modal: master-detail (boards in left rail, selected board's cached images on right).
-// Frozen `cache-*` vocabulary; glass restyle lives in settings.css.
-
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, type CSSProperties, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Archive, Trash2, Monitor, Terminal, Zap, RotateCcw, Package, HardDrive } from 'lucide-react';
+import { X, Archive, Trash2, RotateCcw, Package, RefreshCw, Loader2 } from 'lucide-react';
 import { listCachedImages, deleteCachedImage, getBoards, getCachedBoardImage, logWarn } from '../../hooks/useTauri';
 import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
 import { ErrorDisplay } from '../shared/ErrorDisplay';
 import { BoardBadges } from '../shared/BoardBadges';
 import { BoardImage } from '../shared/BoardImage';
+import { MarqueeText } from '../shared/MarqueeText';
 import { useToasts } from '../../hooks/useToasts';
-import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage, splitUfsKernel, solidBadgeVars } from '../../utils';
+import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage, splitUfsKernel, hexToRgba } from '../../utils';
 import { EVENTS, UI, COLORS } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
-import { getDesktopEnv, getVariantBadge, getKernelType, KERNEL_BADGES, STORAGE_BADGES, CLI_BADGE } from '../../config/badges';
+import { getVariantBadge, getKernelType, KERNEL_BADGES, STORAGE_BADGES, CLI_BADGE } from '../../config/badges';
 import { IMAGE_STORAGE, type CachedImageInfo, type BoardInfo } from '../../types';
 
-/** Group key for cached images whose board slug is unknown */
 const UNKNOWN_BOARD_GROUP = '__unknown__';
 
 interface CacheManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** WebKit does not focus a clicked button, so the opener is named instead of read from activeElement */
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
-/** Board group with matched board data and cached images */
 interface BoardGroup {
-  slug: string | null;
+  key: string;
   name: string;
   board: BoardInfo | null;
   imageUrl: string | null;
@@ -41,68 +39,144 @@ interface BoardGroup {
   totalSize: number;
 }
 
-export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
+function tagVars(hex: string): CSSProperties {
+  return { '--tag': hex, '--tag-soft': hexToRgba(hex, UI.TAG_ALPHA.SOFT), '--tag-ring': hexToRgba(hex, UI.TAG_ALPHA.RING) } as CSSProperties;
+}
+
+function SoftTag({ label, color }: { label: string; color: string }) {
+  return (
+    <span className="cache-modal__tag" style={tagVars(color)}>
+      <i aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function CachedImageRow({ image, index, busy, onUse, onDelete }: {
+  image: CachedImageInfo;
+  index: number;
+  busy: boolean;
+  onUse: () => void;
+  onDelete: () => void;
+}) {
+  const { t } = useTranslation();
+  const parsed = parseArmbianFilename(image.filename);
+  const osInfo = parsed?.distro ? getOsInfo(parsed.distro) : null;
+  const osName = osInfo?.name || parsed?.distro || '';
+  const monoLogo = getMonoLogo(parsed?.distro ?? '', parsed?.desktop);
+  const variant = getVariantBadge(parsed?.desktop) ?? CLI_BADGE;
+  const kernelType = parsed?.branch ? getKernelType(parsed.branch) : null;
+  const kernel = kernelType ? KERNEL_BADGES[kernelType] : null;
+  const { kernel: kernelVersion, isUfs } = splitUfsKernel(parsed?.kernel ?? null);
+  const { base: baseVersion, build } = splitArmbianVersion(parsed?.version ?? '');
+  const title = parsed?.version ? `Armbian ${baseVersion}` : image.filename;
+  const meta = [osInfo?.name, build, formatBytes(image.size), formatRelativeTime(image.last_used, t)].filter(Boolean).join(UI.SUMMARY_SEPARATOR);
+
+  return (
+    <li className="cache-modal__image" style={{ animationDelay: `${index * UI.CACHE_ROW_STAGGER_MS}ms` }}>
+      <span className="cache-modal__os" style={{ background: distroBlock(osName) }}>
+        {monoLogo ? (
+          <img src={monoLogo} alt={osName} />
+        ) : (
+          <Package size={22} color={COLORS.ON_TILE} aria-hidden="true" />
+        )}
+      </span>
+      <span className="cache-modal__image-text">
+        <span className="cache-modal__image-line">
+          <b>{title}</b>
+          <SoftTag label={variant.label} color={variant.color} />
+          {kernel && <SoftTag label={kernelVersion ? `${kernel.label} ${kernelVersion}` : kernel.label} color={kernel.color} />}
+          {isUfs && <SoftTag label={STORAGE_BADGES[IMAGE_STORAGE.UFS].label} color={STORAGE_BADGES[IMAGE_STORAGE.UFS].color} />}
+        </span>
+        <small>{meta}</small>
+      </span>
+      <button type="button" className="btn btn-secondary btn-pill" onClick={onUse}>
+        <RotateCcw size={16} aria-hidden="true" />
+        {t('settings.cache.useImage')}
+      </button>
+      <button
+        type="button"
+        className="cache-modal__delete"
+        onClick={onDelete}
+        disabled={busy}
+        aria-label={`${t('settings.cache.deleteImage')}: ${title}${osName ? ` ${osName}` : ''}`}
+      >
+        <Trash2 size={16} aria-hidden="true" />
+      </button>
+    </li>
+  );
+}
+
+function CacheManagerDialog({ onClose, returnFocusRef }: Omit<CacheManagerModalProps, 'isOpen'>) {
   const { t } = useTranslation();
   const { showSuccess, showError } = useToasts();
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   const [cachedImages, setCachedImages] = useState<CachedImageInfo[]>([]);
   const [allBoards, setAllBoards] = useState<BoardInfo[]>([]);
   const [boardImageUrls, setBoardImageUrls] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  // Master-detail: which board group is shown in the right panel (null = derive first).
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CachedImageInfo | null>(null);
-  // When set, the confirm dialog deletes every cached image of this board group.
   const [deleteAllGroup, setDeleteAllGroup] = useState<BoardGroup | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { isExiting, handleClose } = useModalExitAnimation({ onClose });
+  const confirmOpen = deleteTarget !== null || deleteAllGroup !== null;
 
   useEffect(() => {
-    if (!isOpen) return;
+    const opener = returnFocusRef?.current ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    closeRef.current?.focus();
+    return () => {
+      if (opener?.isConnected) opener.focus();
+    };
+  }, [returnFocusRef]);
+
+  useEffect(() => {
+    // The confirmation dialog has no Escape handling of its own, so Escape cancels it first.
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose();
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
+      if (confirmOpen) {
+        if (!isDeleting) {
+          setDeleteTarget(null);
+          setDeleteAllGroup(null);
+        }
+        return;
+      }
+      handleClose();
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, handleClose]);
+  }, [confirmOpen, isDeleting, handleClose]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      // Cached images are local, so they load offline too.
       const images = await listCachedImages();
       setCachedImages(images);
 
-      // Board data only adds badges and full names; offline falls back to filename metadata.
+      // Board data only adds tier badges and full names; offline falls back to filename metadata.
       try {
-        const boards = await getBoards();
-        setAllBoards(boards);
+        setAllBoards(await getBoards());
       } catch {
         setAllBoards([]);
       }
 
-      const slugs = new Set(
-        images.map((img) => img.board_slug).filter(Boolean) as string[]
-      );
+      const slugs = Array.from(new Set(images.map((img) => img.board_slug).filter((s): s is string => Boolean(s))));
       const results = await Promise.all(
-        Array.from(slugs).map(async (slug) => {
+        slugs.map(async (slug) => {
           try {
-            const dataUri = await getCachedBoardImage(slug);
-            if (dataUri) return { slug, url: dataUri };
-          } catch { /* fallback to default image */ }
-          return null;
+            const url = await getCachedBoardImage(slug);
+            return url ? ([slug, url] as const) : null;
+          } catch {
+            return null;
+          }
         })
       );
-      const urls: Record<string, string> = {};
-      for (const r of results) {
-        if (r) urls[r.slug] = r.url;
-      }
-      setBoardImageUrls(urls);
-
-      // Fresh view starts with no explicit selection (derived to first group).
+      setBoardImageUrls(Object.fromEntries(results.filter((r) => r !== null)));
       setSelectedKey(null);
     } catch (err) {
       logWarn('cache-manager', `Failed to load cache data: ${err}`);
@@ -113,54 +187,34 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
   }, [t]);
 
   useEffect(() => {
-    if (isOpen) loadData();
-  }, [isOpen, loadData]);
+    loadData();
+  }, [loadData]);
 
   const boardGroups = useMemo((): BoardGroup[] => {
     const groupMap = new Map<string, CachedImageInfo[]>();
-
     for (const img of cachedImages) {
       const key = img.board_slug ?? UNKNOWN_BOARD_GROUP;
-      const existing = groupMap.get(key);
-      if (existing) {
-        existing.push(img);
-      } else {
-        groupMap.set(key, [img]);
-      }
+      groupMap.set(key, [...(groupMap.get(key) ?? []), img]);
     }
-
     return Array.from(groupMap.entries()).map(([key, images]) => {
       const slug = key === UNKNOWN_BOARD_GROUP ? null : key;
-      const matchedBoard = slug
-        ? allBoards.find((b) => b.slug === slug) ?? null
-        : null;
-      const name = matchedBoard?.name ?? images[0]?.board_name ?? t('settings.cache.unknownBoard');
-
+      const board = slug ? allBoards.find((b) => b.slug === slug) ?? null : null;
       return {
-        slug,
-        name,
-        board: matchedBoard,
-        imageUrl: slug ? (boardImageUrls[slug] ?? null) : null,
+        key,
+        name: board?.name ?? images[0]?.board_name ?? t('settings.cache.unknownBoard'),
+        board,
+        imageUrl: slug ? boardImageUrls[slug] ?? null : null,
         images,
         totalSize: images.reduce((sum, img) => sum + img.size, 0),
       };
     });
   }, [cachedImages, allBoards, boardImageUrls, t]);
 
-  const groupKey = useCallback((group: BoardGroup) => group.slug ?? UNKNOWN_BOARD_GROUP, []);
-
-  // Resolve the active group: honor selectedKey when still present, else fall back
-  // to the first group (covers initial load and the case where it was just deleted).
-  const selectedGroup = useMemo(() => {
-    if (boardGroups.length === 0) return null;
-    return (
-      boardGroups.find((g) => groupKey(g) === selectedKey) ?? boardGroups[0]
-    );
-  }, [boardGroups, selectedKey, groupKey]);
+  // A deleted or never-chosen selection falls back to the first board.
+  const selectedGroup = boardGroups.find((g) => g.key === selectedKey) ?? boardGroups[0] ?? null;
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
-
     setIsDeleting(true);
     try {
       await deleteCachedImage(deleteTarget.filename);
@@ -174,10 +228,8 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
     }
   };
 
-  /** Delete every cached image belonging to a board group. */
   const handleDeleteAllConfirm = async () => {
     if (!deleteAllGroup) return;
-
     setIsDeleting(true);
     const filenames = new Set(deleteAllGroup.images.map((img) => img.filename));
     try {
@@ -192,231 +244,149 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
     }
   };
 
-  const handleReuse = useCallback(
-    (image: CachedImageInfo) => {
-      window.dispatchEvent(
-        new CustomEvent(EVENTS.CACHE_IMAGE_REUSE, {
-          detail: {
-            path: image.path,
-            filename: image.filename,
-            size: image.size,
-            boardSlug: image.board_slug,
-            boardName: image.board_name,
-          },
-        })
+  const handleReuse = (image: CachedImageInfo) => {
+    window.dispatchEvent(
+      new CustomEvent(EVENTS.CACHE_IMAGE_REUSE, {
+        detail: {
+          path: image.path,
+          filename: image.filename,
+          size: image.size,
+          boardSlug: image.board_slug,
+          boardName: image.board_name,
+        },
+      })
+    );
+    onClose();
+  };
+
+  const isEmpty = !loading && !loadError && cachedImages.length === 0;
+  const summary = loading || loadError
+    ? null
+    : isEmpty
+      ? t('settings.downloads.manageEmpty')
+      : [
+          t('settings.cache.imageCount', { count: cachedImages.length }),
+          t('settings.cache.boardCount', { count: boardGroups.length }),
+        ].join(UI.SUMMARY_SEPARATOR);
+
+  const renderBody = () => {
+    if (loading) {
+      return (
+        <div className="cache-modal__state" role="status">
+          <Loader2 size={20} className="spinning" aria-hidden="true" />
+          {t('modal.loading')}
+        </div>
       );
-      onClose();
-    },
-    [onClose]
-  );
+    }
+    if (loadError) {
+      return (
+        <div className="cache-modal__state">
+          <ErrorDisplay error={loadError} onRetry={loadData} compact />
+        </div>
+      );
+    }
+    if (isEmpty || !selectedGroup) {
+      return (
+        <div className="cache-modal__state cache-modal__empty">
+          <span className="cache-modal__empty-disc" aria-hidden="true">
+            <Archive size={40} strokeWidth={1.5} />
+          </span>
+          <h3>{t('settings.cache.noCachedImages')}</h3>
+          <p>{t('settings.cache.emptyHint')}</p>
+          <button type="button" className="btn btn-secondary btn-pill" onClick={loadData}>
+            <RefreshCw size={16} aria-hidden="true" />
+            {t('device.refresh')}
+          </button>
+        </div>
+      );
+    }
 
-  if (!isOpen) return null;
+    return (
+      <div className="cache-modal__split">
+        <div className="cache-modal__boards">
+          {boardGroups.map((group) => {
+            const active = group.key === selectedGroup.key;
+            return (
+              <button
+                key={group.key}
+                type="button"
+                className={`cache-modal__board${active ? ' is-active' : ''}`}
+                aria-pressed={active}
+                onClick={() => setSelectedKey(group.key)}
+              >
+                <span className="cache-modal__board-text">
+                  <MarqueeText text={group.name} className="cache-modal__board-name" />
+                  <small>{t('settings.cache.imageCount', { count: group.images.length })}</small>
+                </span>
+                <span className="cache-modal__board-size">{formatBytes(group.totalSize)}</span>
+              </button>
+            );
+          })}
+        </div>
 
-  // Portal to <body> so the fixed overlay escapes the animated settings shell's
-  // containing block (otherwise it would render trapped inside the panel).
+        <div className="cache-modal__detail">
+          <div className="cache-modal__head">
+            <span className="cache-modal__photo">
+              <BoardImage className="cache-modal__photo-media" src={selectedGroup.imageUrl} alt={selectedGroup.name} />
+            </span>
+            <span className="cache-modal__head-text">
+              <MarqueeText text={selectedGroup.name} className="cache-modal__head-name" />
+              <span className="cache-modal__head-meta">
+                {selectedGroup.board && <BoardBadges board={selectedGroup.board} className="cache-modal__tier" />}
+                <span>{t('settings.cache.totalSize', { size: formatBytes(selectedGroup.totalSize) })}</span>
+              </span>
+            </span>
+            <button
+              type="button"
+              className="btn btn-secondary btn-pill"
+              onClick={() => setDeleteAllGroup(selectedGroup)}
+              disabled={isDeleting}
+            >
+              <Trash2 size={16} aria-hidden="true" />
+              {t('settings.cache.deleteAll')}
+            </button>
+          </div>
+
+          <h4 className="cache-modal__count">
+            {t('settings.cache.imageCount', { count: selectedGroup.images.length })}
+          </h4>
+
+          <ul className="cache-modal__images" key={selectedGroup.key}>
+            {selectedGroup.images.map((image, index) => (
+              <CachedImageRow
+                key={image.path}
+                image={image}
+                index={index}
+                busy={isDeleting}
+                onUse={() => handleReuse(image)}
+                onDelete={() => setDeleteTarget(image)}
+              />
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
+  // Portal to <body> so the fixed overlay escapes the transformed settings page.
   return createPortal(
     <>
       <div className={`modal-overlay ${isExiting ? 'modal-exiting' : 'modal-entering'}`} onClick={handleClose}>
-        {/* Same glass shell as the Settings modal for a consistent premium look. */}
         <div
-          className="settings-shell cache-shell"
+          className={`modal cache-modal ${isExiting ? 'modal-exiting' : 'modal-entering'}`}
           role="dialog"
           aria-modal="true"
           aria-labelledby="cache-manager-title"
           onClick={(e) => e.stopPropagation()}
         >
-          <header className="settings-shell__header">
-            <h2 className="settings-shell__title" id="cache-manager-title">{t('settings.cache.managerTitle')}</h2>
-            <button className="modal-close" onClick={handleClose} aria-label="Close">
-              <X size={20} />
+          <header className="cache-modal__header">
+            <h2 id="cache-manager-title">{t('settings.cache.managerTitle')}</h2>
+            {summary && <span className="cache-modal__summary">{summary}</span>}
+            <button ref={closeRef} type="button" className="modal-close cache-modal__close" onClick={handleClose} aria-label={t('common.close')}>
+              <X size={20} aria-hidden="true" />
             </button>
           </header>
-
-          <div className="settings-shell__content cache-content">
-            {loading ? (
-              <div className="cache-loading">{t('modal.loading')}</div>
-            ) : loadError ? (
-              <ErrorDisplay error={loadError} onRetry={loadData} compact />
-            ) : cachedImages.length === 0 ? (
-              <div className="cache-empty-state">
-                <span className="cache-empty-state__disc">
-                  <Archive size={40} strokeWidth={1.5} />
-                </span>
-                <p>{t('settings.cache.noCachedImages')}</p>
-              </div>
-            ) : (
-              <div className="cache-split">
-                {/* LEFT RAIL — one board per row, click to select. */}
-                <div className="cache-rail">
-                  {boardGroups.map((group) => {
-                    const key = groupKey(group);
-                    const isActive = selectedGroup ? groupKey(selectedGroup) === key : false;
-
-                    return (
-                      <button
-                        key={key}
-                        className={`cache-rail-item ${isActive ? 'is-active' : ''}`}
-                        onClick={() => setSelectedKey(key)}
-                      >
-                        {/* Text-only rail; the board photo lives once in the detail header. */}
-                        <div className="cache-rail-info">
-                          {/* Name + image count; size lives in the detail header. */}
-                          <div className="cache-rail-title">{group.name}</div>
-                          <div className="cache-rail-meta">
-                            {t('settings.cache.imageCount', { count: group.images.length })}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* RIGHT PANEL — every cached image of the selected board. */}
-                {selectedGroup && (
-                  <div className="cache-detail">
-                    <div className="cache-detail-head">
-                      <div className="cache-detail-thumb">
-                        <BoardImage
-                          className="cache-thumb-media"
-                          src={selectedGroup.imageUrl}
-                          alt={selectedGroup.name}
-                        />
-                      </div>
-                      <div className="cache-detail-headinfo">
-                        {/* Name and tier badge share one line. */}
-                        <div className="cache-detail-titlerow">
-                          <h3 className="cache-detail-name">{selectedGroup.name}</h3>
-                          {selectedGroup.board && (
-                            <BoardBadges board={selectedGroup.board} className="cache-inline-badges" />
-                          )}
-                        </div>
-                        {/* Total size only; the per-board image count lives in the section divider. */}
-                        <div className="cache-detail-sub">
-                          {t('settings.cache.totalSize', { size: formatBytes(selectedGroup.totalSize) })}
-                        </div>
-                      </div>
-                      <button
-                        className="cache-detail-delall"
-                        onClick={() => setDeleteAllGroup(selectedGroup)}
-                        disabled={isDeleting}
-                      >
-                        {t('settings.cache.deleteAll')}
-                      </button>
-                    </div>
-
-                    <div className="cache-detail-section">
-                      {t('settings.cache.imageCount', { count: selectedGroup.images.length })}
-                    </div>
-
-                    {selectedGroup.images.map((image, index) => {
-                      const parsed = parseArmbianFilename(image.filename);
-                      const osInfo = parsed?.distro ? getOsInfo(parsed.distro) : null;
-                      const monoLogo = getMonoLogo(parsed?.distro ?? '', parsed?.desktop);
-                      const desktopEnv = parsed?.desktop ? getDesktopEnv(parsed.desktop) : null;
-                      const variantBadge = getVariantBadge(parsed?.desktop);
-                      const kernelType = parsed?.branch ? getKernelType(parsed.branch) : null;
-                      const badgeConfig = kernelType ? KERNEL_BADGES[kernelType] : null;
-                      const { kernel: kernelVersion, isUfs } = splitUfsKernel(parsed?.kernel ?? null);
-                      // Split "26.2.0-trunk.904" → base headline + build suffix (shown in meta).
-                      const { base: baseVersion, build } = splitArmbianVersion(parsed?.version ?? '');
-
-                      return (
-                        <div
-                          key={image.path}
-                          className="cache-image-row"
-                          style={{ animationDelay: `${index * UI.CACHE_ROW_STAGGER_MS}ms` }}
-                        >
-                          {/* Distro-tinted tile with a white mark anchors each row (matches the OS gallery). */}
-                          <div
-                            className="cache-image-os"
-                            style={{ background: distroBlock(osInfo?.name || parsed?.distro || '') }}
-                          >
-                            {monoLogo ? (
-                              <img
-                                className="cache-image-os__logo"
-                                src={monoLogo}
-                                alt={osInfo?.name || parsed?.distro || ''}
-                              />
-                            ) : (
-                              <Package size={28} color={COLORS.ON_TILE} />
-                            )}
-                          </div>
-
-                          <div className="list-item-content">
-                            <div className="cache-image-ver">
-                              {parsed?.version ? `Armbian ${baseVersion}` : image.filename}
-                            </div>
-
-                            <div className="image-info-side-panel">
-                              {desktopEnv && variantBadge ? (
-                                <div className="side-info-badge badge-desktop">
-                                  <Monitor size={11} />
-                                  <span>{variantBadge.label}</span>
-                                </div>
-                              ) : (
-                                <div className="side-info-badge badge-cli">
-                                  <Terminal size={11} />
-                                  <span>{variantBadge?.label ?? CLI_BADGE.label}</span>
-                                </div>
-                              )}
-                              {badgeConfig && (
-                                <div
-                                  className="side-info-badge badge-kernel badge-solid"
-                                  style={solidBadgeVars(badgeConfig.color)}
-                                >
-                                  <Zap size={11} />
-                                  <span>{badgeConfig.label}</span>
-                                  {kernelVersion && (
-                                    <span className="side-info-badge__ver">{kernelVersion}</span>
-                                  )}
-                                </div>
-                              )}
-                              {isUfs && (
-                                <div
-                                  className="side-info-badge badge-solid"
-                                  style={solidBadgeVars(STORAGE_BADGES[IMAGE_STORAGE.UFS].color)}
-                                >
-                                  <HardDrive size={11} />
-                                  <span>{STORAGE_BADGES[IMAGE_STORAGE.UFS].label}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* OS release (e.g. "Ubuntu 26.04") leads so stable rows are never
-                                bare; build (trunk.NNN) is appended only when present. */}
-                            <div className="list-item-meta">
-                              {osInfo?.name && <>{osInfo.name} · </>}
-                              {build && <>{build} · </>}
-                              {formatBytes(image.size)} · {formatRelativeTime(image.last_used, t)}
-                            </div>
-                          </div>
-
-                          <div className="cache-item-actions">
-                            <button
-                              className="cache-btn cache-btn-use"
-                              onClick={() => handleReuse(image)}
-                              title={t('settings.cache.useImage')}
-                            >
-                              <RotateCcw size={14} />
-                              <span>{t('settings.cache.useImage')}</span>
-                            </button>
-                            <button
-                              className="cache-btn cache-btn-delete"
-                              onClick={() => setDeleteTarget(image)}
-                              disabled={isDeleting}
-                              title={t('settings.cache.deleteImage')}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <div className="cache-modal__body">{renderBody()}</div>
         </div>
       </div>
 
@@ -425,7 +395,7 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
         title={t('settings.cache.deleteImage')}
         message={t('settings.cache.deleteConfirmSingle')}
         confirmText={t('settings.cache.deleteImage')}
-        isDanger={true}
+        isDanger
         onCancel={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
       />
@@ -435,11 +405,15 @@ export function CacheManagerModal({ isOpen, onClose }: CacheManagerModalProps) {
         title={t('settings.cache.deleteAll')}
         message={t('settings.cache.deleteConfirmAll', { count: deleteAllGroup?.images.length ?? 0 })}
         confirmText={t('settings.cache.deleteAll')}
-        isDanger={true}
+        isDanger
         onCancel={() => setDeleteAllGroup(null)}
         onConfirm={handleDeleteAllConfirm}
       />
     </>,
-    document.body,
+    document.body
   );
+}
+
+export function CacheManagerModal({ isOpen, onClose, returnFocusRef }: CacheManagerModalProps) {
+  return isOpen ? <CacheManagerDialog onClose={onClose} returnFocusRef={returnFocusRef} /> : null;
 }

@@ -1,19 +1,29 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Download, RefreshCw, CircleCheck, CircleAlert, X, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { isAppInApplications } from '../../hooks/useTauri';
 import { formatFileSize, getErrorMessage } from '../../utils';
 import { ChangelogModal } from './ChangelogModal';
 import { useUpdate } from '../../contexts/UpdateContext';
+import { useDialogFocus } from '../../hooks/useDialogFocus';
 
 type UpdateState = 'available' | 'downloading' | 'ready' | 'error';
 
 interface DownloadProgress {
   downloaded: number;
   total: number | null;
+}
+
+function UpdateFrame({ onEscape, children }: { onEscape?: () => void; children: ReactNode }) {
+  const dialogRef = useDialogFocus<HTMLDivElement>({ onEscape });
+  return (
+    <div className="update-modal" ref={dialogRef} role="dialog" aria-modal="true" tabIndex={-1}>
+      {children}
+    </div>
+  );
 }
 
 export function UpdateModal() {
@@ -95,7 +105,7 @@ export function UpdateModal() {
   return (
     <>
       <div className="update-modal-overlay">
-        <div className="update-modal">
+        <UpdateFrame onEscape={showChangelog ? undefined : close}>
           {state === 'available' && (
             <button className="update-modal-close" onClick={close} aria-label="Close">
               <X size={18} />
@@ -207,7 +217,7 @@ export function UpdateModal() {
             </>
           )}
         </div>
-      </div>
+        </UpdateFrame>
       </div>
 
       {update && (

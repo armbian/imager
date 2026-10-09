@@ -4,7 +4,8 @@
 import { useState } from 'react';
 import { Upload, ExternalLink, CircleAlert, CircleX, Loader2, ArrowRight, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { uploadLogs, openUrl } from '../../hooks/useTauri';
+import { openUrl } from '../../hooks/useTauri';
+import { useLogUpload } from '../../hooks/useLogUpload';
 import QRCode from 'qrcode';
 import { COLORS, QR_CODE } from '../../config';
 import { getErrorMessage } from '../../utils';
@@ -21,34 +22,27 @@ export function ErrorDisplay({ error, onRetry, onCancel, compact = false }: Erro
   const { t } = useTranslation();
   // The screen must never be message-less, whatever upstream race produced an empty error.
   const message = error.trim() || t('error.flashFailed');
-  const [uploading, setUploading] = useState(false);
-  const [pasteUrl, setPasteUrl] = useState<string | null>(null);
+  const { upload, uploading, url: pasteUrl, error: logUploadError } = useLogUpload();
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const uploadError = logUploadError ?? qrError;
 
   async function handleUploadLogs() {
-    setUploading(true);
-    setUploadError(null);
-
+    setQrError(null);
+    const url = await upload();
+    if (!url || compact) return;
     try {
-      const result = await uploadLogs();
-      setPasteUrl(result.url);
-
-      if (!compact) {
-        const qrDataUrl = await QRCode.toDataURL(result.url, {
-          width: QR_CODE.WIDTH,
-          margin: QR_CODE.MARGIN,
-          color: {
-            dark: COLORS.QR_DARK,
-            light: COLORS.QR_LIGHT,
-          },
-        });
-        setQrCodeDataUrl(qrDataUrl);
-      }
+      const qrDataUrl = await QRCode.toDataURL(url, {
+        width: QR_CODE.WIDTH,
+        margin: QR_CODE.MARGIN,
+        color: {
+          dark: COLORS.QR_DARK,
+          light: COLORS.QR_LIGHT,
+        },
+      });
+      setQrCodeDataUrl(qrDataUrl);
     } catch (err) {
-      setUploadError(getErrorMessage(err, t('error.uploadFailed')));
-    } finally {
-      setUploading(false);
+      setQrError(getErrorMessage(err, t('error.uploadFailed')));
     }
   }
 

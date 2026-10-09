@@ -19,12 +19,14 @@ textarea,
 
 /* Motion: the OS preference decides unless the in-app setting overrides it in
    either direction. Kept as one shared rule so a new animation is covered by
-   default instead of needing its own guard. */
+   default instead of needing its own guard; stagger delays go too, or a
+   backwards fill would hold cards hidden for them. */
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-reduced-motion="false"]) *,
   :root:not([data-reduced-motion="false"]) *::before,
   :root:not([data-reduced-motion="false"]) *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
@@ -35,6 +37,7 @@ textarea,
 :root[data-reduced-motion="true"] *::before,
 :root[data-reduced-motion="true"] *::after {
   animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
@@ -127,18 +130,7 @@ body {
   margin-bottom: 16px;
 }
 
-.no-results {
-  text-align: center;
-  padding: 48px;
-  color: var(--text-muted);
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-}
-
-.no-results p {
-  margin-bottom: 8px;
+/* Focus moved by code after a mouse action (App.tsx, UI.POINTER_FOCUS_ATTR): no keyboard ring */
+:root [data-pointer-focus]:focus-visible {
+  outline: none;
 }
