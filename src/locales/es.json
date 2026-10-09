@@ -35,6 +35,9 @@
     "complete": "¡Escritura completada!",
     "failed": "Algo salió mal",
     "cancel": "Cancelar",
+    "cancelledTitle": "Escritura cancelada",
+    "cancelledNothingWritten": "No se escribió nada en la placa.",
+    "cancelledPartlyWritten": "La placa solo se escribió parcialmente. Vuelve a grabarla antes de usarla.",
     "retry": "Reintentar",
     "done": "Hecho",
     "flashAnother": "Grabar otra",
@@ -181,6 +184,7 @@
     "unknown": "Desconocido",
     "confirm": "Confirmar",
     "cancel": "Cancelar",
+    "back": "Atrás",
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
     "close": "Cerrar"

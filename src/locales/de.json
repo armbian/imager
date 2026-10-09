@@ -35,6 +35,9 @@
     "complete": "Flash abgeschlossen!",
     "failed": "Ein Fehler ist aufgetreten",
     "cancel": "Abbrechen",
+    "cancelledTitle": "Flash abgebrochen",
+    "cancelledNothingWritten": "Es wurde nichts auf das Board geschrieben.",
+    "cancelledPartlyWritten": "Das Board wurde nur teilweise beschrieben. Flashe es erneut, bevor du es verwendest.",
     "retry": "Erneut versuchen",
     "done": "Fertig",
     "flashAnother": "Weiteres Image flashen",
@@ -181,6 +184,7 @@
     "unknown": "Unbekannt",
     "confirm": "Bestätigen",
     "cancel": "Abbrechen",
+    "back": "Zurück",
     "showPassword": "Passwort anzeigen",
     "hidePassword": "Passwort verbergen",
     "close": "Schließen"

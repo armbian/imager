@@ -35,6 +35,9 @@
     "complete": "Zapisovanje končano!",
     "failed": "Prišlo je do napake",
     "cancel": "Prekliči",
+    "cancelledTitle": "Zapisovanje preklicano",
+    "cancelledNothingWritten": "Na ploščo ni bilo nič zapisano.",
+    "cancelledPartlyWritten": "Plošča je bila zapisana le delno. Ponovno jo zapišite, preden jo uporabite.",
     "retry": "Poskusi znova",
     "done": "Končano",
     "flashAnother": "Zapiši drugo",
@@ -181,6 +184,7 @@
     "unknown": "Neznano",
     "confirm": "Potrdi",
     "cancel": "Prekliči",
+    "back": "Nazaj",
     "showPassword": "Pokaži geslo",
     "hidePassword": "Skrij geslo",
     "close": "Zapri"

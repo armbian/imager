@@ -35,6 +35,9 @@
     "complete": "烧录完成！",
     "failed": "出错了",
     "cancel": "取消",
+    "cancelledTitle": "烧录已取消",
+    "cancelledNothingWritten": "未向开发板写入任何内容。",
+    "cancelledPartlyWritten": "开发板只写入了一部分。使用前请重新烧录。",
     "retry": "重试",
     "done": "完成",
     "flashAnother": "再烧录一个",
@@ -181,6 +184,7 @@
     "unknown": "未知",
     "confirm": "确认",
     "cancel": "取消",
+    "back": "上一步",
     "showPassword": "显示密码",
     "hidePassword": "隐藏密码",
     "close": "关闭"

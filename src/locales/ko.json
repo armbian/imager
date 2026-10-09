@@ -35,6 +35,9 @@
     "complete": "플래시 완료!",
     "failed": "문제가 발생했습니다",
     "cancel": "취소",
+    "cancelledTitle": "플래시 취소됨",
+    "cancelledNothingWritten": "보드에 아무것도 기록되지 않았습니다.",
+    "cancelledPartlyWritten": "보드에 일부만 기록되었습니다. 사용하기 전에 다시 플래시하세요.",
     "retry": "다시 시도",
     "done": "완료",
     "flashAnother": "다른 이미지 플래시",
@@ -181,6 +184,7 @@
     "unknown": "알 수 없음",
     "confirm": "확인",
     "cancel": "취소",
+    "back": "이전",
     "showPassword": "비밀번호 표시",
     "hidePassword": "비밀번호 숨기기",
     "close": "닫기"

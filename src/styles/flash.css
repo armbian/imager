@@ -928,6 +928,18 @@
   max-width: 940px;
   margin: 0 auto;
   padding: 0 var(--space-2xl);
+  --screen-tint: var(--color-error);
+  --screen-tint-rgb: var(--color-error-rgb);
+}
+
+/* Cancelled flash: neutral, amber once the board was partly written. */
+.error-screen.is-cancelled {
+  --screen-tint: var(--text-muted);
+  --screen-tint-rgb: var(--color-neutral-rgb);
+}
+.error-screen.is-cancelled.is-partial {
+  --screen-tint: var(--color-warning);
+  --screen-tint-rgb: var(--color-warning-rgb);
 }
 
 /* Hero: error glyph over a breathing glow, framed by concentric rings. */
@@ -950,8 +962,8 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(var(--color-error-rgb), 0.24) 0%,
-    rgba(var(--color-error-rgb), 0.08) 40%,
+    rgba(var(--screen-tint-rgb), 0.24) 0%,
+    rgba(var(--screen-tint-rgb), 0.08) 40%,
     transparent 70%
   );
   filter: blur(16px);
@@ -966,7 +978,7 @@
   width: 46%;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 1.5px solid rgba(var(--color-error-rgb), 0.32);
+  border: 1.5px solid rgba(var(--screen-tint-rgb), 0.32);
   opacity: 0;
   z-index: 0;
   animation: offlineRipple 3.4s var(--ease-out-expo) infinite;
@@ -980,9 +992,9 @@
   z-index: 1;
   width: clamp(64px, 8vw, 104px);
   height: auto;
-  color: var(--color-error);
+  color: var(--screen-tint);
   animation: confirmFloat 5.5s ease-in-out infinite;
-  filter: drop-shadow(0 14px 26px rgba(var(--color-error-rgb), 0.28));
+  filter: drop-shadow(0 14px 26px rgba(var(--screen-tint-rgb), 0.28));
 }
 
 /* Right column: title + diagnosis + remedy card + actions, left-aligned. */
@@ -1173,6 +1185,9 @@
 .error-screen__buttons .btn {
   flex: 1;
   justify-content: center;
+}
+.error-screen.is-cancelled .error-screen__buttons {
+  margin-top: 0;
 }
 
 /* ============================ KEYFRAMES ============================ */

@@ -35,6 +35,9 @@
     "complete": "Snimanje je dovršeno!",
     "failed": "Nešto je pošlo po zlu",
     "cancel": "Odustani",
+    "cancelledTitle": "Snimanje je otkazano",
+    "cancelledNothingWritten": "Ništa nije zapisano na ploču.",
+    "cancelledPartlyWritten": "Ploča je samo djelomično zapisana. Ponovno je snimite prije upotrebe.",
     "retry": "Pokušaj ponovno",
     "done": "Gotovo",
     "flashAnother": "Snimi još jednu",
@@ -181,6 +184,7 @@
     "unknown": "Nepoznato",
     "confirm": "Potvrdi",
     "cancel": "Odustani",
+    "back": "Natrag",
     "showPassword": "Prikaži lozinku",
     "hidePassword": "Sakrij lozinku",
     "close": "Zatvori"

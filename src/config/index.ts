@@ -33,6 +33,7 @@ export {
 export {
   POLLING,
   FLASH_PREP_STAGE,
+  QDL_STAGE,
   LINKS,
   TIMING,
   BYTES_PER_KB,

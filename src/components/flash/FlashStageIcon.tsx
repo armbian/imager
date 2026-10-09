@@ -6,6 +6,7 @@ import {
   HardDrive,
   CircleCheck,
   CircleX,
+  CircleStop,
   Check,
   Archive,
   Shield,
@@ -29,6 +30,7 @@ export type FlashStage =
   | 'flashing'
   | 'verifying'
   | 'complete'
+  | 'cancelled'
   | 'error';
 
 interface FlashStageIconProps {
@@ -60,6 +62,8 @@ export function FlashStageIcon({ stage, size = UI.ICON_SIZE.FLASH_STAGE }: Flash
       return <Check size={size} className="stage-icon verifying" />;
     case 'complete':
       return <CircleCheck size={size} className="stage-icon complete" />;
+    case 'cancelled':
+      return <CircleStop size={size} className="stage-icon cancelled" />;
     case 'error':
       return <CircleX size={size} className="stage-icon error" />;
   }
@@ -90,6 +94,8 @@ export function getStageKey(stage: FlashStage): string {
       return 'flash.verifying';
     case 'complete':
       return 'flash.complete';
+    case 'cancelled':
+      return 'flash.cancelledTitle';
     case 'error':
       return 'flash.failed';
   }
@@ -102,7 +108,7 @@ export type FlashPhase = 'download' | 'prepare' | 'write' | 'verify';
 // eslint-disable-next-line react-refresh/only-export-components
 export const PHASE_ORDER: FlashPhase[] = ['download', 'prepare', 'write', 'verify'];
 
-/** Maps a stage to its macro phase, or null for stages without a dot (authorizing/complete/error). */
+/** Maps a stage to its macro phase, or null for stages without a dot (authorizing/complete/cancelled/error). */
 // eslint-disable-next-line react-refresh/only-export-components
 export function stagePhase(stage: FlashStage): FlashPhase | null {
   switch (stage) {
@@ -121,6 +127,7 @@ export function stagePhase(stage: FlashStage): FlashPhase | null {
       return 'verify';
     case 'authorizing':
     case 'complete':
+    case 'cancelled':
     case 'error':
       return null;
   }

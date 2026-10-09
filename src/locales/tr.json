@@ -35,6 +35,9 @@
     "complete": "Yazma tamamlandı!",
     "failed": "Bir hata oluştu",
     "cancel": "İptal",
+    "cancelledTitle": "Yazma iptal edildi",
+    "cancelledNothingWritten": "Karta hiçbir şey yazılmadı.",
+    "cancelledPartlyWritten": "Karta yalnızca kısmen yazıldı. Kullanmadan önce yeniden yazın.",
     "retry": "Yeniden dene",
     "done": "Tamam",
     "flashAnother": "Başka bir tane yaz",
@@ -181,6 +184,7 @@
     "unknown": "Bilinmeyen",
     "confirm": "Onayla",
     "cancel": "İptal",
+    "back": "Geri",
     "showPassword": "Parolayı göster",
     "hidePassword": "Parolayı gizle",
     "close": "Kapat"
