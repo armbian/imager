@@ -2037,3 +2037,63 @@ button.list-item:disabled:hover {
     min-height: 250px;
   }
 }
+
+/* Search match inside a name (shared/HighlightText.tsx) */
+.text-match {
+  margin: 0 -1px;
+  padding: 0 1px;
+  border-radius: 3px;
+  background: var(--match-bg);
+  color: inherit;
+}
+
+/* Page change (shared/PageSwap.tsx): the two pages slide together like a pager, the old one leaving against the
+   travel (--d) while the new one arrives from the leading edge; the stage clips them only while they move. */
+.page-swap {
+  position: relative;
+}
+
+.page-swap.is-swapping {
+  overflow: clip;
+  overflow-clip-margin: var(--page-swap-clip);
+}
+
+.page-swap__layer {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+}
+
+.page-swap__out {
+  height: 100%;
+  animation: pageSwapOut var(--page-swap-dur) var(--ease-page) forwards;
+}
+
+.page-swap--in {
+  animation: pageSwapIn var(--page-swap-dur) var(--ease-page) backwards;
+}
+
+.page-swap--fade > * {
+  animation: pageSwapFade var(--page-swap-fade) var(--ease-standard) backwards;
+}
+
+@keyframes pageSwapOut {
+  to {
+    opacity: var(--page-swap-out-opacity);
+    transform: translateX(calc(var(--d) * (100% + var(--page-swap-gap)) * -1));
+  }
+}
+
+@keyframes pageSwapIn {
+  from {
+    opacity: var(--page-swap-out-opacity);
+    transform: translateX(calc(var(--d) * (100% + var(--page-swap-gap))));
+  }
+}
+
+@keyframes pageSwapFade {
+  from {
+    opacity: 0;
+  }
+}

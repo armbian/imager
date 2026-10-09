@@ -14,6 +14,7 @@ import { getAutoconfigProfiles, getAllowSystemDevices } from '../../hooks/useSet
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { POLLING, UI, EVENTS, qdlInstructionsKey } from '../../config';
+import { isProfileOfferedFor } from '../../config/autoconfig';
 import { ProfileMenu, ProfileWizard } from '../autoconfig';
 import { getDeviceColors } from '../../config/deviceColors';
 import { getDeviceType, devicesChanged, sortDevices } from '../../utils/deviceUtils';
@@ -35,6 +36,8 @@ interface DevicePanelProps {
   summary?: { label: string; value: string; sub?: string | null }[];
   /** Cached board photo shown at the top of the confirm summary. */
   boardImage?: string | null;
+  /** Selected board slug; profiles scoped to other boards are not offered */
+  boardSlug?: string | null;
   boardName?: string | null;
   /** Whether autoconfig profiles apply (Armbian images only; hidden for generic custom images). */
   supportsAutoconfig?: boolean;
@@ -50,6 +53,7 @@ export function DevicePanel({
   edlEntry,
   summary = [],
   boardImage,
+  boardSlug = null,
   boardName = null,
   supportsAutoconfig = true,
 }: DevicePanelProps) {
@@ -78,15 +82,24 @@ export function DevicePanel({
 
   // Opt-in autoconfig profile picker (flash-time only, Armbian images).
   const [menuOpen, setMenuOpen] = useState(false);
-  const [wizardOpen, setWizardOpen] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState('');
+  const [wizardOpen, setWizardOpen] = useState(false);
+  // A profile the wizard just created, picked once the reloaded list has it
+  const [pendingPickId, setPendingPickId] = useState<string | null>(null);
   const profileRowRef = useRef<HTMLButtonElement>(null);
+  const wizardBoard = useMemo(
+    () => (boardSlug && boardName ? { slug: boardSlug, name: boardName } : null),
+    [boardSlug, boardName]
+  );
 
   const { data: profilesData, reload: reloadProfiles } = useAsyncData<AutoconfigProfile[]>(
     () => (showAutoconfig ? getAutoconfigProfiles() : Promise.resolve([])),
     [showAutoconfig]
   );
-  const profiles = profilesData ?? [];
+  const profiles = useMemo(
+    () => (profilesData ?? []).filter((p) => isProfileOfferedFor(p, boardSlug)),
+    [profilesData, boardSlug]
+  );
   const selectedProfile = profiles.find((p) => p.id === selectedProfileId) ?? null;
 
   // Notify App of the opt-in selection; default "" means no profile (unchanged behaviour).
@@ -111,6 +124,20 @@ export function DevicePanel({
     window.addEventListener(EVENTS.PROFILES_CHANGED, onProfilesChanged);
     return () => window.removeEventListener(EVENTS.PROFILES_CHANGED, onProfilesChanged);
   }, [showAutoconfig, selectedProfileId, reloadProfiles, handleProfileChange]);
+
+  // A profile edited to another board scope is no longer offered here, so it cannot stay picked.
+  useEffect(() => {
+    if (!profilesData || !selectedProfileId || selectedProfile) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- drop a pick the board no longer offers
+    handleProfileChange('');
+  }, [profilesData, selectedProfileId, selectedProfile, handleProfileChange]);
+
+  useEffect(() => {
+    if (!pendingPickId || !profiles.some((p) => p.id === pendingPickId)) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- pick the new profile once the reloaded list offers it
+    setPendingPickId(null);
+    handleProfileChange(pendingPickId);
+  }, [pendingPickId, profiles, handleProfileChange]);
 
   const openWizard = useCallback(() => {
     setMenuOpen(false);
@@ -263,11 +290,14 @@ export function DevicePanel({
                     )}
                     {wizardOpen && (
                       <ProfileWizard
-                        boardName={boardName}
+                        board={wizardBoard}
                         boardImage={boardImage ?? null}
+                        fromFlash
                         returnFocusRef={profileRowRef}
                         onClose={() => setWizardOpen(false)}
-                        onCreated={(profile) => handleProfileChange(profile.id)}
+                        onCreated={(profile) => {
+                          if (isProfileOfferedFor(profile, boardSlug)) setPendingPickId(profile.id);
+                        }}
                       />
                     )}
                   </li>

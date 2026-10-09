@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import type { AutoconfigConfig, SshKeySource as KeyLookupSource, UserShell } from '../types';
+import type {
+  AutoconfigConfig,
+  AutoconfigProfile,
+  ProfileBoard,
+  SshKeySource as KeyLookupSource,
+  UserShell,
+} from '../types';
 import { staticIpErrors, trimmedOrUndefined, type StaticIpErrors } from '../utils';
 import { AUTOCONFIG } from './constants';
 
@@ -12,7 +18,6 @@ export const AUTOCONFIG_PLACEHOLDERS = {
   STATIC_MASK: '255.255.255.0',
   STATIC_GATEWAY: '192.168.1.1',
   STATIC_DNS: '8.8.8.8, 1.1.1.1',
-  LOCALE: 'en_US.UTF-8',
   SSH_KEYS_URL: 'https://github.com/username.keys',
   USER_NAME: 'armbian',
   USER_REAL_NAME: 'Armbian User',
@@ -69,11 +74,6 @@ export function getTimezones(): string[] {
   return ['UTC', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'Asia/Tokyo'];
 }
 
-/** Armbian applies locale and time zone only while it creates a full first user (twin: has_user in autoconfig.rs render_preset). */
-export function hasCompleteUser(c: AutoconfigConfig): boolean {
-  return !!(c.userName?.trim() && c.userPassword?.trim() && c.userRealName?.trim());
-}
-
 type StaticIpConfig = Pick<AutoconfigConfig, 'staticIp' | 'staticMask' | 'staticGateway' | 'staticDns'>;
 
 /** The static IP fields as they are saved and checked: trimmed, blank ones dropped. */
@@ -87,16 +87,9 @@ export function trimStaticIp<T extends StaticIpConfig>(c: T): T {
   };
 }
 
-export const STATIC_IP_FIELDS: readonly (keyof StaticIpErrors)[] = ['ip', 'mask', 'gateway', 'dns'];
-
 export function staticIpConfigErrors(c: StaticIpConfig): StaticIpErrors {
   const s = trimStaticIp(c);
   return staticIpErrors(s.staticIp, s.staticMask, s.staticGateway, s.staticDns);
-}
-
-// A bad static address (e.g. the subnet's broadcast .255) leaves a headless board unreachable.
-export function staticIpBlockingErrors(c: AutoconfigConfig): StaticIpErrors {
-  return c.applyNetwork && c.useStaticIp ? staticIpConfigErrors(c) : {};
 }
 
 /** Offset of an IANA time zone right now, as "UTC+2"; empty when the WebView cannot tell. */
@@ -147,6 +140,26 @@ export function profileGlyphs(c: AutoconfigConfig): ProfileGlyph[] {
   return glyphs;
 }
 
+// Twin of render_preset in src-tauri/src/autoconfig.rs: true when it would write nothing.
+export function presetIsEmpty(c: AutoconfigConfig): boolean {
+  const verbatim = (v?: string | null) => !!v;
+  const trimmed = (v?: string | null) => !!v?.trim();
+  return !(
+    c.applyNetwork === true ||
+    trimmed(c.locale) ||
+    trimmed(c.timezone) ||
+    typeof c.langBasedOnLocation === 'boolean' ||
+    verbatim(c.rootPassword) ||
+    trimmed(c.rootKeyUrl) ||
+    trimmed(c.userName) ||
+    verbatim(c.userPassword) ||
+    trimmed(c.userKeyUrl) ||
+    !!c.userShell ||
+    trimmed(c.userRealName) ||
+    trimmed(c.remoteConfigUrl)
+  );
+}
+
 /** Where public SSH keys come from: a forge account the app turns into a URL, or any link. */
 export type SshKeySource = 'github' | 'gitlab' | 'link';
 
@@ -171,96 +184,19 @@ export function forgeKeysUrl(forge: keyof typeof SSH_KEY_FORGES, user: string): 
   return `${SSH_KEY_FORGES[forge].prefix}${user.trim()}${SSH_KEYS_SUFFIX}`;
 }
 
+/** Inverse of forgeKeysUrl: the forge and a valid user, or null for any other link. */
+export function parseForgeKeysUrl(url: string): { forge: keyof typeof SSH_KEY_FORGES; user: string } | null {
+  for (const forge of Object.keys(SSH_KEY_FORGES) as (keyof typeof SSH_KEY_FORGES)[]) {
+    const prefix = SSH_KEY_FORGES[forge].prefix;
+    if (!url.startsWith(prefix) || !url.endsWith(SSH_KEYS_SUFFIX)) continue;
+    const user = url.slice(prefix.length, url.length - SSH_KEYS_SUFFIX.length);
+    if (isValidKeyUser(forge, user)) return { forge, user };
+  }
+  return null;
+}
+
 export function keyLookupSource(source: SshKeySource): KeyLookupSource {
   return source === 'link' ? 'url' : source;
-}
-
-/** "SHA256:7vN3...O2nM" shortened to its edges, as the key list shows it. */
-export function shortFingerprint(fingerprint: string): string {
-  const hash = fingerprint.slice(fingerprint.indexOf(':') + 1);
-  const edge = AUTOCONFIG.FINGERPRINT_EDGE;
-  return hash.length > edge * 2 ? `${hash.slice(0, edge)}\u2026${hash.slice(-edge)}` : hash;
-}
-
-/** Placeholder shown for secret values in the live preview. */
-const SECRET_MASK = '••••••••';
-
-/** Mirror of the Rust shell_quote: wrap in double quotes, escape \ " $ `. */
-function shellQuote(value: string): string {
-  let out = '"';
-  for (const ch of value) {
-    if (ch === '\\' || ch === '"' || ch === '$' || ch === '`') out += '\\';
-    out += ch;
-  }
-  return out + '"';
-}
-
-/** Live preview of the generated /root/.not_logged_in_yet file. */
-export interface PresetPreview {
-  content: string;
-  count: number;
-}
-
-/** Display-only twin of the Rust `render_preset`, which stays authoritative. */
-export function renderPresetPreview(c: AutoconfigConfig, revealSecrets = false): PresetPreview {
-  const lines: string[] = [];
-  const push = (key: string, value?: string, secret = false) => {
-    if (value === undefined || value === '') return;
-    const shown = secret && !revealSecrets ? SECRET_MASK : value;
-    lines.push(`${key}=${shellQuote(shown)}`);
-  };
-  // Twin of push_trimmed in autoconfig.rs: never used for passwords, the Wi-Fi key or the SSID.
-  const pushTrimmed = (key: string, value?: string) => push(key, trimmedOrUndefined(value));
-  const pushBool = (key: string, value?: boolean) => {
-    if (value === undefined) return;
-    lines.push(`${key}=${value ? '"1"' : '"0"'}`);
-  };
-
-  // Network keys are gated on the same flag the backend checks.
-  if (c.applyNetwork === true) {
-    pushBool('PRESET_NET_CHANGE_DEFAULTS', c.applyNetwork);
-    pushBool('PRESET_NET_ETHERNET_ENABLED', c.ethernetEnabled);
-    pushBool('PRESET_NET_WIFI_ENABLED', c.wifiEnabled);
-    // Wi-Fi credentials only when enabled, so stale SSID/key/country don't linger after toggling off.
-    if (c.wifiEnabled) {
-      push('PRESET_NET_WIFI_SSID', c.wifiSsid);
-      push('PRESET_NET_WIFI_KEY', c.wifiKey, true);
-      pushTrimmed('PRESET_NET_WIFI_COUNTRYCODE', c.wifiCountryCode);
-    }
-    pushBool('PRESET_NET_USE_STATIC', c.useStaticIp);
-    // Static address keys only when static IP enabled; otherwise stale values linger after toggling off.
-    if (c.useStaticIp) {
-      pushTrimmed('PRESET_NET_STATIC_IP', c.staticIp);
-      pushTrimmed('PRESET_NET_STATIC_MASK', c.staticMask);
-      pushTrimmed('PRESET_NET_STATIC_GATEWAY', c.staticGateway);
-      pushTrimmed('PRESET_NET_STATIC_DNS', c.staticDns);
-    }
-  }
-
-  // Armbian applies locale/timezone only during first-user creation; emit only when a full user is defined.
-  if (hasCompleteUser(c)) {
-    pushTrimmed('PRESET_LOCALE', c.locale);
-    pushTrimmed('PRESET_TIMEZONE', c.timezone);
-    if (c.langBasedOnLocation !== undefined) {
-      lines.push(`SET_LANG_BASED_ON_LOCATION=${c.langBasedOnLocation ? '"y"' : '"n"'}`);
-    }
-  }
-
-  push('PRESET_ROOT_PASSWORD', c.rootPassword, true);
-  pushTrimmed('PRESET_ROOT_KEY', c.rootKeyUrl);
-
-  pushTrimmed('PRESET_USER_NAME', c.userName);
-  push('PRESET_USER_PASSWORD', c.userPassword, true);
-  pushTrimmed('PRESET_USER_KEY', c.userKeyUrl);
-  if (c.userShell) lines.push(`PRESET_USER_SHELL=${shellQuote(c.userShell)}`);
-  pushTrimmed('PRESET_DEFAULT_REALNAME', c.userRealName);
-
-  pushTrimmed('PRESET_CONFIGURATION', c.remoteConfigUrl);
-
-  // Any preset declines first login's "Connect via wireless?" prompt, which nobody answers on a headless board.
-  if (lines.length > 0) lines.push('PRESET_CONNECT_WIRELESS="n"');
-
-  return { content: lines.join('\n'), count: lines.length };
 }
 
 /** ISO 3166-1 alpha-2 country code paired with an English display name. */
@@ -491,3 +427,15 @@ export const WIFI_COUNTRY_CODES: readonly CountryOption[] = [
   { code: 'ZM', name: 'Zambia' },
   { code: 'ZW', name: 'Zimbabwe' },
 ];
+
+/** An empty list means the profile is offered for every board */
+export function profileBoards(p: AutoconfigProfile): ProfileBoard[] {
+  return p.boards ?? [];
+}
+
+/** A null board (custom image with no known board) only gets the all-board profiles */
+export function isProfileOfferedFor(p: AutoconfigProfile, boardSlug: string | null): boolean {
+  const boards = profileBoards(p);
+  if (boards.length === 0) return true;
+  return boardSlug !== null && boards.some((b) => b.slug === boardSlug);
+}

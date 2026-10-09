@@ -174,6 +174,12 @@ export const QR_CODE = {
 
 /** UI dimension constants */
 export const UI = {
+  /** Boards row grid in px (GAP twins .boards-row__list); REMOVE_MS mirrors --pager-swap-out in styles/theme.css */
+  BOARDS_ROW: { MIN_CARD_WIDTH: 170, GAP: 12, MIN_SLOTS: 2, DEFAULT_SLOTS: 4, REMOVE_MS: 100 },
+  /** Joins the parts of a one-line summary (nav sub-lines, profile facts) */
+  SUMMARY_SEPARATOR: ' · ',
+  /** Joins list items where the WebView has no Intl.ListFormat */
+  LIST_SEPARATOR: ', ',
   /** Staggered animation timing for list/grid items */
   STAGGER: {
     MAX_INDEX: 18,
@@ -236,8 +242,6 @@ export const UI = {
     PROFILE_GLYPH: 11,
     WIZARD_ITEM: 14,
     WIZARD_TILE: 22,
-    WIZARD_SEG: 15,
-    WIZARD_HINT: 13,
   },
   /** Minimum margin between an anchored popover and the window edge */
   POPOVER_EDGE: 12,
@@ -245,7 +249,11 @@ export const UI = {
     WIDTH: 320,
     GAP: 8,
   },
-  PICKER: {
+  NEW_PROFILE_MENU: {
+    WIDTH: 300,
+  },
+  SELECT_MENU: {
+    MIN_WIDTH: 320,
     GAP: 6,
   },
   /** Depth zoom-through page transition; twins of the --settings-* custom properties in settings-page.css */
@@ -331,9 +339,6 @@ export const AUTOCONFIG = {
   WIFI_KEY_MIN: 8,
   WIFI_KEY_MAX: 63,
   KEY_LOOKUP_DEBOUNCE_MS: 600,
-  KEY_LOOKUP_VISIBLE_ROWS: 2,
-  /** Characters kept on each side of a shortened SHA256 fingerprint */
-  FINGERPRINT_EDGE: 4,
 } as const;
 
 /** Vendor/manufacturer constants */

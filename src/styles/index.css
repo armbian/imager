@@ -8,5 +8,14 @@
 @import './modal.css';
 @import './flash.css';
 @import './settings.css';
+@import './settings-controls.css';
+@import './settings-hero.css';
+@import './settings-page.css';
+@import './settings-general.css';
+@import './settings-sections.css';
+@import './cache-modal.css';
+@import './settings-about.css';
+@import './profiles-list.css';
+@import './profile-editor.css';
 @import './profile.css';
 @import './responsive.css';

@@ -182,11 +182,25 @@ export function formatDate(
   return parsed.toLocaleDateString(locale, { year: 'numeric', month, day: 'numeric' });
 }
 
+/** Items as a short list in the UI language; a plain comma list where the WebView has no Intl.ListFormat (macOS 10.15). */
+export function formatList(items: readonly string[], locale: string): string {
+  try {
+    return new Intl.ListFormat(locale, { type: 'unit' }).format(items);
+  } catch {
+    return items.join(UI.LIST_SEPARATOR);
+  }
+}
+
 /** Strip ANSI escape sequences (terminal colour codes) from `text` so it copies/exports as plain text. */
 export function stripAnsiCodes(text: string): string {
   // eslint-disable-next-line no-control-regex -- matching control chars is intentional
   const ansiEscapePattern = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
   return text.replace(ansiEscapePattern, '');
+}
+
+/** URL without its scheme, leading www. and trailing slash, for display. */
+export function displayUrl(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 }
 
 /** True when the string is a well-formed http(s) URL. */
@@ -266,6 +280,40 @@ export function staticIpErrors(ip?: string, mask?: string, gateway?: string, dns
 export function stripVendorPrefix(name: string, vendorName: string): string {
   if (!vendorName || !name.toLowerCase().startsWith(vendorName.toLowerCase())) return name;
   return name.slice(vendorName.length).trim() || name;
+}
+
+/** How well `text` matches a lowercase needle: 0 at the start, 1 at a word start, 2 inside, -1 no match. */
+export function matchRank(text: string, needle: string): number {
+  if (!needle) return 0;
+  const lower = text.toLowerCase();
+  const at = lower.indexOf(needle);
+  if (at < 0) return -1;
+  if (at === 0) return 0;
+  return /[\s\-_./]/.test(lower[at - 1]) ? 1 : 2;
+}
+
+/** Best rank of a needle across several fields, -1 when none matches. */
+export function bestMatchRank(fields: readonly string[], needle: string): number {
+  let best = -1;
+  for (const field of fields) {
+    const rank = matchRank(field, needle);
+    if (rank >= 0 && (best < 0 || rank < best)) best = rank;
+  }
+  return best;
+}
+
+/** Splits text around the first case-insensitive match of a needle, or null when it does not occur. */
+export function splitMatch(text: string, needle: string): [string, string, string] | null {
+  if (!needle) return null;
+  const at = text.toLowerCase().indexOf(needle.toLowerCase());
+  if (at < 0) return null;
+  return [text.slice(0, at), text.slice(at, at + needle.length), text.slice(at + needle.length)];
+}
+
+/** Two-letter monogram for a brand without a logo: the first letters of two words, else its first two letters. */
+export function vendorInitials(name: string): string {
+  const words = name.replace(/([a-z])([A-Z])/g, '$1 $2').split(/[\s/-]+/).filter(Boolean);
+  return (words.length > 1 ? words[0][0] + words[1][0] : name.slice(0, 2)).toUpperCase();
 }
 
 /** Branded OS identity (title + meta) for home OS row and flash header. API images use structured fields;
@@ -399,4 +447,13 @@ export function sleep(ms: number): Promise<void> {
 
 export function tailPath(path: string, segments = 1): string {
   return path.split(/[\\/]/).filter(Boolean).slice(-segments).join('/') || path;
+}
+
+/** Focuses an element moved to by code; after a mouse action it is marked so the keyboard ring stays hidden. */
+export function focusAfterInput(el: HTMLElement, byPointer: boolean): void {
+  if (byPointer) {
+    el.setAttribute(UI.POINTER_FOCUS_ATTR, '');
+    el.addEventListener('blur', () => el.removeAttribute(UI.POINTER_FOCUS_ATTR), { once: true });
+  }
+  el.focus({ preventScroll: true });
 }
