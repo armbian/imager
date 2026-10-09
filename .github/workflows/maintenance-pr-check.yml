@@ -9,9 +9,25 @@ on:
       - "LICENSE"
       - ".gitignore"
       - ".env*"
-      - ".github/**"
       - "images/**"
-      - "scripts/**"
+      - "releases/**"
+      - "build/**"
+      - "dist/**"
+      - "*.png"
+      - "*.jpg"
+      - "*.jpeg"
+      - "*.gif"
+      - "*.svg"
+      - "*.ico"
+  # Pushes to main only warm the caches; PR runs restore them (PR caches are not shared across PRs).
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
+      - ".env*"
+      - "images/**"
       - "releases/**"
       - "build/**"
       - "dist/**"
@@ -22,20 +38,19 @@ on:
       - "*.svg"
       - "*.ico"
 
-# Cancel in-progress runs for the same PR
+# Cancel superseded runs of the same PR; pushes to main never cancel each other
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
-run-name: "PR #${{ github.event.pull_request.number }}"
+run-name: "${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.pull_request.number) || format('main {0}', github.sha) }}"
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  TAURI_CLI_VERSION: '2.9.6'
 
 jobs:
   # ===========================================
@@ -53,22 +68,34 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - name: Restore npm cache
+        id: npm-cache
+        uses: actions/cache/restore@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Save npm cache
+        if: github.event_name == 'push' && steps.npm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Run ESLint
         run: npm run lint
 
       - name: TypeScript type check
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit -p tsconfig.app.json
+
+      - name: Check locale parity
+        run: node scripts/locales/check-parity.mjs
+
+      - name: Check version sync
+        run: bash scripts/build/check-version-sync.sh
 
   # ===========================================
   # Rust Checks (runs once, platform-independent)
@@ -96,16 +123,22 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - name: Restore npm cache
+        id: npm-cache
+        uses: actions/cache/restore@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Save npm cache
+        if: github.event_name == 'push' && steps.npm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Build frontend
         run: npm run build
@@ -120,7 +153,8 @@ jobs:
         with:
           workspaces: "src-tauri -> target"
           cache-on-failure: true
-          shared-key: "v1-linux-x64"
+          save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          shared-key: "v1-linux-x64-lint"
 
       - name: Check formatting
         working-directory: src-tauri
@@ -165,6 +199,7 @@ jobs:
         with:
           workspaces: "src-tauri -> target"
           cache-on-failure: true
+          save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           shared-key: "v1-windows-x64-lint"
 
       - name: Run Clippy
@@ -216,7 +251,11 @@ jobs:
       - name: Set trunk version and disable signing/updater
         shell: bash
         run: |
-          VERSION="0.0.0-pr.${{ github.event.pull_request.number }}"
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            VERSION="0.0.0-pr.${{ github.event.pull_request.number }}"
+          else
+            VERSION="0.0.0-main.${{ github.run_number }}"
+          fi
           echo "Setting version to $VERSION"
           echo "Disabling code signing and updater for test builds"
 
@@ -264,13 +303,12 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - name: Restore npm cache
+        id: npm-cache
+        uses: actions/cache/restore@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          path: ${{ runner.os == 'Windows' && '~\AppData\Local\npm-cache' || '~/.npm' }}
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -280,26 +318,21 @@ jobs:
         with:
           workspaces: "src-tauri -> target"
           cache-on-failure: true
+          save-if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           shared-key: "v1-${{ matrix.platform }}"
-
-      - name: Cache Tauri CLI
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin
-          key: tauri-cli-${{ matrix.platform }}-${{ env.TAURI_CLI_VERSION }}
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Tauri CLI
-        shell: bash
-        run: |
-          if ! command -v cargo-tauri >/dev/null 2>&1; then
-            cargo install tauri-cli --version "${TAURI_CLI_VERSION}" --locked
-          fi
+      - name: Save npm cache
+        if: github.event_name == 'push' && steps.npm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.os == 'Windows' && '~\AppData\Local\npm-cache' || '~/.npm' }}
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Build application
-        run: cargo tauri build --bundles ${{ matrix.bundles }}
+        run: npx tauri build --bundles ${{ matrix.bundles }}
 
       - name: Check release binary has no dev scenarios
         shell: bash
@@ -317,6 +350,7 @@ jobs:
         run: ./scripts/build/appimage-unbundle-wayland.sh
 
       - name: Upload artifacts
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}
@@ -338,32 +372,31 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
+      - name: Restore npm cache
+        id: npm-cache
+        uses: actions/cache/restore@v4
         with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Save npm cache
+        if: github.event_name == 'push' && steps.npm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Run npm audit
         run: npm audit --audit-level=high
         continue-on-error: true
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo-audit
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin/cargo-audit
-          key: cargo-audit-${{ runner.os }}
-
       - name: Install cargo-audit
-        run: cargo install cargo-audit --locked || true
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
 
       # Ignore list and unsound/yanked deny live in src-tauri/.cargo/audit.toml
       - name: Run cargo audit
