@@ -38,8 +38,10 @@ function AppContent() {
   const [isFlashing, setIsFlashing] = useState(false);
   const [settledFlashExit, setSettledFlashExit] = useState<FlashExit | null>(null);
   const [selectionEpoch, setSelectionEpoch] = useState(0);
-  // Shown on every launch until the user hits "Start now"
-  const [showWelcome, setShowWelcome] = useState(true);
+  // null until the stored preference is read, so neither page flashes at startup
+  const [welcomeState, setShowWelcome] = useState<boolean | null>(null);
+  const welcomeKnown = welcomeState !== null;
+  const showWelcome = welcomeState ?? true;
   // One-shot entrance animation window: true only while the main UI staggers in
   const [entering, setEntering] = useState(false);
   const prevShowWelcomeRef = useRef(showWelcome);
@@ -70,10 +72,12 @@ function AppContent() {
   useEffect(() => {
     getShowWelcome()
       .then((show) => {
-        if (!show) setShowWelcome(false);
+        // A first known "off" is a plain start, not a welcome->main transition
+        if (!show) prevShowWelcomeRef.current = false;
+        setShowWelcome(!!show);
       })
       .catch(() => {
-        // Keep showing the welcome page on failure
+        setShowWelcome(true);
       });
   }, []);
 
@@ -496,7 +500,7 @@ function AppContent() {
           isFlashing ? '' : showWelcome ? ' main-content--welcome' : ' main-content--home'
         }`}
       >
-        {isFlashing ? (
+        {!welcomeKnown && !isFlashing ? null : isFlashing ? (
           selectedBoard && selectedImage && selectedDevice && (
             <FlashProgress
               board={selectedBoard}
