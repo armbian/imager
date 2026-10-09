@@ -3,7 +3,7 @@
 
 import { UI } from '../config';
 
-const { ALPHA_MIN, MAX_SCALE, SAMPLE_MAX, LIGHT_INK, PLATE_COVERAGE } = UI.IMAGE_FIT;
+const { ALPHA_MIN, MAX_SCALE, SAMPLE_MAX, LIGHT_INK, PLATE_COVERAGE, LIGHT_VISIBLE_MAX, VISIBLE_LUM, VISIBLE_CHROMA } = UI.IMAGE_FIT;
 
 /** Opaque content of an image as fractions of its natural size, and whether that content is light ink */
 interface OpaqueBounds {
@@ -40,12 +40,18 @@ function opaqueBounds(img: HTMLImageElement): OpaqueBounds | null {
       let maxY = -1;
       let ink = 0;
       let lum = 0;
+      let visible = 0;
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
           const i = (y * w + x) * 4;
           if (data[i + 3] <= ALPHA_MIN) continue;
           ink++;
-          lum += (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]) / 255;
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const l = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+          lum += l;
+          if (l < VISIBLE_LUM || (Math.max(r, g, b) - Math.min(r, g, b)) / 255 > VISIBLE_CHROMA) visible++;
           if (x < minX) minX = x;
           if (x > maxX) maxX = x;
           if (y < minY) minY = y;
@@ -60,7 +66,8 @@ function opaqueBounds(img: HTMLImageElement): OpaqueBounds | null {
           y: minY / h,
           w: bw / w,
           h: bh / h,
-          light: lum / ink > LIGHT_INK && ink / (bw * bh) < PLATE_COVERAGE,
+          // A mostly white mark with coloured lettering (Khadas) already reads on the light plate
+          light: lum / ink > LIGHT_INK && ink / (bw * bh) < PLATE_COVERAGE && visible / ink < LIGHT_VISIBLE_MAX,
         };
       }
     }

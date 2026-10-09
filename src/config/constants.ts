@@ -311,6 +311,11 @@ export const UI = {
     LIGHT_INK: 0.8,
     /** Ink covering more of its own box than this is an opaque plate, not light lettering */
     PLATE_COVERAGE: 0.9,
+    /** Share of ink that already reads on white (dark or saturated) above which a light logo keeps the light plate */
+    LIGHT_VISIBLE_MAX: 0.05,
+    /** Luminance and chroma that make a pixel read on white */
+    VISIBLE_LUM: 0.7,
+    VISIBLE_CHROMA: 0.4,
   },
   /** Editor action bar slide-down; mirrors --action-bar-out in styles/theme.css */
   ACTION_BAR: {
