@@ -34,7 +34,7 @@ pub const TAG_QDL_ERROR: &str = "[QDL_ERROR]";
 
 pub const QDL_CANCELLED_ERROR: &str = "QDL flash cancelled by user";
 
-/// `FlashState.qdl.stage` values; src/hooks/useFlashOperation.ts matches them.
+/// `FlashState.qdl.stage` values; twin of QDL_STAGE in src/config/constants.ts.
 pub const STAGE_CONNECTING: &str = "connecting";
 pub const STAGE_SAHARA: &str = "sahara";
 pub const STAGE_CONFIGURING: &str = "configuring";

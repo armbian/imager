@@ -35,6 +35,9 @@
     "complete": "Flash voltooid!",
     "failed": "Er is een fout opgetreden",
     "cancel": "Annuleren",
+    "cancelledTitle": "Flash geannuleerd",
+    "cancelledNothingWritten": "Er is niets naar het board geschreven.",
+    "cancelledPartlyWritten": "Het board is maar gedeeltelijk beschreven. Flash het opnieuw voordat je het gebruikt.",
     "retry": "Opnieuw proberen",
     "done": "Klaar",
     "flashAnother": "Nog een flashen",
@@ -181,6 +184,7 @@
     "unknown": "Onbekend",
     "confirm": "Bevestigen",
     "cancel": "Annuleren",
+    "back": "Terug",
     "showPassword": "Wachtwoord tonen",
     "hidePassword": "Wachtwoord verbergen",
     "close": "Sluiten"

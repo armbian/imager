@@ -35,6 +35,9 @@
     "complete": "Zapis zakończony!",
     "failed": "Coś poszło nie tak",
     "cancel": "Anuluj",
+    "cancelledTitle": "Zapis anulowany",
+    "cancelledNothingWritten": "Nic nie zapisano na płytce.",
+    "cancelledPartlyWritten": "Płytka została zapisana tylko częściowo. Zapisz ją ponownie przed użyciem.",
     "retry": "Ponów",
     "done": "Gotowe",
     "flashAnother": "Zapisz kolejny",
@@ -181,6 +184,7 @@
     "unknown": "Nieznany",
     "confirm": "Potwierdź",
     "cancel": "Anuluj",
+    "back": "Wstecz",
     "showPassword": "Pokaż hasło",
     "hidePassword": "Ukryj hasło",
     "close": "Zamknij"

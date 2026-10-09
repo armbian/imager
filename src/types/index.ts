@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import type { FLASH_PREP_STAGE } from '../config/constants';
+import { QDL_STAGE, type FLASH_PREP_STAGE } from '../config/constants';
 
 export interface BoardInfo {
   slug: string;
@@ -191,6 +191,13 @@ export type FlashPrepStage = (typeof FLASH_PREP_STAGE)[keyof typeof FLASH_PREP_S
 /** A freshly reset flash state: nothing prepared, written or verified yet. */
 export function isIdleFlashProgress(prog: FlashProgress): boolean {
   return !prog.prep_stage && !prog.qdl_stage && !prog.is_verifying && prog.written_bytes === 0;
+}
+
+const QDL_PRE_WRITE_STAGES: readonly string[] = [QDL_STAGE.CONNECTING, QDL_STAGE.SAHARA, QDL_STAGE.CONFIGURING];
+
+/** True once a QDL flash has gone past the handshake and may have changed the board's storage. */
+export function isQdlWriteStage(stage: string | null): boolean {
+  return !!stage && !QDL_PRE_WRITE_STAGES.includes(stage);
 }
 
 /** Represents a Qualcomm device in EDL mode detected via USB */

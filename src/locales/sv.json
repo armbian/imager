@@ -35,6 +35,9 @@
     "complete": "Flashningen är klar!",
     "failed": "Något gick fel",
     "cancel": "Avbryt",
+    "cancelledTitle": "Flashningen avbröts",
+    "cancelledNothingWritten": "Ingenting skrevs till kortet.",
+    "cancelledPartlyWritten": "Kortet skrevs bara delvis. Flasha det igen innan du använder det.",
     "retry": "Försök igen",
     "done": "Klar",
     "flashAnother": "Flasha en till",
@@ -181,6 +184,7 @@
     "unknown": "Okänd",
     "confirm": "Bekräfta",
     "cancel": "Avbryt",
+    "back": "Tillbaka",
     "showPassword": "Visa lösenord",
     "hidePassword": "Dölj lösenord",
     "close": "Stäng"

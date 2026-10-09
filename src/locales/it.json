@@ -35,6 +35,9 @@
     "complete": "Scrittura completata!",
     "failed": "Qualcosa è andato storto",
     "cancel": "Annulla",
+    "cancelledTitle": "Scrittura annullata",
+    "cancelledNothingWritten": "Non è stato scritto nulla sulla scheda.",
+    "cancelledPartlyWritten": "La scheda è stata scritta solo in parte. Riscrivila prima di usarla.",
     "retry": "Riprova",
     "done": "Fatto",
     "flashAnother": "Scrivi un'altra immagine",
@@ -181,6 +184,7 @@
     "unknown": "Sconosciuto",
     "confirm": "Conferma",
     "cancel": "Annulla",
+    "back": "Indietro",
     "showPassword": "Mostra password",
     "hidePassword": "Nascondi password",
     "close": "Chiudi"

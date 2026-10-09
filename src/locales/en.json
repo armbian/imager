@@ -35,6 +35,9 @@
     "complete": "Flash complete!",
     "failed": "Something went wrong",
     "cancel": "Cancel",
+    "cancelledTitle": "Flash cancelled",
+    "cancelledNothingWritten": "Nothing was written to the board.",
+    "cancelledPartlyWritten": "The board was only partly written. Flash it again before using it.",
     "retry": "Retry",
     "done": "Done",
     "flashAnother": "Flash Another",
@@ -181,6 +184,7 @@
     "unknown": "Unknown",
     "confirm": "Confirm",
     "cancel": "Cancel",
+    "back": "Back",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "close": "Close"

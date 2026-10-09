@@ -35,6 +35,9 @@
     "complete": "書き込みが完了しました！",
     "failed": "問題が発生しました",
     "cancel": "キャンセル",
+    "cancelledTitle": "書き込みをキャンセルしました",
+    "cancelledNothingWritten": "ボードには何も書き込まれていません。",
+    "cancelledPartlyWritten": "ボードへの書き込みは途中までです。使用する前にもう一度書き込んでください。",
     "retry": "再試行",
     "done": "完了",
     "flashAnother": "別のイメージを書き込む",
@@ -181,6 +184,7 @@
     "unknown": "不明",
     "confirm": "確認",
     "cancel": "キャンセル",
+    "back": "戻る",
     "showPassword": "パスワードを表示",
     "hidePassword": "パスワードを非表示",
     "close": "閉じる"

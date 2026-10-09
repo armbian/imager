@@ -15,6 +15,7 @@ import { useFlashOperation } from '../../hooks/useFlashOperation';
 import { FlashStageIcon, getStageKey, isIndeterminateStage } from './FlashStageIcon';
 import { FlashActions } from './FlashActions';
 import { FlashPhaseDots } from './FlashPhaseDots';
+import { FlashCancelled } from './FlashCancelled';
 import { ErrorDisplay, MarqueeText, ConfirmationDialog, BoardImage } from '../shared';
 
 interface FlashProgressProps {
@@ -47,6 +48,7 @@ export function FlashProgress({
     error,
     showShaWarning,
     verifyAborted,
+    cancelledAfterWrite,
     handleCancel,
     handleRetry,
     handleBack,
@@ -70,11 +72,12 @@ export function FlashProgress({
   // Stages with a breathing bar instead of a percentage.
   const isIndeterminate = isIndeterminateStage(stage);
 
-  const showHeader = stage !== 'authorizing' && stage !== 'error';
   const isError = stage === 'error';
+  const isCancelled = stage === 'cancelled';
   const isComplete = stage === 'complete';
-  const settled = isError || isComplete;
-  const settledExit = useEffectEvent(() => (isError ? handleBack : onComplete));
+  const showHeader = stage !== 'authorizing' && !isError && !isCancelled;
+  const settled = isError || isCancelled || isComplete;
+  const settledExit = useEffectEvent(() => (isComplete ? onComplete : handleBack));
 
   useEffect(() => {
     if (!settled || !onSettledChange) return;
@@ -206,6 +209,8 @@ export function FlashProgress({
           onRetry={handleRetry}
           onCancel={handleBack}
         />
+      ) : isCancelled ? (
+        <FlashCancelled partlyWritten={cancelledAfterWrite} onRetry={handleRetry} onBack={handleBack} />
       ) : (
         // Authorizing (pkexec): narrow centered status column.
         <div className="flash-fallback">

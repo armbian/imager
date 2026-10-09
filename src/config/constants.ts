@@ -9,6 +9,19 @@ export const FLASH_PREP_STAGE = {
   APPLYING_PROFILE: 'applying_profile',
 } as const;
 
+/** `qdl_stage` values from get_flash_progress; twin of qdl::STAGE_* in Rust */
+export const QDL_STAGE = {
+  CONNECTING: 'connecting',
+  SAHARA: 'sahara',
+  CONFIGURING: 'configuring',
+  PROVISIONING: 'provisioning',
+  FIREHOSE: 'firehose',
+  PATCHING: 'patching',
+  RESETTING: 'resetting',
+  COMPLETE: 'complete',
+  PARTITION_PREFIX: 'partition:',
+} as const;
+
 /** Polling intervals in milliseconds */
 export const POLLING = {
   DEVICE_CHECK: 2000,

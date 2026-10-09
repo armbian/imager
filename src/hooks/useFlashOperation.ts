@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageInfo, BlockDevice, AutoconfigConfig } from '../types';
-import { FLASH_METHOD, deriveFlashMethod, isEdlMethod, isIdleFlashProgress } from '../types';
+import { FLASH_METHOD, deriveFlashMethod, isEdlMethod, isIdleFlashProgress, isQdlWriteStage } from '../types';
 import { PHASE_ORDER, type FlashStage, type FlashPhase } from '../components/flash/FlashStageIcon';
 import {
   downloadImage,
@@ -28,7 +28,7 @@ import {
   listCachedImages,
 } from './useTauri';
 import { getSkipVerify } from './useSettings';
-import { POLLING, CACHE, STORAGE_KEYS, FLASH_PREP_STAGE } from '../config';
+import { POLLING, CACHE, STORAGE_KEYS, FLASH_PREP_STAGE, QDL_STAGE } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
 import { isDeviceRefusalError, isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
 
@@ -52,6 +52,8 @@ interface UseFlashOperationReturn {
   imagePath: string | null;
   showShaWarning: boolean;
   verifyAborted: boolean;
+  /** An EDL flash cancelled after the board's storage started to change. */
+  cancelledAfterWrite: boolean;
   handleCancel: () => Promise<void>;
   handleRetry: () => Promise<void>;
   handleBack: () => Promise<void>;
@@ -107,6 +109,7 @@ export function useFlashOperation({
   const [imagePath, setImagePath] = useState<string | null>(null);
   const [showShaWarning, setShowShaWarning] = useState(false);
   const [verifyAborted, setVerifyAborted] = useState(false);
+  const [cancelledAfterWrite, setCancelledAfterWrite] = useState(false);
 
   // Refs for lifecycle management
   const intervalRef = useRef<number | null>(null);
@@ -169,9 +172,10 @@ export function useFlashOperation({
     }
   }, []);
 
-  /** Single exit into the error screen: never empty, honors the precedence latch. */
+  /** Single exit into the error screen: never empty, honors the precedence latch, never covers a cancel. */
   const failFlash = useCallback(
     (message: string, specific = true) => {
+      if (userCancelledRef.current) return;
       if (shownErrorRef.current === 'specific') return;
       if (shownErrorRef.current === 'generic' && !specific) return;
       shownErrorRef.current = specific ? 'specific' : 'generic';
@@ -299,6 +303,7 @@ export function useFlashOperation({
     intervalRef.current = window.setInterval(async () => {
       try {
         const prog = await getDownloadProgress();
+        if (isAborted()) return;
 
         if (prog.is_verifying_sha && stage !== 'verifying_sha') {
           setStage('verifying_sha');
@@ -365,7 +370,7 @@ export function useFlashOperation({
     intervalRef.current = window.setInterval(async () => {
       try {
         const prog = await getFlashProgress();
-        if (prog.is_waiting) return;
+        if (prog.is_waiting || isAborted()) return;
 
         if (prepRef.current !== 'none') {
           if (prog.prep_stage) {
@@ -381,11 +386,15 @@ export function useFlashOperation({
 
         const preparing = prepRef.current !== 'none';
         if (!preparing && prog.is_qdl_mode && prog.qdl_stage) {
-          if (prog.qdl_stage === 'sahara' || prog.qdl_stage === 'connecting' || prog.qdl_stage === 'configuring' || prog.qdl_stage === 'provisioning') {
+          const qdlStage = prog.qdl_stage;
+          if (isQdlWriteStage(qdlStage)) {
+            flashWriteSeenRef.current = true;
+          }
+          if (qdlStage === QDL_STAGE.SAHARA || qdlStage === QDL_STAGE.CONNECTING || qdlStage === QDL_STAGE.CONFIGURING || qdlStage === QDL_STAGE.PROVISIONING) {
             setStage('qdl_sahara');
-          } else if (prog.qdl_stage.startsWith('partition:') || prog.qdl_stage === 'firehose' || prog.qdl_stage === 'patching') {
+          } else if (qdlStage.startsWith(QDL_STAGE.PARTITION_PREFIX) || qdlStage === QDL_STAGE.FIREHOSE || qdlStage === QDL_STAGE.PATCHING) {
             setStage('qdl_firehose');
-          } else if (prog.qdl_stage === 'complete' || prog.qdl_stage === 'resetting') {
+          } else if (qdlStage === QDL_STAGE.COMPLETE || qdlStage === QDL_STAGE.RESETTING) {
             // Done/resetting: don't trigger a device-disconnect error
             return;
           }
@@ -394,8 +403,9 @@ export function useFlashOperation({
             maxProgressRef.current = prog.progress_percent;
             setProgress(prog.progress_percent);
           }
-        } else if (!preparing) {
+        } else if (!preparing && !isEdlFlash) {
           // A non-verifying poll means this run is actually writing: open the latch.
+          // An EDL run reports no block progress before QDL starts (extraction, loader fetch), so only its QDL stage counts.
           if (!prog.is_verifying) {
             flashWriteSeenRef.current = true;
           }
@@ -569,6 +579,18 @@ export function useFlashOperation({
 
   // === Public action handlers ===
 
+  // The last poll can predate the step past the handshake, so ask once more.
+  const boardWriteStarted = async (): Promise<boolean> => {
+    if (flashWriteSeenRef.current) return true;
+    if (!isEdlFlash) return false;
+    try {
+      const prog = await getFlashProgress();
+      return prog.is_qdl_mode && isQdlWriteStage(prog.qdl_stage);
+    } catch {
+      return false;
+    }
+  };
+
   const handleCancel = async () => {
     userCancelledRef.current = true;
     try {
@@ -586,10 +608,9 @@ export function useFlashOperation({
       }
       // EDL: stay put so the blocking flash command can detect cancel and clean up
       if (isEdlFlash) {
-        setStage('authorizing');
+        setCancelledAfterWrite(await boardWriteStarted());
         setProgress(0);
-        setError(t('flash.cancel'));
-        setStage('error');
+        setStage('cancelled');
       } else {
         await cleanupImageSafely(imagePath, image.is_custom);
         onBack();
@@ -704,6 +725,7 @@ export function useFlashOperation({
     imagePath,
     showShaWarning,
     verifyAborted,
+    cancelledAfterWrite,
     handleCancel,
     handleRetry,
     handleBack,
