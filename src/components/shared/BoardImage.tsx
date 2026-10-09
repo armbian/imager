@@ -8,10 +8,11 @@ interface BoardImageProps {
   src?: string | null;
   alt: string;
   className?: string;
+  onLoad?: (event: React.SyntheticEvent<HTMLImageElement>) => void;
 }
 
 // Board photo with a faded Armbian wordmark watermark fallback when missing or it errors.
-export function BoardImage({ src, alt, className }: BoardImageProps) {
+export function BoardImage({ src, alt, className, onLoad }: BoardImageProps) {
   const [failed, setFailed] = useState(false);
   const [lastSrc, setLastSrc] = useState(src);
 
@@ -30,5 +31,5 @@ export function BoardImage({ src, alt, className }: BoardImageProps) {
     );
   }
 
-  return <img src={src} alt={alt} className={className} onError={() => setFailed(true)} />;
+  return <img src={src} alt={alt} className={className} onLoad={onLoad} onError={() => setFailed(true)} />;
 }

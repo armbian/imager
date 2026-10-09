@@ -132,7 +132,7 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
             })}
           </div>
 
-          <GridPager pageCount={pageCount} page={safePage} onChange={setPage} />
+          <GridPager compact pageCount={pageCount} page={safePage} onChange={setPage} />
         </>
       )}
     </div>
