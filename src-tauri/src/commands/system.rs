@@ -230,7 +230,7 @@ pub async fn check_connectivity() -> bool {
 // Armbian System Detection
 
 /// Board identification read from /etc/armbian-release
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ArmbianReleaseInfo {
     pub board: String,
     pub board_name: String,
@@ -239,6 +239,11 @@ pub struct ArmbianReleaseInfo {
 /// Parse /etc/armbian-release (Linux only); None when absent or unreadable
 #[tauri::command]
 pub fn get_armbian_release() -> Option<ArmbianReleaseInfo> {
+    #[cfg(debug_assertions)]
+    if let Some(info) = super::dev_scenarios::armbian_release_override() {
+        return Some(info);
+    }
+
     #[cfg(target_os = "linux")]
     {
         use std::fs;

@@ -9,6 +9,7 @@ import { DevFlash } from './DevFlash';
 import { DevVdisks } from './DevVdisks';
 import { DevNetwork } from './DevNetwork';
 import { DevApp } from './DevApp';
+import { DevHost } from './DevHost';
 import {
   changedSections,
   DEV_SCENARIOS,
@@ -23,7 +24,7 @@ import {
 } from '../../config/devScenarios';
 import { readLocalJson, writeLocalJson } from '../../utils/storage';
 import type { DevScenarioApi } from '../../hooks/useDevScenario';
-import type { CustomImageInfo, DevScenariosStatus } from '../../types';
+import type { ArmbianDetectionOutcome, CustomImageInfo, DevScenariosStatus } from '../../types';
 
 const { ICON_SIZE, DRAWER_ID, TITLE } = DEV_SCENARIOS;
 const PANEL_ID = `${DRAWER_ID}-panel`;
@@ -45,6 +46,7 @@ interface DevDrawerProps {
   onClose: () => void;
   onUseCustomImage: (image: CustomImageInfo) => Promise<void>;
   onResetFlow: (() => void) | null;
+  onRunArmbianDetection: (() => Promise<ArmbianDetectionOutcome>) | null;
   ref?: Ref<HTMLDivElement>;
 }
 
@@ -60,6 +62,7 @@ export function DevDrawer({
   onClose,
   onUseCustomImage,
   onResetFlow,
+  onRunArmbianDetection,
   ref,
 }: DevDrawerProps) {
   const [section, setSection] = useState<DevSectionId>(initialSection);
@@ -101,6 +104,8 @@ export function DevDrawer({
         return <DevVdisks dev={dev} status={status} />;
       case DEV_SECTION.NETWORK:
         return <DevNetwork dev={dev} status={status} onResetFlow={onResetFlow} />;
+      case DEV_SECTION.HOST:
+        return <DevHost dev={dev} status={status} onRunDetection={onRunArmbianDetection} />;
       case DEV_SECTION.APP:
         return <DevApp />;
       default:
@@ -168,7 +173,7 @@ export function DevDrawer({
             <h2 className="dev-pane__title">{current.title}</h2>
             <p className={`dev-pane__status${active || updateSimulated ? ' is-active' : ''}`} role="status">
               <span className="dev-pane__dot" aria-hidden="true" />
-              <span className="dev-pane__status-text">{devStatusText(active, preset?.label ?? null, updateSimulated)}</span>
+              <span className="dev-pane__status-text">{devStatusText(status, updateSimulated)}</span>
             </p>
           </div>
           <button type="button" className="dev-icon-btn" aria-label={`Close ${TITLE.toLowerCase()}`} title="Close" onClick={onClose}>

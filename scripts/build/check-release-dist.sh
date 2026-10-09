@@ -22,6 +22,7 @@ readonly FORBIDDEN=(
     'hideRealDevices'
     'dev-vdisks'
     'dev-test-images'
+    'armbian-dev-host-changed'
 )
 
 log_info() { echo "[check-release-dist] $*"; }

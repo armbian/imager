@@ -250,6 +250,9 @@ export interface ArmbianReleaseInfo {
   board_name: string; // e.g., "Orange Pi 5" - Human-readable board name for display
 }
 
+/** Where a host detection run stopped: the detection mode it applied, or why it applied none */
+export type ArmbianDetectionOutcome = 'modal' | 'auto' | 'disabled' | 'notArmbian' | 'unknownBoard' | 'failed';
+
 /** Where a profile's public SSH keys come from (lookup_ssh_keys) */
 export type SshKeySource = 'github' | 'gitlab' | 'url';
 
@@ -369,6 +372,8 @@ export interface DevScenario {
   edlDevices: DevFakeEdlDevice[];
   flash: DevFlashSim;
   network: DevNetworkSim;
+  /** What getArmbianRelease reports instead of /etc/armbian-release, on every platform */
+  armbianHost: ArmbianReleaseInfo | null;
 }
 
 export interface DevPreset {

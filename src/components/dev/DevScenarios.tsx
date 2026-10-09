@@ -13,7 +13,7 @@ import { useWindowFullscreen } from '../../hooks/useWindowFullscreen';
 import { logWarn } from '../../hooks/useTauri';
 import { DEV_SCENARIOS, devRootPlatformClass, devShortcutLabel } from '../../config/devScenarios';
 import { getErrorMessage } from '../../utils';
-import type { CustomImageInfo } from '../../types';
+import type { ArmbianDetectionOutcome, CustomImageInfo } from '../../types';
 import '../../styles/dev.css';
 
 interface DevScenariosProps {
@@ -22,12 +22,20 @@ interface DevScenariosProps {
   isConfirming: boolean;
   onUseCustomImage: (image: CustomImageInfo) => Promise<void>;
   onResetFlow: (() => void) | null;
+  onRunArmbianDetection: (() => Promise<ArmbianDetectionOutcome>) | null;
 }
 
 const SHORTCUT = devShortcutLabel();
 const ROOT_CLASS = ['dev-root', devRootPlatformClass()].filter(Boolean).join(' ');
 
-export default function DevScenarios({ hidden, isFlashing, isConfirming, onUseCustomImage, onResetFlow }: DevScenariosProps) {
+export default function DevScenarios({
+  hidden,
+  isFlashing,
+  isConfirming,
+  onUseCustomImage,
+  onResetFlow,
+  onRunArmbianDetection,
+}: DevScenariosProps) {
   const dev = useDevScenario();
   const fullscreen = useWindowFullscreen();
   const { simulated, clear: clearSimulatedUpdate } = useSimulatedUpdate();
@@ -115,6 +123,7 @@ export default function DevScenarios({ hidden, isFlashing, isConfirming, onUseCu
           onClose={handleClose}
           onUseCustomImage={onUseCustomImage}
           onResetFlow={onResetFlow}
+          onRunArmbianDetection={onRunArmbianDetection}
         />
       )}
       <DevLauncher ref={launcherRef} open={open} active={active} shortcut={SHORTCUT} onToggle={toggle} />

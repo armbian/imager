@@ -10,6 +10,7 @@ use serde::Serialize;
 use tauri::AppHandle;
 
 use crate::autoconfig::{prepare_working_copy, AutoconfigConfig};
+use crate::commands::system::ArmbianReleaseInfo;
 use crate::config::dev;
 #[cfg(target_os = "macos")]
 use crate::config::devices::BUS_USB;
@@ -121,14 +122,15 @@ fn install(scenario: Scenario) -> Result<Scenario, String> {
     state::replace(scenario.clone());
     log_info!(
         MODULE,
-        "Scenario set: active={}, hideRealDevices={}, {} fake device(s), {} fake EDL device(s), flash={:?}, api={:?}, download={:?}",
+        "Scenario set: active={}, hideRealDevices={}, {} fake device(s), {} fake EDL device(s), flash={:?}, api={:?}, download={:?}, armbianHost={:?}",
         scenario.is_active(),
         scenario.hide_real_devices,
         scenario.devices.len(),
         scenario.edl_devices.len(),
         scenario.flash.outcome,
         scenario.network.api,
-        scenario.network.download
+        scenario.network.download,
+        scenario.armbian_host.as_ref().map(|h| h.board.as_str())
     );
     Ok(scenario)
 }
@@ -181,6 +183,18 @@ pub(crate) fn list_block_devices(
     real: impl FnOnce() -> Result<Vec<BlockDevice>, String>,
 ) -> Result<Vec<BlockDevice>, String> {
     devices::list_block_devices(&state::view(), real, vdisk_size)
+}
+
+/// Applies on every platform, so host detection can be exercised off Linux.
+pub(crate) fn armbian_release_override() -> Option<ArmbianReleaseInfo> {
+    let host = state::view().scenario.armbian_host?;
+    log_info!(
+        MODULE,
+        "Simulated Armbian host: {} ({})",
+        host.board_name,
+        host.board
+    );
+    Some(host)
 }
 
 pub(crate) fn qdl_devices_override() -> Option<Vec<QdlDevice>> {
