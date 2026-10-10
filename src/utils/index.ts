@@ -459,3 +459,11 @@ export function focusAfterInput(el: HTMLElement, byPointer: boolean): void {
   }
   el.focus({ preventScroll: true });
 }
+
+export function changedEntries(prev: Record<string, string>, next: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(next).filter(([key, value]) => prev[key] !== value));
+}
+
+export function dataAttrs(entries: Record<string, string>, suffix = ''): Record<string, string> {
+  return Object.fromEntries(Object.entries(entries).map(([key, value]) => [`data-${key}${suffix}`, value]));
+}

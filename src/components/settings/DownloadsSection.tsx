@@ -130,6 +130,7 @@ export function DownloadsSection() {
         title={t('settings.nav.downloads')}
         lead={t('settings.downloads.lead')}
         heroState={{ offline: String(isOffline) }}
+        loading={offline.value === undefined}
         actions={
           !nothingCached &&
           !loading && (

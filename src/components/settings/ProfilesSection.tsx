@@ -99,6 +99,7 @@ export function ProfilesSection({ registerLeaveGuard, onEditorChange }: Profiles
   );
 
   const isEmpty = data !== null && !error && profiles.length === 0;
+  const pending = data === null && !error;
 
   if (isEmpty && !showSkeleton) {
     return (
@@ -115,11 +116,15 @@ export function ProfilesSection({ registerLeaveGuard, onEditorChange }: Profiles
     );
   }
 
-  const pending = data === null && !error;
-
   return (
     <div className="profiles-page">
-      <SettingsHero hero="profiles" title={t('settings.nav.profiles')} lead={t('settings.profiles.lead')} actions={newButton} />
+      <SettingsHero
+        hero="profiles"
+        title={t('settings.nav.profiles')}
+        lead={t('settings.profiles.lead')}
+        actions={newButton}
+        loading={pending || isEmpty}
+      />
 
       {error ? (
         <ErrorDisplay error={error} onRetry={reload} compact />
