@@ -15,9 +15,10 @@ interface SettingsHeroProps {
   heroState?: Record<string, string>;
   actions?: ReactNode;
   meta?: ReactNode;
+  loading?: boolean;
 }
 
-export function SettingsHero({ hero, title, lead, heroState, actions, meta }: SettingsHeroProps) {
+export function SettingsHero({ hero, title, lead, heroState, actions, meta, loading = false }: SettingsHeroProps) {
   const titleId = useId();
   const { ref, playing } = useEntrancePlayback(UI.SETTINGS_HERO.PLAY_THRESHOLD);
   const { canvas } = HERO_ART[hero];
@@ -38,7 +39,7 @@ export function SettingsHero({ hero, title, lead, heroState, actions, meta }: Se
         {actions && <div className="settings-hero__actions">{actions}</div>}
       </div>
       <div className="settings-hero__art">
-        <HeroArt hero={hero} playing={playing} state={heroState} />
+        {!loading && <HeroArt key={hero} hero={hero} playing={playing} state={heroState} />}
       </div>
     </section>
   );

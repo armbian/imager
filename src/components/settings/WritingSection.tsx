@@ -91,6 +91,7 @@ export function WritingSection() {
         title={t('settings.nav.writing')}
         lead={t('settings.writing.lead')}
         heroState={{ verify: verify ? 'on' : 'off' }}
+        loading={!verifyLoaded}
       />
 
       <SettingsGroup eyebrow={t('settings.writing.whatHappens')}>

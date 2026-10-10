@@ -1,29 +1,22 @@
-/* Entrances drop off at data-settled so state changes use transitions; keyframes end at rest, so nothing jumps */
+/* Entrances stay filled past data-settled: dropping one demotes its composited sprite and shifts it at the hand-over */
 
 .hero-art {
   --hero-floor-h: 18px;
   --hero-floor-lift: 10px;
-  --hero-rise-y: 8px;
-  --hero-state-fade: 0.35s;
-  --hero-knob-dur: 0.6s;
-  --hero-knob-ease: cubic-bezier(0.34, 1.4, 0.64, 1);
-  --hero-arc-dur: 0.18s;
-  --hero-arc-step: 26ms;
-  --hero-arc-start: 98ms;
-  --hero-check-dur: 0.38s;
-  --hero-check-delay: 0.9s;
-  --hero-led-dur: 0.22s;
-  --hero-led-step: 150ms;
-  --hero-dot-start: 500ms;
-  --hero-arc-led-start: 150ms;
-  --hero-swing-dur: 0.9s;
-  --hero-plus-dur: 0.35s;
-  --hero-plus-delay: 0.6s;
-  --hero-idle-led: 2.4s;
-  --hero-idle-led-step: 220ms;
-  --hero-idle-wave: 2.8s;
-  --hero-idle-wave-step: 180ms;
-  --hero-idle-bob: 3.2s;
+  --hero-rise-y: 10px;
+  --hero-rise-dur: 0.55s;
+  --hero-ease-in: cubic-bezier(0.55, 0, 0.9, 0.45);
+  --hero-ease-arc: cubic-bezier(0.45, 0, 0.55, 1);
+  --hero-ease-sink: cubic-bezier(0.6, 0, 0.9, 0.5);
+  --hero-ease-surface: cubic-bezier(0.1, 0.5, 0.4, 1);
+  --hero-pop-dur: 0.45s;
+  --hero-flicker-dur: 0.5s;
+  --hero-scan-flicker-dur: 0.45s;
+  --hero-orb-in-dur: 0.95s;
+  --hero-sun-travel: 0.9s;
+  --hero-moon-travel: 0.95s;
+  --hero-float-loop: 5.5s;
+  --hero-belt-loop: 6.6s;
   position: relative;
   width: 100%;
   height: 100%;
@@ -39,155 +32,563 @@
   height: var(--hero-floor-h);
   border-radius: 50%;
   background: radial-gradient(closest-side, var(--hero-floor), transparent);
+  animation: hero-fade-in var(--dur-slower) var(--ease-out-expo) 0.1s both;
 }
 
 .hero-art__stack {
   position: absolute;
   inset: 0;
+  animation: hero-rise var(--hero-rise-dur) var(--ease-out-expo) 0.05s both;
 }
 
 .hero-art__layer {
   position: absolute;
-  display: block;
-  max-width: none;
 }
 
-/* Entrance: held on its first frame until the hero is in view */
+/* enter > x > y > event > idle wrappers let independent animations compose on one sprite */
+.hero-art__layer * {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  transform-origin: var(--hero-origin, 50% 50%);
+}
+
+/* important: scene rules set the animation shorthand at higher specificity */
 .hero-art[data-playing='false'],
 .hero-art[data-playing='false']::before,
-.hero-art[data-playing='false'] .hero-art__stack,
-.hero-art[data-playing='false'] .hero-art__layer {
+.hero-art[data-playing='false'] * {
+  animation-play-state: paused !important;
+}
+
+/* Scene blocks: literal times below are per-layer choreography data from the approved boards */
+
+/* General: the theme sets the sun or the moon, the night grade, the lit window and the stars */
+.hero-art--general {
+  --hero-star-step: 0.08s;
+}
+
+.hero-art--general [data-layer='star2'] {
+  --hero-n: 1;
+}
+
+.hero-art--general [data-layer='star3'] {
+  --hero-n: 2;
+}
+
+.hero-art--general [data-layer='star4'] {
+  --hero-n: 3;
+}
+
+.hero-art--general [data-layer='star5'] {
+  --hero-n: 4;
+}
+.hero-art--general :is([data-layer='day'], [data-layer='night'], [data-layer='window']) .hero-art__enter {
+  animation: hero-island-in 0.85s var(--ease-out-expo) 0.05s both;
+}
+
+.hero-art--general [data-layer='window'] .hero-art__y {
+  animation: hero-flicker var(--hero-flicker-dur) linear 0.9s both;
+}
+
+.hero-art--general [data-layer='sun'] .hero-art__enter {
+  animation: hero-sun-in var(--hero-orb-in-dur) var(--ease-out-expo) 0.3s both;
+}
+
+.hero-art--general [data-layer='moon'] .hero-art__enter {
+  animation: hero-moon-in var(--hero-orb-in-dur) var(--ease-out-expo) 0.3s both;
+}
+
+.hero-art--general [data-layer^='cloud'] .hero-art__enter {
+  animation: hero-cloud-in 0.8s var(--ease-out-expo) 0.5s both;
+}
+
+.hero-art--general [data-layer='cloud2'] .hero-art__enter {
+  animation-delay: 0.62s;
+}
+
+.hero-art--general [data-layer^='star'] .hero-art__enter {
+  animation: hero-pop-in var(--hero-pop-dur) var(--ease-spring) both;
+  animation-delay: calc(0.6s + var(--hero-n, 0) * var(--hero-star-step));
+}
+
+/* Dark fades the night grade in over the day island, which stays put, so the crossfade never dips */
+.hero-art--general [data-layer='night'] .hero-art__x {
+  transition: opacity 0.5s var(--ease-standard) 0.1s;
+}
+
+.hero-art--general[data-theme='light'] [data-layer='night'] .hero-art__x {
+  opacity: 0;
+}
+
+.hero-art--general[data-theme='dark'] [data-layer='night'] .hero-art__x {
+  transition: opacity 0.65s var(--ease-standard) 0.2s;
+}
+
+.hero-art--general [data-layer='window'] .hero-art__x {
+  transition: opacity 0.25s linear;
+}
+
+.hero-art--general[data-theme='light'] [data-layer='window'] .hero-art__x {
+  opacity: 0;
+}
+
+.hero-art--general[data-theme='dark'] [data-layer='window'] .hero-art__x {
+  transition: opacity 0.01s linear 0.55s;
+}
+
+.hero-art--general[data-theme-to='dark'] [data-layer='window'] .hero-art__event {
+  animation: hero-flicker var(--hero-flicker-dur) linear 0.55s both;
+}
+
+.hero-art--general [data-layer^='cloud'] .hero-art__x {
+  transition:
+    transform 0.75s var(--ease-out-expo) 0.35s,
+    opacity var(--dur-slower) linear 0.35s;
+}
+
+.hero-art--general[data-theme='dark'] [data-layer^='cloud'] .hero-art__x {
+  opacity: 0;
+  transform: translateX(30%);
+  transition:
+    transform 0.55s var(--hero-ease-in),
+    opacity 0.45s linear;
+}
+
+.hero-art--general [data-layer^='star'] .hero-art__x {
+  transition:
+    transform var(--dur-base) var(--hero-ease-in),
+    opacity var(--dur-base) linear;
+}
+
+.hero-art--general[data-theme='light'] [data-layer^='star'] .hero-art__x {
+  opacity: 0;
+  transform: scale(0.3);
+}
+
+.hero-art--general[data-theme='dark'] [data-layer^='star'] .hero-art__x {
+  transition:
+    transform var(--hero-pop-dur) var(--ease-spring),
+    opacity var(--dur-base) linear;
+  transition-delay: calc(0.5s + var(--hero-n, 0) * var(--hero-star-step));
+}
+
+/* Sun and moon arc on split x/y easings and set into the island's thickest band, hidden even if the fade lags */
+.hero-art--general [data-layer='sun'] .hero-art__x {
+  transition: transform var(--hero-sun-travel) var(--hero-ease-arc);
+}
+
+.hero-art--general [data-layer='sun'] .hero-art__y {
+  transition:
+    transform var(--hero-sun-travel) var(--hero-ease-sink),
+    opacity 0.25s linear 0.65s;
+}
+
+.hero-art--general[data-theme='dark'] [data-layer='sun'] .hero-art__x {
+  transform: translateX(202.15%);
+}
+
+.hero-art--general[data-theme='dark'] [data-layer='sun'] .hero-art__y {
+  opacity: 0;
+  transform: translateY(197.53%);
+}
+
+.hero-art--general[data-theme='light'] [data-layer='sun'] .hero-art__x {
+  transition-delay: 0.15s;
+}
+
+.hero-art--general[data-theme='light'] [data-layer='sun'] .hero-art__y {
+  transition:
+    transform var(--hero-sun-travel) var(--hero-ease-surface) 0.15s,
+    opacity var(--dur-base) linear 0.15s;
+}
+
+.hero-art--general [data-layer='moon'] .hero-art__x {
+  transition: transform var(--hero-moon-travel) var(--hero-ease-arc) 0.15s;
+}
+
+.hero-art--general [data-layer='moon'] .hero-art__y {
+  transition:
+    transform var(--hero-moon-travel) var(--hero-ease-surface) 0.15s,
+    opacity var(--dur-base) linear 0.15s;
+}
+
+.hero-art--general[data-theme='light'] [data-layer='moon'] .hero-art__x {
+  transform: translateX(-130.19%);
+  transition-delay: 0s;
+}
+
+.hero-art--general[data-theme='light'] [data-layer='moon'] .hero-art__y {
+  opacity: 0;
+  transform: translateY(163.2%);
+  transition:
+    transform 0.85s var(--hero-ease-sink),
+    opacity var(--dur-base) linear 0.65s;
+}
+
+.hero-art--general[data-settled] :is([data-layer='day'], [data-layer='night'], [data-layer='window']) .hero-art__idle {
+  animation: hero-float var(--hero-float-loop) ease-in-out infinite;
+}
+
+.hero-art--general[data-settled] [data-layer='cloud1'] .hero-art__idle {
+  animation: hero-drift 9s ease-in-out infinite;
+}
+
+.hero-art--general[data-settled] [data-layer='cloud2'] .hero-art__idle {
+  animation: hero-drift 7s ease-in-out 0.8s infinite;
+}
+
+.hero-art--general[data-settled] [data-layer^='star'] .hero-art__idle {
+  animation: hero-twinkle 2.6s ease-in-out infinite;
+}
+
+.hero-art--general[data-settled] [data-layer='star2'] .hero-art__idle {
+  animation-delay: 0.5s;
+}
+
+.hero-art--general[data-settled] [data-layer='star3'] .hero-art__idle {
+  animation-delay: 1.1s;
+}
+
+.hero-art--general[data-settled] [data-layer='star4'] .hero-art__idle {
+  animation-delay: 0.3s;
+}
+
+.hero-art--general[data-settled] [data-layer='star5'] .hero-art__idle {
+  animation-delay: 1.6s;
+}
+
+.hero-art--general[data-settled] :is([data-layer='sun'], [data-layer='moon']) .hero-art__idle {
+  animation: hero-breathe 4.5s ease-in-out infinite;
+}
+
+/* Writing: the plate carries the unlit arch, so the entrance powers it on before verify state applies */
+.hero-art--writing :is([data-layer='bar'], [data-layer='dome']) .hero-art__enter {
+  animation: hero-fade-in var(--dur-medium) var(--ease-standard) 0.75s both;
+}
+
+.hero-art--writing :is([data-layer='light'], [data-layer='lightEdge']) .hero-art__enter {
+  animation: hero-flicker var(--hero-scan-flicker-dur) linear 0.95s both;
+}
+
+.hero-art--writing [data-layer='check'] .hero-art__enter {
+  animation: hero-pop-in var(--hero-pop-dur) var(--ease-spring) 1.2s both;
+}
+
+.hero-art--writing :is([data-layer='card1'], [data-layer='card2']) .hero-art__enter {
+  animation: hero-belt-in 1s var(--ease-out-expo) 0.15s both;
+}
+
+.hero-art--writing :is([data-layer='bar'], [data-layer='dome']) .hero-art__x {
+  transition: opacity 0.35s var(--ease-standard);
+}
+
+.hero-art--writing :is([data-layer='light'], [data-layer='lightEdge']) .hero-art__x {
+  transition: opacity var(--dur-medium) var(--ease-standard);
+}
+
+.hero-art--writing [data-layer='check'] .hero-art__x {
+  transition:
+    transform var(--dur-slow) var(--ease-spring) 0.25s,
+    opacity var(--dur-base) linear 0.25s;
+}
+
+.hero-art--writing[data-verify='off']
+  :is([data-layer='bar'], [data-layer='dome'], [data-layer='light'], [data-layer='lightEdge'])
+  .hero-art__x {
+  opacity: 0;
+}
+
+.hero-art--writing[data-verify='off'] [data-layer='check'] .hero-art__x {
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    transform 0.25s var(--hero-ease-in),
+    opacity var(--dur-base) linear;
+}
+
+.hero-art--writing[data-verify-to='on'] :is([data-layer='light'], [data-layer='lightEdge']) .hero-art__event {
+  animation: hero-flicker var(--hero-scan-flicker-dur) linear 0.1s both;
+}
+
+.hero-art--writing[data-verify-to='on'] [data-layer='dome'] .hero-art__event {
+  animation: hero-bump var(--dur-slow) var(--ease-out-expo) 0.2s;
+}
+
+/* The belt loop is one pass of the path; each card holds its phase as a rest pose and joins the loop there */
+.hero-art--writing [data-layer='card2'] .hero-art__idle {
+  transform: translate(95.774%, -44.663%) scale(0.9057);
+}
+
+.hero-art--writing [data-layer='card3'] .hero-art__idle {
+  opacity: 0;
+  transform: translate(-71.83%, 33.497%) scale(1.0707);
+}
+
+.hero-art--writing[data-settled] [data-layer^='card'] .hero-art__idle {
+  animation: hero-belt var(--hero-belt-loop) linear infinite;
+}
+
+.hero-art--writing[data-settled] [data-layer='card1'] .hero-art__idle {
+  animation-delay: calc(var(--hero-belt-loop) * -3 / 11);
+}
+
+.hero-art--writing[data-settled] [data-layer='card2'] .hero-art__idle {
+  animation-delay: calc(var(--hero-belt-loop) * -7 / 11);
+}
+
+.hero-art--writing[data-settled] :is([data-layer='light'], [data-layer='lightEdge']) .hero-art__idle {
+  animation: hero-scan-pulse var(--hero-belt-loop) ease-in-out infinite;
+}
+
+/* Downloads: offline greys the signal from the outer arc in, slashes it, lifts the arrow and swells the glow once */
+.hero-art--downloads {
+  --hero-signal-step: 0.12s;
+  --hero-grey-step: 0.07s;
+  --hero-grey-back-step: 0.09s;
+  --hero-signal-loop: 2.4s;
+  --hero-signal-wave-step: 0.2s;
+  --hero-slash-delay: 0.42s;
+}
+
+.hero-art--downloads [data-layer^='arc1'] {
+  --hero-n: 1;
+}
+
+.hero-art--downloads [data-layer^='arc2'] {
+  --hero-n: 2;
+}
+
+.hero-art--downloads [data-layer^='arc3'] {
+  --hero-n: 3;
+}
+
+.hero-art--downloads :is([data-layer^='dot'], [data-layer^='arc']) .hero-art__enter {
+  animation: hero-pop-in var(--dur-slow) var(--ease-spring) both;
+  animation-delay: calc(0.35s + var(--hero-n, 0) * var(--hero-signal-step));
+}
+
+.hero-art--downloads [data-layer^='arrow'] .hero-art__enter {
+  animation: hero-arrow-drop 0.85s var(--ease-out-expo) 0.55s both;
+}
+
+.hero-art--downloads [data-layer='glow'] .hero-art__enter {
+  animation: hero-flicker var(--dur-slower) linear 0.9s both;
+}
+
+.hero-art--downloads [data-layer='slash'] .hero-art__enter {
+  animation: hero-pop-in var(--dur-slow) var(--ease-spring) 1s both;
+}
+
+.hero-art--downloads [data-layer='glow'] .hero-art__x {
+  opacity: 0.35;
+}
+
+.hero-art--downloads[data-offline-to='true'] [data-layer='glow'] .hero-art__x {
+  animation: hero-glow-swell 1s ease-in-out 0.7s;
+}
+
+/* The grey overlays fade out from the dot outwards and back in from the outer arc */
+.hero-art--downloads [data-layer$='Grey'] .hero-art__x {
+  opacity: 0;
+  transition: opacity 0.22s linear;
+  transition-delay: calc(var(--hero-n, 0) * var(--hero-grey-step));
+}
+
+.hero-art--downloads [data-layer='arrowGrey'] .hero-art__x {
+  transition-delay: 0.05s;
+}
+
+.hero-art--downloads[data-offline='true'] [data-layer$='Grey'] .hero-art__x {
+  opacity: 1;
+  transition-delay: calc((3 - var(--hero-n, 0)) * var(--hero-grey-back-step));
+}
+
+.hero-art--downloads[data-offline='true'] [data-layer='arrowGrey'] .hero-art__x {
+  transition-delay: 0.2s;
+}
+
+.hero-art--downloads [data-layer^='arrow'] .hero-art__y {
+  transition: transform 0.5s var(--ease-spring) 0.1s;
+}
+
+.hero-art--downloads[data-offline='true'] [data-layer^='arrow'] .hero-art__y {
+  transform: translateY(-9%);
+  transition: transform 0.45s var(--ease-standard) 0.2s;
+}
+
+.hero-art--downloads [data-layer='slash'] .hero-art__x {
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity 0.12s linear,
+    transform var(--dur-base) var(--hero-ease-in);
+}
+
+.hero-art--downloads[data-offline='true'] [data-layer='slash'] .hero-art__x {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.12s linear var(--hero-slash-delay),
+    transform var(--hero-slash-delay) var(--ease-spring) var(--hero-slash-delay);
+}
+
+/* Offline freezes the online loops where they are instead of dropping them, so the arrow never snaps mid-bob */
+.hero-art--downloads[data-settled] [data-layer^='arrow'] .hero-art__idle {
+  animation: hero-arrow-bob 1.8s ease-in-out infinite;
+}
+
+.hero-art--downloads[data-settled] :is([data-layer='arc1'], [data-layer='arc2'], [data-layer='arc3']) .hero-art__idle {
+  animation: hero-signal-wave var(--hero-signal-loop) ease-in-out infinite;
+  animation-delay: calc((var(--hero-n) - 1) * var(--hero-signal-wave-step));
+}
+
+.hero-art--downloads[data-offline='true'] :is([data-layer^='arrow'], [data-layer^='arc']) .hero-art__idle {
   animation-play-state: paused;
 }
 
-.hero-art:not([data-settled])::before {
-  animation: hero-fade-in var(--dur-slower) var(--ease-out-expo) 0.1s both;
+.hero-art--downloads[data-settled][data-offline='true'] [data-layer='glow'] .hero-art__idle {
+  animation: hero-glow-breathe 3.2s ease-in-out infinite;
 }
 
-/* General: the theme drives the knob, the grey track and the dimmed sun */
-.hero-art--general [data-layer='track'],
-.hero-art--general [data-layer='disc'] {
-  opacity: 0;
-  transition: opacity var(--hero-state-fade) var(--ease-standard);
+/* Profiles: four setting tiles burst out from behind the card, nod to it, then orbit it on small ellipses */
+.hero-art--profiles {
+  --hero-burst-step: 0.09s;
+  --hero-nod-step: 0.1s;
 }
 
-.hero-art--general [data-layer='knob'] {
-  transition: transform var(--hero-knob-dur) var(--hero-knob-ease);
+.hero-art--profiles [data-layer='wifi'] {
+  --hero-from: translate(108.06%, 59.67%);
+  --hero-nod: rotate(8deg);
+  --hero-orbit-x-dur: 4.6s;
+  --hero-orbit-y-dur: 3.7s;
 }
 
-.hero-art--general[data-theme='dark'] [data-layer='track'],
-.hero-art--general[data-theme='dark'] [data-layer='disc'] {
-  opacity: 1;
+.hero-art--profiles [data-layer='key'] {
+  --hero-from: translate(-100.98%, 50.03%);
+  --hero-nod: rotate(-8deg);
+  --hero-n: 1;
+  --hero-orbit-x-dur: 5.4s;
+  --hero-orbit-y-dur: 4.1s;
+  --hero-orbit-y-dir: reverse;
 }
 
-/* (-110, -20) source px along the track axis, in percent of the cropped knob */
-.hero-art--general[data-theme='dark'] [data-layer='knob'] {
-  transform: translate(-79.7101%, -14.9254%);
+.hero-art--profiles [data-layer='globe'] {
+  --hero-from: translate(-106.41%, -52.14%);
+  --hero-nod: rotate(8deg);
+  --hero-n: 2;
+  --hero-orbit-x-dur: 4.2s;
+  --hero-orbit-x-dir: reverse;
+  --hero-orbit-y-dur: 4.9s;
 }
 
-.hero-art--general:not([data-settled]) .hero-art__stack {
-  animation: hero-rise var(--dur-slower) var(--ease-out-expo) 0.1s both;
+.hero-art--profiles [data-layer='lock'] {
+  --hero-from: translate(106%, -45.88%);
+  --hero-nod: rotate(-8deg);
+  --hero-n: 3;
+  --hero-orbit-x-dur: 5s;
+  --hero-orbit-x-dir: reverse;
+  --hero-orbit-y-dur: 3.4s;
+  --hero-orbit-y-dir: reverse;
 }
 
-/* Writing: the arc fills clockwise in 24 slices, then the check pops; verify off greys the shield */
-.hero-art--writing [data-layer='check'] {
-  transform-origin: 48.529% 51.667%;
-  transition:
-    opacity var(--dur-medium) var(--ease-standard),
-    transform var(--hero-check-dur) var(--ease-spring);
+.hero-art--profiles [data-layer='card'] .hero-art__enter {
+  animation: hero-card-in var(--dur-slower) var(--ease-out-expo) 0.05s both;
 }
 
-.hero-art--writing [data-layer='grey'] {
-  opacity: 0;
-  transition: opacity var(--dur-medium) var(--ease-standard);
+.hero-art--profiles [data-layer='card'] .hero-art__x {
+  animation: hero-beat 0.5s var(--ease-standard) 1.55s both;
 }
 
-.hero-art--writing[data-verify='off'] [data-layer='check'] {
-  opacity: 0;
-  transform: scale(0.6);
+.hero-art--profiles [data-layer]:not([data-layer='card']) .hero-art__enter {
+  animation: hero-tile-burst 0.7s var(--ease-spring) both;
+  animation-delay: calc(0.3s + var(--hero-n, 0) * var(--hero-burst-step));
 }
 
-.hero-art--writing[data-verify='off'] [data-layer='grey'] {
-  opacity: 1;
+.hero-art--profiles [data-layer]:not([data-layer='card']) .hero-art__x {
+  animation: hero-tile-nod 0.45s var(--ease-standard) both;
+  animation-delay: calc(1s + var(--hero-n, 0) * var(--hero-nod-step));
 }
 
-.hero-art--writing:not([data-settled]) [data-layer^='arc'] {
-  animation: hero-fade-in var(--hero-arc-dur) linear both;
-  animation-delay: calc(var(--hero-arc-start) + var(--i) * var(--hero-arc-step));
+/* Two out-of-phase sines per tile trace an ellipse */
+.hero-art--profiles[data-settled] [data-layer]:not([data-layer='card']) .hero-art__idle {
+  animation: hero-orbit-x var(--hero-orbit-x-dur) ease-in-out infinite var(--hero-orbit-x-dir, normal);
 }
 
-.hero-art--writing:not([data-settled]):not([data-verify='off']) [data-layer='check'] {
-  animation: hero-pop-in var(--hero-check-dur) var(--ease-spring) var(--hero-check-delay) both;
+.hero-art--profiles[data-settled] [data-layer]:not([data-layer='card']) .hero-art__y {
+  animation: hero-orbit-y var(--hero-orbit-y-dur) ease-in-out infinite var(--hero-orbit-y-dir, normal);
 }
 
-/* Downloads: the arrow drops in, the drawer LEDs light top to bottom; offline greys the arrow */
-.hero-art--downloads [data-layer^='dot'] {
-  opacity: 0;
+.hero-art--profiles[data-settled] [data-layer='card'] .hero-art__idle {
+  animation: hero-card-float var(--hero-float-loop) ease-in-out infinite;
 }
 
-.hero-art--downloads [data-layer='grey'] {
-  opacity: 0;
-  transition: opacity var(--dur-medium) var(--ease-standard);
+/* Profiles empty: a blank card drops in, the loose parts tumble around it, then the plus pops */
+.hero-art--profilesEmpty {
+  --hero-tumble-step: 0.1s;
+  --hero-wiggle-step: 2.5s;
 }
 
-.hero-art--downloads[data-offline='true'] [data-layer='grey'] {
-  opacity: 1;
+.hero-art--profilesEmpty [data-layer='wifi'] {
+  --hero-tumble-from: -40deg;
 }
 
-.hero-art--downloads:not([data-settled]) [data-layer='arrow'] {
-  animation: hero-drop-arrow var(--dur-slower) var(--ease-out-expo) 0.1s both;
+.hero-art--profilesEmpty [data-layer='person'] {
+  --hero-tumble-from: 30deg;
+  --hero-n: 1;
 }
 
-.hero-art--downloads:not([data-settled]) [data-layer='grey'] {
-  animation: hero-drop-grey var(--dur-slower) var(--ease-out-expo) 0.1s both;
+.hero-art--profilesEmpty [data-layer='key'] {
+  --hero-tumble-from: 55deg;
+  --hero-n: 2;
 }
 
-.hero-art--downloads:not([data-settled]) [data-layer^='dot'] {
-  animation: hero-light-up var(--dur-base) var(--ease-out-expo) both;
-  animation-delay: calc(var(--hero-dot-start) + var(--i) * var(--hero-led-step));
+.hero-art--profilesEmpty [data-layer='card'] .hero-art__enter {
+  animation: hero-card-drop 0.75s var(--ease-out-expo) 0.05s both;
 }
 
-/* Profiles: the Wi-Fi arcs light up from the dot outwards */
-.hero-art--profiles [data-layer^='arc'] {
-  opacity: 0;
+.hero-art--profilesEmpty :is([data-layer='wifi'], [data-layer='person'], [data-layer='key']) .hero-art__enter {
+  animation: hero-tumble 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(0.3s + var(--hero-n, 0) * var(--hero-tumble-step));
 }
 
-.hero-art--profiles:not([data-settled]) [data-layer^='arc'] {
-  animation: hero-light-up var(--hero-led-dur) var(--ease-out-expo) both;
-  animation-delay: calc(var(--hero-arc-led-start) + var(--i) * var(--hero-led-step));
+.hero-art--profilesEmpty [data-layer='plus'] .hero-art__enter {
+  animation: hero-pop-in 0.5s var(--ease-spring) 1.05s both;
 }
 
-/* Idle loops once the entrance has settled: the drawer LEDs blink in turn, the arrow drifts, the Wi-Fi arcs sweep
-   outwards. Off overlays only change opacity, so the lit art underneath stays untouched. */
-.hero-art--downloads[data-settled] [data-layer^='dot'] {
-  animation: hero-idle-led var(--hero-idle-led) var(--ease-standard) infinite;
-  animation-delay: calc(var(--i) * var(--hero-idle-led-step));
+.hero-art--profilesEmpty[data-settled] :is([data-layer='wifi'], [data-layer='person'], [data-layer='key']) .hero-art__idle {
+  animation: hero-wiggle 7.5s ease-in-out infinite;
+  animation-delay: calc(var(--hero-n, 0) * var(--hero-wiggle-step));
 }
 
-.hero-art--downloads[data-settled] :is([data-layer='arrow'], [data-layer='grey']) {
-  animation: hero-idle-bob var(--hero-idle-bob) var(--ease-standard) infinite;
+.hero-art--profilesEmpty[data-settled] [data-layer='plus'] .hero-art__idle {
+  animation: hero-plus-breathe 2.6s ease-in-out infinite;
 }
 
-.hero-art--profiles[data-settled] [data-layer^='arc'] {
-  animation: hero-idle-wave var(--hero-idle-wave) var(--ease-standard) infinite;
-  animation-delay: calc(var(--i) * var(--hero-idle-wave-step));
+/* Promoted before the idle loops start, so the hand-over at settle does not re-raster the sprites */
+.hero-art--general :is(
+    [data-layer='day'],
+    [data-layer='night'],
+    [data-layer='window'],
+    [data-layer^='cloud'],
+    [data-layer='sun'],
+    [data-layer='moon']
+  )
+  .hero-art__idle,
+.hero-art--writing [data-layer^='card'] .hero-art__idle,
+.hero-art--downloads [data-layer^='arrow'] .hero-art__idle,
+.hero-art--profiles [data-layer] .hero-art__idle,
+.hero-art--profiles [data-layer]:not([data-layer='card']) .hero-art__y,
+.hero-art--profilesEmpty [data-layer]:not([data-layer='card']) .hero-art__idle {
+  will-change: transform;
 }
 
-/* Profiles empty: the badge swings from its clip, then the plus pops */
-.hero-art--profilesEmpty .hero-art__stack {
-  transform-origin: 47.3077% 1.9531%;
-}
-
-.hero-art--profilesEmpty [data-layer='plus'] {
-  transform-origin: 50.495% 50.459%;
-}
-
-.hero-art--profilesEmpty:not([data-settled]) .hero-art__stack {
-  animation: hero-swing var(--hero-swing-dur) var(--ease-standard) both;
-}
-
-.hero-art--profilesEmpty:not([data-settled]) [data-layer='plus'] {
-  animation: hero-pop-in var(--hero-plus-dur) var(--ease-spring) var(--hero-plus-delay) both;
+.hero-art--general [data-layer^='star'] .hero-art__idle,
+.hero-art--writing :is([data-layer='light'], [data-layer='lightEdge']) .hero-art__idle,
+.hero-art--downloads :is([data-layer='arc1'], [data-layer='arc2'], [data-layer='arc3'], [data-layer='glow']) .hero-art__idle {
+  will-change: opacity;
 }
 
 @keyframes hero-fade-in {
@@ -213,7 +614,10 @@
 @keyframes hero-pop-in {
   from {
     opacity: 0;
-    transform: scale(0.4);
+    transform: scale(0.3);
+  }
+  60% {
+    opacity: 1;
   }
   to {
     opacity: 1;
@@ -221,111 +625,363 @@
   }
 }
 
-/* The "off" overlays fade out, so the LED underneath lights up */
-@keyframes hero-light-up {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Translate percentages are 6% and 0.4% of the full source canvas, rescaled to each cropped layer */
-@keyframes hero-drop-arrow {
-  from {
-    opacity: 0;
-    transform: translateY(-21.558%);
-  }
-  80% {
-    opacity: 1;
-    transform: translateY(1.437%);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes hero-drop-grey {
-  from {
-    transform: translateY(-21.865%);
-  }
-  80% {
-    transform: translateY(1.458%);
-  }
-  to {
-    transform: none;
-  }
-}
-
-@keyframes hero-swing {
+@keyframes hero-flicker {
   0% {
-    transform: rotate(7deg);
-  }
-  30% {
-    transform: rotate(-4deg);
-  }
-  55% {
-    transform: rotate(2deg);
-  }
-  78% {
-    transform: rotate(-1deg);
-  }
-  100% {
-    transform: none;
-  }
-}
-
-@keyframes hero-idle-led {
-  0%,
-  30%,
-  100% {
     opacity: 0;
   }
-  42% {
+  20% {
     opacity: 0.85;
   }
-  54% {
-    opacity: 0;
+  35% {
+    opacity: 0.2;
+  }
+  55% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
   }
 }
 
-/* A few px of the arrow layer (about 2.5% of its height): enough to read as motion, never a bounce */
-@keyframes hero-idle-bob {
-  0%,
-  100% {
+@keyframes hero-island-in {
+  from {
+    opacity: 0;
+    transform: translateY(7%);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-1.2%);
+  }
+  to {
+    opacity: 1;
     transform: none;
   }
-  50% {
-    transform: translateY(2.5%);
+}
+
+/* Start points are a quarter to half of the dark or light travel, so the sun and the moon rise from behind the island */
+@keyframes hero-sun-in {
+  from {
+    opacity: 0;
+    transform: translate(50.54%, 125.89%);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
-/* Starts lit, where the entrance leaves it: the arcs dim from the dot outwards, then light up again in the same order */
-@keyframes hero-idle-wave {
-  0%,
-  46%,
-  100% {
+@keyframes hero-moon-in {
+  from {
     opacity: 0;
+    transform: translate(-26.04%, 93.62%);
   }
-  62%,
-  76% {
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-cloud-in {
+  from {
+    opacity: 0;
+    transform: translateX(28%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-float {
+  50% {
+    transform: translateY(-1.4%);
+  }
+}
+
+@keyframes hero-drift {
+  50% {
+    transform: translateX(5%);
+  }
+}
+
+@keyframes hero-twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes hero-breathe {
+  50% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes hero-belt-in {
+  from {
+    opacity: 0;
+    transform: translate(-57.464%, 26.798%);
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* One pass from the belt's near end to its far end, fading at both ends; card1 rests at 3/11 of it, card2 at 7/11 */
+@keyframes hero-belt {
+  from {
+    opacity: 0;
+    transform: translate(-71.83%, 33.497%) scale(1.0707);
+  }
+  10.909% {
+    opacity: 1;
+  }
+  89.091% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate(191.538%, -89.322%) scale(0.8114);
+  }
+}
+
+/* Peaks as each card passes under the bar (card2's rest spot), then falls back to the dim glow */
+@keyframes hero-scan-pulse {
+  0%,
+  36.364%,
+  63.636%,
+  100% {
+    opacity: 1;
+  }
+  6%,
+  30.364%,
+  42.364%,
+  57.636%,
+  69.636%,
+  94% {
+    opacity: 0.84;
+  }
+  13%,
+  23.364%,
+  76.636%,
+  87% {
+    opacity: 0.63;
+  }
+  50% {
+    opacity: 0.64;
+  }
+}
+
+@keyframes hero-bump {
+  40% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes hero-arrow-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-38%);
+  }
+  30% {
+    opacity: 1;
+  }
+  55% {
+    transform: none;
+  }
+  72% {
+    transform: translateY(-7%);
+  }
+  88% {
+    transform: none;
+  }
+  95% {
+    transform: translateY(-1.5%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-arrow-bob {
+  50% {
+    transform: translateY(7%);
+  }
+}
+
+@keyframes hero-signal-wave {
+  40% {
+    opacity: 0.5;
+  }
+}
+
+/* From the resting glow up to full and back */
+@keyframes hero-glow-swell {
+  35% {
+    opacity: 1;
+  }
+}
+
+@keyframes hero-glow-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
     opacity: 0.9;
   }
 }
 
-/* Reduced motion shows the resting frame at once: base.css shortens durations but keeps delays */
+@keyframes hero-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6%) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-1%) scale(1.01);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-beat {
+  40% {
+    transform: scale(1.035);
+  }
+}
+
+@keyframes hero-tile-burst {
+  from {
+    opacity: 0;
+    transform: var(--hero-from) scale(0.3);
+  }
+  25% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-tile-nod {
+  45% {
+    transform: var(--hero-nod);
+  }
+}
+
+@keyframes hero-orbit-x {
+  50% {
+    transform: translateX(2.4%);
+  }
+}
+
+@keyframes hero-orbit-y {
+  50% {
+    transform: translateY(-3.2%);
+  }
+}
+
+@keyframes hero-card-float {
+  50% {
+    transform: translateY(-1.2%);
+  }
+}
+
+@keyframes hero-card-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-14%) rotate(-5deg);
+  }
+  40% {
+    opacity: 1;
+  }
+  62% {
+    transform: translateY(1.5%) rotate(0.6deg);
+  }
+  82% {
+    transform: translateY(-0.6%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-tumble {
+  from {
+    opacity: 0;
+    transform: translateY(-70%) rotate(var(--hero-tumble-from));
+  }
+  30% {
+    opacity: 1;
+  }
+  62% {
+    transform: translateY(5%) rotate(-4deg);
+  }
+  80% {
+    transform: translateY(-2%) rotate(1.5deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-wiggle {
+  0%,
+  16%,
+  100% {
+    transform: none;
+  }
+  4% {
+    transform: rotate(6deg);
+  }
+  8% {
+    transform: rotate(-5deg);
+  }
+  12% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes hero-plus-breathe {
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+/* Reduced motion: the resting frame at once, since base.css shortens durations but keeps transition delays */
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-reduced-motion='false']) .hero-art::before,
-  :root:not([data-reduced-motion='false']) .hero-art__stack,
-  :root:not([data-reduced-motion='false']) .hero-art__layer {
+  :root:not([data-reduced-motion='false']) .hero-art * {
     animation: none !important;
+    transition: none !important;
   }
 }
 
 :root[data-reduced-motion='true'] .hero-art::before,
-:root[data-reduced-motion='true'] .hero-art__stack,
-:root[data-reduced-motion='true'] .hero-art__layer {
+:root[data-reduced-motion='true'] .hero-art * {
   animation: none !important;
+  transition: none !important;
 }

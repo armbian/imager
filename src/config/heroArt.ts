@@ -2,49 +2,54 @@
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 import type { HeroId, SettingsView } from '../types';
-import generalBaseNoknob from '../assets/settings/general/general-base-noknob.png';
-import generalTrackGrey from '../assets/settings/general/general-track-grey.png';
-import generalDiscDim from '../assets/settings/general/general-disc-dim.png';
-import generalKnob from '../assets/settings/general/general-knob.png';
-import writingBase from '../assets/settings/writing/writing-base.png';
-import writingShieldGrey from '../assets/settings/writing/writing-shield-grey.png';
-import writingArc01 from '../assets/settings/writing/writing-arc-01.png';
-import writingArc02 from '../assets/settings/writing/writing-arc-02.png';
-import writingArc03 from '../assets/settings/writing/writing-arc-03.png';
-import writingArc04 from '../assets/settings/writing/writing-arc-04.png';
-import writingArc05 from '../assets/settings/writing/writing-arc-05.png';
-import writingArc06 from '../assets/settings/writing/writing-arc-06.png';
-import writingArc07 from '../assets/settings/writing/writing-arc-07.png';
-import writingArc08 from '../assets/settings/writing/writing-arc-08.png';
-import writingArc09 from '../assets/settings/writing/writing-arc-09.png';
-import writingArc10 from '../assets/settings/writing/writing-arc-10.png';
-import writingArc11 from '../assets/settings/writing/writing-arc-11.png';
-import writingArc12 from '../assets/settings/writing/writing-arc-12.png';
-import writingArc13 from '../assets/settings/writing/writing-arc-13.png';
-import writingArc14 from '../assets/settings/writing/writing-arc-14.png';
-import writingArc15 from '../assets/settings/writing/writing-arc-15.png';
-import writingArc16 from '../assets/settings/writing/writing-arc-16.png';
-import writingArc17 from '../assets/settings/writing/writing-arc-17.png';
-import writingArc18 from '../assets/settings/writing/writing-arc-18.png';
-import writingArc19 from '../assets/settings/writing/writing-arc-19.png';
-import writingArc20 from '../assets/settings/writing/writing-arc-20.png';
-import writingArc21 from '../assets/settings/writing/writing-arc-21.png';
-import writingArc22 from '../assets/settings/writing/writing-arc-22.png';
-import writingArc23 from '../assets/settings/writing/writing-arc-23.png';
-import writingArc24 from '../assets/settings/writing/writing-arc-24.png';
-import writingCheck from '../assets/settings/writing/writing-check.png';
-import dlBase from '../assets/settings/downloads/dl-base.png';
-import dlDotOff1 from '../assets/settings/downloads/dl-dot-off-1.png';
-import dlDotOff2 from '../assets/settings/downloads/dl-dot-off-2.png';
-import dlDotOff3 from '../assets/settings/downloads/dl-dot-off-3.png';
-import dlArrow from '../assets/settings/downloads/dl-arrow.png';
-import dlArrowGrey from '../assets/settings/downloads/dl-arrow-grey.png';
-import prBase from '../assets/settings/profiles/pr-base.png';
-import prArcOff1 from '../assets/settings/profiles/pr-arc-off-1.png';
-import prArcOff2 from '../assets/settings/profiles/pr-arc-off-2.png';
-import prArcOff3 from '../assets/settings/profiles/pr-arc-off-3.png';
-import profilesCardBase from '../assets/settings/profiles/profiles-card-base.png';
-import profilesPlus from '../assets/settings/profiles/profiles-plus.png';
+import generalMoon from '../assets/settings/general/general-moon.webp';
+import generalSun from '../assets/settings/general/general-sun.webp';
+import generalIslandDay from '../assets/settings/general/general-island-day.webp';
+import generalIslandNight from '../assets/settings/general/general-island-night.webp';
+import generalWindow from '../assets/settings/general/general-window.webp';
+import generalCloud1 from '../assets/settings/general/general-cloud-1.webp';
+import generalCloud2 from '../assets/settings/general/general-cloud-2.webp';
+import generalStar1 from '../assets/settings/general/general-star-1.webp';
+import generalStar2 from '../assets/settings/general/general-star-2.webp';
+import generalStar3 from '../assets/settings/general/general-star-3.webp';
+import generalStar4 from '../assets/settings/general/general-star-4.webp';
+import generalStar5 from '../assets/settings/general/general-star-5.webp';
+import writingPlate from '../assets/settings/writing/writing-plate.webp';
+import writingLight from '../assets/settings/writing/writing-light.webp';
+import writingCard from '../assets/settings/writing/writing-card.webp';
+import writingPillar from '../assets/settings/writing/writing-pillar.webp';
+import writingLightEdge from '../assets/settings/writing/writing-light-edge.webp';
+import writingBar from '../assets/settings/writing/writing-bar.webp';
+import writingDome from '../assets/settings/writing/writing-dome.webp';
+import writingCheck from '../assets/settings/writing/writing-check.webp';
+import downloadsTray from '../assets/settings/downloads/downloads-tray.webp';
+import downloadsTrayDark from '../assets/settings/downloads/downloads-tray-dark.webp';
+import downloadsGlow from '../assets/settings/downloads/downloads-glow.webp';
+import downloadsArrow from '../assets/settings/downloads/downloads-arrow.webp';
+import downloadsArrowGrey from '../assets/settings/downloads/downloads-arrow-grey.webp';
+import downloadsDot from '../assets/settings/downloads/downloads-dot.webp';
+import downloadsDotGrey from '../assets/settings/downloads/downloads-dot-grey.webp';
+import downloadsDotGreyDark from '../assets/settings/downloads/downloads-dot-grey-dark.webp';
+import downloadsArc1 from '../assets/settings/downloads/downloads-arc-1.webp';
+import downloadsArc2 from '../assets/settings/downloads/downloads-arc-2.webp';
+import downloadsArc3 from '../assets/settings/downloads/downloads-arc-3.webp';
+import downloadsArc1Grey from '../assets/settings/downloads/downloads-arc-1-grey.webp';
+import downloadsArc1GreyDark from '../assets/settings/downloads/downloads-arc-1-grey-dark.webp';
+import downloadsArc2Grey from '../assets/settings/downloads/downloads-arc-2-grey.webp';
+import downloadsArc3Grey from '../assets/settings/downloads/downloads-arc-3-grey.webp';
+import downloadsArc3GreyDark from '../assets/settings/downloads/downloads-arc-3-grey-dark.webp';
+import downloadsSlash from '../assets/settings/downloads/downloads-slash.webp';
+import downloadsSlashDark from '../assets/settings/downloads/downloads-slash-dark.webp';
+import profilesWifi from '../assets/settings/profiles/profiles-wifi.webp';
+import profilesKey from '../assets/settings/profiles/profiles-key.webp';
+import profilesGlobe from '../assets/settings/profiles/profiles-globe.webp';
+import profilesLock from '../assets/settings/profiles/profiles-lock.webp';
+import profilesCard from '../assets/settings/profiles/profiles-card.webp';
+import profilesEmptyCard from '../assets/settings/profiles/profiles-empty-card.webp';
+import profilesEmptyWifi from '../assets/settings/profiles/profiles-empty-wifi.webp';
+import profilesEmptyPerson from '../assets/settings/profiles/profiles-empty-person.webp';
+import profilesEmptyKey from '../assets/settings/profiles/profiles-empty-key.webp';
+import profilesEmptyPlus from '../assets/settings/profiles/profiles-empty-plus.webp';
 import navGeneral from '../assets/settings/nav/nav-general.png';
 import navWriting from '../assets/settings/nav/nav-writing.png';
 import navProfiles from '../assets/settings/nav/nav-profiles.png';
@@ -59,81 +64,93 @@ interface HeroLayer {
   y: number;
   w: number;
   h: number;
+  /** Used instead of src under the dark theme, for parts whose rim is lit for the light card */
+  srcDark?: string;
+  origin?: string;
 }
 
 interface HeroArtSpec {
   canvas: { w: number; h: number };
   layers: readonly HeroLayer[];
+  /** When the entrance hands over to the idle loops; HERO_SETTLE_MS when absent */
+  settleMs?: number;
 }
 
 // Source px of the prototype art; the canvas is the visible art box, so soft edges may overhang it.
 export const HERO_ART: Record<HeroId, HeroArtSpec> = {
   general: {
-    canvas: { w: 865, h: 734 },
+    canvas: { w: 379, h: 352 },
+    settleMs: 1900,
     layers: [
-      { id: 'base', src: generalBaseNoknob, x: -3, y: -3, w: 871, h: 765 },
-      { id: 'track', src: generalTrackGrey, x: 303, y: 468, w: 272, h: 167 },
-      { id: 'disc', src: generalDiscDim, x: 458, y: 129, w: 349, h: 430 },
-      { id: 'knob', src: generalKnob, x: 422, y: 507, w: 138, h: 134 },
+      { id: 'moon', src: generalMoon, x: 237, y: 0, w: 131, h: 125 },
+      { id: 'sun', src: generalSun, x: 12, y: 21, w: 82, h: 81 },
+      { id: 'day', src: generalIslandDay, x: 1, y: 101, w: 346, h: 249 },
+      { id: 'night', src: generalIslandNight, x: 1, y: 101, w: 346, h: 249 },
+      { id: 'window', src: generalWindow, x: 141, y: 144, w: 83, h: 84 },
+      { id: 'cloud1', src: generalCloud1, x: 218, y: 30, w: 106, h: 70 },
+      { id: 'cloud2', src: generalCloud2, x: 296, y: 89, w: 77, h: 52 },
+      { id: 'star1', src: generalStar1, x: 29, y: 25, w: 61, h: 60 },
+      { id: 'star2', src: generalStar2, x: 85, y: 71, w: 40, h: 39 },
+      { id: 'star3', src: generalStar3, x: 155, y: 17, w: 50, h: 50 },
+      { id: 'star4', src: generalStar4, x: 210, y: 79, w: 36, h: 36 },
+      { id: 'star5', src: generalStar5, x: 334, y: 94, w: 45, h: 45 },
     ],
   },
   writing: {
-    canvas: { w: 324, h: 309 },
+    canvas: { w: 509, h: 352 },
+    settleMs: 1900,
     layers: [
-      { id: 'base', src: writingBase, x: -2, y: -1, w: 338, h: 316 },
-      { id: 'grey', src: writingShieldGrey, x: 211, y: 169, w: 114, h: 141 },
-      { id: 'arc01', src: writingArc01, x: 106, y: 12, w: 66, h: 73 },
-      { id: 'arc02', src: writingArc02, x: 112, y: 0, w: 62, h: 77 },
-      { id: 'arc03', src: writingArc03, x: 116, y: -1, w: 58, h: 77 },
-      { id: 'arc04', src: writingArc04, x: 125, y: -1, w: 51, h: 76 },
-      { id: 'arc05', src: writingArc05, x: 137, y: -1, w: 39, h: 76 },
-      { id: 'arc06', src: writingArc06, x: 149, y: 0, w: 31, h: 63 },
-      { id: 'arc07', src: writingArc07, x: 161, y: 1, w: 26, h: 72 },
-      { id: 'arc08', src: writingArc08, x: 172, y: 3, w: 24, h: 70 },
-      { id: 'arc09', src: writingArc09, x: 180, y: 6, w: 25, h: 66 },
-      { id: 'arc10', src: writingArc10, x: 182, y: 10, w: 31, h: 62 },
-      { id: 'arc11', src: writingArc11, x: 184, y: 14, w: 36, h: 58 },
-      { id: 'arc12', src: writingArc12, x: 186, y: 19, w: 41, h: 54 },
-      { id: 'arc13', src: writingArc13, x: 188, y: 24, w: 45, h: 49 },
-      { id: 'arc14', src: writingArc14, x: 190, y: 30, w: 49, h: 44 },
-      { id: 'arc15', src: writingArc15, x: 193, y: 36, w: 51, h: 38 },
-      { id: 'arc16', src: writingArc16, x: 197, y: 42, w: 52, h: 33 },
-      { id: 'arc17', src: writingArc17, x: 202, y: 49, w: 51, h: 28 },
-      { id: 'arc18', src: writingArc18, x: 208, y: 57, w: 49, h: 23 },
-      { id: 'arc19', src: writingArc19, x: 217, y: 65, w: 43, h: 24 },
-      { id: 'arc20', src: writingArc20, x: 230, y: 74, w: 33, h: 25 },
-      { id: 'arc21', src: writingArc21, x: 229, y: 83, w: 35, h: 27 },
-      { id: 'arc22', src: writingArc22, x: 229, y: 91, w: 36, h: 31 },
-      { id: 'arc23', src: writingArc23, x: 229, y: 97, w: 36, h: 38 },
-      { id: 'arc24', src: writingArc24, x: 204, y: 104, w: 61, h: 46 },
-      { id: 'check', src: writingCheck, x: 232, y: 214, w: 68, h: 60 },
+      { id: 'plate', src: writingPlate, x: 2, y: 2, w: 505, h: 349 },
+      { id: 'light', src: writingLight, x: 205, y: 52, w: 147, h: 183 },
+      { id: 'card1', src: writingCard, x: 85, y: 184, w: 143, h: 83, origin: '48% 46.67%' },
+      { id: 'card2', src: writingCard, x: 85, y: 184, w: 143, h: 83, origin: '48% 46.67%' },
+      { id: 'card3', src: writingCard, x: 85, y: 184, w: 143, h: 83, origin: '48% 46.67%' },
+      { id: 'pillar', src: writingPillar, x: 339, y: 84, w: 91, h: 210 },
+      { id: 'lightEdge', src: writingLightEdge, x: 339, y: 140, w: 14, h: 73 },
+      { id: 'bar', src: writingBar, x: 212, y: 4, w: 124, h: 138 },
+      { id: 'dome', src: writingDome, x: 242, y: 2, w: 96, h: 90, origin: '50.5% 94.22%' },
+      { id: 'check', src: writingCheck, x: 251, y: 23, w: 60, h: 57, origin: '65.8% 42.67%' },
     ],
   },
   downloads: {
-    canvas: { w: 682, h: 854 },
+    canvas: { w: 352, h: 352 },
+    settleMs: 1800,
     layers: [
-      { id: 'base', src: dlBase, x: -3, y: 202, w: 688, h: 658 },
-      { id: 'dot1', src: dlDotOff1, x: 40, y: 346, w: 71, h: 76 },
-      { id: 'dot2', src: dlDotOff2, x: 40, y: 496, w: 69, h: 74 },
-      { id: 'dot3', src: dlDotOff3, x: 40, y: 647, w: 70, h: 76 },
-      { id: 'arrow', src: dlArrow, x: 206, y: -2, w: 286, h: 285 },
-      { id: 'grey', src: dlArrowGrey, x: 206, y: -2, w: 287, h: 281 },
+      { id: 'tray', src: downloadsTray, srcDark: downloadsTrayDark, x: 43, y: 152, w: 278, h: 182 },
+      { id: 'glow', src: downloadsGlow, x: 45, y: 154, w: 273, h: 149 },
+      { id: 'arrow', src: downloadsArrow, x: 143, y: 51, w: 118, h: 120, origin: '49.69% 95.98%' },
+      { id: 'arrowGrey', src: downloadsArrowGrey, x: 143, y: 51, w: 118, h: 120, origin: '49.69% 95.98%' },
+      { id: 'dot', src: downloadsDot, x: 90, y: 98, w: 36, h: 36, origin: '49.49% 48.18%' },
+      { id: 'arc1', src: downloadsArc1, x: 72, y: 75, w: 69, h: 37, origin: '51.91% 109.04%' },
+      { id: 'arc2', src: downloadsArc2, x: 56, y: 51, w: 97, h: 48, origin: '53.42% 134.05%' },
+      { id: 'arc3', src: downloadsArc3, x: 40, y: 27, w: 124, h: 57, origin: '54.69% 154.99%' },
+      { id: 'dotGrey', src: downloadsDotGrey, srcDark: downloadsDotGreyDark, x: 90, y: 98, w: 36, h: 36, origin: '49.49% 48.18%' },
+      { id: 'arc1Grey', src: downloadsArc1Grey, srcDark: downloadsArc1GreyDark, x: 72, y: 75, w: 69, h: 37, origin: '51.91% 109.04%' },
+      { id: 'arc2Grey', src: downloadsArc2Grey, x: 56, y: 51, w: 97, h: 48, origin: '53.42% 134.05%' },
+      { id: 'arc3Grey', src: downloadsArc3Grey, srcDark: downloadsArc3GreyDark, x: 40, y: 27, w: 124, h: 57, origin: '54.69% 154.99%' },
+      { id: 'slash', src: downloadsSlash, srcDark: downloadsSlashDark, x: 46, y: 25, w: 106, h: 109, origin: '49.82% 49.94%' },
     ],
   },
   profiles: {
-    canvas: { w: 1256, h: 868 },
+    canvas: { w: 508, h: 352 },
+    settleMs: 2200,
     layers: [
-      { id: 'base', src: prBase, x: -3, y: -3, w: 1262, h: 874 },
-      { id: 'arc1', src: prArcOff1, x: 593, y: 165, w: 139, h: 81 },
-      { id: 'arc2', src: prArcOff2, x: 542, y: 82, w: 245, h: 109 },
-      { id: 'arc3', src: prArcOff3, x: 494, y: -3, w: 347, h: 134 },
+      { id: 'wifi', src: profilesWifi, x: 16, y: 2, w: 135, h: 145 },
+      { id: 'key', src: profilesKey, x: 356, y: 12, w: 146, h: 151 },
+      { id: 'globe', src: profilesGlobe, x: 363, y: 194, w: 143, h: 156 },
+      { id: 'lock', src: profilesLock, x: 2, y: 182, w: 145, h: 157 },
+      { id: 'card', src: profilesCard, x: 163, y: 50, w: 183, h: 254, origin: '50.39% 98.12%' },
     ],
   },
   profilesEmpty: {
-    canvas: { w: 260, h: 256 },
+    canvas: { w: 427, h: 352 },
+    settleMs: 1900,
     layers: [
-      { id: 'card', src: profilesCardBase, x: -1, y: -1, w: 281, h: 264 },
-      { id: 'plus', src: profilesPlus, x: 127, y: 100, w: 101, h: 109 },
+      { id: 'card', src: profilesEmptyCard, x: 88, y: 12, w: 246, h: 279, origin: '42.01% 108.83%' },
+      { id: 'wifi', src: profilesEmptyWifi, x: 2, y: 2, w: 153, h: 147, origin: '52.08% 96.62%' },
+      { id: 'person', src: profilesEmptyPerson, x: 315, y: 76, w: 110, h: 137, origin: '52.54% 96.33%' },
+      { id: 'key', src: profilesEmptyKey, x: 243, y: 214, w: 169, h: 136, origin: '54.85% 96.88%' },
+      { id: 'plus', src: profilesEmptyPlus, x: 17, y: 192, w: 134, h: 128, origin: '50.37% 96.58%' },
     ],
   },
 };
@@ -148,5 +165,5 @@ export const NAV_ICONS: Record<SettingsView, string> = {
 
 export const ALL_BOARDS_ART = allBoards;
 
-// Longest entrance (Writing check pop) plus slack; afterwards state changes run on their transitions.
+// Hand-over from entrance to idle loops for a hero without its own settleMs.
 export const HERO_SETTLE_MS = 1600;
