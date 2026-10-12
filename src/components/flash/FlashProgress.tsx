@@ -2,7 +2,7 @@
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 import { useState, useEffect, useEffectEvent } from 'react';
-import { HardDrive, Usb, Disc, FileImage, ShieldOff } from 'lucide-react';
+import { Usb, Disc, FileImage, ShieldOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { BoardInfo, ImageInfo, BlockDevice, AutoconfigConfig, FlashExit } from '../../types';
 import { isEdlImage } from '../../types';
@@ -17,7 +17,7 @@ import { FlashStageIcon, getStageKey, isIndeterminateStage } from './FlashStageI
 import { FlashActions } from './FlashActions';
 import { FlashPhaseDots } from './FlashPhaseDots';
 import { FlashCancelled } from './FlashCancelled';
-import { ErrorDisplay, MarqueeText, ConfirmationDialog, BoardImage, getDeviceBadge } from '../shared';
+import { ErrorDisplay, MarqueeText, ConfirmationDialog, BoardImage, DeviceIcon } from '../shared';
 
 interface FlashProgressProps {
   board: BoardInfo;
@@ -89,10 +89,8 @@ export function FlashProgress({
   const isCustomIcon = image.is_custom && board.slug === SLUGS.CUSTOM;
   const isEdl = isEdlImage(image);
 
-  // Same detection used at the storage-selection step, surfaced here so the
-  // confirmation/success screen states the flashed device type too (#153).
-  const deviceType = getDeviceType(device);
-  const deviceTypeLabel = getDeviceBadge(deviceType, t);
+  // A system disk only reaches this screen once unlocked, so the Lock glyph would mislead.
+  const iconType = getDeviceType({ ...device, is_system: false });
 
   // Glow brightness tracks progress; indeterminate stages sit at mid-glow.
   const glowProgress = isComplete ? 100 : isIndeterminate ? 50 : progress;
@@ -150,9 +148,8 @@ export function FlashProgress({
                   <MarqueeText text={getImageDisplayText()} className="os-badge-text" />
                 </div>
                 <div className="flash-device-row">
-                  {isEdl ? <Usb size={16} /> : <HardDrive size={16} />}
+                  {isEdl ? <Usb size={16} /> : <DeviceIcon type={iconType} size={16} />}
                   <MarqueeText text={device.model || device.name} className="flash-device-name" />
-                  {deviceTypeLabel && <span className={`${deviceType}-badge`}>{deviceTypeLabel}</span>}
                   {device.size_formatted && <span className="flash-device-size">{device.size_formatted}</span>}
                 </div>
               </div>
@@ -187,8 +184,8 @@ export function FlashProgress({
                     {isEdl
                       ? t('flash.successHintQdlReady')
                       : image.is_custom
-                        ? t('flash.successHintCustom')
-                        : t('flash.successHint', { boardName: board.name })}
+                        ? t('flash.successHintDeviceCustom')
+                        : t('flash.successHintDevice', { boardName: board.name })}
                   </p>
                   {verifyAborted && (
                     <p className="flash-success-caveat">
