@@ -3,44 +3,35 @@
   <br><br>
 </h2>
 
-### About
+# Armbian Imager
 
-Armbian Imager is the official tool for downloading and flashing Armbian OS images to single-board computers. It checks the target disk before writing, validates the checksum, and verifies the image after the write, so a bad download or the wrong disk doesn't turn into a broken card.
+## Purpose of This Repository
 
-### Features
+Armbian Imager is the official desktop application for downloading, verifying, and flashing Armbian OS images to SD cards, USB drives, and EDL-based boards. It provides a native cross-platform GUI backed by a Rust core that handles device discovery, image decompression, writing, and post-write verification.
+
+## About
+
+Armbian Imager checks the target disk before writing, validates the download's checksum, and verifies the image after the write, so a bad download or the wrong disk doesn't turn into a broken card. It covers 300+ boards with metadata and photos pulled from armbian.com.
+
+## Features
 
 - Works with 300+ boards, with filtering and board metadata from armbian.com
 - Disk safety checks, checksum validation, and post-write verification
 - Native builds for Linux, Windows, and macOS, on x64 and ARM64
-- Multi-language interface that follows your system language by default
-- Built-in application updates
-- Small binary with few runtime dependencies
-
-### Testimonials
-
-> "What a fantastic tool for getting people started with a non Raspberry PI"
-> *Interfacing Linux*, hardware and software guides for Linux creatives ([source](https://www.youtube.com/watch?v=RAxQebKsnuc))
-
-> "A proper multi-platform desktop app that actually works, which is rarer than you'd think."
-> *Bruno Verachten*, Senior Developer Relations Engineer ([source](https://www.linkedin.com/pulse/adding-risc-v-support-armbian-imager-tale-qemu-tauri-deja-verachten-86fxe))
-
-> "The Upcoming Armbian Imager Tool is a Godsend for Non-Raspberry Pi SBC Owners"
-> *Sourav Rudra*, It's FOSS ([source](https://itsfoss.com/news/armbian-imager-quietly-debuts/))
-
-> "According to Armbian, this results in less RAM and storage usage and a faster experience."
-> *Jordan Gloor*, HowtoGeek.com ([source](https://www.howtogeek.com/armbians-raspberry-pi-imager-alternative-is-here/))
-
-> "It's super easy to write an operating system... I'm always happy when an Armbian version comes out because you've got more stability and much more compatibility."
-> *leepspvideo*, Simple Linux install for 300+ Arm devices ([source](https://www.youtube.com/watch?v=vUvGD2GSALI))
+- Code-signed Windows releases (thanks to [SignPath Foundation](https://signpath.org))
+- Multi-language interface (20 languages) that follows your system language
+- Built-in application updates via the Tauri updater
+- First-boot autoconfig: pre-fills user, SSH keys, Wi-Fi and locale into the ext4 rootfs of a RAW image before flashing
+- QDL (Qualcomm EDL) flashing path for boards like Arduino UNO Q
 
 ## Download
 
-Prebuilt binaries are available for every supported platform.
+Prebuilt binaries are available on the [Releases](https://github.com/armbian/imager/releases) page.
 
 | <a href="https://github.com/armbian/imager/releases"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apple.svg" width="24"><br><strong>macOS</strong></a> | <a href="https://github.com/armbian/imager/releases"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/windows11.svg" width="24"><br><strong>Windows</strong></a> | <a href="https://github.com/armbian/imager/releases"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/linux.svg" width="24"><br><strong>Linux</strong></a> |
 |:---:|:---:|:---:|
 | Intel & Apple Silicon | x64 & ARM64 (code-signed) | x64 & ARM64 |
-| <code>.dmg</code> / <code>.app.zip</code> | <code>.exe</code> / <code>.msi</code> | <code>.deb</code> / <code>.AppImage</code> |
+| `.dmg` / `.app.zip` | `.exe` / `.msi` | `.deb` / `.AppImage` |
 
 ## How It Works
 
@@ -49,36 +40,126 @@ Prebuilt binaries are available for every supported platform.
 3. **Pick an image.** Desktop or server, a kernel branch, and a stable, nightly, or rolling release build.
 4. **Flash.** The app downloads, decompresses, writes, and verifies for you.
 
-## Customization
-
-- Theme: light, dark, or follow the system setting
-- Developer mode: turn on detailed logging and open the log viewer
-- Language: 20 languages, auto-detected from your system
-
 ## Platform Support
 
 | Platform | Architecture | Notes |
-|----------|-------------|-------|
+|----------|--------------|-------|
 | macOS | Intel x64 | Full support |
-| macOS | Apple Silicon | Native ARM64 build, Touch ID support |
+| macOS | Apple Silicon | Native ARM64 build |
 | Windows | x64 | Requires Administrator privileges |
-| Windows | ARM64 | Native ARM64 build, requires Administrator privileges |
-| Linux | x64 | Uses lsblk for detection and UDisks2/polkit for elevated device access |
+| Windows | ARM64 | Native ARM64 build, requires Administrator |
+| Linux | x64 | Uses `lsblk` for detection and UDisks2/polkit for elevated device access |
 | Linux | ARM64 | Native ARM64 build |
 
 ### Supported Languages
 
-English, Italian, German, French, Spanish, Portuguese, Portuguese (Brazil), Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian, Greek, Serbian
+English, Italian, German, French, Spanish, Portuguese, Portuguese (Brazil), Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian, Greek, Serbian. Translation files live in [`src/locales/`](src/locales/).
+
+## Tech Stack
+
+- **Frontend:** React 19 + TypeScript, bundled with Vite 8, internationalised with i18next
+- **Backend / shell:** [Tauri 2](https://tauri.app) in Rust (edition 2021, MSRV 1.85.0)
+- **Decompression:** `xz2`, `lzma-rust2`, `bzip2`, `flate2`, `zstd`
+- **Device access:** `windows-sys` on Windows; `libc` + `udisks2`/`zbus` on Linux; `security-framework` + `core-foundation` on macOS
+- **QDL flashing:** [`qdl`](https://github.com/qualcomm/qdlrs) + `nusb`
+- **In-repo crate:** [`armbian-write-conf`](crates/armbian-write-conf/) — writes a config file into the ext4 rootfs of a RAW disk image in userspace, with partition parsing via `gptman` / `mbrman` and ext4 validation via `ext4-view`
+- **Tooling:** ESLint 9, `typescript-eslint`, `cargo fmt`, `cargo clippy`
+
+## Repository Layout
+
+```
+.
+├── src/                         # React frontend (TypeScript)
+│   ├── components/              # UI components (flash/, settings/, modals/, layout/, shared/, autoconfig/, dev/)
+│   ├── hooks/                   # Custom React hooks
+│   ├── contexts/                # Theme, motion, and update React contexts
+│   ├── config/                  # Static config (i18n, boards, filters, hero art, ...)
+│   ├── locales/                 # 20 translation files (en.json is the source of truth)
+│   ├── styles/                  # CSS
+│   ├── utils/                   # Shared utilities
+│   └── App.tsx, main.tsx, i18n.ts
+├── src-tauri/                   # Tauri shell (Rust)
+│   ├── src/
+│   │   ├── commands/            # Tauri IPC commands exposed to the frontend
+│   │   ├── flash/               # Per-OS flashing (linux/, macos/, windows.rs) + verify
+│   │   ├── devices/             # Device enumeration per OS
+│   │   ├── decompress.rs, download.rs, cache.rs
+│   │   ├── qdl/                 # Qualcomm EDL flashing
+│   │   ├── dev_scenarios/       # Debug-only emulator (devices, flash, network, vdisks)
+│   │   ├── images/, paste/, logging/, utils/
+│   │   └── main.rs
+│   ├── capabilities/            # Tauri capability manifests
+│   ├── icons/                   # App icons (desktop, Android, iOS)
+│   ├── packaging/copyright      # Per-file licence breakdown
+│   └── tauri.conf.json, tauri.dev.conf.json, tauri.debug.conf.json
+├── crates/
+│   └── armbian-write-conf/      # Ext4 rootfs config writer + tests
+├── scripts/
+│   ├── setup/                   # install.sh, install-linux.sh, install-macos.sh, install-windows.ps1
+│   └── locales/                 # check-parity.mjs, sync-locales.js
+├── public/                      # Static assets
+├── index.html, vite.config.ts, eslint.config.js
+├── tsconfig.json, tsconfig.app.json, tsconfig.node.json
+├── package.json
+└── .github/                     # Issue templates, labels, workflows
+```
+
+## Development
+
+Full setup, build instructions, and architecture notes live in [DEVELOPMENT.md](DEVELOPMENT.md). The short version:
+
+```bash
+git clone https://github.com/armbian/imager.git && cd imager
+bash scripts/setup/install.sh
+npm install
+npm run tauri:dev
+```
+
+Prerequisites: Node.js ≥ 20.19.0, Rust (stable, ≥ 1.85.0 for the Tauri crate), and the platform-specific system packages listed in [DEVELOPMENT.md](DEVELOPMENT.md).
+
+### Common scripts
+
+| Command | What it does |
+|---------|--------------|
+| `npm run dev` | Vite dev server, frontend only |
+| `npm run tauri:dev` | Full app with hot reload (debug build; includes dev scenarios panel) |
+| `npm run build` | Production frontend build (`tsc -b && vite build`) |
+| `npm run tauri:build` | Production distributable |
+| `npm run lint` | ESLint over the frontend |
+| `npm run clean` | Remove `node_modules`, `dist`, and `src-tauri/target` |
+
+### Quality checks
+
+Run these locally before opening a PR; CI enforces them with zero warnings:
+
+```bash
+npm run lint
+npx tsc --noEmit -p tsconfig.app.json
+node scripts/locales/check-parity.mjs
+
+cd src-tauri
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+```
+
+## Continuous Integration
+
+CI covers PR checks, test builds, releases, scheduled locale sync and release pruning. See the live overview at [actions.armbian.com/?repo=imager](https://actions.armbian.com/?repo=imager).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow, branch naming, Conventional Commit scopes, and translation guidelines. All participants are expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Related reading:
+- [Armbian documentation](https://docs.armbian.com)
+- [Armbian build framework](https://github.com/armbian/build)
+- [Armbian forum](https://forum.armbian.com/)
 
 ## Why We Sign Our Code
 
 Downloading software shouldn't take a leap of faith. Every Windows release is cryptographically signed, so you can confirm the binary is exactly what we built and hasn't been tampered with on the way to you.
 
 This is possible thanks to [SignPath Foundation](https://signpath.org?utm_source=foundation&utm_medium=github&utm_campaign=armbian-imager), which gives free code signing certificates to open source projects, and [SignPath.io](https://signpath.io?utm_source=foundation&utm_medium=github&utm_campaign=armbian-imager) for the signing infrastructure.
-
-## Development
-
-Setup, build instructions, and project layout live in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## License
 
