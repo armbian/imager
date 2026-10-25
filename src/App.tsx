@@ -19,6 +19,7 @@ import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS,
 import { IMAGE_FORMAT, IMAGE_STORAGE, isEdlImage } from './types';
 import { presetIsEmpty } from './config/autoconfig';
 import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer, focusAfterInput } from './utils';
+import { imageErrorKey } from './utils/errorUtils';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianDetectionOutcome, ArmbianReleaseInfo, AutoconfigConfig, CustomImageInfo, FlashExit, LeaveGuard, SettingsView } from './types';
 import './styles/index.css';
 
@@ -406,7 +407,8 @@ function AppContent() {
         }
       } catch (err) {
         logWarn('app', `Failed to check/decompress cached image: ${err}`);
-        // Continue with original path
+        showError(t(imageErrorKey(err) ?? 'error.imageDecompressFailed'));
+        return;
       }
 
       const cachedImage = buildLocalImage({
@@ -436,7 +438,7 @@ function AppContent() {
 
     window.addEventListener(EVENTS.CACHE_IMAGE_REUSE, handler);
     return () => window.removeEventListener(EVENTS.CACHE_IMAGE_REUSE, handler);
-  }, [t]);
+  }, [t, showError]);
 
   // Reset a step and all downstream selections, which become invalid when it changes
   function resetSelectionsFrom(step: SelectionStep) {
@@ -492,7 +494,7 @@ function AppContent() {
       }
     } catch (err) {
       logWarn('app', `Failed to select custom image: ${err}`);
-      showError(t('custom.selectError'));
+      showError(t(imageErrorKey(err) ?? 'custom.selectError'));
     }
   }
 

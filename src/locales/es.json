@@ -169,6 +169,7 @@
     "verifyMismatch": "Lo escrito en el dispositivo no coincide con la imagen. Puede que la tarjeta esté fallando. Prueba con otra tarjeta.",
     "verifyReadFailed": "No se pudo leer el dispositivo para verificar la escritura. Vuelve a conectarlo e inténtalo de nuevo, o prueba con otra tarjeta o lector.",
     "imageDecompressFailed": "No se pudo descomprimir la imagen. El archivo puede estar dañado o incompleto. Descárgalo de nuevo o elige otro archivo.",
+    "imageInvalid": "El archivo de imagen está vacío o no se puede usar. Elígelo de nuevo o descarga una copia nueva.",
     "flashBusy": "El flash anterior aún se está terminando. Espera un momento e inténtalo de nuevo."
   },
   "custom": {

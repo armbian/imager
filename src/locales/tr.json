@@ -169,6 +169,7 @@
     "verifyMismatch": "Cihaza yazılanlar imajla eşleşmiyor. Kart arızalı olabilir. Başka bir kart deneyin.",
     "verifyReadFailed": "Yazma işlemini doğrulamak için cihaz geri okunamadı. Yeniden bağlayıp tekrar deneyin ya da başka bir kart veya okuyucu deneyin.",
     "imageDecompressFailed": "İmaj açılamadı. Dosya bozuk veya eksik olabilir. Yeniden indirin veya başka bir dosya seçin.",
+    "imageInvalid": "İmaj dosyası boş veya kullanılamaz durumda. Yeniden seçin veya yeni bir kopya indirin.",
     "flashBusy": "Önceki yazma işlemi hâlâ tamamlanıyor. Biraz bekleyip tekrar deneyin."
   },
   "custom": {

@@ -169,6 +169,7 @@
     "verifyMismatch": "O que foi gravado no dispositivo não corresponde à imagem. O cartão pode estar com defeito. Tente outro cartão.",
     "verifyReadFailed": "Não foi possível reler o dispositivo para verificar a gravação. Volte a ligá-lo e tente novamente, ou experimente outro cartão ou leitor.",
     "imageDecompressFailed": "Não foi possível descomprimir a imagem. O ficheiro pode estar danificado ou incompleto. Transfira-o novamente ou escolha outro ficheiro.",
+    "imageInvalid": "O ficheiro de imagem está vazio ou não pode ser utilizado. Escolha-o novamente ou transfira uma cópia nova.",
     "flashBusy": "A gravação anterior ainda está a terminar. Aguarde um momento e tente novamente."
   },
   "custom": {

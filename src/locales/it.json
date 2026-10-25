@@ -169,6 +169,7 @@
     "verifyMismatch": "I dati scritti sul dispositivo non corrispondono all'immagine. La scheda potrebbe essere difettosa. Prova un'altra scheda.",
     "verifyReadFailed": "Non è stato possibile rileggere il dispositivo per verificare la scrittura. Ricollegalo e riprova, oppure prova un'altra scheda o un altro lettore.",
     "imageDecompressFailed": "Non è stato possibile decomprimere l'immagine. Il file potrebbe essere danneggiato o incompleto. Scaricalo di nuovo o scegli un altro file.",
+    "imageInvalid": "Il file immagine è vuoto o inutilizzabile. Sceglilo di nuovo o scarica una copia nuova.",
     "flashBusy": "La scrittura precedente non è ancora terminata. Attendi un momento e riprova."
   },
   "custom": {

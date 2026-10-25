@@ -3,7 +3,7 @@
 
 // Parse the backend's tagged error strings (e.g. [SHA_UNAVAILABLE]) and map them to i18n keys
 
-import { formatBytes } from './index';
+import { formatBytes, getErrorMessage } from './index';
 
 export type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
@@ -23,7 +23,7 @@ const DEVICE_ERROR_KEYS = {
   '[FLASH_BUSY]': 'error.flashBusy',
 } as const;
 
-/** Twins of TAG_SHA_MISMATCH (download.rs), TAG_VERIFY_* (flash/verify.rs), TAG_DECOMPRESS_FAILED (decompress.rs) and TAG_CANCELLED (utils/errors.rs) */
+/** Twins of TAG_SHA_MISMATCH (download.rs), TAG_VERIFY_* (flash/verify.rs), TAG_DECOMPRESS_FAILED (decompress.rs), TAG_CANCELLED and TAG_IMAGE_INVALID (utils/errors.rs) */
 const IMAGE_ERROR_KEYS = {
   // Only an EDL flash keeps its screen after Cancel, so a cancelled download or decompress lands here
   '[CANCELLED]': 'error.qdlCancelled',
@@ -31,6 +31,7 @@ const IMAGE_ERROR_KEYS = {
   '[VERIFY_MISMATCH]': 'error.verifyMismatch',
   '[VERIFY_READ_FAILED]': 'error.verifyReadFailed',
   '[DECOMPRESS_FAILED]': 'error.imageDecompressFailed',
+  '[IMAGE_INVALID]': 'error.imageInvalid',
 } as const;
 
 const QDL_ERROR_KEYS = {
@@ -55,6 +56,11 @@ export function isShaUnavailableError(error: string): boolean {
 /** True when the backend refused the target device before writing ([DEVICE_*] tags, [FLASH_BUSY]) */
 export function isDeviceRefusalError(error: string): boolean {
   return DEVICE_TOO_SMALL_PATTERN.test(error) || findTaggedKey(error, DEVICE_ERROR_KEYS) !== undefined;
+}
+
+/** i18n key of a tagged image error, for callers that fall back to their own message instead of the raw string */
+export function imageErrorKey(error: unknown): string | undefined {
+  return findTaggedKey(getErrorMessage(error, ''), IMAGE_ERROR_KEYS);
 }
 
 /** Map tagged backend flash errors ([AUTOCONFIG_NOT_ARMBIAN], [DEVICE_*], [FLASH_BUSY], [WRITE_FAILED:offset], image checks, [QDL_*]) to translated messages */

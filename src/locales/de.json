@@ -169,6 +169,7 @@
     "verifyMismatch": "Die auf das Gerät geschriebenen Daten stimmen nicht mit dem Image überein. Die Karte ist möglicherweise defekt. Versuche eine andere Karte.",
     "verifyReadFailed": "Das Gerät konnte zur Überprüfung des Schreibvorgangs nicht zurückgelesen werden. Verbinde es erneut und versuche es noch einmal oder verwende eine andere Karte oder einen anderen Leser.",
     "imageDecompressFailed": "Das Image konnte nicht entpackt werden. Die Datei ist möglicherweise beschädigt oder unvollständig. Lade sie erneut herunter oder wähle eine andere Datei.",
+    "imageInvalid": "Die Image-Datei ist leer oder unbrauchbar. Wähle sie erneut aus oder lade eine neue Kopie herunter.",
     "flashBusy": "Der vorherige Flash-Vorgang wird noch abgeschlossen. Warte einen Moment und versuche es erneut."
   },
   "custom": {

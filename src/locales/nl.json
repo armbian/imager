@@ -169,6 +169,7 @@
     "verifyMismatch": "Wat naar het apparaat is geschreven komt niet overeen met de image. De kaart is mogelijk defect. Probeer een andere kaart.",
     "verifyReadFailed": "Het apparaat kon niet worden teruggelezen om het schrijven te verifiëren. Sluit het opnieuw aan en probeer het nog eens, of probeer een andere kaart of lezer.",
     "imageDecompressFailed": "De image kon niet worden uitgepakt. Het bestand is mogelijk beschadigd of onvolledig. Download het opnieuw of kies een ander bestand.",
+    "imageInvalid": "Het image-bestand is leeg of onbruikbaar. Kies het opnieuw of download een nieuwe kopie.",
     "flashBusy": "De vorige flash wordt nog afgerond. Wacht even en probeer het opnieuw."
   },
   "custom": {

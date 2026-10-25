@@ -169,6 +169,7 @@
     "verifyMismatch": "Ono što je zapisano na uređaj ne podudara se sa slikom. Kartica je možda neispravna. Pokušajte s drugom karticom.",
     "verifyReadFailed": "Uređaj nije bilo moguće ponovno pročitati radi provjere zapisa. Ponovno ga spojite i pokušajte opet ili pokušajte s drugom karticom ili čitačem.",
     "imageDecompressFailed": "Sliku nije bilo moguće raspakirati. Datoteka je možda oštećena ili nepotpuna. Ponovno je preuzmite ili odaberite drugu datoteku.",
+    "imageInvalid": "Datoteka slike je prazna ili neupotrebljiva. Odaberite je ponovno ili preuzmite novu kopiju.",
     "flashBusy": "Prethodno snimanje se još privodi kraju. Pričekajte trenutak i pokušajte ponovno."
   },
   "custom": {
