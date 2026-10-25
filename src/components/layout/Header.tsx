@@ -8,7 +8,6 @@ import armbianLogoWhite from '../../assets/armbian-logo-white.png';
 import armbianLogoBlack from '../../assets/armbian-logo-black.png';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer } from '../../types';
 import { isEdlImage } from '../../types';
-import { UpdateModal } from '../shared';
 import { isDetectedBoard } from '../../utils';
 import { SettingsButton } from '../settings';
 
@@ -93,65 +92,62 @@ export function Header({
   }
 
   return (
-    <>
-      <UpdateModal />
-      <header className={`header ${entering ? 'is-entering' : ''}`} data-tauri-drag-region>
-        {/* Wordmark hidden on the welcome landing, where the hero already brands the app. */}
-        {hideLogo ? (
-          <div className="header-left" />
-        ) : (
-          <div
-            className={`header-left ${canReset ? 'clickable' : ''}`}
-            onClick={handleLogoClick}
-            title={canReset ? t('header.resetTooltip') : undefined}
-          >
-            {/* Black wordmark on light theme, white on dark; toggled via CSS to also cover 'auto'. */}
-            <img src={armbianLogoBlack} alt="Armbian" className="logo-main logo-main--light" />
-            <img src={armbianLogoWhite} alt="" aria-hidden="true" className="logo-main logo-main--dark" />
-          </div>
-        )}
-        <div className="header-right">
-          <div className={`header-controls${settingsOpen ? ' is-settings' : ''}`}>
-            {/* Steps hidden on the welcome landing and the offline entry (banner already says it) */}
-            {showSteps && (
-              <div className="header-steps" aria-hidden={settingsOpen || undefined} inert={settingsOpen || undefined}>
-                {steps.map((step, index) => (
-                  <div
-                    key={step.key}
-                    className={`header-step ${step.completed ? 'completed' : ''} ${canNavigateSteps && step.completed ? 'clickable' : ''}`}
-                    onClick={() => handleStepClick(step.key, step.completed)}
-                    title={canNavigateSteps && step.completed ? t('header.stepTooltip', { step: step.label }) : undefined}
-                  >
-                    <span className="header-step-indicator">
-                      {step.completed ? <Check size={14} /> : (index + 1)}
-                    </span>
-                    <span className="header-step-label">{step.label}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!hideSettings && (
-              <button
-                type="button"
-                className="header-back"
-                onClick={onCloseSettings}
-                aria-hidden={!settingsOpen || undefined}
-                inert={!settingsOpen || undefined}
-              >
-                <ArrowLeft size={16} aria-hidden="true" />
-                {t('settings.backToFlashing')}
-              </button>
-            )}
-          </div>
+    <header className={`header ${entering ? 'is-entering' : ''}`} data-tauri-drag-region>
+      {/* Wordmark hidden on the welcome landing, where the hero already brands the app. */}
+      {hideLogo ? (
+        <div className="header-left" />
+      ) : (
+        <div
+          className={`header-left ${canReset ? 'clickable' : ''}`}
+          onClick={handleLogoClick}
+          title={canReset ? t('header.resetTooltip') : undefined}
+        >
+          {/* Black wordmark on light theme, white on dark; toggled via CSS to also cover 'auto'. */}
+          <img src={armbianLogoBlack} alt="Armbian" className="logo-main logo-main--light" />
+          <img src={armbianLogoWhite} alt="" aria-hidden="true" className="logo-main logo-main--dark" />
+        </div>
+      )}
+      <div className="header-right">
+        <div className={`header-controls${settingsOpen ? ' is-settings' : ''}`}>
+          {/* Steps hidden on the welcome landing and the offline entry (banner already says it) */}
+          {showSteps && (
+            <div className="header-steps" aria-hidden={settingsOpen || undefined} inert={settingsOpen || undefined}>
+              {steps.map((step, index) => (
+                <div
+                  key={step.key}
+                  className={`header-step ${step.completed ? 'completed' : ''} ${canNavigateSteps && step.completed ? 'clickable' : ''}`}
+                  onClick={() => handleStepClick(step.key, step.completed)}
+                  title={canNavigateSteps && step.completed ? t('header.stepTooltip', { step: step.label }) : undefined}
+                >
+                  <span className="header-step-indicator">
+                    {step.completed ? <Check size={14} /> : (index + 1)}
+                  </span>
+                  <span className="header-step-label">{step.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
           {!hideSettings && (
-            <SettingsButton
-              ref={settingsButtonRef}
-              active={settingsOpen}
-              onClick={() => (settingsOpen ? onCloseSettings?.() : onOpenSettings?.())}
-            />
+            <button
+              type="button"
+              className="header-back"
+              onClick={onCloseSettings}
+              aria-hidden={!settingsOpen || undefined}
+              inert={!settingsOpen || undefined}
+            >
+              <ArrowLeft size={16} aria-hidden="true" />
+              {t('settings.backToFlashing')}
+            </button>
           )}
         </div>
-      </header>
-    </>
+        {!hideSettings && (
+          <SettingsButton
+            ref={settingsButtonRef}
+            active={settingsOpen}
+            onClick={() => (settingsOpen ? onCloseSettings?.() : onOpenSettings?.())}
+          />
+        )}
+      </div>
+    </header>
   );
 }

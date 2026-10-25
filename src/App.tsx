@@ -12,7 +12,7 @@ import { useDeviceMonitor } from './hooks/useDeviceMonitor';
 import { useConnectivity } from './hooks/useConnectivity';
 import { ToastProvider, useToasts } from './hooks/useToasts';
 import { useModalExitAnimation } from './hooks/useModalExitAnimation';
-import { UpdateProvider } from './contexts/UpdateContext';
+import { UpdateProvider, useUpdate } from './contexts/UpdateContext';
 import { useMotion } from './contexts/MotionContext';
 import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from './hooks/useSettings';
 import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, SETTINGS_VIEW, PLATFORM } from './config';
@@ -60,6 +60,10 @@ function AppContent() {
 
   const { isOnline } = useConnectivity();
   const prevOnlineRef = useRef<boolean | null>(null);
+
+  // Installing or relaunching for an update would kill a write in progress
+  const { setRestartBlocked } = useUpdate();
+  useEffect(() => setRestartBlocked(isFlashing), [isFlashing, setRestartBlocked]);
 
   // Armbian board detection state
   const [armbianInfo, setArmbianInfo] = useState<ArmbianReleaseInfo | null>(null);
@@ -675,6 +679,7 @@ function AppContent() {
             onSelectDevice={handleDeviceSelect}
             onConfirmDevice={handleConfirmFlash}
             onClearDevice={handleClearDevice}
+            onOpenUpdate={() => openSettings(SETTINGS_VIEW.ABOUT)}
             isOnline={isOnline}
             entering={entering}
           />

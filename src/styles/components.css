@@ -958,223 +958,6 @@ button.list-item:disabled:hover {
   }
 }
 
-/* UPDATE MODAL */
-.update-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn var(--dur-base) ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.update-modal {
-  background: var(--bg-modal);
-  border: 1px solid var(--border-light);
-  border-radius: 20px;
-  padding: 30px 30px 24px;
-  max-width: 380px;
-  width: 90%;
-  text-align: center;
-  box-shadow:
-    0 30px 70px -24px rgba(0, 0, 0, 0.6),
-    0 2px 10px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  animation: updateModalIn 0.42s var(--ease-out-expo);
-}
-
-@keyframes updateModalIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.update-modal-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 18px;
-  background: linear-gradient(160deg, #ff8052 0%, var(--armbian-orange) 100%);
-  border-radius: 17px;
-  color: white;
-  box-shadow:
-    0 12px 26px -8px rgba(var(--accent-rgb), 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.update-modal-icon svg {
-  width: 26px;
-  height: 26px;
-}
-
-.update-modal-title {
-  font-size: 21px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 10px;
-  letter-spacing: -0.4px;
-}
-
-.update-modal-message {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0 0 24px;
-  line-height: 1.55;
-}
-
-.update-modal-buttons {
-  display: flex;
-  gap: 10px;
-  width: 100%;
-  margin-top: 4px;
-}
-
-.update-modal-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 13px 18px;
-  border-radius: var(--radius-xl);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease,
-    border-color 0.18s ease;
-  border: none;
-  flex: 1;
-  min-width: 0;
-}
-
-.update-modal-btn.primary {
-  background: var(--accent);
-  color: white;
-  box-shadow: 0 10px 22px -8px rgba(var(--accent-rgb), 0.6);
-}
-
-.update-modal-btn.primary:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px -8px rgba(var(--accent-rgb), 0.7);
-}
-
-.update-modal-btn.primary:active {
-  transform: translateY(0);
-  box-shadow: 0 6px 14px -8px rgba(var(--accent-rgb), 0.5);
-}
-
-.update-modal-btn.secondary {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.update-modal-btn.secondary:hover {
-  background: var(--bg-hover);
-  border-color: var(--text-muted);
-  transform: translateY(-1px);
-}
-
-.update-modal-btn.secondary:active {
-  transform: translateY(0);
-}
-
-.update-modal-btn svg {
-  transition: transform 0.18s ease;
-  flex-shrink: 0;
-}
-
-.update-modal-btn:hover svg {
-  transform: scale(1.06);
-}
-
-.update-modal-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-.update-modal-btn:disabled::before {
-  display: none;
-}
-
-.update-modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--dur-base) ease;
-}
-
-.update-modal-close:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.update-modal-close:active {
-  transform: scale(0.92);
-}
-
-.update-modal {
-  position: relative;
-}
-
-.update-version-info {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0 auto 8px;
-  padding: 6px 10px;
-  background: var(--bg-card);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border-light);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  width: fit-content;
-  font-variant-numeric: tabular-nums;
-}
-
-.update-version-current {
-  font-size: 13px;
-  color: var(--text-muted);
-  font-weight: 500;
-  padding: 4px 9px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-}
-
-.update-version-arrow {
-  color: var(--text-muted);
-  font-size: 14px;
-  padding: 0 1px;
-}
-
 /* TOAST NOTIFICATIONS */
 
 .toast-container {
@@ -1285,102 +1068,97 @@ button.list-item:disabled:hover {
   }
 }
 
-.update-version-new {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.2px;
-  padding: 4px 10px;
+/* UPDATE PROGRESS (shared/UpdateProgressBar.tsx) */
+.update-progress__track {
+  position: relative;
+  width: 100%;
+  height: var(--update-track-h, 4px);
+  border-radius: var(--radius-pill);
   background: rgba(var(--accent-rgb), 0.12);
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(var(--accent-rgb), 0.22);
+  overflow: hidden;
 }
 
-.update-changelog-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin: 0 auto 22px;
-  padding: 7px 14px;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-lg);
+/* scaleX instead of width: compositable on old WebKit */
+.update-progress__fill {
+  width: 100%;
+  height: 100%;
+  background: var(--progress-fill);
+  transform: scaleX(var(--update-progress, 0));
+  transform-origin: left center;
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+}
+
+.update-progress__fill.is-indeterminate {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 32%;
+  transform: none;
+  transition: none;
+  animation: flashTrackSlide var(--dur-loop) var(--ease-standard) infinite;
+}
+
+.update-progress__text {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.update-progress__label {
+  overflow: hidden;
+  min-width: 0;
   color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.18s ease, background 0.18s ease;
-}
-
-.update-changelog-link:hover {
-  color: var(--accent);
-  background: var(--bg-hover);
-}
-
-.update-changelog-link:hover svg {
-  transform: scale(1.1);
-}
-
-.update-changelog-link:active {
-  transform: scale(0.98);
-}
-
-.update-changelog-link svg {
-  flex-shrink: 0;
-  transition: transform var(--dur-base) ease;
-}
-
-.update-progress-container {
-  width: 100%;
-  margin: 16px 0 24px;
-}
-
-.update-progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.update-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--armbian-orange) 0%, #ff8052 100%);
-  border-radius: var(--radius-sm);
-  transition: width var(--dur-medium) ease;
-}
-
-.update-progress-text {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.update-progress-percent {
   font-weight: 600;
-  color: var(--text-primary);
+  line-height: 20px;
+  text-overflow: ellipsis;
 }
 
-.update-modal-icon.success {
-  background: linear-gradient(135deg, var(--color-success) 0%, #34d399 100%);
-  box-shadow: 0 8px 24px rgba(var(--color-success-rgb), 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
+.update-progress__figures {
+  flex: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
 }
 
-.update-modal-icon.error {
-  background: linear-gradient(135deg, var(--color-error) 0%, #f87171 100%);
-  box-shadow: 0 8px 24px rgba(var(--color-error-rgb), 0.3), 0 2px 8px rgba(0, 0, 0, 0.1);
+.update-progress--detail {
+  max-width: var(--progress-track-max);
+}
+
+.update-progress--rail {
+  --update-track-h: 3px;
+  /* Overlays the entry's bottom padding so the footer height is the same in every state */
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  left: 0;
+  padding-left: calc(var(--rail-update-icon) + var(--rail-update-gap) + var(--rail-update-pad));
+  padding-right: var(--rail-update-pad);
+}
+
+/* The global reduced-motion switch ends the sweep off-track; hold a centred sliver instead */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduced-motion="false"]) .update-progress__fill.is-indeterminate {
+    animation: none;
+    inset: 0;
+    width: 40%;
+    margin-inline: auto;
+  }
+}
+
+:root[data-reduced-motion="true"] .update-progress__fill.is-indeterminate {
+  animation: none;
+  inset: 0;
+  width: 40%;
+  margin-inline: auto;
 }
 
 .spinning {
   /* Reuses the canonical spin keyframe defined in base.css */
   animation: spin 1s linear infinite;
-}
-
-.update-error-message {
-  color: var(--color-error);
 }
 
 /* MOTD TIP (Banner under header) */
@@ -1461,7 +1239,7 @@ button.list-item:disabled:hover {
 
 @keyframes railTipFade {
   from { opacity: 0; transform: translateY(3px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 .rail-tip__arrow {
@@ -1475,21 +1253,60 @@ button.list-item:disabled:hover {
   transform: translate(2px, -2px);
 }
 
-/* Update entry: under the MOTD tip, divided by a hairline; opens the update dialog */
+/* Update entry under the MOTD tip; labels never wrap, a button too wide for the title drops to its own row */
 .rail-update {
+  --rail-update-icon: 28px;
+  --rail-update-gap: 10px;
+  --rail-update-pad: 8px;
+  --rail-update-title-min: 80px;
+  position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  column-gap: 6px;
+  row-gap: 4px;
   width: 100%;
   margin-top: 10px;
-  padding: 12px 8px 6px;
+  padding: 8px 0;
   border-top: 1px solid var(--border-light);
 }
 
+.rail-update__open {
+  display: block;
+  flex: 1 1 calc(var(--rail-update-pad) * 2 + var(--rail-update-icon) + var(--rail-update-gap) + var(--rail-update-title-min));
+  min-width: 0;
+  padding: 4px var(--rail-update-pad);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) ease;
+}
+
+.rail-update__open:hover {
+  background: rgba(var(--accent-rgb), 0.04);
+}
+
+.rail-update__open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.rail-update__body {
+  display: flex;
+  align-items: center;
+  gap: var(--rail-update-gap);
+  min-width: 0;
+  animation: railTipFade var(--dur-medium) var(--ease-out-expo);
+}
+
 .rail-update__icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: var(--rail-update-icon);
+  height: var(--rail-update-icon);
+  border-radius: var(--radius-lg);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -1497,46 +1314,130 @@ button.list-item:disabled:hover {
   background: rgba(var(--accent-rgb), 0.12);
 }
 
+.rail-update.is-ready .rail-update__icon,
+.rail-update.is-installing .rail-update__icon {
+  color: var(--color-success);
+  background: rgba(var(--color-success-rgb), 0.12);
+}
+
+.rail-update.is-ready .rail-update__icon svg {
+  transform-origin: center;
+  animation: flashCheckPop var(--dur-slower) var(--ease-spring) both;
+}
+
+.rail-update.is-error .rail-update__icon {
+  color: var(--color-error);
+  background: rgba(var(--color-error-rgb), 0.12);
+}
+
 .rail-update__text {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
+  line-height: 1.25;
+}
+
+.rail-update__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail-update__title {
   font-size: 12.5px;
   font-weight: 600;
-  line-height: 1.25;
   color: var(--text-primary);
 }
 
-.rail-update__text span {
-  display: block;
+.rail-update__sub {
   font-size: 11px;
   font-weight: 400;
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.rail-update__cta {
+.rail-update__trail {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   flex-shrink: 0;
   font-size: 11.5px;
   font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.rail-update__chevron {
+  color: var(--text-muted);
+  transition: color var(--dur-fast) ease, transform var(--dur-fast) ease;
+}
+
+.rail-update__open:hover .rail-update__chevron {
+  color: var(--accent);
+  transform: translateX(3px);
+}
+
+.rail-update__cta {
+  flex: none;
+  margin-left: auto;
+  margin-right: var(--rail-update-pad);
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.25;
   color: var(--accent);
   background: transparent;
   padding: 5px 11px;
   border: 1px solid rgba(var(--accent-rgb), 0.5);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition: background var(--dur-fast) ease, border-color var(--dur-fast) ease, opacity var(--dur-fast) ease;
 }
 
-.rail-update__cta:hover {
+.rail-update__cta:hover:not(:disabled) {
   background: rgba(var(--accent-rgb), 0.1);
   border-color: var(--accent);
 }
 
+.rail-update__cta.is-primary {
+  color: var(--text-on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.rail-update__cta.is-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.rail-update__cta:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .rail-update__cta:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* CHANGELOG MODAL */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes changelogModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .changelog-modal-overlay {
   position: fixed;
   top: 0;
@@ -1565,7 +1466,7 @@ button.list-item:disabled:hover {
     0 30px 70px -24px rgba(0, 0, 0, 0.6),
     0 2px 10px rgba(0, 0, 0, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  animation: updateModalIn 0.42s var(--ease-out-expo);
+  animation: changelogModalIn var(--dur-slow) var(--ease-out-expo);
   overflow: hidden;
 }
 
@@ -1581,6 +1482,7 @@ button.list-item:disabled:hover {
 
 .changelog-modal-title {
   display: flex;
+  margin: 0;
   align-items: center;
   gap: 11px;
   font-size: 16px;

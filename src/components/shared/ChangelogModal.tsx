@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, FileText, ExternalLink, Calendar, Loader2, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getGithubRelease, openUrl } from '../../hooks/useTauri';
 import type { GitHubRelease } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
+import { useDialogFocus } from '../../hooks/useDialogFocus';
 import { ErrorDisplay } from './ErrorDisplay';
 import { formatDate } from '../../utils';
+import { releaseContributors, releaseNotesHtml } from '../../utils/releaseNotes';
 import { LINKS } from '../../config';
 
 interface ChangelogModalProps {
@@ -17,159 +20,51 @@ interface ChangelogModalProps {
   version: string;
 }
 
-// Modal displaying a GitHub release's notes and changelog
+// A GitHub release's notes and contributors; mounted only while open
 export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps) {
-  const { t } = useTranslation();
+  if (!isOpen) return null;
+  return <ChangelogDialog onClose={onClose} version={version} />;
+}
+
+function ChangelogDialog({ onClose, version }: Omit<ChangelogModalProps, 'isOpen'>) {
+  const { t, i18n } = useTranslation();
+  const titleId = useId();
+  const dialogRef = useDialogFocus<HTMLDivElement>({ onEscape: onClose });
   const { data: release, loading, error, reload } = useAsyncData<GitHubRelease>(
     () => getGithubRelease(version),
-    [isOpen, version],
-    { immediate: isOpen }
+    [version]
   );
 
-  // Unique @username mentions from the release body, sorted
-  const releaseBody = release?.body;
-  const contributors = useMemo(() => {
-    if (!releaseBody) return [];
+  const releaseBody = release?.body?.trim() ? release.body : null;
+  const html = useMemo(() => (releaseBody ? releaseNotesHtml(releaseBody) : ''), [releaseBody]);
+  const contributors = useMemo(() => releaseContributors(releaseBody), [releaseBody]);
 
-    const mentions = releaseBody.match(/@([a-zA-Z0-9_-]+)/g);
-    if (!mentions) return [];
-
-    return Array.from(new Set(mentions.map(m => m.substring(1)))).sort();
-  }, [releaseBody]);
-
-  if (!isOpen) return null;
-
-  // Convert the release body's markdown to HTML
-  const parseReleaseBody = (body: string | null): string => {
-    if (!body) return t('update.noChangelog', 'No changelog available');
-
-    // Strip the "Full Changelog" line GitHub appends
-    let cleanedBody = body.replace(/\*\*Full Changelog\*\*: https:\/\/github\.com\/[^\s]+/gi, '');
-    cleanedBody = cleanedBody.replace(/Full Changelog: https:\/\/github\.com\/[^\s]+/gi, '');
-
-    const lines = cleanedBody.split('\n');
-    let html = '';
-    let inList = false;
-    let inCodeBlock = false;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      if (line.trim().startsWith('```')) {
-        inCodeBlock = !inCodeBlock;
-        continue;
-      }
-
-      if (inCodeBlock) {
-        html += `<div class="code-block">${line}</div>`;
-        continue;
-      }
-
-      const isListItem = /^\s*[-*]\s+/.test(line);
-
-      if (isListItem) {
-        if (!inList) {
-          html += '<ul>';
-          inList = true;
-        }
-
-        const itemContent = line.replace(/^\s*[-*]\s+/, '');
-        const formattedItem = itemContent
-          .replace(/ https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)/g, ' #PR$1 ')
-          .replace(/\[[^\]]+\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)\)/g, '#PR$1')
-          // Escape only after PR placeholders are inserted, so the markup survives
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/#PR(\d+)/g, '<span class="pr-number">#$1</span>')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-          .replace(/`([^`]+)`/g, '<code>$1</code>')
-          .replace(/\[([^\]]+)\]\(https:\/\/github\.com\/[^)]+\)/g, '$1')
-          .replace(/https:\/\/github\.com\/[^\s]+/g, '')
-          .replace(/,\s*$/g, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-          // Keep non-GitHub external links
-          .replace(/\[([^\]]+)\]\((?!https?:\/\/github\.com)(https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-
-        html += `<li>${formattedItem}</li>`;
-      } else {
-        if (inList) {
-          html += '</ul>';
-          inList = false;
-        }
-
-        if (line.trim() === '') {
-          html += '<br />';
-          continue;
-        }
-
-        if (line.startsWith('### ')) {
-          html += `<h3>${line.slice(4)}</h3>`;
-          continue;
-        }
-
-        if (line.startsWith('## ')) {
-          html += `<h2>${line.slice(3)}</h2>`;
-          continue;
-        }
-
-        const formattedLine = line
-          .replace(/ https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)/g, ' #PR$1 ')
-          .replace(/\[[^\]]+\]\(https:\/\/github\.com\/[^/]+\/[^/]+\/(?:pull|issues)\/(\d+)\)/g, '#PR$1')
-          // Escape only after PR placeholders are inserted, so the markup survives
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/#PR(\d+)/g, '<span class="pr-number">#$1</span>')
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-          .replace(/`([^`]+)`/g, '<code>$1</code>')
-          .replace(/\[([^\]]+)\]\(https:\/\/github\.com\/[^)]+\)/g, '$1')
-          .replace(/https:\/\/github\.com\/[^\s]+/g, '')
-          .replace(/,\s*$/g, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-          // Keep non-GitHub external links
-          .replace(/\[([^\]]+)\]\((?!https?:\/\/github\.com)(https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-
-        html += `<p>${formattedLine}</p>`;
-      }
-    }
-
-    if (inList) {
-      html += '</ul>';
-    }
-
-    // Collapse stray/duplicate <br /> tags to avoid extra spacing
-    html = html.replace(/(<br\s*\/?>)+$/g, '');
-    html = html.replace(/(<br\s*\/?>){2,}/g, '<br />');
-    html = html.replace(/<br\s*\/?>\s*<h2>/g, '<h2>');
-    html = html.replace(/<br\s*\/?>\s*<h3>/g, '<h3>');
-
-    return html;
-  };
-
-  return (
+  // Portal to <body> so the fixed overlay escapes the animated settings shell
+  return createPortal(
     <div className="changelog-modal-overlay" onClick={onClose}>
       <div
+        ref={dialogRef}
         className="changelog-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="changelog-modal-header">
-          <div className="changelog-modal-title">
-            <span className="changelog-modal-title__icon">
+          <h2 id={titleId} className="changelog-modal-title">
+            <span className="changelog-modal-title__icon" aria-hidden="true">
               <FileText size={16} />
             </span>
-            <span>{t('update.changelogTitle', 'What\'s New')}</span>
-          </div>
+            <span>{t('update.changelogTitle')}</span>
+          </h2>
           <button
+            type="button"
             className="changelog-modal-close"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('common.close')}
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 
@@ -191,35 +86,36 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
                 <div className="changelog-meta">
                   <span className="changelog-date">
                     <Calendar size={14} />
-                    {formatDate(release.published_at, undefined, 'long')}
+                    {formatDate(release.published_at, i18n.language, 'long')}
                   </span>
                   <button
+                    type="button"
                     onClick={() => openUrl(release.html_url)}
                     className="changelog-link"
                   >
-                    {t('update.viewOnGitHub', 'View on GitHub')}
+                    {t('update.viewOnGitHub')}
                     <ExternalLink size={14} />
                   </button>
                 </div>
               </div>
 
-              <div
-                className="changelog-body"
-                dangerouslySetInnerHTML={{
-                  __html: parseReleaseBody(release.body),
-                }}
-              />
+              {html ? (
+                <div className="changelog-body" dangerouslySetInnerHTML={{ __html: html }} />
+              ) : (
+                <p className="changelog-body">{t('update.noChangelog')}</p>
+              )}
 
               {contributors.length > 0 && (
                 <div className="changelog-contributors">
                   <div className="changelog-contributors-header">
                     <Users size={16} />
-                    <span>{t('update.contributors', 'Contributors')}</span>
+                    <span>{t('update.contributors')}</span>
                   </div>
                   <div className="changelog-contributors-list">
                     {contributors.map((username) => (
                       <button
                         key={username}
+                        type="button"
                         className="changelog-contributor"
                         onClick={() => openUrl(`${LINKS.GITHUB}/${username}`)}
                         title={`@${username}`}
@@ -239,6 +135,7 @@ export function ChangelogModal({ isOpen, onClose, version }: ChangelogModalProps
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

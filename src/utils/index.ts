@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { COLORS, UI, SLUGS, SUPPORT_TIER, SUPPORT_TIER_ORDER, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, PLATFORM, PLATFORM_UA, BYTES_PER_KB } from '../config';
+import { COLORS, UI, SLUGS, SUPPORT_TIER, SUPPORT_TIER_ORDER, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, PLATFORM, PLATFORM_UA, BYTES_PER_KB, ZERO_BYTES_LABEL } from '../config';
 import { getImageVariantLabel, getOsInfo } from '../config/os-info';
 import { getVariantBadge, getKernelType, KERNEL_BADGES } from '../config/badges';
 import { IMAGE_STABILITY, type ImageInfo, type BoardInfo, type Manufacturer } from '../types';
@@ -64,6 +64,24 @@ export function formatFileSize(
   if (gb >= 1) return `${gb.toFixed(1)} GB`;
   const mb = bytes / (1024 * 1024);
   return `${mb.toFixed(0)} MB`;
+}
+
+/** Whole percent of `part` in `total`, clamped to 0..100; null when the total is unknown */
+export function percentOf(part: number, total: number | null): number | null {
+  if (!total || total <= 0) return null;
+  return Math.min(100, Math.max(0, Math.round((part / total) * 100)));
+}
+
+/** "12.4 MB of 30.0 MB" in the UI language, or only the bytes so far while the total is unknown */
+export function formatTransfer(
+  done: number,
+  total: number | null,
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string {
+  const doneText = formatFileSize(done, ZERO_BYTES_LABEL, true);
+  return total
+    ? t('update.transferProgress', { done: doneText, total: formatFileSize(total, ZERO_BYTES_LABEL, true) })
+    : doneText;
 }
 
 /** Format bytes as a human-readable string (e.g. "2.3 GB") */

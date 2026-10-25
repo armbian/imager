@@ -1,4 +1,4 @@
-/* SETTINGS ABOUT: app hero, link cards, logs, developer, credits */
+/* SETTINGS ABOUT: app hero, update strip, link cards, logs, developer, credits */
 
 .about-page__hero {
   display: flex;
@@ -91,29 +91,125 @@
 }
 
 .about-page__status-text.is-ok {
-  color: var(--color-success-dark);
-}
-
-.about-page__status-text.is-new {
-  color: var(--accent);
+  color: var(--color-success-ink);
 }
 
 .about-page__status-text.is-warn {
   color: var(--color-warning-ink);
 }
 
-.theme-dark .about-page__status-text.is-ok {
-  color: var(--color-success);
+/* Hero and update strip read as one card: the wrapper owns the outer radius and hairline */
+.about-page__head.has-update {
+  margin-bottom: 24px;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  background: var(--hero-bg);
+  box-shadow: 0 0 0 1px var(--hero-line);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not(.theme-light):not(.theme-dark) .about-page__status-text.is-ok {
-    color: var(--color-success);
-  }
+.about-page__head.has-update .about-page__hero {
+  margin-bottom: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.about-update {
+  --about-update-rgb: var(--accent-rgb);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--about-update-min-h);
+  padding: 12px 32px;
+  border-top: 1px solid rgba(var(--about-update-rgb), 0.25);
+  background: linear-gradient(90deg, rgba(var(--about-update-rgb), 0.16), rgba(var(--about-update-rgb), 0.05));
+  animation: uiEnterFade var(--dur-medium) var(--ease-out-expo) backwards;
+}
+
+.about-update.is-ready {
+  --about-update-rgb: var(--color-success-rgb);
+}
+
+.about-update.is-error {
+  --about-update-rgb: var(--color-error-rgb);
+}
+
+.about-update > * {
+  flex: none;
+}
+
+.about-update__text {
+  flex: 1 1 auto;
+  overflow: hidden;
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.about-update.is-ready .about-update__text {
+  color: var(--color-success-ink);
+}
+
+.about-update.is-error .about-update__text {
+  overflow: visible;
+  color: var(--danger-ink);
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.about-update > .about-update__progress {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.about-update .update-progress--detail {
+  max-width: none;
+}
+
+.about-update .update-progress__label {
+  color: var(--text-primary);
+}
+
+.about-page__notes-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-fast) ease;
+}
+
+.about-page__notes-link svg {
+  transition: transform var(--dur-fast) ease;
+}
+
+.about-page__notes-link:hover {
+  color: var(--accent);
+}
+
+.about-page__notes-link:hover svg {
+  transform: translateX(2px);
+}
+
+.about-update .btn {
+  white-space: nowrap;
 }
 
 .about-link:focus-visible,
-.about-page__paste:focus-visible {
+.about-page__paste:focus-visible,
+.about-page__notes-link:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

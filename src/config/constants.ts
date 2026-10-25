@@ -56,6 +56,30 @@ export const TIMING = {
   COVERFLOW_ADVANCE: 3600,
 } as const;
 
+const UPDATER_TITLE_KEY = {
+  available: 'update.title',
+  downloading: 'update.railDownloading',
+  ready: 'update.ready',
+  installing: 'update.ready',
+  error: 'update.error',
+} as const;
+
+export const UPDATER = {
+  /** The plugin reports one event per network chunk; state follows at most this often */
+  PROGRESS_FLUSH_MS: 100,
+  ERROR_KEY: {
+    download: 'update.errorMessage',
+    install: 'update.installErrorMessage',
+    relaunch: 'update.relaunchErrorMessage',
+  },
+  NOT_IN_APPLICATIONS_KEY: 'update.errorNotInApplications',
+  TITLE_KEY: UPDATER_TITLE_KEY,
+  ANNOUNCE_KEY: { ...UPDATER_TITLE_KEY, installing: 'update.restarting' },
+} as const;
+
+export type UpdateFailure = keyof typeof UPDATER.ERROR_KEY;
+
+export const ZERO_BYTES_LABEL = '0 B';
 export const BYTES_PER_KB = 1024;
 export const BYTES_PER_MB = BYTES_PER_KB * BYTES_PER_KB;
 
@@ -273,6 +297,9 @@ export const UI = {
     PROFILE_GLYPH: 11,
     WIZARD_ITEM: 14,
     WIZARD_TILE: 22,
+    BUTTON: 16,
+    CHEVRON: 14,
+    UPDATE_ENTRY: 15,
   },
   /** Minimum margin between an anchored popover and the window edge */
   POPOVER_EDGE: 12,

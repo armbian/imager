@@ -37,6 +37,7 @@ export {
   LINKS,
   TIMING,
   BYTES_PER_KB,
+  ZERO_BYTES_LABEL,
   BYTES_PER_MB,
   CACHE,
   EVENTS,

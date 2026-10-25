@@ -23,7 +23,7 @@ interface SettingsPageProps {
 }
 
 // A dialog, sheet or menu open on top of the page owns Escape.
-const OVERLAY_SELECTOR = '.modal-overlay, .update-modal-overlay, .changelog-modal-overlay, [aria-modal="true"]';
+const OVERLAY_SELECTOR = '.modal-overlay, [aria-modal="true"]';
 
 export function SettingsPage({
   view,

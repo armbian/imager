@@ -194,6 +194,7 @@
   --settings-ease-emph: cubic-bezier(0.2, 0, 0, 1);
   /* Settings sections stop widening here and centre in the island, like a system settings pane */
   --settings-content-max: 960px;
+  --about-update-min-h: 57px;
 
   /* Settings page: hero cards, danger zone, attention dots, cache meter */
   --hero-bg: #f3eee8;

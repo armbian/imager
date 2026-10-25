@@ -18,4 +18,4 @@ export { PageSwap } from './PageSwap';
 export { PasswordInput } from './PasswordInput';
 export { SearchBox } from './SearchBox';
 export { UpdateEntry } from './UpdateEntry';
-export { UpdateModal } from './UpdateModal';
+export { UpdateProgressBar } from './UpdateProgressBar';

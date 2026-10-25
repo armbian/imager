@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { getVersion } from '@tauri-apps/api/app';
 import {
   Bug,
-  CircleArrowUp,
+  ChevronRight,
   CircleCheck,
   Download,
   ExternalLink,
@@ -28,10 +28,10 @@ import { useAsyncData } from '../../hooks/useAsyncData';
 import { useLogUpload } from '../../hooks/useLogUpload';
 import { useSettingToggle } from '../../hooks/useSettingToggle';
 import { useUpdate } from '../../contexts/UpdateContext';
-import { ErrorDisplay } from '../shared/ErrorDisplay';
+import { ChangelogModal, ErrorDisplay, UpdateProgressBar } from '../shared';
 import { SettingsGroup, SettingsRow, ToggleRow } from './controls';
 import { LogsModal } from './LogsModal';
-import { LINKS, PLATFORM_LABEL, SETTINGS } from '../../config/constants';
+import { LINKS, PLATFORM_LABEL, SETTINGS, UI } from '../../config/constants';
 import { displayUrl } from '../../utils';
 import armbianLogo from '../../../src-tauri/icons/icon.png';
 
@@ -61,7 +61,7 @@ async function openExternal(url: string) {
 
 function UpdateStatus() {
   const { t } = useTranslation();
-  const { update, available, open, recheck, checking, checkState } = useUpdate();
+  const { recheck, checking, checkState } = useUpdate();
 
   if (checking) {
     return (
@@ -70,21 +70,6 @@ function UpdateStatus() {
           <Loader2 size={16} className="spinning" aria-hidden="true" />
           {t('settings.about.checking')}
         </span>
-      </div>
-    );
-  }
-
-  if (available && update) {
-    return (
-      <div className="about-page__status" role="status">
-        <span className="about-page__status-text is-new">
-          <CircleArrowUp size={16} aria-hidden="true" />
-          {t('settings.about.updateAvailable', { version: update.version })}
-        </span>
-        <button type="button" className="btn btn-primary btn-pill" onClick={open}>
-          <Download size={16} aria-hidden="true" />
-          {t('settings.about.updateRestart')}
-        </button>
       </div>
     );
   }
@@ -115,6 +100,81 @@ function UpdateStatus() {
   );
 }
 
+function UpdateStrip({ version }: { version: string }) {
+  const { t } = useTranslation();
+  const { status, progress, errorMessage, failedAt, restartBlocked, download, restart, retry } = useUpdate();
+  const [notesOpen, setNotesOpen] = useState(false);
+
+  const notesLink = (
+    <button type="button" className="about-page__notes-link" onClick={() => setNotesOpen(true)}>
+      {t('update.viewChangelog')}
+      <ChevronRight size={UI.ICON_SIZE.CHEVRON} aria-hidden="true" />
+    </button>
+  );
+
+  let tone = '';
+  let content;
+  if (status === 'downloading') {
+    content = (
+      <div className="about-update__progress">
+        <UpdateProgressBar progress={progress} variant="detail" label={t('update.downloadingVersion', { version })} />
+      </div>
+    );
+  } else if (status === 'ready' || status === 'installing') {
+    const installing = status === 'installing';
+    const note = restartBlocked ? t('update.restartBlocked') : t('update.versionReady', { version });
+    tone = ' is-ready';
+    content = (
+      <>
+        <span className="about-update__text" role="status" title={note}>
+          {note}
+        </span>
+        {notesLink}
+        <button type="button" className="btn btn-primary btn-pill" onClick={restart} disabled={installing || restartBlocked}>
+          <RefreshCw size={UI.ICON_SIZE.BUTTON} className={installing ? 'spinning' : undefined} aria-hidden="true" />
+          {t(installing ? 'update.restarting' : 'update.restartNow')}
+        </button>
+      </>
+    );
+  } else if (status === 'error') {
+    const retryBlocked = restartBlocked && failedAt !== 'download';
+    const message = retryBlocked ? t('update.restartBlocked') : errorMessage || t('update.errorMessage');
+    tone = ' is-error';
+    content = (
+      <>
+        <span className="about-update__text" role="alert" title={message}>
+          {message}
+        </span>
+        <button type="button" className="btn btn-secondary btn-pill" onClick={retry} disabled={retryBlocked}>
+          <RefreshCw size={UI.ICON_SIZE.BUTTON} aria-hidden="true" />
+          {t('update.retry')}
+        </button>
+      </>
+    );
+  } else {
+    const text = t('update.appVersionAvailable', { version });
+    content = (
+      <>
+        <span className="about-update__text" role="status" title={text}>
+          {text}
+        </span>
+        {notesLink}
+        <button type="button" className="btn btn-primary btn-pill" onClick={download}>
+          <Download size={UI.ICON_SIZE.BUTTON} aria-hidden="true" />
+          {t('update.install')}
+        </button>
+      </>
+    );
+  }
+
+  return (
+    <div className={`about-update${tone}`}>
+      {content}
+      <ChangelogModal isOpen={notesOpen} onClose={() => setNotesOpen(false)} version={version} />
+    </div>
+  );
+}
+
 export function AboutSection() {
   const { t } = useTranslation();
   const [logsOpen, setLogsOpen] = useState(false);
@@ -122,6 +182,7 @@ export function AboutSection() {
   const developerMode = useSettingToggle(getDeveloperMode, setDeveloperMode, { fallback: SETTINGS.DEFAULTS.DEVELOPER_MODE });
   const titleId = useId();
   const linksId = useId();
+  const { update } = useUpdate();
 
   const { data: appInfo, error, reload } = useAsyncData(async () => {
     const [appVersion, tauriVersion, systemInfo] = await Promise.all([getVersion(), getTauriVersion(), getSystemInfo()]);
@@ -135,23 +196,26 @@ export function AboutSection() {
 
   return (
     <div className="about-page">
-      <section className="about-page__hero" aria-labelledby={titleId}>
-        <span className="about-page__icon">
-          <img src={armbianLogo} alt="" />
-        </span>
-        <div className="about-page__hero-text">
-          <h1 id={titleId} className="about-page__title">Armbian Imager</h1>
-          {appInfo && (
-            <p className="about-page__meta">
-              <span className="about-page__version">v{appInfo.appVersion}</span>
-              <span>
-                {appInfo.platform} · {appInfo.arch}
-              </span>
-            </p>
-          )}
-          <UpdateStatus />
-        </div>
-      </section>
+      <div className={`about-page__head${update ? ' has-update' : ''}`}>
+        <section className="about-page__hero" aria-labelledby={titleId}>
+          <span className="about-page__icon">
+            <img src={armbianLogo} alt="" />
+          </span>
+          <div className="about-page__hero-text">
+            <h1 id={titleId} className="about-page__title">Armbian Imager</h1>
+            {appInfo && (
+              <p className="about-page__meta">
+                <span className="about-page__version">v{appInfo.appVersion}</span>
+                <span>
+                  {appInfo.platform} · {appInfo.arch}
+                </span>
+              </p>
+            )}
+            {!update && <UpdateStatus />}
+          </div>
+        </section>
+        {update && <UpdateStrip version={update.version} />}
+      </div>
 
       {error && (
         <div className="about-page__error">

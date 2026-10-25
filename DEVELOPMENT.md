@@ -185,7 +185,8 @@ armbian-imager/
 │   │       ├── SearchBox.tsx         # Filter input for modals
 │   │       ├── SkeletonCard.tsx      # Placeholder loaders
 │   │       ├── Toast.tsx             # Success/error notifications
-│   │       ├── UpdateModal.tsx       # App update dialog
+│   │       ├── UpdateProgressBar.tsx # Update download progress
+│   │       ├── UpdateEntry.tsx       # Sidebar update entry: state, progress, action
 │   │       └── ChangelogModal.tsx    # Release notes display
 │   │
 │   ├── hooks/                        # Custom React Hooks
@@ -228,6 +229,7 @@ armbian-imager/
 │   ├── types/index.ts               # BoardInfo, ImageInfo, BlockDevice, etc.
 │   ├── utils/index.ts               # formatFileSize, parseArmbianFilename, etc.
 │   ├── utils/deviceUtils.ts         # isDeviceConnected, getDeviceType
+│   ├── utils/releaseNotes.ts        # Release body to HTML, contributors
 │   ├── locales/                     # 20 language JSON files
 │   └── assets/                      # Logos (Armbian, OS distros)
 │

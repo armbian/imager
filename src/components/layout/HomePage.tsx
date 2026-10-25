@@ -38,6 +38,8 @@ interface HomePageProps {
   onConfirmDevice: () => void;
   /** Cancel the inline storage summary (back to the device list). */
   onClearDevice: () => void;
+  /** Opens Settings > About, where the update is detailed */
+  onOpenUpdate: () => void;
   isOnline?: boolean;
   /** One-shot entrance animation flag while leaving the welcome screen. */
   entering?: boolean;
@@ -125,6 +127,7 @@ function SplitLayout({
   fullBleed = false,
   entering = false,
   showMotd = true,
+  onOpenUpdate,
 }: {
   steps: Step[];
   boardImage: string | null;
@@ -135,6 +138,7 @@ function SplitLayout({
   entering?: boolean;
   /** Hide the rotating MOTD tip (e.g. while offline, where it's irrelevant). */
   showMotd?: boolean;
+  onOpenUpdate: () => void;
 }) {
   // The active step drives the focus panel; fall back to the last step when done.
   const active = steps.find((s) => s.state === 'active') ?? steps[steps.length - 1];
@@ -154,7 +158,7 @@ function SplitLayout({
           <div className="split-nav__bottom">
             {footer && <div className="split-nav__foot">{footer}</div>}
             {showMotd && <MotdTip />}
-            <UpdateEntry />
+            <UpdateEntry onOpenDetails={onOpenUpdate} />
           </div>
         </aside>
 
@@ -222,6 +226,7 @@ export function HomePage({
   onSelectDevice,
   onConfirmDevice,
   onClearDevice,
+  onOpenUpdate,
   isOnline = true,
   entering = false,
 }: HomePageProps) {
@@ -356,6 +361,7 @@ export function HomePage({
         fullBleed={!!selectedDevice}
         entering={entering}
         showMotd={isOnline}
+        onOpenUpdate={onOpenUpdate}
         footer={foot(
           <button type="button" className="split-link" onClick={onChooseCustomImage}>
             <FolderOpen size={15} />
@@ -420,6 +426,7 @@ export function HomePage({
         fullBleed={!!selectedDevice}
         entering={entering}
         showMotd={isOnline}
+        onOpenUpdate={onOpenUpdate}
         footer={foot(
           <button
             type="button"
@@ -493,6 +500,7 @@ export function HomePage({
       fullBleed={!!selectedDevice}
       entering={entering}
       showMotd={isOnline}
+      onOpenUpdate={onOpenUpdate}
       footer={foot(
         !selectedManufacturer ? (
           <button type="button" className="split-link" onClick={onChooseCustomImage}>
