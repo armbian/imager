@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { ArrowRight, CircuitBoard, RefreshCw, SearchX, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getBoards, getCachedBoardImage } from '../../hooks/useTauri';
@@ -10,6 +10,7 @@ import { useVendorLogos } from '../../hooks/useVendorLogos';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { usePagedGrid } from '../../hooks/usePagedGrid';
 import { compareBoardsBySupport, staggerDelay, stripVendorPrefix } from '../../utils';
+import { measurePhotoZoom, type PhotoZoom } from '../../utils/imageFit';
 import { UI, SUPPORT_TIER_LABEL } from '../../config';
 import { ErrorDisplay, SearchBox, BoardImage, GridPager, MarqueeText, EmptyState } from '../shared';
 import type { BoardInfo, Manufacturer } from '../../types';
@@ -24,6 +25,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [boardImages, setBoardImages] = useState<Record<string, string | null>>({});
+  const [photoZooms, setPhotoZooms] = useState<Record<string, PhotoZoom | null>>({});
   const loadedSlugsRef = useRef<Set<string>>(new Set());
 
   const { data: boards, loading, error, reload } = useAsyncData<BoardInfo[]>(() => getBoards(), []);
@@ -61,8 +63,13 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
       await Promise.all(
         pagedBoards.map(async (board) => {
           if (loadedSlugsRef.current.has(board.slug)) return;
-          const dataUri = await getCachedBoardImage(board.slug).catch(() => null);
           loadedSlugsRef.current.add(board.slug);
+          const dataUri = await getCachedBoardImage(board.slug).catch(() => null);
+          // Measured before the photo shows, so it paints once at its final size
+          const zoom = dataUri
+            ? await measurePhotoZoom(board.slug, dataUri, UI.IMAGE_FIT.BOARD_CARD_MAX_ZOOM)
+            : null;
+          setPhotoZooms((prev) => ({ ...prev, [board.slug]: zoom }));
           setBoardImages((prev) => ({ ...prev, [board.slug]: dataUri ?? null }));
         })
       );
@@ -119,6 +126,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
               const displayName = stripVendorPrefix(board.name, vendorName);
               const showVendor = !!vendorName;
               const img = board.slug in boardImages ? boardImages[board.slug] : undefined;
+              const zoom = photoZooms[board.slug];
               // A QDL board whose storage this build has no write path for can't be
               // flashed here; block it at selection instead of failing mid-flash.
               const needsUpdate = !!board.qdl && !board.qdl.supported;
@@ -137,7 +145,10 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
                     {img === undefined ? (
                       <div className="skeleton board-card__imgskeleton" />
                     ) : (
-                      <span className="board-card__photo">
+                      <span
+                        className="board-card__photo"
+                        style={zoom ? ({ '--photo-zoom-x': zoom.x, '--photo-zoom-y': zoom.y } as CSSProperties) : undefined}
+                      >
                         <BoardImage src={img} alt={board.name} />
                       </span>
                     )}

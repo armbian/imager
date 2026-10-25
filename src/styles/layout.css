@@ -2371,14 +2371,14 @@
 
 .board-card__photo > img {
   flex: none;
-  width: var(--board-photo-zoom);
-  height: var(--board-photo-zoom);
+  width: calc(var(--photo-zoom-x, 1) * 100%);
+  height: calc(var(--photo-zoom-y, 1) * 100%);
   object-fit: contain;
   transition: transform 0.6s var(--ease-out-expo), filter 0.6s var(--ease-out-expo);
 }
 
 .board-card:hover .board-card__img img {
-  transform: scale(1.08) rotate(2deg);
+  transform: scale(var(--board-photo-hover-scale)) rotate(var(--board-photo-hover-tilt));
   filter: drop-shadow(0 15px 20px rgba(0, 0, 0, 0.5));
 }
 

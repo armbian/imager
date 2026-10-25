@@ -335,6 +335,11 @@ export const UI = {
     /** Luminance and chroma that make a pixel read on white */
     VISIBLE_LUM: 0.7,
     VISIBLE_CHROMA: 0.4,
+    /** Home board card photo zoom cap; only a photo with wide transparent margins reaches it */
+    BOARD_CARD_MAX_ZOOM: 1.3,
+    /** Board card photo hover scale and tilt, reserved in its resting zoom; mirror --board-photo-hover-* in styles/theme.css */
+    BOARD_CARD_HOVER_SCALE: 1.08,
+    BOARD_CARD_HOVER_TILT_DEG: 2,
   },
   /** Editor action bar slide-down; mirrors --action-bar-out in styles/theme.css */
   ACTION_BAR: {

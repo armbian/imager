@@ -140,8 +140,9 @@
   --board-info-h: 92px;
   --home-card-min: 185px;
   --home-card-max: 300px;
-  /* The API board photos carry wide transparent margins; this trims them inside the photo box */
-  --board-photo-zoom: 130%;
+  /* Board card photo hover; mirrored by UI.IMAGE_FIT.BOARD_CARD_HOVER_*, which keep it from cropping the photo */
+  --board-photo-hover-scale: 1.08;
+  --board-photo-hover-tilt: 2deg;
   --mfr-logo-max-h: 140px;
   --mfr-initials: 76px;
   /* Quick in and out swaps shared by the editor's floating controls */

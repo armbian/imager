@@ -16,12 +16,46 @@ interface OpaqueBounds {
 
 const boundsCache = new Map<string, OpaqueBounds | null>();
 
-function opaqueBounds(img: HTMLImageElement): OpaqueBounds | null {
-  const key = img.currentSrc || img.src;
-  const cached = boundsCache.get(key);
-  if (cached !== undefined) return cached;
+/** Bounding box of the pixels above ALPHA_MIN in RGBA data, as fractions of its size; null if all transparent */
+function scanOpaque(data: Uint8ClampedArray, w: number, h: number): OpaqueBounds | null {
+  let minX = w;
+  let minY = h;
+  let maxX = -1;
+  let maxY = -1;
+  let ink = 0;
+  let lum = 0;
+  let visible = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (data[i + 3] <= ALPHA_MIN) continue;
+      ink++;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const l = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      lum += l;
+      if (l < VISIBLE_LUM || (Math.max(r, g, b) - Math.min(r, g, b)) / 255 > VISIBLE_CHROMA) visible++;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (ink === 0) return null;
+  const bw = maxX - minX + 1;
+  const bh = maxY - minY + 1;
+  return {
+    x: minX / w,
+    y: minY / h,
+    w: bw / w,
+    h: bh / h,
+    // A mostly white mark with coloured lettering (Khadas) already reads on the light plate
+    light: lum / ink > LIGHT_INK && ink / (bw * bh) < PLATE_COVERAGE && visible / ink < LIGHT_VISIBLE_MAX,
+  };
+}
 
-  let result: OpaqueBounds | null = null;
+function readBounds(img: HTMLImageElement): OpaqueBounds | null {
   const { naturalWidth, naturalHeight } = img;
   const sample = Math.min(1, SAMPLE_MAX / Math.max(naturalWidth, naturalHeight, 1));
   const w = Math.max(1, Math.round(naturalWidth * sample));
@@ -33,47 +67,19 @@ function opaqueBounds(img: HTMLImageElement): OpaqueBounds | null {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (ctx && naturalWidth && naturalHeight) {
       ctx.drawImage(img, 0, 0, w, h);
-      const data = ctx.getImageData(0, 0, w, h).data;
-      let minX = w;
-      let minY = h;
-      let maxX = -1;
-      let maxY = -1;
-      let ink = 0;
-      let lum = 0;
-      let visible = 0;
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          const i = (y * w + x) * 4;
-          if (data[i + 3] <= ALPHA_MIN) continue;
-          ink++;
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          const l = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-          lum += l;
-          if (l < VISIBLE_LUM || (Math.max(r, g, b) - Math.min(r, g, b)) / 255 > VISIBLE_CHROMA) visible++;
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-      }
-      if (ink > 0) {
-        const bw = maxX - minX + 1;
-        const bh = maxY - minY + 1;
-        result = {
-          x: minX / w,
-          y: minY / h,
-          w: bw / w,
-          h: bh / h,
-          // A mostly white mark with coloured lettering (Khadas) already reads on the light plate
-          light: lum / ink > LIGHT_INK && ink / (bw * bh) < PLATE_COVERAGE && visible / ink < LIGHT_VISIBLE_MAX,
-        };
-      }
+      return scanOpaque(ctx.getImageData(0, 0, w, h).data, w, h);
     }
   } catch {
-    result = null;
+    return null;
   }
+  return null;
+}
+
+function opaqueBounds(img: HTMLImageElement): OpaqueBounds | null {
+  const key = img.currentSrc || img.src;
+  const cached = boundsCache.get(key);
+  if (cached !== undefined) return cached;
+  const result = readBounds(img);
   boundsCache.set(key, result);
   return result;
 }
@@ -110,4 +116,46 @@ export function logoFit(img: HTMLImageElement, area: number): { transform: strin
     return width / cw;
   });
   return { transform, light: b.light };
+}
+
+/** Per-axis size of a photo, as a multiple of its box, drawn centred with `object-fit: contain` */
+export interface PhotoZoom {
+  x: number;
+  y: number;
+}
+
+const photoZoomCache = new Map<string, Promise<PhotoZoom | null>>();
+
+/** Largest zoom up to `max` keeping a centred contained image's content in any box, hovered too; below 1 at an edge */
+function safeZoom(b: Pick<OpaqueBounds, 'x' | 'y' | 'w' | 'h'>, aspect: number, max: number): PhotoZoom {
+  const { BOARD_CARD_HOVER_SCALE: scale, BOARD_CARD_HOVER_TILT_DEG: tilt } = UI.IMAGE_FIT;
+  const cos = Math.cos((tilt * Math.PI) / 180);
+  const sin = Math.sin((tilt * Math.PI) / 180);
+  const ex = Math.max(0.5 - b.x, b.x + b.w - 0.5);
+  const ey = Math.max(0.5 - b.y, b.y + b.h - 0.5);
+  // The tilt swings each axis's extent into the other, scaled by the image's own aspect
+  return {
+    x: Math.min(max, 0.5 / (scale * (ex * cos + (ey * sin) / aspect))),
+    y: Math.min(max, 0.5 / (scale * (ey * cos + ex * sin * aspect))),
+  };
+}
+
+/** Decodes a photo once per `key` and measures its safe zoom; null when it cannot be decoded or read */
+export function measurePhotoZoom(key: string, src: string, max: number): Promise<PhotoZoom | null> {
+  let zoom = photoZoomCache.get(key);
+  if (!zoom) {
+    zoom = (async () => {
+      const img = new Image();
+      img.src = src;
+      try {
+        await img.decode();
+      } catch {
+        return null;
+      }
+      const b = readBounds(img);
+      return b && img.naturalHeight ? safeZoom(b, img.naturalWidth / img.naturalHeight, max) : null;
+    })();
+    photoZoomCache.set(key, zoom);
+  }
+  return zoom;
 }
