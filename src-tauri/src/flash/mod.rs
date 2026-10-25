@@ -13,6 +13,8 @@ mod macos;
 #[cfg(target_os = "windows")]
 mod windows;
 
+use std::fs::File;
+use std::path::Path;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -22,7 +24,10 @@ use tokio::sync::{Mutex, OwnedMutexGuard};
 
 #[cfg(target_os = "windows")]
 use crate::devices::FlashTarget;
-use crate::log_info;
+use crate::utils::{tagged, TAG_IMAGE_INVALID};
+use crate::{log_error, log_info};
+
+const MODULE: &str = "flash";
 
 /// QDL (Qualcomm EDL) progress state. Uses `std::sync::Mutex` because `qdl_flash`
 /// runs in `spawn_blocking`.
@@ -281,7 +286,36 @@ pub(crate) fn reject_simulated(path: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Open the image and take its length from the handle, refusing anything but a non-empty regular file.
+pub(crate) fn open_image(path: &Path) -> Result<(File, u64), String> {
+    crate::utils::ensure_regular_nonempty(path)?;
+    let file = File::open(path).map_err(|e| {
+        let e = format!("Failed to open image {path:?}: {e}");
+        log_error!(MODULE, "{}", e);
+        e
+    })?;
+    // Re-checked on the handle: the path may have been swapped since the stat.
+    let meta = file.metadata().map_err(|e| {
+        let e = format!("Failed to read image file info for {path:?}: {e}");
+        log_error!(MODULE, "{}", e);
+        e
+    })?;
+    let len = crate::utils::ensure_regular_nonempty_metadata(path, &meta)?;
+    Ok((file, len))
+}
+
+/// The image delivered fewer (or more) bytes than its length said.
+pub(crate) fn image_length_changed_err(read: u64, expected: u64) -> String {
+    tagged(
+        TAG_IMAGE_INVALID,
+        format!("image delivered {read} bytes, expected {expected}"),
+    )
+}
+
 pub(crate) fn check_capacity(image_size: u64, device_size: u64) -> Result<(), String> {
+    if image_size == 0 {
+        return Err(tagged(TAG_IMAGE_INVALID, "image is empty (0 bytes)"));
+    }
     // Device sizes are whole sectors, so this also covers the sector padding of the last write.
     if device_size == 0 || image_size > device_size {
         return Err(format!(
@@ -520,7 +554,35 @@ mod tests {
     #[test]
     fn capacity_allows_exact_fit() {
         assert!(check_capacity(1024, 1024).is_ok());
-        assert!(check_capacity(0, 1024).is_ok());
+    }
+
+    #[test]
+    fn capacity_refuses_an_empty_image_as_an_image_error() {
+        for device_size in [1024, 0] {
+            let err = check_capacity(0, device_size).unwrap_err();
+            assert!(err.starts_with(TAG_IMAGE_INVALID), "{err}");
+            assert!(!err.contains("DEVICE_TOO_SMALL"), "{err}");
+        }
+    }
+
+    #[test]
+    fn open_image_takes_the_length_from_the_handle() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("a.img");
+        std::fs::write(&path, [1u8; 700]).unwrap();
+        let (_, len) = open_image(&path).unwrap();
+        assert_eq!(len, 700);
+    }
+
+    #[test]
+    fn open_image_refuses_an_empty_file_and_a_directory() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("a.img");
+        std::fs::write(&path, b"").unwrap();
+        for p in [path.as_path(), dir.path()] {
+            let err = open_image(p).unwrap_err();
+            assert!(err.starts_with(TAG_IMAGE_INVALID), "{err}");
+        }
     }
 
     #[test]

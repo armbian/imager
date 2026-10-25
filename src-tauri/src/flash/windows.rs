@@ -46,9 +46,16 @@ pub async fn flash_image(
         device_path
     );
 
-    let image_size = std::fs::metadata(image_path)
-        .map_err(|e| format!("Failed to get image size: {}", e))?
-        .len();
+    let disk_number = extract_disk_number(device_path)?;
+
+    log_info!(MODULE, "Locking volumes on disk {}...", disk_number);
+    let _volume_locks = lock_disk_volumes(disk_number)?;
+    std::thread::sleep(std::time::Duration::from_millis(
+        config::flash::UNMOUNT_DELAY_MS,
+    ));
+
+    // Opened after the volume lock: a handle on the target's own volume would make the lock fail.
+    let (mut image_file, image_size) = super::open_image(image_path)?;
 
     state.total_bytes.store(image_size, Ordering::SeqCst);
 
@@ -58,17 +65,6 @@ pub async fn flash_image(
         image_size,
         bytes_to_gb(image_size)
     );
-
-    let disk_number = extract_disk_number(device_path)?;
-
-    log_info!(MODULE, "Locking volumes on disk {}...", disk_number);
-    let _volume_locks = lock_disk_volumes(disk_number)?;
-    std::thread::sleep(std::time::Duration::from_millis(
-        config::flash::UNMOUNT_DELAY_MS,
-    ));
-
-    let mut image_file =
-        std::fs::File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
 
     log_debug!(MODULE, "Opening device for writing...");
     let mut device = open_device_for_write(device_path)?;
@@ -125,6 +121,12 @@ pub async fn flash_image(
         state.written_bytes.store(written, Ordering::SeqCst);
 
         tracker.update(bytes_read as u64);
+    }
+
+    if written != image_size {
+        let e = super::image_length_changed_err(written, image_size);
+        log_error!(MODULE, "Image changed during the write: {}", e);
+        return Err(e);
     }
 
     log_debug!(MODULE, "Flushing write cache...");

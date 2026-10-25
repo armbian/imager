@@ -5,8 +5,10 @@
 
 use std::path::{Component, Path, PathBuf};
 
-use super::app_cache_dir;
-use crate::{log_info, log_warn};
+use super::{app_cache_dir, tagged, TAG_IMAGE_INVALID};
+use crate::{log_error, log_info, log_warn};
+
+const MODULE: &str = "utils::path";
 
 pub const TAG_INVALID_FILE_NAME: &str = "[INVALID_FILE_NAME]";
 
@@ -59,10 +61,84 @@ pub fn validate_file_name(name: &str) -> Result<&str, String> {
     }
 }
 
-pub fn image_size(path: &Path) -> Result<u64, String> {
-    std::fs::metadata(path)
-        .map(|m| m.len())
-        .map_err(|e| format!("Failed to get image size: {e}"))
+enum ImageFileProblem {
+    Unreadable(std::io::Error),
+    NotRegular(&'static str),
+    Empty,
+}
+
+fn file_kind(file_type: &std::fs::FileType) -> &'static str {
+    if file_type.is_dir() {
+        return "directory";
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::FileTypeExt;
+        if file_type.is_fifo() {
+            return "FIFO";
+        }
+        if file_type.is_block_device() {
+            return "block device";
+        }
+        if file_type.is_char_device() {
+            return "character device";
+        }
+        if file_type.is_socket() {
+            return "socket";
+        }
+    }
+    "special file"
+}
+
+// A stat never opens the file, so a FIFO cannot block here.
+fn inspect_image_file(path: &Path) -> Result<u64, ImageFileProblem> {
+    let meta = std::fs::metadata(path).map_err(ImageFileProblem::Unreadable)?;
+    classify_image_metadata(&meta)
+}
+
+fn classify_image_metadata(meta: &std::fs::Metadata) -> Result<u64, ImageFileProblem> {
+    if !meta.is_file() {
+        return Err(ImageFileProblem::NotRegular(file_kind(&meta.file_type())));
+    }
+    if meta.len() == 0 {
+        return Err(ImageFileProblem::Empty);
+    }
+    Ok(meta.len())
+}
+
+fn refuse_image(path: &Path, problem: &ImageFileProblem) -> String {
+    let e = image_problem_err(path, problem);
+    log_error!(MODULE, "Refusing image: {}", e);
+    e
+}
+
+fn image_problem_err(path: &Path, problem: &ImageFileProblem) -> String {
+    match problem {
+        ImageFileProblem::Unreadable(e) => {
+            format!("Failed to read image file info for {path:?}: {e}")
+        }
+        ImageFileProblem::NotRegular(kind) => tagged(
+            TAG_IMAGE_INVALID,
+            format!("image {path:?} is a {kind}, not a regular file"),
+        ),
+        ImageFileProblem::Empty => tagged(
+            TAG_IMAGE_INVALID,
+            format!("image {path:?} is empty (0 bytes)"),
+        ),
+    }
+}
+
+/// Length of `path` when it is a non-empty regular file (symlinks followed), checked without opening it.
+pub fn ensure_regular_nonempty(path: &Path) -> Result<u64, String> {
+    inspect_image_file(path).map_err(|problem| refuse_image(path, &problem))
+}
+
+/// The same check over metadata already in hand, such as an open handle's.
+pub fn ensure_regular_nonempty_metadata(
+    path: &Path,
+    meta: &std::fs::Metadata,
+) -> Result<u64, String> {
+    classify_image_metadata(meta).map_err(|problem| refuse_image(path, &problem))
 }
 
 /// Strip a compression extension (.xz, .gz, .bz2, .zst), returning the original if none matches
@@ -324,14 +400,73 @@ mod tests {
         assert!(validate_file_name(&longest).is_ok());
     }
 
+    fn refused(r: Result<u64, String>) -> String {
+        let err = r.unwrap_err();
+        assert!(err.starts_with(TAG_IMAGE_INVALID), "{err}");
+        err
+    }
+
     #[test]
-    fn image_size_reads_the_length() {
+    fn a_regular_image_gives_its_length() {
         let dir = tempfile::tempdir().unwrap();
         let file = dir.path().join("a.img");
         std::fs::write(&file, [0u8; 300]).unwrap();
-        assert_eq!(image_size(&file), Ok(300));
-        assert!(image_size(&dir.path().join("missing"))
-            .unwrap_err()
-            .starts_with("Failed to get image size"));
+        assert_eq!(ensure_regular_nonempty(&file), Ok(300));
+    }
+
+    #[test]
+    fn an_empty_image_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("a.img");
+        std::fs::write(&file, b"").unwrap();
+        assert!(refused(ensure_regular_nonempty(&file)).contains("is empty (0 bytes)"));
+        assert!(file.exists(), "the check never deletes");
+    }
+
+    #[test]
+    fn a_directory_image_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(refused(ensure_regular_nonempty(dir.path())).contains("is a directory"));
+    }
+
+    #[test]
+    fn a_missing_image_is_an_untagged_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let err = ensure_regular_nonempty(&dir.path().join("missing")).unwrap_err();
+        assert!(err.starts_with("Failed to read image file info"), "{err}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_symlink_is_judged_by_its_target() {
+        let dir = tempfile::tempdir().unwrap();
+        let full = dir.path().join("full.img");
+        let empty = dir.path().join("empty.img");
+        std::fs::write(&full, [1u8; 512]).unwrap();
+        std::fs::write(&empty, b"").unwrap();
+        std::os::unix::fs::symlink(&full, dir.path().join("to-full")).unwrap();
+        std::os::unix::fs::symlink(&empty, dir.path().join("to-empty")).unwrap();
+        assert_eq!(
+            ensure_regular_nonempty(&dir.path().join("to-full")),
+            Ok(512)
+        );
+        refused(ensure_regular_nonempty(&dir.path().join("to-empty")));
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[test]
+    fn a_fifo_is_refused_without_blocking() {
+        let dir = tempfile::tempdir().unwrap();
+        let fifo = dir.path().join("pipe.img");
+        let c_path = std::ffi::CString::new(fifo.as_os_str().as_encoded_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(c_path.as_ptr(), 0o600) }, 0);
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(ensure_regular_nonempty(&fifo));
+        });
+        let result = rx
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .expect("the check must not block on a FIFO");
+        assert!(refused(result).contains("is a FIFO"));
     }
 }

@@ -12,7 +12,8 @@ use crate::decompress::{decompress_local_file, needs_decompression};
 use crate::images::{fetch_boards, map_board, BoardInfo};
 use crate::qdl::extract::open_tar_reader;
 use crate::utils::{
-    custom_decompress_dir, normalize_slug, parse_armbian_filename, validate_path_in_cache,
+    custom_decompress_dir, ensure_regular_nonempty, normalize_slug, parse_armbian_filename,
+    validate_path_in_cache,
 };
 use crate::{log_debug, log_error, log_info, log_warn};
 
@@ -100,15 +101,7 @@ pub async fn select_custom_image(window: tauri::Window) -> Result<Option<CustomI
                 log_error!("custom_image", "Invalid path: not a valid file path");
                 "Invalid path: not a valid file path".to_string()
             })?;
-            let metadata = std::fs::metadata(path_buf).map_err(|e| {
-                log_error!(
-                    "custom_image",
-                    "Failed to read file info for {:?}: {}",
-                    path_buf,
-                    e
-                );
-                format!("Failed to read file info: {}", e)
-            })?;
+            let size = ensure_regular_nonempty(path_buf)?;
 
             let name = path_buf
                 .file_name()
@@ -120,13 +113,13 @@ pub async fn select_custom_image(window: tauri::Window) -> Result<Option<CustomI
                 "custom_image",
                 "Selected custom image: {} ({} bytes)",
                 name,
-                metadata.len()
+                size
             );
 
             Ok(Some(CustomImageInfo {
                 path: path_buf.to_string_lossy().to_string(),
                 name,
-                size: metadata.len(),
+                size,
             }))
         }
         None => {

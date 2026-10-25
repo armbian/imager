@@ -23,7 +23,7 @@ use crate::devices::target::check_target;
 use crate::devices::BlockDevice;
 use crate::flash::{check_capacity, FlashState};
 use crate::qdl::QdlDevice;
-use crate::utils::{app_cache_dir, autoconfig_temp_dir, image_size};
+use crate::utils::{app_cache_dir, autoconfig_temp_dir, ensure_regular_nonempty};
 use crate::{log_error, log_info, log_warn};
 
 #[derive(Debug, Serialize)]
@@ -258,7 +258,7 @@ pub(crate) async fn intercept_flash(
             expected_size,
             super::operations::allow_system_devices(app),
         )?;
-        check_capacity(image_size(image_path)?, block.size)?;
+        check_capacity(ensure_regular_nonempty(image_path)?, block.size)?;
 
         let working_copy = match autoconfig {
             Some(profile) => Some(
@@ -307,9 +307,13 @@ async fn simulated_write(
         return vdisk_write(&device.id, image_path, verify, flash_state).await;
     }
     let cfg = state::view().scenario.flash;
-    flash_sim::simulate_block_flash(image_size(image_path)?, &cfg, verify, flash_state, || {
-        state::mark_unplugged(&device.id)
-    })
+    flash_sim::simulate_block_flash(
+        ensure_regular_nonempty(image_path)?,
+        &cfg,
+        verify,
+        flash_state,
+        || state::mark_unplugged(&device.id),
+    )
     .await
 }
 
@@ -327,7 +331,7 @@ pub(crate) async fn intercept_qdl_flash(
     };
     let result = async {
         let device = routed?;
-        let image_size = image_size(image_path)?;
+        let image_size = ensure_regular_nonempty(image_path)?;
         log_info!(
             MODULE,
             "Simulated QDL {:?} flash: {} -> {} (outcome: {:?})",

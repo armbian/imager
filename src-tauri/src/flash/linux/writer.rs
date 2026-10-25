@@ -14,7 +14,7 @@ use std::sync::Arc;
 
 use crate::config;
 use crate::devices::{device_changed_error, FlashTarget, TAG_INVALID_PATH};
-use crate::flash::{reject_simulated, sync_device, unmount_device, FlashState};
+use crate::flash::{open_image, reject_simulated, sync_device, unmount_device, FlashState};
 use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_debug, log_error, log_info};
 
@@ -127,9 +127,16 @@ pub async fn flash_image(
         device_path
     );
 
-    let image_size = std::fs::metadata(image_path)
-        .map_err(|e| format!("Failed to get image size: {}", e))?
-        .len();
+    log_info!(MODULE, "Unmounting device partitions...");
+    unmount_device(device_path)?;
+
+    // Give the unmount a moment to settle before writing.
+    std::thread::sleep(std::time::Duration::from_millis(
+        config::flash::UNMOUNT_DELAY_MS,
+    ));
+
+    // Opened after the unmount: a handle on the target's own filesystem would keep it busy and mounted.
+    let (mut image_file, image_size) = open_image(image_path)?;
 
     state.total_bytes.store(image_size, Ordering::SeqCst);
 
@@ -139,14 +146,6 @@ pub async fn flash_image(
         image_size,
         bytes_to_gb(image_size)
     );
-
-    log_info!(MODULE, "Unmounting device partitions...");
-    unmount_device(device_path)?;
-
-    // Give the unmount a moment to settle before writing.
-    std::thread::sleep(std::time::Duration::from_millis(
-        config::flash::UNMOUNT_DELAY_MS,
-    ));
 
     // UDisks2 first (handles polkit auth), direct open as a root fallback.
     log_debug!(MODULE, "Opening device for writing...");
@@ -167,9 +166,6 @@ pub async fn flash_image(
 
     state.ensure_not_cancelled()?;
     quick_erase(&mut device)?;
-
-    let mut image_file =
-        File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
 
     let chunk_size = config::flash::CHUNK_SIZE;
     let mut buffer = vec![0u8; chunk_size];
@@ -218,6 +214,12 @@ pub async fn flash_image(
         }
 
         tracker.update(bytes_read as u64);
+    }
+
+    if written != image_size {
+        let e = crate::flash::image_length_changed_err(written, image_size);
+        log_error!(MODULE, "Image changed during the write: {}", e);
+        return Err(e);
     }
 
     tracker.finish();

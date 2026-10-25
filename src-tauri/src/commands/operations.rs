@@ -18,7 +18,7 @@ use crate::flash::{
     request_authorization, FlashState,
 };
 use crate::utils::{
-    app_cache_dir, autoconfig_temp_dir, image_size, images_dir, validate_cache_path,
+    app_cache_dir, autoconfig_temp_dir, ensure_regular_nonempty, images_dir, validate_cache_path,
 };
 use crate::{log_debug, log_error, log_info, log_warn};
 
@@ -269,9 +269,9 @@ async fn prepare_and_flash(
     autoconfig: Option<AutoconfigConfig>,
     flash_state: Arc<FlashState>,
 ) -> Result<(), String> {
+    let image_size = ensure_regular_nonempty(&path)?;
     let target = resolve_flash_target(app, device_path, expected_size).await?;
 
-    let image_size = image_size(&path)?;
     if let Err(e) = check_capacity(image_size, target.size()) {
         log_error!("operations", "Refusing target {:?}: {}", device_path, e);
         return Err(e);

@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use crate::config;
 use crate::devices::{device_changed_error, FlashTarget, TAG_INVALID_PATH};
-use crate::flash::{reject_simulated, sync_device, unmount_device, FlashState};
+use crate::flash::{open_image, reject_simulated, sync_device, unmount_device, FlashState};
 use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_debug, log_error, log_info};
 
@@ -286,12 +286,6 @@ pub async fn flash_image(
     let device_path = target.path();
     state.reset_progress();
 
-    let image_size = std::fs::metadata(image_path)
-        .map_err(|e| format!("Failed to get image size: {}", e))?
-        .len();
-
-    state.total_bytes.store(image_size, Ordering::SeqCst);
-
     // rdisk is the raw, unbuffered device, much faster to write than disk.
     let raw_device = device_path.replace("/dev/disk", "/dev/rdisk");
 
@@ -301,6 +295,11 @@ pub async fn flash_image(
     std::thread::sleep(std::time::Duration::from_millis(
         config::flash::UNMOUNT_DELAY_MS,
     ));
+
+    // Opened after the unmount: a handle on the target's own filesystem would keep it busy and mounted.
+    let (mut image_file, image_size) = open_image(image_path)?;
+
+    state.total_bytes.store(image_size, Ordering::SeqCst);
 
     // Reuse the auth captured earlier, so no dialog appears now.
     log_debug!(MODULE, "Opening device with saved authorization");
@@ -316,6 +315,7 @@ pub async fn flash_image(
         Ok(()) => {
             do_flash_work(
                 image_path,
+                &mut image_file,
                 device_path,
                 &mut device,
                 device_fd,
@@ -357,9 +357,7 @@ pub(crate) async fn flash_to_vdisk(
         ));
     }
 
-    let image_size = std::fs::metadata(image_path)
-        .map_err(|e| format!("Failed to get image size: {}", e))?
-        .len();
+    let (mut image_file, image_size) = open_image(image_path)?;
     // A write past EOF grows a regular file instead of failing, so the fit is checked up front.
     let padded = image_size.div_ceil(SECTOR_SIZE as u64) * SECTOR_SIZE as u64;
     let needed = padded.saturating_add(config::flash::QUICK_ERASE_SIZE as u64);
@@ -374,11 +372,23 @@ pub(crate) async fn flash_to_vdisk(
         image_path.display(),
         label
     );
-    do_flash_work(image_path, label, &mut file, fd, image_size, state, verify).await
+    do_flash_work(
+        image_path,
+        &mut image_file,
+        label,
+        &mut file,
+        fd,
+        image_size,
+        state,
+        verify,
+    )
+    .await
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn do_flash_work(
     image_path: &PathBuf,
+    image_file: &mut File,
     device_path: &str,
     device: &mut File,
     device_fd: i32,
@@ -388,9 +398,6 @@ async fn do_flash_work(
 ) -> Result<(), String> {
     state.ensure_not_cancelled()?;
     quick_erase(device, device_fd)?;
-
-    let mut image_file =
-        File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
 
     let chunk_size = config::flash::CHUNK_SIZE;
     let mut buffer = vec![0u8; chunk_size];
@@ -452,6 +459,12 @@ async fn do_flash_work(
         state.written_bytes.store(written, Ordering::SeqCst);
 
         tracker.update(bytes_read as u64);
+    }
+
+    if written != image_size {
+        let e = crate::flash::image_length_changed_err(written, image_size);
+        log_error!(MODULE, "Image changed during the write: {}", e);
+        return Err(e);
     }
 
     tracker.finish();
@@ -646,5 +659,82 @@ mod tests {
         .await
         .unwrap_err();
         assert!(err.starts_with(TAG_INVALID_PATH), "{err}");
+    }
+
+    fn sentinel(len: usize) -> Vec<u8> {
+        (0..len).map(|i| (i % 11) as u8 + 1).collect()
+    }
+
+    #[tokio::test]
+    async fn an_empty_image_leaves_the_disk_untouched() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let image = image(dir, 0);
+        let (disk, file) = vdisk(dir, 16 * 1024 * 1024);
+        let before = sentinel(16 * 1024 * 1024);
+        std::fs::write(&disk, &before).unwrap();
+        let state = Arc::new(FlashState::new());
+
+        let err = flash_to_vdisk(&image, "test", file, state.clone(), true)
+            .await
+            .unwrap_err();
+
+        assert!(err.starts_with(crate::utils::TAG_IMAGE_INVALID), "{err}");
+        assert_eq!(state.written_bytes.load(Ordering::SeqCst), 0);
+        assert!(
+            std::fs::read(&disk).unwrap() == before,
+            "nothing may be erased"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_directory_as_image_leaves_the_disk_untouched() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let image_dir = dir.join("image.img");
+        std::fs::create_dir(&image_dir).unwrap();
+        let (disk, file) = vdisk(dir, 16 * 1024 * 1024);
+        let before = sentinel(16 * 1024 * 1024);
+        std::fs::write(&disk, &before).unwrap();
+
+        let err = flash_to_vdisk(&image_dir, "test", file, Arc::new(FlashState::new()), false)
+            .await
+            .unwrap_err();
+
+        assert!(err.starts_with(crate::utils::TAG_IMAGE_INVALID), "{err}");
+        assert!(
+            std::fs::read(&disk).unwrap() == before,
+            "nothing may be erased"
+        );
+    }
+
+    #[tokio::test]
+    async fn an_image_shorter_than_its_length_fails_the_write() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let image_len = 1024 * 1024;
+        let image = image(dir, image_len);
+        let (_disk, mut file) = vdisk(dir, 16 * 1024 * 1024);
+        let fd = file.as_raw_fd();
+        let mut image_file = File::open(&image).unwrap();
+        let claimed = image_len as u64 + 4096;
+
+        let err = do_flash_work(
+            &image,
+            &mut image_file,
+            "test",
+            &mut file,
+            fd,
+            claimed,
+            Arc::new(FlashState::new()),
+            false,
+        )
+        .await
+        .unwrap_err();
+
+        assert_eq!(
+            err,
+            crate::flash::image_length_changed_err(image_len as u64, claimed)
+        );
     }
 }
