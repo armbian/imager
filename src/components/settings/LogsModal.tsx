@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Copy, Check } from 'lucide-react';
 import Ansi from 'ansi-to-html';
 import { getLogs } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
+import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { stripAnsiCodes } from '../../utils';
 import { ErrorDisplay } from '../shared/ErrorDisplay';
-import { TIMING, COLORS } from '../../config';
+import { COLORS } from '../../config';
 
 interface LogsModalProps {
   isOpen: boolean;
@@ -21,20 +22,17 @@ interface LogsModalProps {
  * renders via dangerouslySetInnerHTML+escapeXML, copy strips ANSI and reverts after TIMING.COPIED_NOTIFICATION; no exit animation, no Escape handler (intentional), overlay click closes. */
 export function LogsModal({ isOpen, onClose }: LogsModalProps) {
   const { t } = useTranslation();
-  const [copied, setCopied] = useState<boolean>(false);
   const { data: logs, loading, error, reload } = useAsyncData(() => getLogs(), [isOpen], {
     immediate: isOpen,
     resetOnReload: true,
   });
 
-  /** Copies the logs to the clipboard as plain text, flashing a confirmation. */
+  const plainLogs = useMemo(() => (logs ? stripAnsiCodes(logs) : null), [logs]);
+  const { copied, copy } = useCopyFeedback(plainLogs);
+
   const handleCopyLogs = async () => {
     try {
-      if (!logs) return;
-      const plainText = stripAnsiCodes(logs);
-      await navigator.clipboard.writeText(plainText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), TIMING.COPIED_NOTIFICATION);
+      await copy();
     } catch (err) {
       console.error('Failed to copy logs:', err);
     }

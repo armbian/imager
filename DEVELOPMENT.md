@@ -192,6 +192,7 @@ armbian-imager/
 │   ├── hooks/                        # Custom React Hooks
 │   │   ├── useTauri.ts              # 26+ Tauri IPC command wrappers
 │   │   ├── useAsyncData.ts          # Generic async fetch (race-condition safe)
+│   │   ├── useCopyFeedback.ts       # Clipboard copy with a timed "copied" flag
 │   │   ├── useFlashOperation.ts     # Full flash lifecycle orchestration
 │   │   ├── useVendorLogos.ts        # Logo preloading + manufacturer grouping
 │   │   ├── useSettings.ts           # Tauri Store get/set (20+ settings)

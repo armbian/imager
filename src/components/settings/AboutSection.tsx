@@ -22,7 +22,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import { getTauriVersion, getSystemInfo, openUrl } from '../../hooks/useTauri';
+import { getTauriVersion, getSystemInfo, openExternal } from '../../hooks/useTauri';
 import { getDeveloperMode, setDeveloperMode } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
 import { useLogUpload } from '../../hooks/useLogUpload';
@@ -50,14 +50,6 @@ const ABOUT_LINKS: readonly AboutLink[] = [
   { icon: Bug, labelKey: 'settings.reportIssue', url: LINKS.ISSUES, subKey: 'settings.about.reportSub' },
   { icon: Heart, labelKey: 'settings.about.support', url: LINKS.DONATE },
 ];
-
-async function openExternal(url: string) {
-  try {
-    await openUrl(url);
-  } catch {
-    window.open(url, '_blank');
-  }
-}
 
 function UpdateStatus() {
   const { t } = useTranslation();

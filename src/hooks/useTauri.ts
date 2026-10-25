@@ -127,6 +127,15 @@ export async function openUrl(url: string): Promise<void> {
   return invoke('open_url', { url });
 }
 
+/** Opens a link in the system browser, falling back to the WebView when the command fails. */
+export async function openExternal(url: string): Promise<void> {
+  try {
+    await openUrl(url);
+  } catch {
+    window.open(url, '_blank');
+  }
+}
+
 export async function logInfo(module: string, message: string): Promise<void> {
   return invoke('log_from_frontend', { module, message });
 }
