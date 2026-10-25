@@ -3,14 +3,16 @@
 
 //! Windows-specific flash implementation. Requires Administrator for raw disk access.
 
-use super::verify::{data_mismatch_err, verify_cancelled_err, TAG_VERIFY_READ_FAILED};
+use super::verify::{
+    data_mismatch_err, short_read_err, verify_cancelled_err, TAG_VERIFY_READ_FAILED,
+};
 use super::{reject_simulated, FlashState};
 use crate::config;
 use crate::devices::{device_changed_error, FlashTarget};
 use crate::utils::{bytes_to_gb, tagged, ProgressTracker};
 use crate::{log_debug, log_error, log_info, log_warn};
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
@@ -30,7 +32,7 @@ const FILE_FLAG_WRITE_THROUGH: u32 = 0x80000000;
 
 /// Flashes an image to a block device. Requires Administrator privileges.
 pub async fn flash_image(
-    image_path: &PathBuf,
+    image_path: &Path,
     target: &FlashTarget,
     state: Arc<FlashState>,
     verify: bool,
@@ -144,7 +146,7 @@ pub async fn flash_image(
             config::flash::UNMOUNT_DELAY_MS,
         ));
         let device = open_device_for_read(device_path)?;
-        verify_with_sector_alignment(image_path, device, state)?;
+        verify_with_sector_alignment(&mut image_file, device, state)?;
     }
 
     log_info!(MODULE, "Flash complete, releasing volume locks...");
@@ -401,19 +403,14 @@ fn flush_device_buffers(_device: &std::fs::File) -> Result<(), String> {
 /// Verifies written data using sector-aligned reads, required by `FILE_FLAG_NO_BUFFERING` (bypasses OS cache).
 #[cfg(target_os = "windows")]
 fn verify_with_sector_alignment(
-    image_path: &PathBuf,
+    image_file: &mut std::fs::File,
     mut device: std::fs::File,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
     state.is_verifying.store(true, Ordering::SeqCst);
     state.verified_bytes.store(0, Ordering::SeqCst);
 
-    let mut image_file = std::fs::File::open(image_path).map_err(|e| {
-        tagged(
-            TAG_VERIFY_READ_FAILED,
-            format!("Failed to open image: {}", e),
-        )
-    })?;
+    super::verify::rewind_image(image_file)?;
 
     let image_size = state.total_bytes.load(Ordering::SeqCst);
 
@@ -490,6 +487,10 @@ fn verify_with_sector_alignment(
             total_read += n;
         }
 
+        if total_read < image_read {
+            return Err(short_read_err(verified, image_read, total_read));
+        }
+
         if image_buffer[..image_read] != device_buffer[..image_read] {
             log_error!(MODULE, "Data mismatch at byte {}", verified);
 
@@ -515,6 +516,7 @@ fn verify_with_sector_alignment(
         tracker.update(image_read as u64);
     }
 
+    super::verify::check_verified_length(verified, image_size)?;
     tracker.finish();
     Ok(())
 }

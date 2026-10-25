@@ -370,7 +370,7 @@ async fn vdisk_write(
 ) -> Result<(), String> {
     let (file, path) = vdisk::open_in(&app_cache_dir(), id)?;
     let label = path.to_string_lossy().to_string();
-    crate::flash::flash_to_vdisk(&image_path.to_path_buf(), &label, file, flash_state, verify).await
+    crate::flash::flash_to_vdisk(image_path, &label, file, flash_state, verify).await
 }
 
 #[cfg(not(target_os = "macos"))]

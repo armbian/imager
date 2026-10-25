@@ -6,11 +6,10 @@
 #![allow(dead_code)]
 
 use crate::config;
-use crate::utils::{bytes_to_gb, tagged, ProgressTracker, TAG_CANCELLED};
+use crate::utils::{bytes_to_gb, tagged, ProgressTracker, TAG_CANCELLED, TAG_IMAGE_INVALID};
 use crate::{log_error, log_info};
 use std::fs::File;
-use std::io::Read;
-use std::path::PathBuf;
+use std::io::{Read, Seek, SeekFrom};
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
@@ -33,27 +32,58 @@ pub(crate) fn data_mismatch_err(offset: u64) -> String {
     )
 }
 
+/// The device returned fewer bytes than the image chunk it is compared with.
+pub(crate) fn short_read_err(offset: u64, expected: usize, got: usize) -> String {
+    let e = tagged(
+        TAG_VERIFY_MISMATCH,
+        format!(
+            "Verification failed: size mismatch at byte {} (expected {}, got {})",
+            offset, expected, got
+        ),
+    );
+    log_error!(MODULE, "{}", e);
+    e
+}
+
 /// Verification reader trait for platform-specific device reading
 pub trait VerificationReader: Read + Send {}
 
 impl<T: Read + Send> VerificationReader for T {}
 
-/// Verify written data by comparing the image against a device reader.
-/// Platform-agnostic; the caller supplies the device `Read`er.
-pub fn verify_data<R: Read>(
-    image_path: &PathBuf,
+/// Seek the image handle the writer used back to its start for the read-back.
+pub(crate) fn rewind_image(image_file: &mut File) -> Result<(), String> {
+    image_file
+        .seek(SeekFrom::Start(0))
+        .map(|_| ())
+        .map_err(|e| {
+            tagged(
+                TAG_VERIFY_READ_FAILED,
+                format!("Failed to rewind image for verification: {}", e),
+            )
+        })
+}
+
+/// Refuse a verification with nothing to compare, or one where the image ended early.
+pub(crate) fn check_verified_length(verified: u64, image_size: u64) -> Result<(), String> {
+    let e = if image_size == 0 {
+        tagged(TAG_IMAGE_INVALID, "nothing to verify: image length is 0")
+    } else if verified < image_size {
+        super::image_length_changed_err(verified, image_size)
+    } else {
+        return Ok(());
+    };
+    log_error!(MODULE, "Verification failed: {}", e);
+    Err(e)
+}
+
+/// Verify written data by comparing the image, read from its start, against a device reader.
+pub fn verify_data<I: Read, R: Read>(
+    image_file: &mut I,
     device_reader: &mut R,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
     state.is_verifying.store(true, Ordering::SeqCst);
     state.verified_bytes.store(0, Ordering::SeqCst);
-
-    let mut image_file = File::open(image_path).map_err(|e| {
-        tagged(
-            TAG_VERIFY_READ_FAILED,
-            format!("Failed to open image for verification: {}", e),
-        )
-    })?;
 
     let chunk_size = config::flash::CHUNK_SIZE;
     let mut image_buffer = vec![0u8; chunk_size];
@@ -112,20 +142,7 @@ pub fn verify_data<R: Read>(
         }
 
         if device_read != image_read {
-            log_error!(
-                MODULE,
-                "Verification failed: size mismatch at byte {} (expected {}, got {})",
-                verified,
-                image_read,
-                device_read
-            );
-            return Err(tagged(
-                TAG_VERIFY_MISMATCH,
-                format!(
-                    "Verification failed: size mismatch at byte {} (expected {}, got {})",
-                    verified, image_read, device_read
-                ),
-            ));
+            return Err(short_read_err(verified, image_read, device_read));
         }
 
         if image_buffer[..image_read] != device_buffer[..device_read] {
@@ -143,6 +160,7 @@ pub fn verify_data<R: Read>(
         tracker.update(image_read as u64);
     }
 
+    check_verified_length(verified, image_size)?;
     tracker.finish();
     Ok(())
 }
@@ -152,16 +170,20 @@ mod tests {
     use super::*;
     use std::io::{Cursor, Error};
 
-    fn run(image: &[u8], device: &mut impl Read, cancelled: bool) -> Result<(), String> {
-        let tmp = tempfile::tempdir().unwrap();
-        let path = tmp.path().join("image.img");
-        std::fs::write(&path, image).unwrap();
+    fn run_with_total(
+        image: &[u8],
+        total: u64,
+        device: &mut impl Read,
+        cancelled: bool,
+    ) -> Result<(), String> {
         let state = Arc::new(FlashState::new());
-        state
-            .total_bytes
-            .store(image.len() as u64, Ordering::SeqCst);
+        state.total_bytes.store(total, Ordering::SeqCst);
         state.is_cancelled.store(cancelled, Ordering::SeqCst);
-        verify_data(&path, device, state)
+        verify_data(&mut Cursor::new(image.to_vec()), device, state)
+    }
+
+    fn run(image: &[u8], device: &mut impl Read, cancelled: bool) -> Result<(), String> {
+        run_with_total(image, image.len() as u64, device, cancelled)
     }
 
     struct FailingReader;
@@ -200,15 +222,26 @@ mod tests {
     }
 
     #[test]
-    fn missing_image_is_tagged_read_failed() {
+    fn image_read_failure_is_tagged() {
         let state = Arc::new(FlashState::new());
-        let err = verify_data(
-            &PathBuf::from("/nonexistent/armbian-imager/image.img"),
-            &mut Cursor::new(Vec::new()),
-            state,
-        )
-        .unwrap_err();
-        assert!(err.starts_with(TAG_VERIFY_READ_FAILED), "{err}");
+        state.total_bytes.store(1024, Ordering::SeqCst);
+        let err =
+            verify_data(&mut FailingReader, &mut Cursor::new(vec![7u8; 1024]), state).unwrap_err();
+        assert_eq!(err, "[VERIFY_READ_FAILED] Failed to read image: boom");
+    }
+
+    #[test]
+    fn an_image_shorter_than_the_written_length_fails() {
+        let err = run_with_total(&[7u8; 1024], 4096, &mut Cursor::new(vec![7u8; 4096]), false)
+            .unwrap_err();
+        assert!(err.starts_with(TAG_IMAGE_INVALID), "{err}");
+        assert!(err.contains("delivered 1024 bytes, expected 4096"), "{err}");
+    }
+
+    #[test]
+    fn nothing_to_verify_is_refused() {
+        let err = run_with_total(&[], 0, &mut Cursor::new(Vec::new()), false).unwrap_err();
+        assert!(err.starts_with(TAG_IMAGE_INVALID), "{err}");
     }
 
     #[test]

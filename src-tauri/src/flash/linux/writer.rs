@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::os::unix::fs::{FileTypeExt, OpenOptionsExt};
 use std::os::unix::io::{AsRawFd, FromRawFd};
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
@@ -111,7 +111,7 @@ fn check_opened_device(device: &mut File, target: &FlashTarget) -> Result<(), St
 
 /// Flash an image to a block device
 pub async fn flash_image(
-    image_path: &PathBuf,
+    image_path: &Path,
     target: &FlashTarget,
     state: Arc<FlashState>,
     verify: bool,
@@ -245,7 +245,7 @@ pub async fn flash_image(
             .seek(SeekFrom::Start(0))
             .map_err(|e| format!("Failed to seek device: {}", e))?;
 
-        verify_written_data(image_path, &mut device, state.clone())?;
+        verify_written_data(&mut image_file, &mut device, state.clone())?;
     }
 
     log_info!(MODULE, "Flash complete!");
@@ -284,9 +284,10 @@ fn quick_erase(device: &mut File) -> Result<(), String> {
 
 /// Verify written data
 fn verify_written_data(
-    image_path: &PathBuf,
+    image_file: &mut File,
     device: &mut File,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
-    crate::flash::verify::verify_data(image_path, device, state)
+    crate::flash::verify::rewind_image(image_file)?;
+    crate::flash::verify::verify_data(image_file, device, state)
 }

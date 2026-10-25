@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::fs::FileTypeExt;
 use std::os::unix::io::{AsRawFd, FromRawFd};
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
@@ -277,7 +277,7 @@ fn check_opened_device(device: &File, target: &FlashTarget) -> Result<(), String
 
 /// Flash an image to a block device on macOS
 pub async fn flash_image(
-    image_path: &PathBuf,
+    image_path: &Path,
     target: &FlashTarget,
     state: Arc<FlashState>,
     verify: bool,
@@ -314,7 +314,6 @@ pub async fn flash_image(
     let result = match check_opened_device(&device, target) {
         Ok(()) => {
             do_flash_work(
-                image_path,
                 &mut image_file,
                 device_path,
                 &mut device,
@@ -342,7 +341,7 @@ pub async fn flash_image(
 
 #[cfg(debug_assertions)]
 pub(crate) async fn flash_to_vdisk(
-    image_path: &PathBuf,
+    image_path: &Path,
     label: &str,
     mut file: File,
     state: Arc<FlashState>,
@@ -373,7 +372,6 @@ pub(crate) async fn flash_to_vdisk(
         label
     );
     do_flash_work(
-        image_path,
         &mut image_file,
         label,
         &mut file,
@@ -385,9 +383,7 @@ pub(crate) async fn flash_to_vdisk(
     .await
 }
 
-#[allow(clippy::too_many_arguments)]
 async fn do_flash_work(
-    image_path: &PathBuf,
     image_file: &mut File,
     device_path: &str,
     device: &mut File,
@@ -479,7 +475,7 @@ async fn do_flash_work(
     // Verification reuses the same fd, so no extra auth prompt.
     if verify {
         log_info!(MODULE, "Starting verification");
-        verify_written_data(image_path, device, device_fd, state.clone())?;
+        verify_written_data(image_file, device, device_fd, state.clone())?;
     }
 
     log_info!(MODULE, "Flash complete!");
@@ -488,7 +484,7 @@ async fn do_flash_work(
 
 /// Verify written data by reading back and comparing.
 fn verify_written_data(
-    image_path: &PathBuf,
+    image_file: &mut File,
     device: &mut File,
     device_fd: i32,
     state: Arc<FlashState>,
@@ -499,13 +495,15 @@ fn verify_written_data(
 
     // BufReader keeps raw-device reads sector-aligned, avoiding EINVAL on the final read.
     let mut buf_reader = BufReader::with_capacity(config::flash::CHUNK_SIZE, &*device);
-    crate::flash::verify::verify_data(image_path, &mut buf_reader, state)
+    crate::flash::verify::rewind_image(image_file)?;
+    crate::flash::verify::verify_data(image_file, &mut buf_reader, state)
 }
 
 #[cfg(all(test, debug_assertions))]
 mod tests {
     use super::*;
     use crate::flash::FlashState;
+    use std::path::PathBuf;
 
     fn image(dir: &std::path::Path, len: usize) -> PathBuf {
         let path = dir.join("image.img");
@@ -720,7 +718,6 @@ mod tests {
         let claimed = image_len as u64 + 4096;
 
         let err = do_flash_work(
-            &image,
             &mut image_file,
             "test",
             &mut file,
