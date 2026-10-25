@@ -140,7 +140,27 @@
     "uploadingLogs": "A enviar registos...",
     "uploadLogsForSupport": "Enviar registos para suporte",
     "viewLogs": "Ver registos",
-    "scanQrOrShare": "Digitalize o QR ou partilhe este link:"
+    "scanQrOrShare": "Digitalize o QR ou partilhe este link:",
+    "serverTitle": "Os servidores do Armbian não respondem",
+    "serverHint": "O problema não é a sua ligação. Tente novamente dentro de alguns minutos.",
+    "networkTitle": "Não foi possível aceder ao Armbian",
+    "networkHint": "Verifique a sua ligação à internet ou tente novamente dentro de alguns minutos.",
+    "otherTitle": "Esta lista não foi carregada",
+    "otherHint": "Tente novamente. Se continuar a acontecer, envie os registos para que a equipa do Armbian possa investigar.",
+    "devicesTitle": "Não foi possível verificar os seus dispositivos de armazenamento",
+    "devicesHint": "Volte a ligar o leitor de cartões ou a unidade e tente novamente.",
+    "edlDevicesTitle": "Não foi possível procurar dispositivos em modo EDL",
+    "edlDevicesHint": "Volte a ligar a placa em modo EDL e tente novamente.",
+    "retrying": "A tentar novamente...",
+    "stillFailing": "Continua a não funcionar.",
+    "logsUploaded": "Registos enviados",
+    "copyLink": "Copiar link",
+    "copied": "Copiado",
+    "logsStepScan": "Digitalize o código ou copie o link",
+    "logsStepIssue": "Abra uma issue no GitHub",
+    "logsStepPaste": "Cole o link e descreva o problema",
+    "logsCaption": "Registos do Armbian",
+    "openInBrowser": "Abrir no navegador"
   },
   "error": {
     "downloadFailed": "Falha na transferência",
@@ -188,7 +208,8 @@
     "back": "Voltar",
     "showPassword": "Mostrar palavra-passe",
     "hidePassword": "Ocultar palavra-passe",
-    "close": "Fechar"
+    "close": "Fechar",
+    "done": "Concluído"
   },
   "settings": {
     "title": "Definições",

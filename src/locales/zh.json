@@ -140,7 +140,27 @@
     "uploadingLogs": "正在上传日志……",
     "uploadLogsForSupport": "上传日志以获取支持",
     "viewLogs": "查看日志",
-    "scanQrOrShare": "请扫描二维码或分享此链接："
+    "scanQrOrShare": "请扫描二维码或分享此链接：",
+    "serverTitle": "Armbian 服务器没有响应",
+    "serverHint": "这不是你的网络问题。请几分钟后再试。",
+    "networkTitle": "无法连接到 Armbian",
+    "networkHint": "请检查你的网络连接，或几分钟后再试。",
+    "otherTitle": "此列表未能加载",
+    "otherHint": "请重试。如果问题持续出现，请上传日志，方便 Armbian 团队排查。",
+    "devicesTitle": "无法检查你的存储设备",
+    "devicesHint": "请重新连接读卡器或驱动器，然后重试。",
+    "edlDevicesTitle": "无法搜索 EDL 模式下的设备",
+    "edlDevicesHint": "请让开发板以 EDL 模式重新连接，然后重试。",
+    "retrying": "正在重试……",
+    "stillFailing": "仍然无法使用。",
+    "logsUploaded": "日志已上传",
+    "copyLink": "复制链接",
+    "copied": "已复制",
+    "logsStepScan": "扫描二维码或复制链接",
+    "logsStepIssue": "在 GitHub 上提交 issue",
+    "logsStepPaste": "粘贴链接并描述问题",
+    "logsCaption": "Armbian 日志",
+    "openInBrowser": "在浏览器中打开"
   },
   "error": {
     "downloadFailed": "下载失败",
@@ -188,7 +208,8 @@
     "back": "上一步",
     "showPassword": "显示密码",
     "hidePassword": "隐藏密码",
-    "close": "关闭"
+    "close": "关闭",
+    "done": "完成"
   },
   "settings": {
     "title": "设置",

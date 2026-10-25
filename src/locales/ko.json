@@ -140,7 +140,27 @@
     "uploadingLogs": "로그 업로드 중...",
     "uploadLogsForSupport": "지원 요청용 로그 업로드",
     "viewLogs": "로그 보기",
-    "scanQrOrShare": "QR 코드를 스캔하거나 이 링크를 공유하세요:"
+    "scanQrOrShare": "QR 코드를 스캔하거나 이 링크를 공유하세요:",
+    "serverTitle": "Armbian 서버가 응답하지 않습니다",
+    "serverHint": "사용자의 연결 문제가 아닙니다. 몇 분 뒤에 다시 시도해 보세요.",
+    "networkTitle": "Armbian에 연결할 수 없습니다",
+    "networkHint": "인터넷 연결을 확인하거나 몇 분 뒤에 다시 시도해 보세요.",
+    "otherTitle": "이 목록을 불러오지 못했습니다",
+    "otherHint": "다시 시도해 보세요. 계속 발생하면 Armbian 팀이 확인할 수 있도록 로그를 업로드하세요.",
+    "devicesTitle": "저장 장치를 확인하지 못했습니다",
+    "devicesHint": "카드 리더기나 드라이브를 다시 연결한 뒤 다시 시도하세요.",
+    "edlDevicesTitle": "EDL 모드 장치를 찾지 못했습니다",
+    "edlDevicesHint": "보드를 EDL 모드로 다시 연결한 뒤 다시 시도하세요.",
+    "retrying": "다시 시도하는 중...",
+    "stillFailing": "아직도 작동하지 않습니다.",
+    "logsUploaded": "로그 업로드 완료",
+    "copyLink": "링크 복사",
+    "copied": "복사됨",
+    "logsStepScan": "코드를 스캔하거나 링크 복사",
+    "logsStepIssue": "GitHub에서 이슈 열기",
+    "logsStepPaste": "링크를 붙여넣고 문제 설명",
+    "logsCaption": "Armbian 로그",
+    "openInBrowser": "브라우저에서 열기"
   },
   "error": {
     "downloadFailed": "다운로드 실패",
@@ -188,7 +208,8 @@
     "back": "이전",
     "showPassword": "비밀번호 표시",
     "hidePassword": "비밀번호 숨기기",
-    "close": "닫기"
+    "close": "닫기",
+    "done": "완료"
   },
   "settings": {
     "title": "설정",

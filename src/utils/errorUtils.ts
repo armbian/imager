@@ -83,9 +83,14 @@ export function translateFlashError(error: string, t: TFn): string {
   return translateQdlError(error, t);
 }
 
+/** i18n key for a [QDL_*] tagged error, or undefined when the message carries no known tag */
+export function qdlErrorKey(error: string): string | undefined {
+  return findTaggedKey(error, QDL_ERROR_KEYS);
+}
+
 /** Map QDL backend error tags to translated user-facing messages */
 export function translateQdlError(error: string, t: TFn): string {
-  const key = findTaggedKey(error, QDL_ERROR_KEYS);
+  const key = qdlErrorKey(error);
   if (key) return t(key);
   if (error.includes(QDL_ERROR_TAG)) return error.replace(`${QDL_ERROR_TAG} `, '');
   return error;
@@ -113,4 +118,17 @@ export function translateSshKeysError(error: string, t: TFn, forge: string | nul
   const keys = findSshKeysError(error);
   if (!keys) return t('settings.autoconfig.keys.unreachable');
   return forge ? t(keys.forge, { forge }) : t(keys.link);
+}
+
+export type LoadErrorKind = 'server' | 'network' | 'other';
+
+// Untagged texts: the cache fallback in images/mod.rs and reqwest 0.12 Display impls; a reworded one falls back to 'other'.
+const NETWORK_ERROR_PATTERN = /error sending request|error decoding response body|No cached .* data available/;
+const SERVER_ERROR_PATTERN = /HTTP status server error|Failed to parse \w+ response/;
+
+/** Classify a catalog load failure so the panel can say whose side the problem is on */
+export function classifyLoadError(error: string): LoadErrorKind {
+  if (NETWORK_ERROR_PATTERN.test(error)) return 'network';
+  if (SERVER_ERROR_PATTERN.test(error)) return 'server';
+  return 'other';
 }

@@ -140,7 +140,27 @@
     "uploadingLogs": "Günlükler yükleniyor...",
     "uploadLogsForSupport": "Destek için günlükleri yükle",
     "viewLogs": "Günlükleri Görüntüle",
-    "scanQrOrShare": "QR tarayın veya bu bağlantıyı paylaşın:"
+    "scanQrOrShare": "QR tarayın veya bu bağlantıyı paylaşın:",
+    "serverTitle": "Armbian sunucuları yanıt vermiyor",
+    "serverHint": "Sorun sizin bağlantınızda değil. Birkaç dakika sonra tekrar deneyin.",
+    "networkTitle": "Armbian'a ulaşılamıyor",
+    "networkHint": "İnternet bağlantınızı kontrol edin veya birkaç dakika sonra tekrar deneyin.",
+    "otherTitle": "Bu liste yüklenemedi",
+    "otherHint": "Tekrar deneyin. Sorun devam ederse Armbian ekibi inceleyebilsin diye günlükleri yükleyin.",
+    "devicesTitle": "Depolama cihazlarınız kontrol edilemedi",
+    "devicesHint": "Kart okuyucuyu veya sürücüyü yeniden bağlayıp tekrar deneyin.",
+    "edlDevicesTitle": "EDL modundaki cihazlar aranamadı",
+    "edlDevicesHint": "Kartı EDL modunda yeniden bağlayıp tekrar deneyin.",
+    "retrying": "Yeniden deneniyor...",
+    "stillFailing": "Hâlâ çalışmıyor.",
+    "logsUploaded": "Günlükler yüklendi",
+    "copyLink": "Bağlantıyı kopyala",
+    "copied": "Kopyalandı",
+    "logsStepScan": "Kodu tarayın veya bağlantıyı kopyalayın",
+    "logsStepIssue": "GitHub'da bir issue açın",
+    "logsStepPaste": "Bağlantıyı yapıştırın ve sorunu anlatın",
+    "logsCaption": "Armbian günlükleri",
+    "openInBrowser": "Tarayıcıda aç"
   },
   "error": {
     "downloadFailed": "İndirme başarısız",
@@ -188,7 +208,8 @@
     "back": "Geri",
     "showPassword": "Parolayı göster",
     "hidePassword": "Parolayı gizle",
-    "close": "Kapat"
+    "close": "Kapat",
+    "done": "Tamam"
   },
   "settings": {
     "title": "Ayarlar",

@@ -140,7 +140,27 @@
     "uploadingLogs": "Logs uploaden...",
     "uploadLogsForSupport": "Logs uploaden voor ondersteuning",
     "viewLogs": "Logs bekijken",
-    "scanQrOrShare": "Scan QR of deel deze link:"
+    "scanQrOrShare": "Scan QR of deel deze link:",
+    "serverTitle": "De servers van Armbian reageren niet",
+    "serverHint": "Dit ligt niet aan je verbinding. Probeer het over een paar minuten opnieuw.",
+    "networkTitle": "Armbian is niet bereikbaar",
+    "networkHint": "Controleer je internetverbinding of probeer het over een paar minuten opnieuw.",
+    "otherTitle": "Deze lijst is niet geladen",
+    "otherHint": "Probeer het opnieuw. Blijft het gebeuren, upload dan de logs zodat het Armbian-team het kan onderzoeken.",
+    "devicesTitle": "Opslagapparaten konden niet worden gecontroleerd",
+    "devicesHint": "Sluit de kaartlezer of schijf opnieuw aan en probeer het opnieuw.",
+    "edlDevicesTitle": "Zoeken naar apparaten in EDL-modus is mislukt",
+    "edlDevicesHint": "Sluit het board opnieuw aan in EDL-modus en probeer het opnieuw.",
+    "retrying": "Opnieuw proberen...",
+    "stillFailing": "Het werkt nog steeds niet.",
+    "logsUploaded": "Logs geüpload",
+    "copyLink": "Link kopiëren",
+    "copied": "Gekopieerd",
+    "logsStepScan": "Scan de code of kopieer de link",
+    "logsStepIssue": "Open een issue op GitHub",
+    "logsStepPaste": "Plak de link en beschrijf het probleem",
+    "logsCaption": "Armbian-logs",
+    "openInBrowser": "Openen in browser"
   },
   "error": {
     "downloadFailed": "Download mislukt",
@@ -188,7 +208,8 @@
     "back": "Terug",
     "showPassword": "Wachtwoord tonen",
     "hidePassword": "Wachtwoord verbergen",
-    "close": "Sluiten"
+    "close": "Sluiten",
+    "done": "Klaar"
   },
   "settings": {
     "title": "Instellingen",

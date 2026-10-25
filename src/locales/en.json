@@ -140,7 +140,27 @@
     "uploadingLogs": "Uploading logs...",
     "uploadLogsForSupport": "Upload Logs for Support",
     "viewLogs": "View Logs",
-    "scanQrOrShare": "Scan the QR code or share this link:"
+    "scanQrOrShare": "Scan the QR code or share this link:",
+    "serverTitle": "Armbian's servers aren't responding",
+    "serverHint": "This isn't a problem with your connection. Try again in a few minutes.",
+    "networkTitle": "Can't reach Armbian",
+    "networkHint": "Check your internet connection, or try again in a few minutes.",
+    "otherTitle": "This list didn't load",
+    "otherHint": "Try again. If it keeps happening, upload the logs so the Armbian team can look into it.",
+    "devicesTitle": "Couldn't check your storage devices",
+    "devicesHint": "Reconnect the card reader or drive, then try again.",
+    "edlDevicesTitle": "Couldn't look for devices in EDL mode",
+    "edlDevicesHint": "Reconnect the board in EDL mode, then try again.",
+    "retrying": "Trying again...",
+    "stillFailing": "Still not working.",
+    "logsUploaded": "Logs uploaded",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "logsStepScan": "Scan the code or copy the link",
+    "logsStepIssue": "Open an issue on GitHub",
+    "logsStepPaste": "Paste the link and describe the problem",
+    "logsCaption": "Armbian logs",
+    "openInBrowser": "Open in browser"
   },
   "error": {
     "downloadFailed": "Download failed",
@@ -188,7 +208,8 @@
     "back": "Back",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "close": "Close"
+    "close": "Close",
+    "done": "Done"
   },
   "settings": {
     "title": "Settings",

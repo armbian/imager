@@ -140,7 +140,27 @@
     "uploadingLogs": "Nalaganje dnevnikov...",
     "uploadLogsForSupport": "Naloži dnevnike za podporo",
     "viewLogs": "Prikaži dnevnike",
-    "scanQrOrShare": "Skenirajte QR ali delite to povezavo:"
+    "scanQrOrShare": "Skenirajte QR ali delite to povezavo:",
+    "serverTitle": "Strežniki Armbian se ne odzivajo",
+    "serverHint": "Težava ni v vaši povezavi. Poskusite znova čez nekaj minut.",
+    "networkTitle": "Armbiana ni mogoče doseči",
+    "networkHint": "Preverite internetno povezavo ali poskusite znova čez nekaj minut.",
+    "otherTitle": "Tega seznama ni bilo mogoče naložiti",
+    "otherHint": "Poskusite znova. Če se težava ponavlja, naložite dnevnike, da jih lahko ekipa Armbian pregleda.",
+    "devicesTitle": "Naprav za shranjevanje ni bilo mogoče preveriti",
+    "devicesHint": "Ponovno povežite bralnik kartic ali pogon in poskusite znova.",
+    "edlDevicesTitle": "Iskanje naprav v načinu EDL ni uspelo",
+    "edlDevicesHint": "Ponovno povežite ploščo v načinu EDL in poskusite znova.",
+    "retrying": "Ponovni poskus...",
+    "stillFailing": "Še vedno ne deluje.",
+    "logsUploaded": "Dnevniki naloženi",
+    "copyLink": "Kopiraj povezavo",
+    "copied": "Kopirano",
+    "logsStepScan": "Skenirajte kodo ali kopirajte povezavo",
+    "logsStepIssue": "Odprite issue na GitHubu",
+    "logsStepPaste": "Prilepite povezavo in opišite težavo",
+    "logsCaption": "Dnevniki Armbian",
+    "openInBrowser": "Odpri v brskalniku"
   },
   "error": {
     "downloadFailed": "Prenos ni uspel",
@@ -188,7 +208,8 @@
     "back": "Nazaj",
     "showPassword": "Pokaži geslo",
     "hidePassword": "Skrij geslo",
-    "close": "Zapri"
+    "close": "Zapri",
+    "done": "Končano"
   },
   "settings": {
     "title": "Nastavitve",

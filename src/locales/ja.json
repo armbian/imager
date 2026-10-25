@@ -140,7 +140,27 @@
     "uploadingLogs": "ログをアップロードしています...",
     "uploadLogsForSupport": "サポート用にログをアップロード",
     "viewLogs": "ログを表示",
-    "scanQrOrShare": "QRコードを読み取るか、このリンクを共有してください："
+    "scanQrOrShare": "QRコードを読み取るか、このリンクを共有してください：",
+    "serverTitle": "Armbianのサーバーが応答しません",
+    "serverHint": "お使いの接続の問題ではありません。数分後にもう一度お試しください。",
+    "networkTitle": "Armbianに接続できません",
+    "networkHint": "インターネット接続を確認するか、数分後にもう一度お試しください。",
+    "otherTitle": "この一覧を読み込めませんでした",
+    "otherHint": "もう一度お試しください。繰り返し発生する場合は、Armbianチームが調べられるようにログをアップロードしてください。",
+    "devicesTitle": "ストレージデバイスを確認できませんでした",
+    "devicesHint": "カードリーダーまたはドライブを接続し直してから、もう一度お試しください。",
+    "edlDevicesTitle": "EDLモードのデバイスを検索できませんでした",
+    "edlDevicesHint": "ボードをEDLモードで接続し直してから、もう一度お試しください。",
+    "retrying": "再試行しています...",
+    "stillFailing": "まだ動作しません。",
+    "logsUploaded": "ログをアップロードしました",
+    "copyLink": "リンクをコピー",
+    "copied": "コピーしました",
+    "logsStepScan": "コードを読み取るか、リンクをコピー",
+    "logsStepIssue": "GitHubでIssueを作成",
+    "logsStepPaste": "リンクを貼り付けて問題を説明",
+    "logsCaption": "Armbian ログ",
+    "openInBrowser": "ブラウザで開く"
   },
   "error": {
     "downloadFailed": "ダウンロードに失敗しました",
@@ -188,7 +208,8 @@
     "back": "戻る",
     "showPassword": "パスワードを表示",
     "hidePassword": "パスワードを非表示",
-    "close": "閉じる"
+    "close": "閉じる",
+    "done": "完了"
   },
   "settings": {
     "title": "設定",

@@ -1,0 +1,359 @@
+/* PANEL LOAD ERROR: a selection panel that failed to load, centered on its clay scene */
+
+/* Class name mirrored by UI.PANEL_ERROR_CLASS in config/constants.ts */
+.panel-fail {
+  --panel-fail-art-h: clamp(120px, 26vh, 200px);
+  --panel-fail-hint-w: 430px;
+  --panel-fail-btn-h: 38px;
+  --panel-fail-title-size: 28px;
+  --panel-fail-hint-size: 15px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2xl);
+  overflow-y: auto;
+}
+
+/* A plain wrapper, not display: contents, which older WebKit drops from the accessibility tree */
+.panel-fail__message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* Auto margins centre the column and collapse to zero when it outgrows the panel, so it scrolls instead of clipping */
+.panel-fail__column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  margin: auto;
+  text-align: center;
+  animation: confirmContentIn var(--dur-slower) var(--ease-out-expo) both;
+}
+
+.panel-fail__art {
+  flex: none;
+  width: calc(var(--panel-fail-art-h) * var(--hero-ratio, 1));
+  height: var(--panel-fail-art-h);
+  margin-bottom: var(--space-sm);
+}
+
+.panel-fail__title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--panel-fail-title-size);
+  font-weight: 700;
+  line-height: 36px;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.panel-fail__hint {
+  max-width: var(--panel-fail-hint-w);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--panel-fail-hint-size);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.panel-fail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.panel-fail__actions .btn-pill {
+  height: var(--panel-fail-btn-h);
+  padding: 0 var(--space-xl);
+  font-size: 14px;
+}
+
+.panel-fail__actions .btn-primary {
+  box-shadow: var(--shadow-accent-cta);
+}
+
+.panel-fail__actions .btn[aria-disabled='true'],
+.panel-fail__actions .btn:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+/* Log upload result: the QR on a tilted phone beside the steps and the link. The body is display: contents so the
+   modal header, body parts and footer share one grid, title and Done in the right column. */
+.modal.log-share-modal {
+  --log-share-w: 560px;
+  --log-share-pad: 28px;
+  --log-share-gap: 26px;
+  --log-share-phone-w: 150px;
+  --log-share-phone-h: 270px;
+  --log-share-phone-in: 0.8s;
+  --log-share-qr: 104px;
+  --log-share-chip: 22px;
+  --log-share-field-h: 44px;
+  --log-share-icon-btn: 32px;
+  --log-share-close: 30px;
+  --log-share-btn-h: 38px;
+  --log-share-phone-radius: 30px;
+  --log-share-small-radius: 10px;
+  --log-share-island-top: 18px;
+  --log-share-island-w: 46px;
+  --log-share-island-h: 13px;
+  --log-share-caption-size: 9.5px;
+  --log-share-steps-size: 13.5px;
+  --log-share-chip-size: 11px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--log-share-phone-w) minmax(0, 1fr);
+  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-areas:
+    'phone header'
+    'phone steps'
+    'phone link'
+    'phone .'
+    'phone footer';
+  column-gap: var(--log-share-gap);
+  row-gap: var(--space-md);
+  max-width: var(--log-share-w);
+  padding: var(--log-share-pad);
+  border-radius: var(--radius-island);
+}
+
+.log-share-modal .modal-header {
+  grid-area: header;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+.log-share-modal .modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.log-share-modal .modal-close {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  width: var(--log-share-close);
+  height: var(--log-share-close);
+  border-radius: var(--radius-full);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.log-share-modal .modal-body {
+  display: contents;
+}
+
+.log-share-modal .modal-footer {
+  grid-area: footer;
+  padding: 0;
+}
+
+.log-share-modal .modal-footer .btn-pill {
+  height: var(--log-share-btn-h);
+  padding: 0 var(--space-xl);
+  font-size: 14px;
+  box-shadow: var(--shadow-accent-cta);
+}
+
+.log-share__phone {
+  grid-area: phone;
+  align-self: center;
+  position: relative;
+  box-sizing: border-box;
+  width: var(--log-share-phone-w);
+  height: var(--log-share-phone-h);
+  padding: 10px;
+  border-radius: var(--log-share-phone-radius);
+  background: var(--phone-body);
+  box-shadow: inset 0 0 0 2px var(--phone-ring), 0 20px 40px var(--phone-shadow);
+  transform: rotate(-3deg);
+  animation: logSharePhoneIn var(--log-share-phone-in) var(--ease-spring) var(--dur-fast) both;
+}
+
+.log-share__island {
+  position: absolute;
+  top: var(--log-share-island-top);
+  left: 50%;
+  width: var(--log-share-island-w);
+  height: var(--log-share-island-h);
+  border-radius: var(--log-share-small-radius);
+  background: var(--phone-island);
+  transform: translateX(-50%);
+}
+
+.log-share__screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-sizing: border-box;
+  height: 100%;
+  padding: var(--space-md);
+  border-radius: var(--radius-island);
+  background: linear-gradient(180deg, var(--phone-screen-top), var(--phone-screen-bottom));
+}
+
+.log-share__qr {
+  box-sizing: border-box;
+  display: block;
+  width: var(--log-share-qr);
+  height: var(--log-share-qr);
+  padding: 6px;
+  border-radius: var(--log-share-small-radius);
+  background: var(--qr-plate);
+}
+
+.log-share__caption {
+  color: var(--phone-caption);
+  font-size: var(--log-share-caption-size);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.log-share__steps {
+  grid-area: steps;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: log-share-step;
+  color: var(--text-secondary);
+  font-size: var(--log-share-steps-size);
+  line-height: 1.35;
+}
+
+.log-share__steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  counter-increment: log-share-step;
+}
+
+.log-share__steps li::before {
+  content: counter(log-share-step);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--log-share-chip);
+  height: var(--log-share-chip);
+  border-radius: var(--radius-full);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent);
+  font-size: var(--log-share-chip-size);
+  font-weight: 700;
+}
+
+.log-share__step-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--accent-rgb), 0.45);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color var(--dur-fast) ease;
+}
+
+.log-share__step-link:hover {
+  color: var(--accent);
+}
+
+.log-share__link {
+  grid-area: link;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: var(--log-share-field-h);
+  padding: 0 6px 0 14px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+}
+
+.log-share__url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Menlo', monospace;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+}
+
+.log-share__url b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.log-share__icon-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--log-share-icon-btn);
+  height: var(--log-share-icon-btn);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--dur-base) ease, background-color var(--dur-base) ease;
+}
+
+.log-share__icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.log-share__icon-btn.is-copied {
+  color: var(--color-success-ink);
+}
+
+.log-share__step-link:focus-visible,
+.log-share__icon-btn:focus-visible {
+  outline: 2px solid rgba(var(--accent-rgb), 0.5);
+  outline-offset: 2px;
+}
+
+/* Announces the copy confirmation; the icon swap alone is silent */
+.log-share__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes logSharePhoneIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) rotate(-6deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-3deg);
+  }
+}

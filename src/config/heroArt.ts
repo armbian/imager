@@ -167,3 +167,12 @@ export const ALL_BOARDS_ART = allBoards;
 
 // Hand-over from entrance to idle loops for a hero without its own settleMs.
 export const HERO_SETTLE_MS = 1600;
+
+// Retrying flips each scene's state to light it up.
+export const PANEL_ERROR_HERO: Record<
+  'catalog' | 'devices',
+  { id: HeroId; failed: Record<string, string>; trying: Record<string, string> }
+> = {
+  catalog: { id: 'downloads', failed: { offline: 'true' }, trying: { offline: 'false' } },
+  devices: { id: 'writing', failed: { verify: 'off' }, trying: { verify: 'on' } },
+};

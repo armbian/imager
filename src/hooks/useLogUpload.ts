@@ -3,38 +3,60 @@
 
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import QRCode from 'qrcode';
+import { COLORS, QR_CODE } from '../config';
 import { getErrorMessage } from '../utils';
-import { uploadLogs } from './useTauri';
+import { openExternal, uploadLogs } from './useTauri';
 
 interface LogUpload {
   /** Resolves to the paste URL, or null when the upload failed (see error) */
   upload: () => Promise<string | null>;
   uploading: boolean;
   url: string | null;
+  /** QR code of the paste URL as a data URL, only with `withQr` */
+  qr: string | null;
   error: string | null;
+  open: () => Promise<void>;
 }
 
 /** Uploads the session log to the paste service and keeps the resulting link. */
-export function useLogUpload(): LogUpload {
+export function useLogUpload({ withQr = false }: { withQr?: boolean } = {}): LogUpload {
   const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
+  const [qr, setQr] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const upload = useCallback(async () => {
     setUploading(true);
     setError(null);
+    let pasteUrl: string;
     try {
-      const result = await uploadLogs();
-      setUrl(result.url);
-      return result.url;
+      pasteUrl = (await uploadLogs()).url;
+      setUrl(pasteUrl);
     } catch (err) {
       setError(getErrorMessage(err, t('error.uploadFailed')));
-      return null;
-    } finally {
       setUploading(false);
+      return null;
     }
-  }, [t]);
+    if (withQr) {
+      try {
+        setQr(await QRCode.toDataURL(pasteUrl, {
+          width: QR_CODE.WIDTH,
+          margin: QR_CODE.MARGIN,
+          color: { dark: COLORS.QR_DARK, light: COLORS.QR_LIGHT },
+        }));
+      } catch (err) {
+        setError(getErrorMessage(err, t('error.uploadFailed')));
+      }
+    }
+    setUploading(false);
+    return pasteUrl;
+  }, [t, withQr]);
 
-  return { upload, uploading, url, error };
+  const open = useCallback(async () => {
+    if (url) await openExternal(url);
+  }, [url]);
+
+  return { upload, uploading, url, qr, error, open };
 }

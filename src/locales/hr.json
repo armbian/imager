@@ -140,7 +140,27 @@
     "uploadingLogs": "Slanje zapisa...",
     "uploadLogsForSupport": "Pošalji zapise za podršku",
     "viewLogs": "Pregledaj zapise",
-    "scanQrOrShare": "Skenirajte QR kod ili podijelite ovu poveznicu:"
+    "scanQrOrShare": "Skenirajte QR kod ili podijelite ovu poveznicu:",
+    "serverTitle": "Armbianovi poslužitelji ne odgovaraju",
+    "serverHint": "Problem nije u vašoj vezi. Pokušajte ponovno za nekoliko minuta.",
+    "networkTitle": "Armbian nije dostupan",
+    "networkHint": "Provjerite internetsku vezu ili pokušajte ponovno za nekoliko minuta.",
+    "otherTitle": "Ovaj popis nije se učitao",
+    "otherHint": "Pokušajte ponovno. Ako se i dalje događa, pošaljite zapise kako bi ih Armbian tim mogao pregledati.",
+    "devicesTitle": "Provjera uređaja za pohranu nije uspjela",
+    "devicesHint": "Ponovno spojite čitač kartica ili disk i pokušajte ponovno.",
+    "edlDevicesTitle": "Traženje uređaja u EDL načinu rada nije uspjelo",
+    "edlDevicesHint": "Ponovno spojite ploču u EDL načinu rada i pokušajte ponovno.",
+    "retrying": "Ponovni pokušaj...",
+    "stillFailing": "I dalje ne radi.",
+    "logsUploaded": "Zapisi poslani",
+    "copyLink": "Kopiraj poveznicu",
+    "copied": "Kopirano",
+    "logsStepScan": "Skenirajte kod ili kopirajte poveznicu",
+    "logsStepIssue": "Otvorite issue na GitHubu",
+    "logsStepPaste": "Zalijepite poveznicu i opišite problem",
+    "logsCaption": "Armbian zapisi",
+    "openInBrowser": "Otvori u pregledniku"
   },
   "error": {
     "downloadFailed": "Preuzimanje nije uspjelo",
@@ -188,7 +208,8 @@
     "back": "Natrag",
     "showPassword": "Prikaži lozinku",
     "hidePassword": "Sakrij lozinku",
-    "close": "Zatvori"
+    "close": "Zatvori",
+    "done": "Gotovo"
   },
   "settings": {
     "title": "Postavke",

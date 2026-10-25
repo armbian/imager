@@ -6,12 +6,13 @@ import {
   RefreshCw, TriangleAlert, Shield, Usb, Lock, Cpu, ArrowRight, ChevronDown,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { ErrorDisplay, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText, EmptyState } from '../shared';
+import { PanelError, DeviceIcon, getDeviceBadge, BoardImage, MarqueeText, EmptyState } from '../shared';
 import type { BlockDevice, AutoconfigProfile, AutoconfigProfilesChangedDetail, FlashMethod } from '../../types';
 import { isEdlMethod } from '../../types';
 import { getTargetDevices } from '../../hooks/useTauri';
 import { getAutoconfigProfiles, getAllowSystemDevices } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
+import { useErrorRetry } from '../../hooks/useErrorRetry';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { POLLING, UI, EVENTS, qdlInstructionsKey } from '../../config';
 import { isProfileOfferedFor } from '../../config/autoconfig';
@@ -144,10 +145,11 @@ export function DevicePanel({
     setWizardOpen(true);
   }, []);
 
-  const { data: rawDevices, loading, error, reload } = useAsyncData<BlockDevice[]>(
+  const { data: rawDevices, loading, error: loadError, reload } = useAsyncData<BlockDevice[]>(
     () => getTargetDevices(isQdlMode),
     [isQdlMode]
   );
+  const { error, retrying, retry, panelRef } = useErrorRetry(loadError, loading, reload);
 
   // Also "ready" when loading finished with no devices found.
   const devicesReady = useMemo(() => {
@@ -325,7 +327,7 @@ export function DevicePanel({
   }
 
   return (
-    <div className="mfr-panel device-panel">
+    <div className="mfr-panel device-panel" ref={panelRef}>
       <div className="device-panel__head">
         <div className="device-alert">
           <span className="device-alert__icon">
@@ -347,9 +349,12 @@ export function DevicePanel({
       </div>
 
       {error ? (
-        <div className="device-panel__body">
-          <ErrorDisplay error={error} onRetry={reload} compact />
-        </div>
+        <PanelError
+          error={error}
+          onRetry={retry}
+          retrying={retrying}
+          source={isQdlMode ? 'edl' : 'devices'}
+        />
       ) : (
         <div className="device-panel__body">
           {showDeviceSkeleton && (

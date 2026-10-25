@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { getImagesForBoard, listCachedImages } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
+import { useErrorRetry } from '../../hooks/useErrorRetry';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import {
   getOsInfo, getAppInfo, getKernelType, getImageVariantLabel,
@@ -18,7 +19,7 @@ import {
 import { getMonoLogo } from '../../config/mono-logos';
 import { formatFileSize, hexToRgba, staggerDelay, splitArmbianVersion, formatDate, armbianIdentityKey, formatKernelLabel } from '../../utils';
 import { distroGradient, distroBlock, distroVars } from '../../utils/distroTheme';
-import { ErrorDisplay, ConfirmationDialog, EmptyState } from '../shared';
+import { PanelError, ConfirmationDialog, EmptyState } from '../shared';
 import { isUfsImage, IMAGE_STORAGE, type BoardInfo, type ImageInfo, type ImageFilterType, type CachedImageInfo } from '../../types';
 
 const UFS_BADGE = STORAGE_BADGES[IMAGE_STORAGE.UFS];
@@ -104,10 +105,11 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
   const [pendingImage, setPendingImage] = useState<ImageInfo | null>(null);
   const [showWarning, setShowWarning] = useState(false);
 
-  const { data: allImages, loading, error, reload } = useAsyncData<ImageInfo[]>(
+  const { data: allImages, loading, error: loadError, reload } = useAsyncData<ImageInfo[]>(
     () => getImagesForBoard(board.slug),
     [board.slug]
   );
+  const { error, retrying, retry, panelRef } = useErrorRetry(loadError, loading, reload);
 
   const ready = !!allImages?.length || !loading;
   const { showSkeleton } = useSkeletonLoading(loading, ready);
@@ -307,28 +309,30 @@ export function OsPanel({ board, onSelect }: OsPanelProps) {
   }
 
   return (
-    <div className="mfr-panel">
-      <div className="mfr-panel__head os-filters">
-        <button className={`filter-btn ${filterType === 'all' ? 'active' : ''}`} onClick={() => setFilterType('all')}>
-          <Layers size={14} />
-          {t('modal.allImages')}
-        </button>
-        {REST_FILTER_BUTTONS.map(({ key, labelKey, icon: Icon }) =>
-          availableFilters[key as RestFilter] ? (
-            <button
-              key={key}
-              className={`filter-btn ${filterType === key ? 'active' : ''}`}
-              onClick={() => setFilterType(key as RestFilter)}
-            >
-              <Icon size={14} />
-              {t(labelKey)}
-            </button>
-          ) : null
-        )}
-      </div>
+    <div className="mfr-panel" ref={panelRef}>
+      {!error && (
+        <div className="mfr-panel__head os-filters">
+          <button className={`filter-btn ${filterType === 'all' ? 'active' : ''}`} onClick={() => setFilterType('all')}>
+            <Layers size={14} />
+            {t('modal.allImages')}
+          </button>
+          {REST_FILTER_BUTTONS.map(({ key, labelKey, icon: Icon }) =>
+            availableFilters[key as RestFilter] ? (
+              <button
+                key={key}
+                className={`filter-btn ${filterType === key ? 'active' : ''}`}
+                onClick={() => setFilterType(key as RestFilter)}
+              >
+                <Icon size={14} />
+                {t(labelKey)}
+              </button>
+            ) : null
+          )}
+        </div>
+      )}
 
       {error ? (
-        <ErrorDisplay error={error} onRetry={reload} compact />
+        <PanelError error={error} onRetry={retry} retrying={retrying} />
       ) : showSkeleton || loading ? (
         <div className="os-body">
           <div className="os-rest-grid">

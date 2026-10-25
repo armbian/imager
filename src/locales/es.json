@@ -140,7 +140,27 @@
     "uploadingLogs": "Subiendo logs...",
     "uploadLogsForSupport": "Subir logs para soporte",
     "viewLogs": "Ver logs",
-    "scanQrOrShare": "Escanea el QR o comparte este enlace:"
+    "scanQrOrShare": "Escanea el QR o comparte este enlace:",
+    "serverTitle": "Los servidores de Armbian no responden",
+    "serverHint": "No es un problema de tu conexión. Inténtalo de nuevo en unos minutos.",
+    "networkTitle": "No se puede llegar a Armbian",
+    "networkHint": "Revisa tu conexión a internet o inténtalo de nuevo en unos minutos.",
+    "otherTitle": "No se pudo cargar esta lista",
+    "otherHint": "Inténtalo de nuevo. Si sigue pasando, sube los logs para que el equipo de Armbian pueda revisarlo.",
+    "devicesTitle": "No se pudieron comprobar tus dispositivos de almacenamiento",
+    "devicesHint": "Vuelve a conectar el lector de tarjetas o la unidad e inténtalo de nuevo.",
+    "edlDevicesTitle": "No se pudo buscar dispositivos en modo EDL",
+    "edlDevicesHint": "Vuelve a conectar la placa en modo EDL e inténtalo de nuevo.",
+    "retrying": "Reintentando...",
+    "stillFailing": "Sigue sin funcionar.",
+    "logsUploaded": "Logs subidos",
+    "copyLink": "Copiar enlace",
+    "copied": "Copiado",
+    "logsStepScan": "Escanea el código o copia el enlace",
+    "logsStepIssue": "Abre un issue en GitHub",
+    "logsStepPaste": "Pega el enlace y describe el problema",
+    "logsCaption": "Logs de Armbian",
+    "openInBrowser": "Abrir en el navegador"
   },
   "error": {
     "downloadFailed": "Error de descarga",
@@ -188,7 +208,8 @@
     "back": "Atrás",
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "done": "Hecho"
   },
   "settings": {
     "title": "Configuración",

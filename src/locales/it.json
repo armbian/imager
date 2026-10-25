@@ -140,7 +140,27 @@
     "uploadingLogs": "Caricamento dei log...",
     "uploadLogsForSupport": "Carica i log per il supporto",
     "viewLogs": "Visualizza i log",
-    "scanQrOrShare": "Scansiona il codice QR o condividi questo link:"
+    "scanQrOrShare": "Scansiona il codice QR o condividi questo link:",
+    "serverTitle": "I server di Armbian non rispondono",
+    "serverHint": "Non dipende dalla tua connessione. Riprova tra qualche minuto.",
+    "networkTitle": "Impossibile raggiungere Armbian",
+    "networkHint": "Controlla la connessione a Internet o riprova tra qualche minuto.",
+    "otherTitle": "Questo elenco non si è caricato",
+    "otherHint": "Riprova. Se continua a succedere, carica i log così il team di Armbian può verificare.",
+    "devicesTitle": "Impossibile controllare i dispositivi di archiviazione",
+    "devicesHint": "Ricollega il lettore di schede o l'unità e riprova.",
+    "edlDevicesTitle": "Impossibile cercare dispositivi in modalità EDL",
+    "edlDevicesHint": "Ricollega la scheda in modalità EDL e riprova.",
+    "retrying": "Nuovo tentativo...",
+    "stillFailing": "Continua a non funzionare.",
+    "logsUploaded": "Log caricati",
+    "copyLink": "Copia il link",
+    "copied": "Copiato",
+    "logsStepScan": "Scansiona il codice o copia il link",
+    "logsStepIssue": "Apri una issue su GitHub",
+    "logsStepPaste": "Incolla il link e descrivi il problema",
+    "logsCaption": "Log Armbian",
+    "openInBrowser": "Apri nel browser"
   },
   "error": {
     "downloadFailed": "Download non riuscito",
@@ -188,7 +208,8 @@
     "back": "Indietro",
     "showPassword": "Mostra password",
     "hidePassword": "Nascondi password",
-    "close": "Chiudi"
+    "close": "Chiudi",
+    "done": "Fatto"
   },
   "settings": {
     "title": "Impostazioni",

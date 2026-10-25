@@ -38,6 +38,7 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-accent-cta: 0 8px 24px rgba(var(--accent-rgb), 0.35);
 
   /* Floating islands (sidebar, content panel): frosted glass over the aurora */
   --island-bg: rgba(255, 255, 255, 0.55);
@@ -124,6 +125,16 @@
   --pf-board-shadow: drop-shadow(0 14px 20px rgba(15, 23, 42, 0.25));
   /* Action pill over content: nearly the card surface, so photos behind do not show through */
   --float-solid-bg: rgba(255, 255, 255, 0.94);
+
+  /* Phone drawn in the log share dialog: a device, so it stays dark in both themes */
+  --phone-body: #111111;
+  --phone-ring: #3a3a3a;
+  --phone-island: #000000;
+  --phone-screen-top: #2b2623;
+  --phone-screen-bottom: #191614;
+  --phone-caption: #c9c3be;
+  --phone-shadow: rgba(0, 0, 0, 0.35);
+  --qr-plate: #ffffff;
 
   /* Settings page (theme-agnostic sizes) */
   --header-control-h: 48px;

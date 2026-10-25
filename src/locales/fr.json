@@ -140,7 +140,27 @@
     "uploadingLogs": "Téléversement des logs...",
     "uploadLogsForSupport": "Téléverser les logs pour le support",
     "viewLogs": "Voir les logs",
-    "scanQrOrShare": "Scannez le QR ou partagez ce lien :"
+    "scanQrOrShare": "Scannez le QR ou partagez ce lien :",
+    "serverTitle": "Les serveurs d'Armbian ne répondent pas",
+    "serverHint": "Votre connexion n'est pas en cause. Réessayez dans quelques minutes.",
+    "networkTitle": "Armbian est inaccessible",
+    "networkHint": "Vérifiez votre connexion Internet ou réessayez dans quelques minutes.",
+    "otherTitle": "Cette liste n'a pas pu être chargée",
+    "otherHint": "Réessayez. Si le problème persiste, téléversez les logs pour que l'équipe Armbian puisse l'examiner.",
+    "devicesTitle": "Impossible de vérifier vos périphériques de stockage",
+    "devicesHint": "Reconnectez le lecteur de cartes ou le disque, puis réessayez.",
+    "edlDevicesTitle": "Impossible de rechercher les appareils en mode EDL",
+    "edlDevicesHint": "Reconnectez la carte en mode EDL, puis réessayez.",
+    "retrying": "Nouvelle tentative...",
+    "stillFailing": "Ça ne fonctionne toujours pas.",
+    "logsUploaded": "Logs téléversés",
+    "copyLink": "Copier le lien",
+    "copied": "Copié",
+    "logsStepScan": "Scannez le code ou copiez le lien",
+    "logsStepIssue": "Ouvrez un ticket sur GitHub",
+    "logsStepPaste": "Collez le lien et décrivez le problème",
+    "logsCaption": "Logs Armbian",
+    "openInBrowser": "Ouvrir dans le navigateur"
   },
   "error": {
     "downloadFailed": "Échec du téléchargement",
@@ -188,7 +208,8 @@
     "back": "Retour",
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe",
-    "close": "Fermer"
+    "close": "Fermer",
+    "done": "Terminé"
   },
   "settings": {
     "title": "Paramètres",

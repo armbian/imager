@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Factory, RefreshCw, SearchX, X } from 'lucide-react';
 import { getBoards, getVendors } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
+import { useErrorRetry } from '../../hooks/useErrorRetry';
 import { useManufacturerList, type ManufacturerData } from '../../hooks/useVendorLogos';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { usePagedGrid } from '../../hooks/usePagedGrid';
-import { ErrorDisplay, SearchBox, GridPager, EmptyState } from '../shared';
+import { PanelError, SearchBox, GridPager, EmptyState } from '../shared';
 import { DEFAULT_COLOR, staggerDelay } from '../../utils';
 import { VENDOR, UI, PARTNER_TIER_RANK, PARTNER_TIER_UNRANKED } from '../../config';
 import type { BoardInfo, VendorInfo, Manufacturer } from '../../types';
@@ -30,8 +31,11 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
 
-  const { data: boards, loading, error, reload } = useAsyncData<BoardInfo[]>(() => getBoards(), []);
-  const { data: vendors } = useAsyncData<VendorInfo[]>(() => getVendors(), []);
+  const { data: boards, loading, error: loadError, reload } = useAsyncData<BoardInfo[]>(() => getBoards(), []);
+  const { data: vendors, reload: reloadVendors } = useAsyncData<VendorInfo[]>(() => getVendors(), []);
+  // Vendors fail with the boards, so a retry refetches both or tier badges and order stay missing.
+  const reloadAll = useCallback(() => Promise.all([reload(), reloadVendors()]), [reload, reloadVendors]);
+  const { error, retrying, retry, panelRef } = useErrorRetry(loadError, loading, reloadAll);
   const { manufacturers, isLoaded } = useManufacturerList(boards, true, search);
 
   // Logos never load for an empty board list, so that case is ready as soon as the fetch ends.
@@ -69,13 +73,15 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
   );
 
   return (
-    <div className="mfr-panel">
-      <div className="mfr-panel__head">
-        <SearchBox value={search} onChange={setSearch} placeholder={t('modal.searchManufacturer')} autoFocus={false} />
-      </div>
+    <div className="mfr-panel" ref={panelRef}>
+      {!error && (
+        <div className="mfr-panel__head">
+          <SearchBox value={search} onChange={setSearch} placeholder={t('modal.searchManufacturer')} autoFocus={false} />
+        </div>
+      )}
 
       {error ? (
-        <ErrorDisplay error={error} onRetry={reload} compact />
+        <PanelError error={error} onRetry={retry} retrying={retrying} />
       ) : showSkeleton || loading ? (
         <div className="mfr-grid">
           {Array.from({ length: UI.SKELETON.MANUFACTURER_PANEL }).map((_, i) => (
@@ -103,7 +109,7 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
             icon={Factory}
             title={t('modal.noManufacturers')}
             hint={t('modal.listEmptyHint')}
-            action={{ label: t('device.refresh'), icon: RefreshCw, onClick: reload }}
+            action={{ label: t('device.refresh'), icon: RefreshCw, onClick: reloadAll }}
           />
         )
       ) : (

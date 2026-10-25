@@ -1009,7 +1009,7 @@
 }
 
 .focus-cta.is-primary {
-  box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.35);
+  box-shadow: var(--shadow-accent-cta);
 }
 
 .focus-cta:disabled {

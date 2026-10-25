@@ -6,13 +6,14 @@ import { ArrowRight, CircuitBoard, RefreshCw, SearchX, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getBoards, getCachedBoardImage } from '../../hooks/useTauri';
 import { useAsyncData } from '../../hooks/useAsyncData';
+import { useErrorRetry } from '../../hooks/useErrorRetry';
 import { useVendorLogos } from '../../hooks/useVendorLogos';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { usePagedGrid } from '../../hooks/usePagedGrid';
 import { compareBoardsBySupport, staggerDelay, stripVendorPrefix } from '../../utils';
 import { measurePhotoZoom, type PhotoZoom } from '../../utils/imageFit';
 import { UI, SUPPORT_TIER_LABEL } from '../../config';
-import { ErrorDisplay, SearchBox, BoardImage, GridPager, MarqueeText, EmptyState } from '../shared';
+import { PanelError, SearchBox, BoardImage, GridPager, MarqueeText, EmptyState } from '../shared';
 import type { BoardInfo, Manufacturer } from '../../types';
 
 interface BoardPanelProps {
@@ -28,7 +29,8 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
   const [photoZooms, setPhotoZooms] = useState<Record<string, PhotoZoom | null>>({});
   const loadedSlugsRef = useRef<Set<string>>(new Set());
 
-  const { data: boards, loading, error, reload } = useAsyncData<BoardInfo[]>(() => getBoards(), []);
+  const { data: boards, loading, error: loadError, reload } = useAsyncData<BoardInfo[]>(() => getBoards(), []);
+  const { error, retrying, retry, panelRef } = useErrorRetry(loadError, loading, reload);
   const { isLoaded: vendorLogosChecked, getEffectiveVendor } = useVendorLogos(boards, true);
 
   const ready = vendorLogosChecked || (!loading && !boards?.length);
@@ -78,13 +80,15 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
   }, [pagedBoards]);
 
   return (
-    <div className="mfr-panel">
-      <div className="mfr-panel__head">
-        <SearchBox value={search} onChange={setSearch} placeholder={t('modal.searchBoard')} autoFocus={false} />
-      </div>
+    <div className="mfr-panel" ref={panelRef}>
+      {!error && (
+        <div className="mfr-panel__head">
+          <SearchBox value={search} onChange={setSearch} placeholder={t('modal.searchBoard')} autoFocus={false} />
+        </div>
+      )}
 
       {error ? (
-        <ErrorDisplay error={error} onRetry={reload} compact />
+        <PanelError error={error} onRetry={retry} retrying={retrying} />
       ) : showSkeleton || loading ? (
         <div className="mfr-grid">
           {Array.from({ length: UI.SKELETON.BOARD_PANEL }).map((_, i) => (

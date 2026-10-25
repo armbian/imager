@@ -140,7 +140,27 @@
     "uploadingLogs": "Przesyłanie logów...",
     "uploadLogsForSupport": "Prześlij logi do wsparcia",
     "viewLogs": "Zobacz logi",
-    "scanQrOrShare": "Zeskanuj QR lub udostępnij ten link:"
+    "scanQrOrShare": "Zeskanuj QR lub udostępnij ten link:",
+    "serverTitle": "Serwery Armbian nie odpowiadają",
+    "serverHint": "To nie wina Twojego połączenia. Spróbuj ponownie za kilka minut.",
+    "networkTitle": "Nie można połączyć się z Armbian",
+    "networkHint": "Sprawdź połączenie z internetem lub spróbuj ponownie za kilka minut.",
+    "otherTitle": "Nie udało się załadować tej listy",
+    "otherHint": "Spróbuj ponownie. Jeśli problem się powtarza, prześlij logi, aby zespół Armbian mógł to sprawdzić.",
+    "devicesTitle": "Nie udało się sprawdzić urządzeń pamięci",
+    "devicesHint": "Podłącz ponownie czytnik kart lub dysk i spróbuj jeszcze raz.",
+    "edlDevicesTitle": "Nie udało się wyszukać urządzeń w trybie EDL",
+    "edlDevicesHint": "Podłącz ponownie płytkę w trybie EDL i spróbuj jeszcze raz.",
+    "retrying": "Ponawianie...",
+    "stillFailing": "Nadal nie działa.",
+    "logsUploaded": "Logi przesłane",
+    "copyLink": "Kopiuj link",
+    "copied": "Skopiowano",
+    "logsStepScan": "Zeskanuj kod lub skopiuj link",
+    "logsStepIssue": "Otwórz zgłoszenie na GitHubie",
+    "logsStepPaste": "Wklej link i opisz problem",
+    "logsCaption": "Logi Armbian",
+    "openInBrowser": "Otwórz w przeglądarce"
   },
   "error": {
     "downloadFailed": "Pobieranie nie powiodło się",
@@ -188,7 +208,8 @@
     "back": "Wstecz",
     "showPassword": "Pokaż hasło",
     "hidePassword": "Ukryj hasło",
-    "close": "Zamknij"
+    "close": "Zamknij",
+    "done": "Gotowe"
   },
   "settings": {
     "title": "Ustawienia",

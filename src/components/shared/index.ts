@@ -15,6 +15,7 @@ export { HighlightText } from './HighlightText';
 export { MarqueeText } from './MarqueeText';
 export { MotdTip } from './MotdTip';
 export { PageSwap } from './PageSwap';
+export { PanelError } from './PanelError';
 export { PasswordInput } from './PasswordInput';
 export { SearchBox } from './SearchBox';
 export { UpdateEntry } from './UpdateEntry';

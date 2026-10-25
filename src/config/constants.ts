@@ -54,6 +54,8 @@ export const TIMING = {
   COPIED_NOTIFICATION: 2000,
   TOAST_DURATION: 3000,
   COVERFLOW_ADVANCE: 3600,
+  /** Minimum time a Retry stays busy, long enough for the lit scene and a fast failure to read as a new attempt */
+  RETRY_MIN_BUSY: 1200,
 } as const;
 
 const UPDATER_TITLE_KEY = {
@@ -300,6 +302,10 @@ export const UI = {
     BUTTON: 16,
     CHEVRON: 14,
     UPDATE_ENTRY: 15,
+    ERROR_HERO: 72,
+    REMEDY_ROW: 18,
+    PASTE_LINK: 12,
+    UPLOAD_ERROR: 14,
   },
   /** Minimum margin between an anchored popover and the window edge */
   POPOVER_EDGE: 12,
@@ -374,6 +380,7 @@ export const UI = {
   },
   /** Marks focus moved by code after a mouse action, so base.css hides the keyboard ring there */
   POINTER_FOCUS_ATTR: 'data-pointer-focus',
+  PANEL_ERROR_CLASS: 'panel-fail',
   /** Choose boards sheet: page sizes, list caps, and timings twinned with styles/theme.css */
   BOARD_SHEET: {
     PER_PAGE: 8,

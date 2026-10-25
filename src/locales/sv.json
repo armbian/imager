@@ -140,7 +140,27 @@
     "uploadingLogs": "Laddar upp loggar...",
     "uploadLogsForSupport": "Ladda upp loggar för support",
     "viewLogs": "Visa loggar",
-    "scanQrOrShare": "Skanna QR-koden eller dela den här länken:"
+    "scanQrOrShare": "Skanna QR-koden eller dela den här länken:",
+    "serverTitle": "Armbians servrar svarar inte",
+    "serverHint": "Det beror inte på din anslutning. Försök igen om några minuter.",
+    "networkTitle": "Det går inte att nå Armbian",
+    "networkHint": "Kontrollera din internetanslutning eller försök igen om några minuter.",
+    "otherTitle": "Den här listan kunde inte laddas",
+    "otherHint": "Försök igen. Om det fortsätter, ladda upp loggarna så att Armbian-teamet kan undersöka det.",
+    "devicesTitle": "Det gick inte att kontrollera dina lagringsenheter",
+    "devicesHint": "Anslut kortläsaren eller enheten igen och försök på nytt.",
+    "edlDevicesTitle": "Det gick inte att söka efter enheter i EDL-läge",
+    "edlDevicesHint": "Anslut kortet i EDL-läge igen och försök på nytt.",
+    "retrying": "Försöker igen...",
+    "stillFailing": "Det fungerar fortfarande inte.",
+    "logsUploaded": "Loggar uppladdade",
+    "copyLink": "Kopiera länk",
+    "copied": "Kopierat",
+    "logsStepScan": "Skanna koden eller kopiera länken",
+    "logsStepIssue": "Öppna ett issue på GitHub",
+    "logsStepPaste": "Klistra in länken och beskriv problemet",
+    "logsCaption": "Armbian-loggar",
+    "openInBrowser": "Öppna i webbläsaren"
   },
   "error": {
     "downloadFailed": "Nedladdningen misslyckades",
@@ -188,7 +208,8 @@
     "back": "Tillbaka",
     "showPassword": "Visa lösenord",
     "hidePassword": "Dölj lösenord",
-    "close": "Stäng"
+    "close": "Stäng",
+    "done": "Klar"
   },
   "settings": {
     "title": "Inställningar",

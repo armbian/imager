@@ -171,11 +171,18 @@ armbian-imager/
 │   │   │   └── controls/             # SettingsGroup, SettingsRow, ToggleRow, SegmentedControl, SelectMenu
 │   │   ├── layout/
 │   │   │   ├── Header.tsx            # App header with step indicators
-│   │   │   └── HomePage.tsx          # Main selection buttons / flash view
+│   │   │   ├── HomePage.tsx          # Main selection buttons / flash view
+│   │   │   ├── ManufacturerPanel.tsx # Step 1: Vendor selection
+│   │   │   ├── BoardPanel.tsx        # Step 2: Board selection (image grid)
+│   │   │   ├── OsPanel.tsx           # Step 3: OS image selection (filters)
+│   │   │   └── DevicePanel.tsx       # Step 4: Device selection (polling)
 │   │   └── shared/                   # Reusable UI components
 │   │       ├── BoardBadges.tsx       # Support level badges
 │   │       ├── ConfirmationDialog.tsx# Data loss / unstable image warnings
 │   │       ├── ErrorDisplay.tsx      # Error with retry + log upload
+│   │       ├── PanelError.tsx        # Selection panel load-failure state with retry and log upload
+│   │       ├── LogShareModal.tsx     # Uploaded-logs dialog with QR and link
+│   │       ├── LogUploadRemedy.tsx   # Upload-logs action and paste link
 │   │       ├── MarqueeText.tsx       # Scrolling overflow text
 │   │       ├── MotdTip.tsx           # Rotating tips from Armbian API
 │   │       ├── SearchBox.tsx         # Filter input for modals
@@ -188,6 +195,7 @@ armbian-imager/
 │   ├── hooks/                        # Custom React Hooks
 │   │   ├── useTauri.ts              # 26+ Tauri IPC command wrappers
 │   │   ├── useAsyncData.ts          # Generic async fetch (race-condition safe)
+│   │   ├── useErrorRetry.ts         # Retry with minimum busy time
 │   │   ├── useCopyFeedback.ts       # Clipboard copy with a timed "copied" flag
 │   │   ├── useFlashOperation.ts     # Full flash lifecycle orchestration
 │   │   ├── useVendorLogos.ts        # Logo preloading + manufacturer grouping
