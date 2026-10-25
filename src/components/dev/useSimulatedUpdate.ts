@@ -5,16 +5,17 @@ import { useCallback } from 'react';
 import { getVersion } from '@tauri-apps/api/app';
 import { SimulatedUpdate } from './SimulatedUpdate';
 import { useUpdate } from '../../contexts/UpdateContext';
+import type { DevUpdateMode } from '../../config/devScenarios';
 
 export function useSimulatedUpdate() {
   const { update, simulate } = useUpdate();
   const simulated = update instanceof SimulatedUpdate ? update : null;
 
   const offer = useCallback(
-    async (fails: boolean) => {
+    async (mode: DevUpdateMode) => {
       if (!simulate) return;
       await simulated?.close();
-      simulate(new SimulatedUpdate(await getVersion(), fails));
+      simulate(new SimulatedUpdate(await getVersion(), mode));
     },
     [simulate, simulated]
   );

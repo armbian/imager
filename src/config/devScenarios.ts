@@ -329,14 +329,35 @@ export const DEV_DEVICE_TAG = {
 
 export const DEV_SIMULATED_UPDATE = {
   RID: -1,
-  VERSION: '99.0.0',
+  VERSION: '2.0.3',
   BODY: 'Simulated release from the dev scenarios panel. Installing it never relaunches the app.',
   CHUNKS: 20,
   CHUNK_BYTES: 2 * BYTES_PER_MB,
-  CHUNK_INTERVAL_MS: 150,
+  /** About 10 s in total, long enough to inspect the sidebar and Settings > About */
+  CHUNK_INTERVAL_MS: 500,
   FAIL_AFTER_CHUNKS: 8,
+  INSTALL_DELAY_MS: 800,
   ERROR: 'Simulated update download failed',
+  INSTALL_ERROR: 'Simulated update install failed',
+  /** Same text the real plugin throws */
+  INSTALL_BEFORE_DOWNLOAD: 'Update.install called before Update.download',
 } as const;
+
+export const DEV_UPDATE_MODE = {
+  OK: 'ok',
+  FAIL_DOWNLOAD: 'fail-download',
+  FAIL_INSTALL: 'fail-install',
+  UNKNOWN_SIZE: 'unknown-size',
+} as const;
+
+export type DevUpdateMode = (typeof DEV_UPDATE_MODE)[keyof typeof DEV_UPDATE_MODE];
+
+export const DEV_UPDATE_MODES: readonly { mode: DevUpdateMode; label: string; note: string }[] = [
+  { mode: DEV_UPDATE_MODE.OK, label: `Offer v${DEV_SIMULATED_UPDATE.VERSION}`, note: 'Restarting never relaunches.' },
+  { mode: DEV_UPDATE_MODE.FAIL_DOWNLOAD, label: 'Failing download', note: `Its download fails at ${Math.round((DEV_SIMULATED_UPDATE.FAIL_AFTER_CHUNKS / DEV_SIMULATED_UPDATE.CHUNKS) * 100)}%.` },
+  { mode: DEV_UPDATE_MODE.FAIL_INSTALL, label: 'Failing install', note: 'Its install fails; Retry installs again.' },
+  { mode: DEV_UPDATE_MODE.UNKNOWN_SIZE, label: 'Unknown size', note: 'Its download reports no total size.' },
+];
 
 function sameJson(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
