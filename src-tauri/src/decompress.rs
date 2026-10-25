@@ -18,10 +18,11 @@ use zstd::stream::read::Decoder as ZstdDecoder;
 
 use crate::config;
 use crate::download::DownloadState;
-use crate::log_info;
 use crate::utils::{
-    get_recommended_threads, strip_compression_ext, tagged, ProgressTracker, TAG_CANCELLED,
+    discard_if_empty, ensure_regular_nonempty, get_recommended_threads, strip_compression_ext,
+    tagged, ProgressTracker, TAG_CANCELLED,
 };
+use crate::{log_info, log_warn};
 
 const MODULE: &str = "decompress";
 
@@ -170,13 +171,24 @@ fn decompress_with_reader_mt<R: Read>(
 
 /// Decompress a local custom-image file, returning the decompressed path.
 pub fn decompress_local_file(
-    input_path: &PathBuf,
+    input_path: &Path,
+    state: &Arc<DownloadState>,
+) -> Result<PathBuf, String> {
+    // Decompress into the cache dir, not the user's directory.
+    decompress_local_file_in(input_path, &crate::utils::custom_decompress_dir(), state)
+}
+
+fn decompress_local_file_in(
+    input_path: &Path,
+    out_dir: &Path,
     state: &Arc<DownloadState>,
 ) -> Result<PathBuf, String> {
     let filename = input_path
         .file_name()
         .and_then(|n| n.to_str())
         .ok_or("Invalid filename")?;
+
+    let input_len = ensure_regular_nonempty(input_path)?;
 
     let base_filename = strip_compression_ext(filename);
 
@@ -188,15 +200,12 @@ pub fn decompress_local_file(
 
     let output_filename = format!("{}-{}", base_filename, timestamp);
 
-    // Decompress into the cache dir, not the user's directory.
-    let custom_cache_dir = crate::utils::custom_decompress_dir();
-
-    std::fs::create_dir_all(&custom_cache_dir)
+    std::fs::create_dir_all(out_dir)
         .map_err(|e| format!("Failed to create cache directory: {}", e))?;
 
-    let output_path = custom_cache_dir.join(&output_filename);
+    let output_path = out_dir.join(&output_filename);
 
-    if output_path.exists() {
+    if output_path.exists() && discard_if_empty(&output_path).is_ok() {
         log_info!(
             MODULE,
             "Decompressed file already exists: {}",
@@ -206,10 +215,7 @@ pub fn decompress_local_file(
     }
 
     state.is_decompressing.store(true, Ordering::SeqCst);
-
-    if let Ok(metadata) = std::fs::metadata(input_path) {
-        state.total_bytes.store(metadata.len(), Ordering::SeqCst);
-    }
+    state.total_bytes.store(input_len, Ordering::SeqCst);
 
     log_info!(
         MODULE,
@@ -234,13 +240,33 @@ pub fn decompress_local_file(
         log_info!(MODULE, "Decompressing ZSTD format");
         decompress_with_zstd(input_path, &output_path, state)
     } else {
-        return Err(format!("Unsupported compression format for: {}", filename));
+        Err(format!("Unsupported compression format for: {}", filename))
     };
 
-    result?;
-
     state.is_decompressing.store(false, Ordering::SeqCst);
-    log_info!(MODULE, "Decompression complete: {}", output_path.display());
+
+    if let Err(e) = result {
+        if output_path.is_file() {
+            match std::fs::remove_file(&output_path) {
+                Ok(()) => log_warn!(MODULE, "Removed partial output {}", output_path.display()),
+                Err(rm) => log_warn!(
+                    MODULE,
+                    "Failed to remove partial output {}: {}",
+                    output_path.display(),
+                    rm
+                ),
+            }
+        }
+        return Err(e);
+    }
+
+    let output_len = discard_if_empty(&output_path)?;
+    log_info!(
+        MODULE,
+        "Decompression complete: {} ({} bytes)",
+        output_path.display(),
+        output_len
+    );
 
     Ok(output_path)
 }
@@ -285,5 +311,70 @@ mod tests {
         st.is_cancelled.store(true, Ordering::SeqCst);
         let err = decompress_with_gz(&input, &tmp.path().join("out.img"), &st).unwrap_err();
         assert_eq!(err, "[CANCELLED] Decompression cancelled");
+    }
+
+    fn entries(dir: &Path) -> usize {
+        std::fs::read_dir(dir).map_or(0, |d| d.count())
+    }
+
+    #[test]
+    fn a_valid_archive_of_nothing_is_refused_and_removed() {
+        use flate2::{write::GzEncoder, Compression};
+        let tmp = tempfile::tempdir().unwrap();
+        let input = tmp.path().join("empty.img.gz");
+        let gz = GzEncoder::new(Vec::new(), Compression::default())
+            .finish()
+            .unwrap();
+        std::fs::write(&input, gz).unwrap();
+        let out = tmp.path().join("out");
+
+        let err = decompress_local_file_in(&input, &out, &state()).unwrap_err();
+
+        assert!(err.starts_with(crate::utils::TAG_IMAGE_INVALID), "{err}");
+        assert_eq!(entries(&out), 0, "the empty output must be deleted");
+    }
+
+    #[test]
+    fn an_empty_input_is_refused_before_any_output() {
+        let tmp = tempfile::tempdir().unwrap();
+        let input = tmp.path().join("empty.img.xz");
+        std::fs::write(&input, b"").unwrap();
+        let out = tmp.path().join("out");
+
+        let err = decompress_local_file_in(&input, &out, &state()).unwrap_err();
+
+        assert!(err.starts_with(crate::utils::TAG_IMAGE_INVALID), "{err}");
+        assert!(!out.exists());
+    }
+
+    #[test]
+    fn a_failed_decompression_leaves_no_output() {
+        let tmp = tempfile::tempdir().unwrap();
+        let input = tmp.path().join("bad.img.gz");
+        std::fs::write(&input, b"not a gzip stream at all").unwrap();
+        let out = tmp.path().join("out");
+        let st = state();
+
+        let err = decompress_local_file_in(&input, &out, &st).unwrap_err();
+
+        assert!(err.starts_with(TAG_DECOMPRESS_FAILED), "{err}");
+        assert_eq!(entries(&out), 0);
+        assert!(!st.is_decompressing.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn a_real_archive_still_decompresses() {
+        use flate2::{write::GzEncoder, Compression};
+        use std::io::Write as _;
+        let tmp = tempfile::tempdir().unwrap();
+        let input = tmp.path().join("a.img.gz");
+        let mut enc = GzEncoder::new(Vec::new(), Compression::default());
+        enc.write_all(&[5u8; 4096]).unwrap();
+        std::fs::write(&input, enc.finish().unwrap()).unwrap();
+        let out = tmp.path().join("out");
+
+        let path = decompress_local_file_in(&input, &out, &state()).unwrap();
+
+        assert_eq!(std::fs::read(path).unwrap(), vec![5u8; 4096]);
     }
 }

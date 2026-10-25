@@ -16,7 +16,8 @@ use tokio::sync::Mutex;
 use crate::config;
 use crate::decompress::decompress_with_rust_xz;
 use crate::utils::{
-    bytes_to_mb, tagged, validate_cache_path, validate_file_name, ProgressTracker, TAG_CANCELLED,
+    bytes_to_mb, discard_if_empty, tagged, validate_cache_path, validate_file_name,
+    ProgressTracker, TAG_CANCELLED,
 };
 use crate::{log_debug, log_error, log_info, log_warn};
 
@@ -406,6 +407,7 @@ pub async fn download_image(
         }
     }
 
+    discard_if_empty(&output_path)?;
     log_info!(MODULE, "Image ready: {}", output_path.display());
     *state.output_path.lock().await = Some(output_path.clone());
     Ok(output_path)
@@ -478,6 +480,7 @@ pub async fn continue_without_sha(
         }
     }
 
+    discard_if_empty(&output_path)?;
     log_info!(MODULE, "Image ready: {}", output_path.display());
     *state.output_path.lock().await = Some(output_path.clone());
     Ok(output_path)

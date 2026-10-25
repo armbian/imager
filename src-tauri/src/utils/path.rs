@@ -141,6 +141,22 @@ pub fn ensure_regular_nonempty_metadata(
     classify_image_metadata(meta).map_err(|problem| refuse_image(path, &problem))
 }
 
+/// Like `ensure_regular_nonempty`, but also deletes `path` when it is an empty regular file.
+pub fn discard_if_empty(path: &Path) -> Result<u64, String> {
+    inspect_image_file(path).map_err(|problem| {
+        let e = image_problem_err(path, &problem);
+        if matches!(problem, ImageFileProblem::Empty) {
+            match std::fs::remove_file(path) {
+                Ok(()) => log_error!(MODULE, "Removed empty output: {}", e),
+                Err(rm) => log_error!(MODULE, "Failed to remove empty output: {} ({})", e, rm),
+            }
+        } else {
+            log_error!(MODULE, "Refusing output: {}", e);
+        }
+        e
+    })
+}
+
 /// Strip a compression extension (.xz, .gz, .bz2, .zst), returning the original if none matches
 pub fn strip_compression_ext(filename: &str) -> &str {
     for ext in &[".xz", ".gz", ".bz2", ".zst"] {
@@ -468,5 +484,20 @@ mod tests {
             .recv_timeout(std::time::Duration::from_secs(5))
             .expect("the check must not block on a FIFO");
         assert!(refused(result).contains("is a FIFO"));
+    }
+
+    #[test]
+    fn discard_removes_only_an_empty_regular_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let empty = dir.path().join("empty.img");
+        let full = dir.path().join("full.img");
+        std::fs::write(&empty, b"").unwrap();
+        std::fs::write(&full, [1u8; 4]).unwrap();
+        refused(discard_if_empty(&empty));
+        assert!(!empty.exists());
+        assert_eq!(discard_if_empty(&full), Ok(4));
+        assert!(full.exists());
+        refused(discard_if_empty(dir.path()));
+        assert!(dir.path().exists());
     }
 }
