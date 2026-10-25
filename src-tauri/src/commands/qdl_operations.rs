@@ -10,7 +10,7 @@ use crate::autoconfig::{prepare_flash_copy, PrepError};
 use crate::flash::{reject_simulated, FlashSession, FlashState, SessionRefusal};
 use crate::qdl;
 use crate::qdl::QdlDevice;
-use crate::utils::{autoconfig_temp_dir, qdl_temp_dir};
+use crate::utils::{autoconfig_temp_dir, ensure_regular_nonempty, qdl_temp_dir};
 use crate::{log_error, log_info, log_warn};
 
 use super::state::AppState;
@@ -107,6 +107,7 @@ pub async fn flash_qdl_image(
     check_edl_target(&device_path)?;
 
     let tar_path = PathBuf::from(&tar_path);
+    ensure_regular_nonempty(&tar_path)?;
     let extract_dir = qdl_temp_dir();
 
     let flash_dir = qdl::extract::extract_qdl_archive(&tar_path, &extract_dir).map_err(|e| {
@@ -187,6 +188,7 @@ pub async fn flash_qdl_ufs_image(
     }
 
     check_edl_target(&device_path)?;
+    ensure_regular_nonempty(&image_path)?;
 
     // Resolve the board's QDL facts from the API (bundled fallback), then fetch the
     // loader and provisioning descriptor from the API blob proxy with digest checks.

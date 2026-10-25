@@ -107,6 +107,9 @@ pub fn qdl_flash_ufs(
     provision: ProvisionSource,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
+    // Refused before connecting, so an empty image can never reach the NAK-means-provision path.
+    let img_len = crate::utils::ensure_regular_nonempty(image_path)?;
+
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
     let mut device = connect_and_configure(device_path, elf_path, QdlStorage::Ufs, &state)?;
@@ -115,9 +118,6 @@ pub fn qdl_flash_ufs(
     update_qdl_stage(&state, STAGE_FIREHOSE);
 
     let sector_size = QdlStorage::Ufs.sector_size();
-    let img_len = fs::metadata(image_path)
-        .map_err(|e| format!("Failed to stat image: {}", e))?
-        .len();
     let num_sectors = raw_num_sectors(img_len, sector_size);
     let total_bytes = num_sectors as u64 * sector_size as u64;
     state.qdl.partitions_total.store(1, Ordering::SeqCst);
@@ -976,6 +976,26 @@ mod tests {
             .unwrap()
             .is_none());
         assert!(program_file(&layout.root, &layout.flash_dir, &attrs("../../../etc.img")).is_err());
+    }
+
+    #[test]
+    fn an_empty_ufs_image_is_refused_before_connecting() {
+        let tmp = tempfile::tempdir().unwrap();
+        let image = tmp.path().join("empty-ufs.img");
+        fs::write(&image, b"").unwrap();
+        let state = Arc::new(FlashState::new());
+
+        let err = qdl_flash_ufs(
+            &image,
+            &tmp.path().join("missing-loader.elf"),
+            "qdl://missing",
+            ProvisionSource::Absent,
+            state.clone(),
+        )
+        .unwrap_err();
+
+        assert!(err.starts_with(crate::utils::TAG_IMAGE_INVALID), "{err}");
+        assert!(!state.qdl.is_active.load(Ordering::SeqCst));
     }
 
     #[test]
