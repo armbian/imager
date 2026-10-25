@@ -8,6 +8,11 @@ ignore = [
     "RUSTSEC-2026-0097",
     # gettext-rs 0.7 unsound (Linux): udisks2 0.3.1 (latest) pins gettext-rs 0.7, fix is 0.8
     "RUSTSEC-2026-0244",
+    # zip 4.6.1 extract flaws (Windows): tauri-plugin-updater <= 2.14.0 pins zip 4, zip 9 lands in 2.14.1
+    # (tauri-apps/plugins-workspace#3698); only signed update archives are extracted. Recheck by 2026-11-15
+    "RUSTSEC-2026-0367",
+    "RUSTSEC-2026-0368",
+    "RUSTSEC-2026-0369",
 ]
 
 [output]
