@@ -153,12 +153,8 @@ armbian-imager/
 │   │   │   ├── FlashProgress.tsx     # Presentation (uses useFlashOperation hook)
 │   │   │   ├── FlashActions.tsx      # Cancel/retry/done buttons
 │   │   │   └── FlashStageIcon.tsx    # Stage icons + i18n keys
-│   │   ├── modals/                   # 4-step selection wizard
-│   │   │   ├── Modal.tsx             # Base modal (animations, exit handling)
-│   │   │   ├── ManufacturerModal.tsx # Step 1: Vendor selection
-│   │   │   ├── BoardModal.tsx        # Step 2: Board selection (image grid)
-│   │   │   ├── ImageModal.tsx        # Step 3: OS image selection (filters)
-│   │   │   ├── DeviceModal.tsx       # Step 4: Device selection (polling)
+│   │   ├── modals/                   # Modal shell + Armbian board dialog
+│   │   │   ├── Modal.tsx             # Portal shell with dialog semantics and focus trap
 │   │   │   └── ArmbianBoardModal.tsx # Auto-detect when running on Armbian
 │   │   ├── settings/                 # Full-window settings page
 │   │   │   ├── SettingsPage.tsx      # Page shell (nav + active section, Esc, leave guard)

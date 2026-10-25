@@ -246,6 +246,13 @@
   padding: 0;
 }
 
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-xl) var(--space-lg);
+}
+
 .modal-list {
   display: flex;
   flex-direction: column;
