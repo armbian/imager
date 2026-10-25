@@ -421,7 +421,7 @@
 /* Diagonal stripe overlay blended onto the gradient fill */
 .progress-fill {
   background:
-    linear-gradient(90deg, var(--accent) 0%, #ff8c42 100%),
+    var(--progress-fill),
     repeating-linear-gradient(
       45deg,
       transparent,
@@ -435,7 +435,7 @@
 @media (prefers-color-scheme: dark) {
   .progress-fill {
     background:
-      linear-gradient(90deg, var(--accent) 0%, #ff8c42 100%),
+      var(--progress-fill),
       repeating-linear-gradient(
         45deg,
         transparent,
@@ -833,7 +833,7 @@
 .flash-track {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: var(--progress-track-max);
   height: 4px;
   border-radius: var(--radius-pill);
   background: rgba(var(--accent-rgb), 0.12);
@@ -843,7 +843,7 @@
   height: 100%;
   width: 0;
   border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--accent) 0%, #ff8c42 100%);
+  background: var(--progress-fill);
   box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.4);
   transition: width var(--dur-slow) var(--ease-out-expo);
 }
@@ -863,7 +863,7 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  max-width: 420px;        /* match .flash-track */
+  max-width: var(--progress-track-max);        /* match .flash-track */
 }
 .flash-dot {
   width: 6px;

@@ -31,6 +31,9 @@
   --accent: var(--armbian-orange);
   --accent-hover: #e55a1c;
   --text-on-accent: #ffffff;
+  /* Hairline progress fill, shared by the flash and update tracks */
+  --progress-fill: linear-gradient(90deg, var(--accent) 0%, #ff8c42 100%);
+  --progress-track-max: 420px;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
