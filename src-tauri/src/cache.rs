@@ -16,8 +16,8 @@ use crate::config::cache::UFS_PRESET_PURGE_MARKER;
 use crate::config::images::CACHED_IMAGE_EXT;
 use crate::qdl::boards::is_ufs_build_filename;
 use crate::utils::{
-    app_cache_dir, assets_dir, images_dir, parse_armbian_filename, validate_file_name,
-    validate_path_in_cache,
+    app_cache_dir, assets_dir, discard_if_empty, images_dir, parse_armbian_filename,
+    validate_file_name, validate_path_in_cache,
 };
 use crate::{log_debug, log_error, log_info, log_warn};
 
@@ -312,15 +312,27 @@ pub fn get_cached_image(filename: &str) -> Option<PathBuf> {
         }
     };
 
+    get_cached_image_internal(&get_images_cache_dir(), filename)
+}
+
+fn get_cached_image_internal(cache_dir: &Path, filename: &str) -> Option<PathBuf> {
     if let Err(e) = validate_file_name(filename) {
         log_warn!(MODULE, "{}", e);
         return None;
     }
 
-    let cache_dir = get_images_cache_dir();
     let cached_path = cache_dir.join(filename);
 
-    if cached_path.exists() && cached_path.is_file() {
+    if cached_path.is_file() {
+        // An empty entry can never be flashed, so it goes and the image is fetched again.
+        if discard_if_empty(&cached_path).is_err() {
+            log_warn!(
+                MODULE,
+                "Treating unusable cached image as a miss: {}",
+                cached_path.display()
+            );
+            return None;
+        }
         log_info!(MODULE, "Found cached image: {}", cached_path.display());
 
         // Bump mtime so LRU treats this as recently used.
@@ -379,8 +391,10 @@ pub fn list_cached_images() -> Result<Vec<CachedImageInfo>, String> {
         .lock()
         .map_err(|e| format!("Failed to acquire cache lock: {}", e))?;
 
-    let cache_dir = get_images_cache_dir();
+    list_cached_images_internal(&get_images_cache_dir())
+}
 
+fn list_cached_images_internal(cache_dir: &Path) -> Result<Vec<CachedImageInfo>, String> {
     if !cache_dir.exists() {
         log_debug!(
             MODULE,
@@ -389,7 +403,7 @@ pub fn list_cached_images() -> Result<Vec<CachedImageInfo>, String> {
         return Ok(Vec::new());
     }
 
-    let entries = fs::read_dir(&cache_dir).map_err(|e| {
+    let entries = fs::read_dir(cache_dir).map_err(|e| {
         log_error!(MODULE, "Failed to read cache directory: {}", e);
         format!("Failed to read cache directory: {}", e)
     })?;
@@ -411,6 +425,12 @@ pub fn list_cached_images() -> Result<Vec<CachedImageInfo>, String> {
             Ok(m) => m,
             Err(_) => continue,
         };
+
+        // Hidden, not deleted: a download still decompressing into the cache starts at 0 bytes.
+        if metadata.len() == 0 {
+            log_warn!(MODULE, "Not listing empty cache entry: {}", filename);
+            continue;
+        }
 
         let last_used = metadata
             .modified()
@@ -612,6 +632,37 @@ mod tests {
         fs::write(path, vec![0u8; len]).unwrap();
         let mtime = SystemTime::now() - Duration::from_secs(age_secs);
         filetime::set_file_mtime(path, FileTime::from_system_time(mtime)).unwrap();
+    }
+
+    #[test]
+    fn a_lookup_drops_an_empty_entry_as_a_miss() {
+        let f = fixture();
+        fs::write(f.images.join("empty.img"), b"").unwrap();
+        fs::write(f.images.join("full.img"), [1u8; 64]).unwrap();
+
+        assert_eq!(get_cached_image_internal(&f.images, "empty.img"), None);
+        assert!(!f.images.join("empty.img").exists());
+        assert_eq!(
+            get_cached_image_internal(&f.images, "full.img"),
+            Some(f.images.join("full.img"))
+        );
+        assert_eq!(get_cached_image_internal(&f.images, "missing.img"), None);
+    }
+
+    #[test]
+    fn the_list_hides_empty_entries_without_deleting_them() {
+        let f = fixture();
+        fs::write(f.images.join("empty.img"), b"").unwrap();
+        fs::write(f.images.join("full.img"), [1u8; 64]).unwrap();
+
+        let names: Vec<_> = list_cached_images_internal(&f.images)
+            .unwrap()
+            .into_iter()
+            .map(|i| i.filename)
+            .collect();
+
+        assert_eq!(names, ["full.img"]);
+        assert!(f.images.join("empty.img").exists());
     }
 
     #[test]
