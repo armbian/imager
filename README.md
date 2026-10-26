@@ -3,9 +3,15 @@
   <br><br>
 </h2>
 
+# Armbian Imager
+
+## Purpose of This Repository
+
+Armbian Imager is the official cross-platform desktop application for downloading, verifying, and flashing Armbian OS images to SD cards, USB drives, and EDL-based boards. This repository contains the Tauri 2 application: a React/TypeScript frontend and a Rust backend, plus the in-repo `armbian-write-conf` crate used to inject first-boot configuration into image rootfs.
+
 ### About
 
-Armbian Imager is the official tool for downloading and flashing Armbian OS images to single-board computers. It checks the target disk before writing, validates the checksum, and verifies the image after the write, so a bad download or the wrong disk doesn't turn into a broken card.
+Armbian Imager downloads and flashes Armbian OS images to single-board computers. It checks the target disk before writing, validates the checksum, and verifies the image after the write, so a bad download or the wrong disk doesn't turn into a broken card.
 
 ### Features
 
@@ -13,8 +19,9 @@ Armbian Imager is the official tool for downloading and flashing Armbian OS imag
 - Disk safety checks, checksum validation, and post-write verification
 - Native builds for Linux, Windows, and macOS, on x64 and ARM64
 - Multi-language interface that follows your system language by default
-- Built-in application updates
-- Small binary with few runtime dependencies
+- Built-in application updates via the Tauri updater
+- First-boot autoconfig profiles (user, access, network, region) written directly into the image's ext4 rootfs
+- QDL (Qualcomm Device Loader) support for EDL-based boards such as Arduino UNO Q
 
 ### Testimonials
 
@@ -35,12 +42,12 @@ Armbian Imager is the official tool for downloading and flashing Armbian OS imag
 
 ## Download
 
-Prebuilt binaries are available for every supported platform.
+Prebuilt binaries are available for every supported platform from the [Releases page](https://github.com/armbian/imager/releases).
 
 | <a href="https://github.com/armbian/imager/releases"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apple.svg" width="24"><br><strong>macOS</strong></a> | <a href="https://github.com/armbian/imager/releases"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/windows11.svg" width="24"><br><strong>Windows</strong></a> | <a href="https://github.com/armbian/imager/releases"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/linux.svg" width="24"><br><strong>Linux</strong></a> |
 |:---:|:---:|:---:|
 | Intel & Apple Silicon | x64 & ARM64 (code-signed) | x64 & ARM64 |
-| <code>.dmg</code> / <code>.app.zip</code> | <code>.exe</code> / <code>.msi</code> | <code>.deb</code> / <code>.AppImage</code> |
+| `.dmg` / `.app.zip` | `.exe` / `.msi` | `.deb` / `.AppImage` |
 
 ## How It Works
 
@@ -49,36 +56,133 @@ Prebuilt binaries are available for every supported platform.
 3. **Pick an image.** Desktop or server, a kernel branch, and a stable, nightly, or rolling release build.
 4. **Flash.** The app downloads, decompresses, writes, and verifies for you.
 
-## Customization
-
-- Theme: light, dark, or follow the system setting
-- Developer mode: turn on detailed logging and open the log viewer
-- Language: 20 languages, auto-detected from your system
-
 ## Platform Support
 
 | Platform | Architecture | Notes |
 |----------|-------------|-------|
 | macOS | Intel x64 | Full support |
-| macOS | Apple Silicon | Native ARM64 build, Touch ID support |
+| macOS | Apple Silicon | Native ARM64 build |
 | Windows | x64 | Requires Administrator privileges |
 | Windows | ARM64 | Native ARM64 build, requires Administrator privileges |
-| Linux | x64 | Uses lsblk for detection and UDisks2/polkit for elevated device access |
+| Linux | x64 | UDisks2/polkit for elevated device access |
 | Linux | ARM64 | Native ARM64 build |
 
 ### Supported Languages
 
-English, Italian, German, French, Spanish, Portuguese, Portuguese (Brazil), Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian, Greek, Serbian
+20 locales, each file lives under `src/locales/`:
+
+English, Italian, German, French, Spanish, Portuguese, Portuguese (Brazil), Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian, Greek, Serbian.
+
+## Repository Layout
+
+```
+.
+├── src/                     # React 19 + TypeScript frontend
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── i18n.ts
+│   ├── components/          # UI (autoconfig, dev, flash, layout, modals, settings, shared)
+│   ├── config/              # Static config (i18n, filters, profiles, boards, ...)
+│   ├── contexts/            # React contexts (Motion, Theme, Update)
+│   ├── hooks/               # Custom hooks (Tauri IPC, async data, flash lifecycle, ...)
+│   ├── locales/             # 20 translation JSON files
+│   ├── styles/              # CSS
+│   ├── types/               # Shared TypeScript types
+│   └── utils/               # Frontend helpers
+├── src-tauri/               # Tauri 2 / Rust backend
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── commands/        # Tauri IPC command handlers
+│   │   ├── config/
+│   │   ├── devices/         # Linux/macOS/Windows device enumeration
+│   │   ├── flash/           # Per-platform writers and verify
+│   │   ├── images/          # Image models and filters
+│   │   ├── qdl/             # Qualcomm Device Loader (EDL) flashing
+│   │   ├── dev_scenarios/   # Debug-only simulated devices/network/images
+│   │   ├── paste/           # paste.armbian.com log upload
+│   │   └── utils/
+│   ├── capabilities/        # Tauri capability manifests
+│   ├── icons/               # App icons (desktop, Android, iOS)
+│   ├── packaging/
+│   ├── tauri.conf.json
+│   ├── tauri.dev.conf.json
+│   └── tauri.debug.conf.json
+├── crates/
+│   └── armbian-write-conf/  # Rust crate: write first-boot config into ext4 rootfs
+├── scripts/
+│   ├── locales/             # Locale sync + parity scripts (Node.js)
+│   └── setup/               # Dev environment setup scripts
+├── public/
+├── index.html
+├── package.json
+├── vite.config.ts
+├── eslint.config.js
+├── tsconfig*.json
+├── DEVELOPMENT.md
+├── CONTRIBUTING.md
+└── CODE_OF_CONDUCT.md
+```
+
+## Tech Stack
+
+Built with:
+
+- **Frontend:** React 19, TypeScript 5.9, Vite 8, i18next / react-i18next, lucide-react, qrcode
+- **Backend:** Rust 2021 (MSRV 1.85), Tauri 2 with the `shell`, `dialog`, `updater`, `process`, `store`, and `mcp-bridge` plugins
+- **Networking & I/O:** `reqwest` (rustls), `tokio`, `futures-util`
+- **Decompression:** `lzma-rust2`, `xz2`, `bzip2`, `flate2`, `zstd`
+- **Hashing:** `sha2`, `hex`
+- **Device access:** Linux `libc` + `udisks2` + `zbus`; macOS `security-framework` + `core-foundation`; Windows `windows-sys`
+- **QDL (EDL flashing):** [`qdlrs`](https://github.com/qualcomm/qdlrs), `nusb`
+- **In-repo crate:** `armbian-write-conf` (ext4 writer, uses `gptman`, `mbrman`, `ext4-view`, and a vendored `armbian-ext4fs`)
+- **Lint & format:** ESLint 9 with `typescript-eslint` and React hooks plugins; `cargo fmt` + `cargo clippy`
+- **CI tooling:** Node.js scripts under `scripts/locales/`; shell/PowerShell setup scripts under `scripts/setup/`
+
+## Development
+
+Setup, build instructions, available scripts, and architecture details live in [DEVELOPMENT.md](DEVELOPMENT.md).
+
+Quick start:
+
+```bash
+git clone https://github.com/armbian/imager.git && cd imager
+bash scripts/setup/install.sh
+npm install
+npm run tauri:dev
+```
+
+Requirements (see [DEVELOPMENT.md](DEVELOPMENT.md) for the full list):
+
+- Node.js ≥ 20.19.0 (from `package.json` `engines`)
+- Rust stable, MSRV 1.85.0 (from `src-tauri/Cargo.toml`)
+- Platform build tools: webkit2gtk/GTK on Linux, Xcode CLT on macOS, VS Build Tools + WebView2 on Windows
+
+Common npm scripts:
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Vite dev server (frontend only) |
+| `npm run tauri:dev` | Full app with hot reload |
+| `npm run build` | Production frontend build |
+| `npm run tauri:build` | Production distributable |
+| `npm run lint` | ESLint |
+| `npm run clean` | Remove `node_modules`, `dist`, `src-tauri/target` |
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Translations live in `src/locales/`; all 20 locale files must stay in parity with `en.json` (checked by `scripts/locales/check-parity.mjs` in CI).
+
+## Continuous Integration
+
+Build, lint, release, locale sync, and label maintenance are all handled by GitHub Actions. For an overview of workflow status for this repository, see:
+
+<https://actions.armbian.com/?repo=imager>
 
 ## Why We Sign Our Code
 
 Downloading software shouldn't take a leap of faith. Every Windows release is cryptographically signed, so you can confirm the binary is exactly what we built and hasn't been tampered with on the way to you.
 
 This is possible thanks to [SignPath Foundation](https://signpath.org?utm_source=foundation&utm_medium=github&utm_campaign=armbian-imager), which gives free code signing certificates to open source projects, and [SignPath.io](https://signpath.io?utm_source=foundation&utm_medium=github&utm_campaign=armbian-imager) for the signing infrastructure.
-
-## Development
-
-Setup, build instructions, and project layout live in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## License
 
