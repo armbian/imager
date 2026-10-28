@@ -1,9 +1,6 @@
 name: "Maintenance: Release"
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       build_linux:
@@ -81,7 +78,9 @@ jobs:
           tag: ${{ steps.relmeta.outputs.tag }}
           name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
           commit: ${{ github.sha }}
+          skipIfReleaseExists: true
           draft: true
+          omitDraftDuringUpdate: true
           prerelease: false
           generateReleaseNotes: true
           allowUpdates: true
@@ -229,6 +228,7 @@ jobs:
           tag: ${{ needs.create-release.outputs.release_tag }}
           name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
           draft: true
+          omitDraftDuringUpdate: true
           prerelease: false
           allowUpdates: true
           omitBodyDuringUpdate: true
@@ -252,7 +252,7 @@ jobs:
             arch: aarch64
             os: macos-latest
 
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, macOS, ARM64]
     permissions:
       contents: write
     env:
@@ -421,6 +421,7 @@ jobs:
           tag: ${{ needs.create-release.outputs.release_tag }}
           name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
           draft: true
+          omitDraftDuringUpdate: true
           prerelease: false
           allowUpdates: true
           omitBodyDuringUpdate: true
@@ -662,6 +663,7 @@ jobs:
           tag: ${{ needs.create-release.outputs.release_tag }}
           name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
           draft: true
+          omitDraftDuringUpdate: true
           prerelease: false
           allowUpdates: true
           omitBodyDuringUpdate: true
@@ -678,6 +680,7 @@ jobs:
           tag: ${{ needs.create-release.outputs.release_tag }}
           name: "Armbian Imager ${{ needs.create-release.outputs.release_tag }}"
           draft: true
+          omitDraftDuringUpdate: true
           prerelease: false
           allowUpdates: true
           omitBodyDuringUpdate: true
