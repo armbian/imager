@@ -3,9 +3,15 @@
   <br><br>
 </h2>
 
-### About
+# Armbian Imager
 
-Armbian Imager is the official tool for downloading and flashing Armbian OS images to single-board computers. It checks the target disk before writing, validates the checksum, and verifies the image after the write, so a bad download or the wrong disk doesn't turn into a broken card.
+## Purpose of This Repository
+
+Armbian Imager is the official cross-platform desktop tool for downloading and flashing Armbian OS images to SD cards and USB drives. It handles target-disk safety checks, checksum validation, and post-write verification so that a bad download or the wrong disk doesn't turn into a broken card.
+
+## About
+
+Armbian Imager works with 300+ boards, with filtering and board metadata sourced from armbian.com. Native builds are produced for Linux, Windows, and macOS, on x64 and ARM64. The UI follows your system language by default and ships with built-in application updates.
 
 ### Features
 
@@ -68,7 +74,67 @@ Prebuilt binaries are available for every supported platform.
 
 ### Supported Languages
 
-English, Italian, German, French, Spanish, Portuguese, Portuguese (Brazil), Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian, Greek, Serbian
+English, Italian, German, French, Spanish, Portuguese, Portuguese (Brazil), Dutch, Polish, Russian, Chinese, Japanese, Korean, Ukrainian, Turkish, Slovenian, Swedish, Croatian, Greek, Serbian.
+
+The locale files live under [`src/locales/`](src/locales/) with `en.json` as the source of truth. Translation parity is enforced in CI by [`scripts/locales/check-parity.mjs`](scripts/locales/check-parity.mjs), and a scheduled job runs [`scripts/locales/sync-locales.js`](scripts/locales/sync-locales.js) to propagate new keys.
+
+## Tech Stack
+
+Armbian Imager is a [Tauri 2](https://tauri.app/) desktop application.
+
+- **Frontend:** TypeScript + React 19, built with Vite 8, styled with CSS, linted with ESLint 9. Internationalization via `i18next` / `react-i18next`.
+- **Backend:** Rust (edition 2021, MSRV 1.85), using the Tauri 2 runtime with the `shell`, `dialog`, `updater`, `process`, `store`, and `mcp-bridge` plugins. HTTP via `reqwest` (rustls), async via `tokio`, decompression via `lzma-rust2`, `xz2`, `bzip2`, `flate2`, and `zstd`. QDL (Qualcomm Device Loader) flashing via the `qdl` crate for EDL-based boards.
+- **In-repo crate:** [`crates/armbian-write-conf/`](crates/armbian-write-conf/) — an MIT-licensed library that writes a small first-boot config file into the ext4 rootfs of a RAW disk image in userspace, then validates it. It uses `gptman`, `mbrman`, and `ext4-view`, and vendors a fork named `armbian-ext4fs`.
+- **Setup scripts:** platform installers in [`scripts/setup/`](scripts/setup/) — Bash for Linux/macOS, PowerShell for Windows.
+
+## Repository Layout
+
+```
+.
+├── src/                     # React 19 + TypeScript frontend
+│   ├── components/          # UI (autoconfig, dev, flash, layout, modals, settings, shared)
+│   ├── hooks/               # Custom React hooks (incl. Tauri IPC wrappers)
+│   ├── config/              # Static config: i18n, boards, filters, flags, themes
+│   ├── contexts/            # React contexts (Motion, Theme, Update)
+│   ├── locales/             # 20 translation JSON files
+│   ├── styles/              # CSS
+│   ├── assets/              # Images, logos, settings artwork
+│   ├── utils/               # Shared TypeScript utilities
+│   └── types/               # Shared type definitions
+├── src-tauri/               # Rust backend (Tauri app)
+│   ├── src/
+│   │   ├── commands/        # Tauri IPC command handlers
+│   │   ├── devices/         # Per-OS device detection (linux, macos, windows)
+│   │   ├── flash/           # Per-OS flash writers + verification
+│   │   ├── qdl/             # EDL/QDL flashing path
+│   │   ├── dev_scenarios/   # Debug-only simulator (not in release builds)
+│   │   ├── images/          # Image metadata and filters
+│   │   ├── paste/           # Log upload to paste.armbian.com
+│   │   ├── utils/           # Shared Rust utilities
+│   │   └── main.rs
+│   ├── capabilities/        # Tauri capability definitions
+│   ├── icons/               # App icons (desktop, Android, iOS)
+│   └── tauri.conf.json      # Tauri configuration
+├── crates/
+│   └── armbian-write-conf/  # In-repo crate: ext4 first-boot config writer
+├── scripts/
+│   ├── locales/             # Locale parity + AI translation sync
+│   └── setup/               # Linux/macOS/Windows dev-env installers
+├── public/                  # Static web assets
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   └── workflows/           # GitHub Actions workflows
+├── package.json
+├── vite.config.ts
+├── eslint.config.js
+└── index.html
+```
+
+## Continuous Integration
+
+CI runs on GitHub Actions and covers linting, type checks, locale parity, cross-platform build tests on pull requests, release builds for Linux (x64/ARM64), macOS (x64/Apple Silicon), and Windows (x64/ARM64), and various repository-maintenance tasks.
+
+For a per-workflow status overview, see the Armbian CI dashboard for this repository: **<https://actions.armbian.com/?repo=imager>**.
 
 ## Why We Sign Our Code
 
@@ -78,7 +144,18 @@ This is possible thanks to [SignPath Foundation](https://signpath.org?utm_source
 
 ## Development
 
-Setup, build instructions, and project layout live in [DEVELOPMENT.md](DEVELOPMENT.md).
+Setup, build instructions, and project layout live in [DEVELOPMENT.md](DEVELOPMENT.md). Contribution guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md), and community expectations in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+### Quick start
+
+```bash
+git clone https://github.com/armbian/imager.git && cd imager
+bash scripts/setup/install.sh
+npm install
+npm run tauri:dev
+```
+
+Requirements: Node.js ≥ 20.19.0, Rust ≥ 1.85, and the platform-specific system dependencies documented in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## License
 
@@ -87,6 +164,13 @@ Armbian Imager is distributed under the GNU General Public License, either versi
 SPDX-License-Identifier: `GPL-2.0-or-later`
 
 The full text is in [LICENSE](LICENSE). A few bundled components keep their own terms: the `armbian-write-conf` crate and its vendored `armbian-ext4fs` fork are `MIT`, and the language flag graphics from [Twemoji](https://github.com/jdecked/twemoji) are `CC-BY-4.0`. Per-file details are in [`src-tauri/packaging/copyright`](src-tauri/packaging/copyright).
+
+## Related Links
+
+- Armbian website: <https://www.armbian.com>
+- Armbian documentation: <https://docs.armbian.com>
+- Armbian build framework: <https://github.com/armbian/build>
+- Forum: <https://forum.armbian.com>
 
 ---
 
