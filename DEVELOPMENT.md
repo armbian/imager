@@ -443,7 +443,7 @@ All platforms: quick erase (64MB zeros) before flashing, `fsync` after write, sh
 | Board List & Images | [github.armbian.com/armbian-images.json](https://github.armbian.com/armbian-images.json) |
 | Board Photos | [cache.armbian.com/images/272/{slug}.png](https://cache.armbian.com/images/) |
 | Vendor Logos | [cache.armbian.com/images/vendors/150/{vendor}.png](https://cache.armbian.com/images/vendors/150/) |
-| MOTD Tips | [github.com/armbian/os/main/motd.json](https://raw.githubusercontent.com/armbian/os/main/motd.json) |
+| MOTD Tips | [github.armbian.com/featured.json](https://github.armbian.com/featured.json) |
 | Log Upload | [paste.armbian.com](https://paste.armbian.com) |
 | App Updates | [GitHub Releases](https://github.com/armbian/imager/releases/latest/download/latest.json) |
 
