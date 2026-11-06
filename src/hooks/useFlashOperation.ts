@@ -27,7 +27,7 @@ import {
   cleanupFailedDownload,
   listCachedImages,
 } from './useTauri';
-import { getSkipVerify } from './useSettings';
+import { getCacheEnabled, getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS, FLASH_PREP_STAGE, QDL_STAGE } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
 import { isDeviceRefusalError, isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
@@ -49,7 +49,6 @@ interface UseFlashOperationReturn {
   phases: FlashPhase[];
   progress: number;
   error: string | null;
-  imagePath: string | null;
   showShaWarning: boolean;
   verifyAborted: boolean;
   /** An EDL flash cancelled after the board's storage started to change. */
@@ -61,20 +60,23 @@ interface UseFlashOperationReturn {
   handleShaWarningCancel: () => Promise<void>;
 }
 
-/** Delete a custom (decompressed) or downloaded image file, ignoring errors */
+/** Delete a decompressed custom or downloaded image, ignoring errors; true when the file is gone. */
 async function cleanupImageSafely(
   path: string | null,
   isCustom?: boolean
-): Promise<void> {
-  if (!path) return;
+): Promise<boolean> {
+  if (!path) return false;
   try {
     if (isCustom) {
+      // Backend refuses paths outside custom-decompress, so a user's own file never counts as gone.
       await deleteDecompressedCustomImage(path);
-    } else {
-      await deleteDownloadedImage(path);
+      return true;
     }
+    await deleteDownloadedImage(path);
+    // The backend keeps the download while the cache is enabled.
+    return !(await getCacheEnabled());
   } catch {
-    // Ignore cleanup errors
+    return false;
   }
 }
 
@@ -106,7 +108,6 @@ export function useFlashOperation({
   const [phases, setPhases] = useState<FlashPhase[]>(() => [...PHASE_ORDER]);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [imagePath, setImagePath] = useState<string | null>(null);
   const [showShaWarning, setShowShaWarning] = useState(false);
   const [verifyAborted, setVerifyAborted] = useState(false);
   const [cancelledAfterWrite, setCancelledAfterWrite] = useState(false);
@@ -130,6 +131,8 @@ export function useFlashOperation({
   const pendingCleanupRef = useRef<Promise<void> | null>(null);
   // The whole current run (auth -> download -> write); Retry awaits it so two runs never overlap.
   const runRef = useRef<Promise<void> | null>(null);
+  // A ref, not state: a Retry clicked while the failed run still cleans up must see the cleared path.
+  const imagePathRef = useRef<string | null>(null);
   const skipVerifyRef = useRef<boolean>(false);
   // Keep the latest opt-in profile config for the event-driven flash flow.
   const autoconfigRef = useRef<AutoconfigConfig | null>(autoconfig ?? null);
@@ -265,7 +268,7 @@ export function useFlashOperation({
       // QDL custom images (.tar) flash directly; extraction is internal
       if (isQdlMode) {
         setPhases(buildPhases({ download: false, prepare: true, verify: false }));
-        setImagePath(customPath);
+        imagePathRef.current = customPath;
         await startFlash(customPath);
         return;
       }
@@ -279,10 +282,10 @@ export function useFlashOperation({
         setProgress(0);
         const decompressedPath = await decompressCustomImage(customPath);
         if (isAborted()) return;
-        setImagePath(decompressedPath);
+        imagePathRef.current = decompressedPath;
         await startFlash(decompressedPath);
       } else {
-        setImagePath(customPath);
+        imagePathRef.current = customPath;
         await startFlash(customPath);
       }
     } catch (err) {
@@ -337,7 +340,7 @@ export function useFlashOperation({
       const path = await downloadImage(image.direct_url, image.sha_url);
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (isAborted()) return;
-      setImagePath(path);
+      imagePathRef.current = path;
       await startFlash(path);
     } catch (err) {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -475,6 +478,7 @@ export function useFlashOperation({
         failFlash(translateFlashError(rawError, t));
       }
 
+      let fileGone = false;
       // Increment failure count for cached (non-custom) images; skip on disconnect or a device
       // refusal (e.g. card too small, previous flash still finishing) so neither burns down a good cached image.
       if (!image.is_custom && !isQdlMode && !deviceDisconnectedRef.current && !isDeviceRefusalError(rawError)) {
@@ -486,6 +490,7 @@ export function useFlashOperation({
           try {
             await forceDeleteCachedImage(path);
             setFlashFailureCount(0);
+            fileGone = true;
           } catch {
             // Ignore deletion errors
           }
@@ -493,8 +498,10 @@ export function useFlashOperation({
       }
 
       if (!isQdlMode && !deviceDisconnectedRef.current) {
-        await cleanupImageSafely(path, image.is_custom);
+        fileGone = (await cleanupImageSafely(path, image.is_custom)) || fileGone;
       }
+      // Retry must redo the download or decompression that produced a deleted file.
+      if (fileGone) imagePathRef.current = null;
     }
   }
 
@@ -603,7 +610,7 @@ export function useFlashOperation({
         setStage('complete');
         setProgress(100);
         setFlashFailureCount(0);
-        await cleanupImageSafely(imagePath, image.is_custom);
+        await cleanupImageSafely(imagePathRef.current, image.is_custom);
         return;
       }
       // EDL: stay put so the blocking flash command can detect cancel and clean up
@@ -612,7 +619,7 @@ export function useFlashOperation({
         setProgress(0);
         setStage('cancelled');
       } else {
-        await cleanupImageSafely(imagePath, image.is_custom);
+        await cleanupImageSafely(imagePathRef.current, image.is_custom);
         onBack();
       }
     } catch {
@@ -621,6 +628,7 @@ export function useFlashOperation({
   };
 
   const restartRun = async () => {
+    const imagePath = imagePathRef.current;
     if (imagePath) {
       // EDL: skip block-device authorization (USB access handled by OS). The TAR path
       // re-extracts (prepare), but a UFS .img is already decompressed and ready.
@@ -687,7 +695,7 @@ export function useFlashOperation({
   };
 
   const handleBack = async () => {
-    await cleanupImageSafely(imagePath, image.is_custom);
+    await cleanupImageSafely(imagePathRef.current, image.is_custom);
     onBack();
   };
 
@@ -702,7 +710,7 @@ export function useFlashOperation({
     try {
       const path = await continueDownloadWithoutSha();
       if (isAborted()) return;
-      setImagePath(path);
+      imagePathRef.current = path;
       runRef.current = startFlash(path);
     } catch (err) {
       const raw = getErrorMessage(err, '');
@@ -722,7 +730,6 @@ export function useFlashOperation({
     phases,
     progress,
     error,
-    imagePath,
     showShaWarning,
     verifyAborted,
     cancelledAfterWrite,
