@@ -66,6 +66,9 @@ for APP in "${APPIMAGES[@]}"; do
         -name 'libwayland-egl.so.*' -o \
         -name 'libwayland-server.so.*' \) -print -delete
 
+    # Extraction leaves 0700 directories, which appimagetool now refuses.
+    chmod -R u+rwX,go+rX "$EXTRACT_DIR/squashfs-root"
+
     # --appimage-extract-and-run so appimagetool itself doesn't need FUSE either.
     ARCH="$ARCH" "$APPIMAGETOOL" --appimage-extract-and-run \
         "$EXTRACT_DIR/squashfs-root" "$APP.new" >/dev/null
