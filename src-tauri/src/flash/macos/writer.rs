@@ -4,7 +4,7 @@
 //! macOS device writer: opens devices via authopen authorization and writes data.
 
 use std::fs::File;
-use std::io::{BufReader, Read, Write};
+use std::io::{BufReader, Write};
 use std::os::unix::fs::FileTypeExt;
 use std::os::unix::io::{AsRawFd, FromRawFd};
 use std::path::Path;
@@ -416,24 +416,26 @@ async fn do_flash_work(
     loop {
         state.ensure_not_cancelled()?;
 
-        let bytes_read = image_file
-            .read(&mut buffer)
+        let bytes_read = crate::flash::fill_chunk(image_file, &mut buffer)
             .map_err(|e| format!("Failed to read image: {}", e))?;
 
         if bytes_read == 0 {
             break;
         }
 
-        // Raw device requires sector-aligned writes; pad the final chunk
-        let bytes_to_write = if bytes_read % SECTOR_SIZE != 0 {
-            let padded = bytes_read.div_ceil(SECTOR_SIZE) * SECTOR_SIZE;
+        // Raw device requires sector-aligned writes; only the chunk that hit EOF is padded.
+        let at_eof = bytes_read < buffer.len();
+        let bytes_to_write = if at_eof {
+            let padded = crate::flash::padded_len(bytes_read, SECTOR_SIZE);
             buffer[bytes_read..padded].fill(0);
-            log_debug!(
-                MODULE,
-                "Padding final write from {} to {} bytes (sector alignment)",
-                bytes_read,
-                padded
-            );
+            if padded != bytes_read {
+                log_debug!(
+                    MODULE,
+                    "Padding final write from {} to {} bytes (sector alignment)",
+                    bytes_read,
+                    padded
+                );
+            }
             padded
         } else {
             bytes_read
@@ -455,6 +457,10 @@ async fn do_flash_work(
         state.written_bytes.store(written, Ordering::SeqCst);
 
         tracker.update(bytes_read as u64);
+
+        if at_eof {
+            break;
+        }
     }
 
     if written != image_size {

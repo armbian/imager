@@ -14,6 +14,7 @@ mod macos;
 mod windows;
 
 use std::fs::File;
+use std::io::{self, Read};
 use std::path::Path;
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::process::Command;
@@ -363,6 +364,38 @@ pub(crate) fn write_failed_err(offset: u64, e: impl std::fmt::Display) -> String
     format!("[WRITE_FAILED:{}] {}", offset, e)
 }
 
+#[cfg_attr(target_os = "linux", allow(dead_code))]
+pub(crate) fn padded_len(len: usize, sector: usize) -> usize {
+    len.div_ceil(sector) * sector
+}
+
+/// Read until `buf` is full or the reader is at EOF, so a short count always means EOF.
+#[cfg_attr(target_os = "linux", allow(dead_code))]
+pub(crate) fn fill_chunk<R: Read>(reader: &mut R, buf: &mut [u8]) -> io::Result<usize> {
+    let mut filled = 0;
+    while filled < buf.len() {
+        match reader.read(&mut buf[filled..]) {
+            Ok(0) => break,
+            Ok(n) => filled += n,
+            Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(filled)
+}
+
+/// Accept only a logical sector size that a padded write of `chunk` bytes can align to.
+#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+pub(crate) fn validate_sector_size(sector: u64, chunk: usize) -> Result<usize, String> {
+    use crate::config::flash::{MAX_SECTOR_SIZE, MIN_SECTOR_SIZE};
+    usize::try_from(sector)
+        .ok()
+        .filter(|s| {
+            (MIN_SECTOR_SIZE..=MAX_SECTOR_SIZE).contains(s) && s.is_power_of_two() && chunk % s == 0
+        })
+        .ok_or_else(|| format!("Device reported an unsupported sector size: {sector} bytes"))
+}
+
 pub(crate) fn cancelled_err() -> String {
     crate::utils::tagged(
         crate::utils::TAG_CANCELLED,
@@ -589,6 +622,116 @@ mod tests {
     fn capacity_refuses_one_byte_over() {
         let err = check_capacity(1025, 1024).unwrap_err();
         assert!(err.starts_with("[DEVICE_TOO_SMALL:1025:1024]"));
+    }
+
+    #[test]
+    fn padded_len_rounds_up_to_whole_sectors() {
+        assert_eq!(padded_len(0, 512), 0);
+        assert_eq!(padded_len(1024, 512), 1024);
+        assert_eq!(padded_len(1, 512), 512);
+        assert_eq!(padded_len(513, 512), 1024);
+        assert_eq!(padded_len(1, 4096), 4096);
+        assert_eq!(padded_len(4097, 4096), 8192);
+        let chunk = crate::config::flash::CHUNK_SIZE;
+        assert_eq!(padded_len(chunk, 512), chunk);
+        assert_eq!(padded_len(chunk, 4096), chunk);
+    }
+
+    #[test]
+    fn padded_len_covers_the_reported_windows_tail() {
+        // 132120858-byte image: the 32nd 4 MiB chunk carries the last 2097434 bytes.
+        let image: usize = 132_120_858;
+        let tail = image % crate::config::flash::CHUNK_SIZE;
+        assert_eq!(tail, 2_097_434);
+        assert_eq!(padded_len(tail, 512), 2_097_664);
+        assert_eq!(padded_len(tail, 4096), 2_101_248);
+    }
+
+    #[test]
+    fn padding_never_passes_a_whole_sector_device() {
+        for sector in [512usize, 4096] {
+            for dev_sectors in [1usize, 2, 7, 1000] {
+                let dev = dev_sectors * sector;
+                let images = [1, sector - 1, sector, sector + 1, dev - 1, dev];
+                for image in images.into_iter().filter(|i| *i <= dev) {
+                    assert!(padded_len(image, sector) <= dev, "{image} on {dev}");
+                }
+            }
+        }
+    }
+
+    struct ChoppyReader {
+        data: Vec<u8>,
+        pos: usize,
+        step: usize,
+        interrupt_next: bool,
+    }
+
+    impl Read for ChoppyReader {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            if self.interrupt_next {
+                self.interrupt_next = false;
+                return Err(io::Error::from(io::ErrorKind::Interrupted));
+            }
+            self.interrupt_next = true;
+            let n = buf.len().min(self.step).min(self.data.len() - self.pos);
+            buf[..n].copy_from_slice(&self.data[self.pos..self.pos + n]);
+            self.pos += n;
+            Ok(n)
+        }
+    }
+
+    #[test]
+    fn fill_chunk_fills_across_short_and_interrupted_reads() {
+        let data: Vec<u8> = (0..2500u32).map(|i| (i % 251) as u8).collect();
+        let mut reader = ChoppyReader {
+            data: data.clone(),
+            pos: 0,
+            step: 300,
+            interrupt_next: true,
+        };
+        let mut buf = vec![0xAAu8; 1024];
+
+        assert_eq!(fill_chunk(&mut reader, &mut buf).unwrap(), 1024);
+        assert_eq!(&buf[..], &data[..1024]);
+        assert_eq!(fill_chunk(&mut reader, &mut buf).unwrap(), 1024);
+        assert_eq!(&buf[..], &data[1024..2048]);
+        assert_eq!(fill_chunk(&mut reader, &mut buf).unwrap(), 452);
+        assert_eq!(&buf[..452], &data[2048..]);
+        assert_eq!(fill_chunk(&mut reader, &mut buf).unwrap(), 0);
+    }
+
+    #[test]
+    fn fill_chunk_stops_at_a_take_limit() {
+        let data = vec![7u8; 4096];
+        let mut reader = (&data[..]).take(1000);
+        let mut buf = vec![0u8; 4096];
+        assert_eq!(fill_chunk(&mut reader, &mut buf).unwrap(), 1000);
+        assert_eq!(fill_chunk(&mut reader, &mut buf).unwrap(), 0);
+    }
+
+    #[test]
+    fn fill_chunk_passes_real_errors_through() {
+        struct Broken;
+        impl Read for Broken {
+            fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
+                Err(io::Error::other("boom"))
+            }
+        }
+        let err = fill_chunk(&mut Broken, &mut [0u8; 16]).unwrap_err();
+        assert_eq!(err.to_string(), "boom");
+    }
+
+    #[test]
+    fn sector_size_accepts_only_aligned_powers_of_two() {
+        let chunk = crate::config::flash::CHUNK_SIZE;
+        for ok in [512u64, 1024, 2048, 4096, 8192] {
+            assert_eq!(validate_sector_size(ok, chunk).unwrap(), ok as usize);
+        }
+        for bad in [0u64, 1, 256, 520, 3000, 4095, 16384, u64::MAX] {
+            assert!(validate_sector_size(bad, chunk).is_err(), "{bad} accepted");
+        }
+        assert!(validate_sector_size(4096, 4096 + 512).is_err());
     }
 
     #[test]

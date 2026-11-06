@@ -71,19 +71,24 @@ pub async fn flash_image(
     log_debug!(MODULE, "Opening device for writing...");
     let mut device = open_device_for_write(device_path)?;
 
-    let opened_size = opened_device_size(&device).map_err(|e| {
-        log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
-        e
-    })?;
+    let chunk_size = config::flash::CHUNK_SIZE;
+    let (opened_size, sector_size) = opened_device_geometry(&device)
+        .and_then(|(size, sector)| Ok((size, super::validate_sector_size(sector, chunk_size)?)))
+        .map_err(|e| {
+            log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
+            e
+        })?;
     if opened_size != target.size() {
         let e = device_changed_error(device_path, target.size(), opened_size);
         log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
         return Err(e);
     }
+    log_info!(MODULE, "Device sector size: {} bytes", sector_size);
 
-    let chunk_size = config::flash::CHUNK_SIZE;
     let mut buffer = vec![0u8; chunk_size];
     let mut written: u64 = 0;
+    // The device was checked against image_size, so never read past it.
+    let mut image_reader = Read::by_ref(&mut image_file).take(image_size);
 
     let mut tracker = ProgressTracker::new(
         "Write",
@@ -100,7 +105,7 @@ pub async fn flash_image(
             return Err(super::cancelled_err());
         }
 
-        let bytes_read = image_file.read(&mut buffer).map_err(|e| {
+        let bytes_read = super::fill_chunk(&mut image_reader, &mut buffer).map_err(|e| {
             log_error!(MODULE, "Failed to read image: {}", e);
             format!("Failed to read image: {}", e)
         })?;
@@ -109,7 +114,36 @@ pub async fn flash_image(
             break;
         }
 
-        device.write_all(&buffer[..bytes_read]).map_err(|e| {
+        // disk.sys rejects any PhysicalDrive I/O that is not a whole number of sectors.
+        let at_eof = bytes_read < buffer.len();
+        let to_write = if at_eof {
+            let padded = super::padded_len(bytes_read, sector_size);
+            buffer[bytes_read..padded].fill(0);
+            if padded != bytes_read {
+                log_debug!(
+                    MODULE,
+                    "Padding final write from {} to {} bytes (sector alignment)",
+                    bytes_read,
+                    padded
+                );
+            }
+            padded
+        } else {
+            bytes_read
+        };
+
+        let write_end = written.saturating_add(to_write as u64);
+        if let Err(e) = super::check_capacity(write_end, opened_size) {
+            log_error!(
+                MODULE,
+                "Refusing to write past the end of {}: {}",
+                device_path,
+                e
+            );
+            return Err(e);
+        }
+
+        device.write_all(&buffer[..to_write]).map_err(|e| {
             log_error!(
                 MODULE,
                 "Failed to write to device at byte {}: {}",
@@ -123,6 +157,10 @@ pub async fn flash_image(
         state.written_bytes.store(written, Ordering::SeqCst);
 
         tracker.update(bytes_read as u64);
+
+        if at_eof {
+            break;
+        }
     }
 
     if written != image_size {
@@ -451,9 +489,8 @@ fn verify_with_sector_alignment(
         let remaining = image_size - verified;
         let read_size = std::cmp::min(aligned_chunk_size as u64, remaining) as usize;
 
-        let image_read = image_file
-            .read(&mut image_buffer[..read_size])
-            .map_err(|e| {
+        let image_read =
+            super::fill_chunk(image_file, &mut image_buffer[..read_size]).map_err(|e| {
                 tagged(
                     TAG_VERIFY_READ_FAILED,
                     format!("Failed to read image: {}", e),
@@ -465,7 +502,7 @@ fn verify_with_sector_alignment(
         }
 
         // Round the device read up to a whole sector (no-buffering requirement).
-        let device_read_size = image_read.div_ceil(sector_size) * sector_size;
+        let device_read_size = super::padded_len(image_read, sector_size);
 
         let mut total_read = 0;
         while total_read < device_read_size {
@@ -521,9 +558,9 @@ fn verify_with_sector_alignment(
     Ok(())
 }
 
-/// Size of the opened disk, from the same IOCTL device detection uses.
+/// Size and logical sector size of the opened disk, from the same IOCTL device detection uses.
 #[cfg(target_os = "windows")]
-fn opened_device_size(device: &std::fs::File) -> Result<u64, String> {
+fn opened_device_geometry(device: &std::fs::File) -> Result<(u64, u64), String> {
     use std::os::windows::io::AsRawHandle;
     use windows_sys::Win32::Foundation::GetLastError;
     use windows_sys::Win32::System::Ioctl::{DISK_GEOMETRY_EX, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX};
@@ -550,10 +587,12 @@ fn opened_device_size(device: &std::fs::File) -> Result<u64, String> {
     }
 
     let geometry = unsafe { std::ptr::read_unaligned(buffer.as_ptr() as *const DISK_GEOMETRY_EX) };
-    u64::try_from(geometry.DiskSize).map_err(|_| "Device reported a negative size".to_string())
+    let size = u64::try_from(geometry.DiskSize)
+        .map_err(|_| "Device reported a negative size".to_string())?;
+    Ok((size, u64::from(geometry.Geometry.BytesPerSector)))
 }
 
-/// Retrieves the physical sector size of the device.
+/// Retrieves the logical sector size of the device.
 #[cfg(target_os = "windows")]
 fn get_device_sector_size(device: &std::fs::File) -> Result<usize, String> {
     use std::os::windows::io::AsRawHandle;
@@ -592,7 +631,9 @@ fn get_device_sector_size(device: &std::fs::File) -> Result<usize, String> {
 
         let sector_size = geometry.bytes_per_sector as usize;
 
-        if !(512..=8192).contains(&sector_size) || (sector_size & (sector_size - 1)) != 0 {
+        if !(config::flash::MIN_SECTOR_SIZE..=config::flash::MAX_SECTOR_SIZE).contains(&sector_size)
+            || !sector_size.is_power_of_two()
+        {
             log_warn!(
                 MODULE,
                 "Invalid sector size {}, using default 512",
