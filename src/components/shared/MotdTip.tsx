@@ -2,21 +2,15 @@
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Lightbulb, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { openUrl } from '../../hooks/useTauri';
 import { getShowMotd } from '../../hooks/useSettings';
-import { LINKS, TIMING, EVENTS } from '../../config';
-
-interface MotdMessage {
-  message: string;
-  url: string;
-  expiration: string;
-}
+import { LINKS, TIMING, EVENTS, featuredToMotdTips, motdIconFor, type MotdTip as MotdTipData } from '../../config';
 
 export function MotdTip() {
-  const [tip, setTip] = useState<MotdMessage | null>(null);
+  const [tip, setTip] = useState<MotdTipData | null>(null);
   const [showMotd, setShowMotd] = useState<boolean | null>(null);
-  const messagesRef = useRef<MotdMessage[]>([]);
+  const messagesRef = useRef<MotdTipData[]>([]);
   const currentIndexRef = useRef(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -50,16 +44,10 @@ export function MotdTip() {
         }
 
         const response = await fetch(LINKS.MOTD);
-        const messages: MotdMessage[] = await response.json();
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const validMessages = featuredToMotdTips(await response.json(), new Date());
 
         if (!isMounted) return;
-
-        const now = new Date();
-        const validMessages = messages.filter((msg) => {
-          if (!msg.expiration) return true;
-          const expDate = new Date(msg.expiration);
-          return isNaN(expDate.getTime()) || expDate > now;
-        });
 
         if (validMessages.length > 0) {
           messagesRef.current = validMessages;
@@ -95,6 +83,8 @@ export function MotdTip() {
     return null;
   }
 
+  const Icon = motdIconFor(tip.type);
+
   const handleClick = () => {
     openUrl(tip.url).catch(console.error);
   };
@@ -103,7 +93,7 @@ export function MotdTip() {
     <button className="rail-tip" onClick={handleClick} title={tip.message}>
       {/* key on the message too: remounting replays the finite halo on each rotation */}
       <span key={`node-${tip.message}`} className="rail-tip__node">
-        <Lightbulb size={12} />
+        <Icon size={12} />
       </span>
       {/* key on the message so it re-fades each rotation */}
       <span key={tip.message} className="rail-tip__msg">

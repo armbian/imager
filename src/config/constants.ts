@@ -41,7 +41,7 @@ export const LINKS = {
   ISSUES: `${GITHUB_REPO}/issues`,
   DOCS: 'https://docs.armbian.com',
   FORUM: 'https://forum.armbian.com',
-  MOTD: 'https://raw.githubusercontent.com/armbian/os/main/motd.json',
+  MOTD: 'https://github.armbian.com/featured.json',
   WEBSITE: 'https://www.armbian.com',
   DONATE: 'https://www.armbian.com/donate',
   /** Shown in the log upload description; the upload endpoint itself lives in the backend config */

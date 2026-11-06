@@ -81,3 +81,8 @@ export {
 } from './imageFilters';
 export type { OsCategory } from './imageFilters';
 export { qdlInstructionsKey } from './qdlBoards';
+export {
+  motdIconFor,
+  featuredToMotdTips,
+  type MotdTip,
+} from './motd';
