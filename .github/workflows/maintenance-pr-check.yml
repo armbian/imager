@@ -246,7 +246,7 @@ jobs:
 
           # macOS Apple Silicon
           - platform: macos-arm
-            os: macos-latest
+            os: [self-hosted, imager-tart]
             bundles: dmg
             artifact_path: |
               src-tauri/target/release/bundle/dmg/*.dmg
