@@ -17,7 +17,7 @@ tauri = { version = "2", features = ["protocol-asset", "macos-private-api"] }
 
 # glib 0.18.5 (RUSTSEC-2024-0429, Linux only) comes from tauri > muda/tao/tauri-runtime-wry/wry > gtk 0.18.
 # Not used directly; ignored in .cargo/audit.toml until wry moves to gtk 0.19:
-# https://github.com/tauri-apps/wry/pull/1843 (tauri 2.11.2, wry 0.55.1, last checked 2026-10-06)
+# https://github.com/tauri-apps/wry/pull/1843 (tauri 2.12.5, wry 0.57.1, last checked 2026-11-06)
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-updater = "2"

@@ -30,12 +30,12 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/api": "~2.12",
     "@tauri-apps/plugin-fs": "^2.4.4",
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-shell": "^2.3.3",
     "@tauri-apps/plugin-store": "^2.4.1",
-    "@tauri-apps/plugin-updater": "^2.9.0",
+    "@tauri-apps/plugin-updater": "~2.14",
     "@types/qrcode": "^1.5.6",
     "ansi-to-html": "^0.7.0",
     "i18next": "^25.7.2",
@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@tauri-apps/cli": "^2.11.2",
+    "@tauri-apps/cli": "~2.12",
     "@twemoji/svg": "^15.0.0",
     "@types/node": "^24.10.3",
     "@types/react": "^19.2.5",
