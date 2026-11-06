@@ -246,12 +246,13 @@ jobs:
 
           # macOS Apple Silicon
           - platform: macos-arm
-            os: [self-hosted, imager-tart]
+            os: macos-latest
             bundles: dmg
             artifact_path: |
               src-tauri/target/release/bundle/dmg/*.dmg
 
-    runs-on: ${{ matrix.os }}
+    # vars.MACOS_RUNNER (JSON labels) moves macOS onto our own runner; fork PRs stay on GitHub.
+    runs-on: ${{ matrix.platform == 'macos-arm' && vars.MACOS_RUNNER && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && fromJSON(vars.MACOS_RUNNER) || matrix.os }}
     timeout-minutes: 60
     steps:
       - name: Checkout repository

@@ -208,7 +208,8 @@ jobs:
           - target: aarch64-apple-darwin
             arch: aarch64
             os: macos-latest
-    runs-on: ${{ matrix.os }}
+    # vars.MACOS_RUNNER (JSON labels) moves macOS onto our own runner.
+    runs-on: ${{ vars.MACOS_RUNNER && fromJSON(vars.MACOS_RUNNER) || matrix.os }}
     env:
       APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
       APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -344,6 +345,13 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.zip
             src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
           retention-days: 30
+
+      - name: Remove the signing keychain (self-hosted)
+        if: always() && runner.environment == 'self-hosted'
+        run: |
+          security default-keychain -s "$HOME/Library/Keychains/login.keychain-db" || true
+          security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" 2>/dev/null || true
+          rm -f certificate.p12
 
   build-windows-x64:
     name: Windows x64
