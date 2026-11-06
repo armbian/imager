@@ -66,6 +66,12 @@ pub mod flash {
     /// Write chunk size (4 MB)
     pub const CHUNK_SIZE: usize = 4 * 1024 * 1024;
 
+    /// Smallest logical sector size accepted for a raw device write (bytes)
+    pub const MIN_SECTOR_SIZE: usize = 512;
+
+    /// Largest logical sector size accepted for a raw device write (bytes)
+    pub const MAX_SECTOR_SIZE: usize = 8192;
+
     /// Quick erase size - zeros written before flashing (10 MB)
     pub const QUICK_ERASE_SIZE: usize = 10 * 1024 * 1024;
 
