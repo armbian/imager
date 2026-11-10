@@ -25,13 +25,8 @@
       }
     ],
     "security": {
-      "csp": null,
-      "assetProtocol": {
-        "enable": true,
-        "scope": ["**"]
-      }
-    },
-    "macOSPrivateApi": true
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,

@@ -7,7 +7,6 @@
     "core:default",
     "core:window:allow-start-dragging",
     "shell:allow-open",
-    "dialog:default",
     "updater:default",
     "process:allow-restart",
     "store:default"
