@@ -44,7 +44,7 @@ dirs = "5"
 qdl = { git = "https://github.com/qualcomm/qdlrs", rev = "4cc11c81bad548504ec243493d30f5fb33c6ceff", features = ["usb"] }
 nusb = "0.2"
 tar = "0.4"
-xmltree = "0.11"
+xmltree = { version = "0.11", features = ["attribute-order"] }
 indexmap = "2"
 once_cell = "1.21.3"
 chrono = "0.4"
@@ -67,8 +67,6 @@ zbus = "=5.12.0"
 [target.'cfg(target_os = "macos")'.dependencies]
 # macOS-specific dependencies
 libc = "0.2"
-security-framework = "2.11"
-security-framework-sys = "2.11"
 core-foundation = "0.10"
 core-foundation-sys = "0.8"
 

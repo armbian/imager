@@ -999,6 +999,39 @@ mod tests {
     }
 
     #[test]
+    fn ufs_provisioning_packets_keep_document_attribute_order() {
+        let tmp = tempfile::tempdir().unwrap();
+        let xml = tmp.path().join("provision.xml");
+        fs::write(
+            &xml,
+            r#"<?xml version="1.0" ?>
+<data>
+  <ufs bNumberLU="1" bBootEnable="1" bDescrAccessEn="0" LUNum="0" bLUEnable="1" commit="false"/>
+  <ufs LUNum="0" bLUEnable="1" size_in_kb="0" commit="true"/>
+</data>"#,
+        )
+        .unwrap();
+
+        let commands = super::super::provision::parse_ufs_commands(&xml).unwrap();
+        let keys: Vec<&str> = commands[0].iter().map(|(k, _)| k.as_str()).collect();
+        assert_eq!(
+            keys,
+            [
+                "bNumberLU",
+                "bBootEnable",
+                "bDescrAccessEn",
+                "LUNum",
+                "bLUEnable",
+                "commit"
+            ]
+        );
+        assert_eq!(
+            String::from_utf8(build_ufs_packet(&commands[1])).unwrap(),
+            "<?xml version=\"1.0\" ?>\n<data>\n  <ufs LUNum=\"0\" bLUEnable=\"1\" size_in_kb=\"0\" commit=\"true\" />\n</data>"
+        );
+    }
+
+    #[test]
     fn raw_num_sectors_rounds_up() {
         assert_eq!(raw_num_sectors(0, 4096), 0);
         assert_eq!(raw_num_sectors(4096, 4096), 1);
