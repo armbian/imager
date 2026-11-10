@@ -182,7 +182,7 @@ fn calculate_file_sha256(path: &Path, state: &Arc<DownloadState>) -> Result<Stri
         hasher.update(&buffer[..bytes_read]);
         bytes_processed += bytes_read as u64;
 
-        if bytes_processed % (10 * 1024 * 1024) == 0 {
+        if bytes_processed.is_multiple_of(10 * 1024 * 1024) {
             log_debug!(
                 MODULE,
                 "SHA256 calculation progress: {} MB",

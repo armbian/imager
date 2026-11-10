@@ -391,7 +391,9 @@ pub(crate) fn validate_sector_size(sector: u64, chunk: usize) -> Result<usize, S
     usize::try_from(sector)
         .ok()
         .filter(|s| {
-            (MIN_SECTOR_SIZE..=MAX_SECTOR_SIZE).contains(s) && s.is_power_of_two() && chunk % s == 0
+            (MIN_SECTOR_SIZE..=MAX_SECTOR_SIZE).contains(s)
+                && s.is_power_of_two()
+                && chunk.is_multiple_of(*s)
         })
         .ok_or_else(|| format!("Device reported an unsupported sector size: {sector} bytes"))
 }
