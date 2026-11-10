@@ -21,16 +21,18 @@ const MOTD_EXCLUDED_TYPES = ['software'] as const;
 
 const MOTD_TITLE_TYPES = ['news'] as const;
 
-const MOTD_ICONS: Record<string, LucideIcon> = {
+export const MOTD_ICONS = {
   news: Newspaper,
   sponsor: Heart,
   contribute: GitPullRequest,
   service: LifeBuoy,
   build: Hammer,
-};
+} satisfies Record<string, LucideIcon>;
 
-export function motdIconFor(type: string): LucideIcon {
-  return Object.hasOwn(MOTD_ICONS, type) ? MOTD_ICONS[type] : Lightbulb;
+export const MOTD_DEFAULT_ICON: LucideIcon = Lightbulb;
+
+export function hasMotdIcon(type: string): type is keyof typeof MOTD_ICONS {
+  return Object.hasOwn(MOTD_ICONS, type);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

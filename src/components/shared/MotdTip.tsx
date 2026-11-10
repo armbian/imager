@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ExternalLink } from 'lucide-react';
 import { openUrl } from '../../hooks/useTauri';
 import { getShowMotd } from '../../hooks/useSettings';
-import { LINKS, TIMING, EVENTS, featuredToMotdTips, motdIconFor, type MotdTip as MotdTipData } from '../../config';
+import { LINKS, TIMING, EVENTS, MOTD_ICONS, MOTD_DEFAULT_ICON, featuredToMotdTips, hasMotdIcon, type MotdTip as MotdTipData } from '../../config';
 
 export function MotdTip() {
   const [tip, setTip] = useState<MotdTipData | null>(null);
@@ -83,7 +83,7 @@ export function MotdTip() {
     return null;
   }
 
-  const Icon = motdIconFor(tip.type);
+  const Icon = hasMotdIcon(tip.type) ? MOTD_ICONS[tip.type] : MOTD_DEFAULT_ICON;
 
   const handleClick = () => {
     openUrl(tip.url).catch(console.error);

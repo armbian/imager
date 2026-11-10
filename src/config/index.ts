@@ -82,7 +82,9 @@ export {
 export type { OsCategory } from './imageFilters';
 export { qdlInstructionsKey } from './qdlBoards';
 export {
-  motdIconFor,
+  MOTD_ICONS,
+  MOTD_DEFAULT_ICON,
+  hasMotdIcon,
   featuredToMotdTips,
   type MotdTip,
 } from './motd';

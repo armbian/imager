@@ -47,7 +47,6 @@ export function useAnchoredPopover<T extends HTMLElement>(
 
   useLayoutEffect(() => {
     if (!open) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- placed from its own measured size once mounted
     place();
   }, [open, place]);
 

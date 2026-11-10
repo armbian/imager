@@ -14,35 +14,26 @@ interface VendorLogoState {
 }
 
 /** Preload vendor logos and track failures; failed vendors are grouped under "other" */
-export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
+export function useVendorLogos(boards: BoardInfo[] | null) {
   const [state, setState] = useState<VendorLogoState>({
     failedLogos: new Set(),
     cachedUrls: new Map(),
     isLoaded: false,
   });
 
-  // Reset state when inactive
-  useEffect(() => {
-    if (!isActive) {
-      setState({ failedLogos: new Set(), cachedUrls: new Map(), isLoaded: false });
+  const vendorSlugs = useMemo(() => {
+    const slugs = new Set<string>();
+    for (const board of boards ?? []) {
+      if (board.vendor && board.vendor !== VENDOR.FALLBACK_ID) {
+        slugs.add(board.vendor);
+      }
     }
-  }, [isActive]);
+    return slugs;
+  }, [boards]);
 
   // Preload logos via local cache using vendor slugs
   useEffect(() => {
-    if (!isActive || !boards?.length || state.isLoaded) return;
-
-    const vendorSlugs = new Set<string>();
-    for (const board of boards) {
-      if (board.vendor && board.vendor !== VENDOR.FALLBACK_ID) {
-        vendorSlugs.add(board.vendor);
-      }
-    }
-
-    if (vendorSlugs.size === 0) {
-      setState({ failedLogos: new Set(), cachedUrls: new Map(), isLoaded: true });
-      return;
-    }
+    if (vendorSlugs.size === 0 || state.isLoaded) return;
 
     let loaded = 0;
     const failed = new Set<string>();
@@ -64,7 +55,9 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
         }
       });
     });
-  }, [isActive, boards, state.isLoaded]);
+  }, [vendorSlugs, state.isLoaded]);
+
+  const isLoaded = state.isLoaded || (!!boards?.length && vendorSlugs.size === 0);
 
   // Falls back to "other" when the vendor's logo failed to load
   const getEffectiveVendor = useCallback((board: BoardInfo): string => {
@@ -81,7 +74,7 @@ export function useVendorLogos(boards: BoardInfo[] | null, isActive: boolean) {
   return {
     failedLogos: state.failedLogos,
     cachedUrls: state.cachedUrls,
-    isLoaded: state.isLoaded,
+    isLoaded,
     getEffectiveVendor,
     hasValidLogo,
   };
@@ -99,10 +92,9 @@ export interface ManufacturerData {
 /** Build the manufacturer list from boards; boards with failed logos go under "other" */
 export function useManufacturerList(
   boards: BoardInfo[] | null,
-  isActive: boolean,
   searchFilter: string = ''
 ) {
-  const { failedLogos, cachedUrls, isLoaded, getEffectiveVendor, hasValidLogo } = useVendorLogos(boards, isActive);
+  const { failedLogos, cachedUrls, isLoaded, getEffectiveVendor, hasValidLogo } = useVendorLogos(boards);
 
   const manufacturers = useMemo(() => {
     if (!boards || !isLoaded) return [];

@@ -187,6 +187,7 @@ function CacheManagerDialog({ onClose, returnFocusRef }: Omit<CacheManagerModalP
   }, [t]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mount fetch; its first sets repeat the initial state
     loadData();
   }, [loadData]);
 
