@@ -8,7 +8,7 @@ import type { BoardInfo, ImageInfo, BlockDevice, AutoconfigConfig, FlashExit } f
 import { isEdlImage } from '../../types';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
-import { formatImageIdentity } from '../../utils';
+import { boardDisplayName, formatImageIdentity } from '../../utils';
 import { SLUGS, getOsName } from '../../config';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { useFlashOperation } from '../../hooks/useFlashOperation';
@@ -88,6 +88,7 @@ export function FlashProgress({
 
   const isCustomIcon = image.is_custom && board.slug === SLUGS.CUSTOM;
   const isEdl = isEdlImage(image);
+  const boardName = boardDisplayName(board);
 
   // A system disk only reaches this screen once unlocked, so the Lock glyph would mislead.
   const iconType = getDeviceType({ ...device, is_system: false });
@@ -112,13 +113,13 @@ export function FlashProgress({
                 <FileImage className="flash-custom-glyph__icon" strokeWidth={1.5} />
               </div>
             ) : (
-              <BoardImage src={boardImageUrl} alt={board.name} className="flash-board-image" />
+              <BoardImage src={boardImageUrl} alt={boardName} className="flash-board-image" />
             )}
           </div>
 
           <div className="flash-stage__main">
             <div className="flash-info">
-              <h2>{board.name}</h2>
+              <h2>{boardName}</h2>
               <div className="flash-info-badges">
                 <div
                   className="os-badge"
@@ -185,7 +186,7 @@ export function FlashProgress({
                       ? t('flash.successHintQdlReady')
                       : image.is_custom
                         ? t('flash.successHintDeviceCustom')
-                        : t('flash.successHintDevice', { boardName: board.name })}
+                        : t('flash.successHintDevice', { boardName })}
                   </p>
                   {verifyAborted && (
                     <p className="flash-success-caveat">

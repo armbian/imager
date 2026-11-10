@@ -10,7 +10,7 @@ import { useErrorRetry } from '../../hooks/useErrorRetry';
 import { useVendorLogos } from '../../hooks/useVendorLogos';
 import { useSkeletonLoading } from '../../hooks/useSkeletonLoading';
 import { usePagedGrid } from '../../hooks/usePagedGrid';
-import { compareBoardsBySupport, staggerDelay, stripVendorPrefix } from '../../utils';
+import { boardDisplayName, compareBoardsBySupport, staggerDelay, stripVendorPrefix } from '../../utils';
 import { measurePhotoZoom, type PhotoZoom } from '../../utils/imageFit';
 import { UI, SUPPORT_TIER_LABEL } from '../../config';
 import { PanelError, SearchBox, BoardImage, GridPager, MarqueeText, EmptyState } from '../shared';
@@ -44,7 +44,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
       .filter((board) => {
         if (getEffectiveVendor(board) !== manufacturer.id) return false;
         return (
-          board.name.toLowerCase().includes(searchLower) ||
+          boardDisplayName(board).toLowerCase().includes(searchLower) ||
           board.slug.toLowerCase().includes(searchLower)
         );
       })

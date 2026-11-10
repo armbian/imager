@@ -18,7 +18,7 @@ import { getArmbianBoardDetection, getShowWelcome, getAutoconfigProfile } from '
 import { EVENTS, SLUGS, VENDOR, IMAGE_VARIANT, LOCAL_SOURCE_LABEL, UI, SETTINGS, SETTINGS_VIEW, PLATFORM } from './config';
 import { IMAGE_FORMAT, IMAGE_STORAGE, isEdlImage } from './types';
 import { presetIsEmpty } from './config/autoconfig';
-import { DEFAULT_COLOR, buildLocalImage, buildLocalBoard, localManufacturer, focusAfterInput } from './utils';
+import { DEFAULT_COLOR, boardDisplayName, buildLocalImage, buildLocalBoard, localManufacturer, focusAfterInput } from './utils';
 import { imageErrorKey } from './utils/errorUtils';
 import type { BoardInfo, ImageInfo, BlockDevice, SelectionStep, Manufacturer, ArmbianDetectionOutcome, ArmbianReleaseInfo, AutoconfigConfig, CustomImageInfo, FlashExit, LeaveGuard, SettingsView } from './types';
 import './styles/index.css';
@@ -277,7 +277,7 @@ function AppContent() {
       setSelectedImage(null);
       setSelectedDevice(null);
 
-      logInfo('app', `Auto-selected: ${manufacturer.name} → ${board.name} (${board.slug})`);
+      logInfo('app', `Auto-selected: ${manufacturer.name} → ${boardDisplayName(board)} (${board.slug})`);
     } catch (err) {
       logWarn('app', `Failed to auto-select board: ${err}`);
     }
@@ -317,7 +317,7 @@ function AppContent() {
       return 'unknownBoard';
     }
 
-    logInfo('app', `Found matching board in API: ${matchedBoard.name}`);
+    logInfo('app', `Found matching board in API: ${boardDisplayName(matchedBoard)}`);
 
     setDetectedBoard(matchedBoard);
 
@@ -398,7 +398,7 @@ function AppContent() {
       try {
         matchedBoard = await detectBoardFromFilename(filename);
         if (matchedBoard) {
-          logInfo('app', `Detected board from cached filename: ${matchedBoard.name}`);
+          logInfo('app', `Detected board from cached filename: ${boardDisplayName(matchedBoard)}`);
         }
       } catch {
         // Ignore detection errors
@@ -518,7 +518,7 @@ function AppContent() {
       supports_autoconfig: false,
     }));
     if (detectedBoard) {
-      logInfo('app', `Detected board from filename: ${detectedBoard.name} (${detectedBoard.slug})`);
+      logInfo('app', `Detected board from filename: ${boardDisplayName(detectedBoard)} (${detectedBoard.slug})`);
     }
     if (isQdl) {
       logInfo('app', `Custom image detected as QDL archive: ${result.name}`);

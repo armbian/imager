@@ -309,6 +309,35 @@ export function stripVendorPrefix(name: string, vendorName: string): string {
   return /^\p{L}/u.test(rest) ? rest : name;
 }
 
+const vendorPrefixPatterns = new Map<string, RegExp | null>();
+const LOCAL_VENDOR_IDS: readonly string[] = Object.values(SLUGS);
+
+function vendorPrefixPattern(vendorName: string): RegExp | null {
+  let pattern = vendorPrefixPatterns.get(vendorName);
+  if (pattern === undefined) {
+    const letters = vendorName.match(/[\p{L}\p{N}]/gu);
+    pattern = letters ? new RegExp(`^${letters.join('[^\\p{L}\\p{N}]*')}(?![\\p{L}\\p{N}])`, 'iu') : null;
+    vendorPrefixPatterns.set(vendorName, pattern);
+  }
+  return pattern;
+}
+
+/** Whether a board name already opens with its vendor, ignoring case and separators ("BananaPi" for "Banana Pi"). */
+export function hasVendorPrefix(name: string, vendorName?: string | null): boolean {
+  const pattern = vendorName ? vendorPrefixPattern(vendorName) : null;
+  return !pattern || pattern.test(name);
+}
+
+/** A board name led by its vendor, unless the name already carries it. */
+export function withVendorPrefix(name: string, vendorName?: string | null): string {
+  return hasVendorPrefix(name, vendorName) ? name : `${(vendorName ?? '').trim()} ${name}`;
+}
+
+/** Full board label for places with no vendor kicker; local custom/cached entries keep their own name. */
+export function boardDisplayName(board: Pick<BoardInfo, 'name' | 'vendor' | 'vendor_name'>): string {
+  return LOCAL_VENDOR_IDS.includes(board.vendor) ? board.name : withVendorPrefix(board.name, board.vendor_name);
+}
+
 /** How well `text` matches a lowercase needle: 0 at the start, 1 at a word start, 2 inside, -1 no match. */
 export function matchRank(text: string, needle: string): number {
   if (!needle) return 0;
@@ -447,17 +476,17 @@ export function localManufacturer(board: Pick<BoardInfo, 'vendor' | 'vendor_name
   return { id: board.vendor, name: board.vendor_name, color: DEFAULT_COLOR, boardCount: 1 };
 }
 
-/** Board sort comparator: by support tier, then alphabetically. */
-export function compareBoardsBySupport<T extends {
-  support_tier: string;
-  name: string;
-}>(a: T, b: T): number {
+/** Board sort comparator: by support tier, then alphabetically by full name. */
+export function compareBoardsBySupport<T extends Pick<BoardInfo, 'support_tier' | 'name' | 'vendor' | 'vendor_name'>>(
+  a: T,
+  b: T
+): number {
   const aIdx = SUPPORT_TIER_ORDER.indexOf(a.support_tier);
   const bIdx = SUPPORT_TIER_ORDER.indexOf(b.support_tier);
   const aPriority = aIdx === -1 ? SUPPORT_TIER_ORDER.length : aIdx;
   const bPriority = bIdx === -1 ? SUPPORT_TIER_ORDER.length : bIdx;
   if (aPriority !== bPriority) return aPriority - bPriority;
-  return a.name.localeCompare(b.name);
+  return boardDisplayName(a).localeCompare(boardDisplayName(b));
 }
 
 /** Platform from the webview user agent, available before get_system_info answers. */

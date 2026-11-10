@@ -61,7 +61,7 @@ export function SheetCard({ slug, name, board, photo, needle = '', on = false, o
           {tierLabel && <span className={`bp-tier is-${tier}`}>{tierLabel}</span>}
         </span>
         <span className="bps-card__name">
-          <HighlightText text={stripVendorPrefix(name, vendor)} needle={needle} />
+          <HighlightText text={stripVendorPrefix(board?.name ?? name, vendor)} needle={needle} />
         </span>
       </span>
     </>

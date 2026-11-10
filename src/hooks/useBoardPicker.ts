@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import { PARTNER_TIER_RANK, SUPPORT_TIER_ORDER, UI } from '../config';
 import type { AutoconfigProfile, BoardInfo, ProfileBoard, VendorInfo } from '../types';
-import { bestMatchRank, compareBoardsBySupport, matchRank } from '../utils';
+import { bestMatchRank, boardDisplayName, compareBoardsBySupport, matchRank } from '../utils';
 import { useAsyncData } from './useAsyncData';
 import { useBoardPhotos } from './useBoardPhotos';
 import { getAutoconfigProfiles } from './useSettings';
@@ -38,7 +38,7 @@ const tierIndex = (tier: string | undefined) => {
   const at = tier ? SUPPORT_TIER_ORDER.indexOf(tier) : -1;
   return at < 0 ? SUPPORT_TIER_ORDER.length : at;
 };
-const toProfileBoard = (b: BoardInfo): ProfileBoard => ({ slug: b.slug, name: b.name });
+const toProfileBoard = (b: BoardInfo): ProfileBoard => ({ slug: b.slug, name: boardDisplayName(b) });
 
 /** Ranked brands whose name contains the needle: prefix first, then word start, then the bigger brand. */
 export function rankVendors(vendors: readonly BoardVendor[], needle: string): BoardVendor[] {
@@ -136,7 +136,7 @@ export function useBoardPicker(selected: ProfileBoard[], onChange: BoardsUpdate,
     const pool = vendor ? ordered.filter((b) => b.vendor === vendor) : ordered;
     if (!needle) return pool;
     return pool
-      .map((b, i) => ({ b, i, rank: bestMatchRank([b.name, b.vendor_name || '', b.slug], needle) }))
+      .map((b, i) => ({ b, i, rank: bestMatchRank([b.name, boardDisplayName(b), b.vendor_name || '', b.slug], needle) }))
       .filter((x) => x.rank >= 0)
       .sort((x, y) => x.rank - y.rank || x.i - y.i)
       .map((x) => x.b);
