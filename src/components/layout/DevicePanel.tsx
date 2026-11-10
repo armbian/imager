@@ -172,7 +172,6 @@ export function DevicePanel({
     if (!rawDevices) return;
     if (devicesChanged(prevDevicesRef.current, rawDevices)) {
       prevDevicesRef.current = rawDevices;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Sync external device data for change detection
       setDevices(sortDevices(rawDevices));
     }
   }, [rawDevices]);

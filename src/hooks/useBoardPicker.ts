@@ -54,7 +54,7 @@ function useBoardCatalog(profileId: string | undefined) {
   const { data: boards, loading, error, reload } = useAsyncData<BoardInfo[]>(() => getBoards(), []);
   const { data: vendorInfo } = useAsyncData<VendorInfo[]>(() => getVendors().catch(() => []), []);
   const { data: profiles } = useAsyncData<AutoconfigProfile[]>(() => getAutoconfigProfiles().catch(() => []), []);
-  const { cachedUrls: logos } = useVendorLogos(boards, true);
+  const { cachedUrls: logos } = useVendorLogos(boards);
   const { showSkeleton } = useSkeletonLoading(loading, !!boards || !loading);
 
   const ordered = useMemo(() => [...(boards ?? [])].sort(compareBoardsBySupport), [boards]);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { getErrorMessage } from '../utils';
 
 /** Result of async data fetching */
@@ -37,7 +37,9 @@ function useAsyncDataCore<T>(
   const fetchIdRef = useRef(0);
   // Avoids recreating the reload callback when fetcher changes
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
+  useLayoutEffect(() => {
+    fetcherRef.current = fetcher;
+  }, [fetcher]);
 
   const reload = useCallback(async () => {
     const currentFetchId = ++fetchIdRef.current;

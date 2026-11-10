@@ -220,6 +220,7 @@ function AppContent() {
   // Resolve the picked profile id to its config; null when no profile is selected
   useEffect(() => {
     if (!selectedProfileId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- a deselected profile must stop autoconfig injection at once
       setAutoconfig(null);
       return;
     }
@@ -286,6 +287,7 @@ function AppContent() {
   // the flow instead of skipping the landing.
   useEffect(() => {
     if (!showWelcome && pendingAutoSelect) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- applies the queued detection once the landing is gone
       autoSelectBoard(pendingAutoSelect);
       setPendingAutoSelect(null);
     }

@@ -31,7 +31,7 @@ export function BoardPanel({ manufacturer, onSelect }: BoardPanelProps) {
 
   const { data: boards, loading, error: loadError, reload } = useAsyncData<BoardInfo[]>(() => getBoards(), []);
   const { error, retrying, retry, panelRef } = useErrorRetry(loadError, loading, reload);
-  const { isLoaded: vendorLogosChecked, getEffectiveVendor } = useVendorLogos(boards, true);
+  const { isLoaded: vendorLogosChecked, getEffectiveVendor } = useVendorLogos(boards);
 
   const ready = vendorLogosChecked || (!loading && !boards?.length);
   const { showSkeleton } = useSkeletonLoading(loading, ready);

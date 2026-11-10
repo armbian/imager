@@ -36,7 +36,7 @@ export function ManufacturerPanel({ onSelect }: ManufacturerPanelProps) {
   // Vendors fail with the boards, so a retry refetches both or tier badges and order stay missing.
   const reloadAll = useCallback(() => Promise.all([reload(), reloadVendors()]), [reload, reloadVendors]);
   const { error, retrying, retry, panelRef } = useErrorRetry(loadError, loading, reloadAll);
-  const { manufacturers, isLoaded } = useManufacturerList(boards, true, search);
+  const { manufacturers, isLoaded } = useManufacturerList(boards, search);
 
   // Logos never load for an empty board list, so that case is ready as soon as the fetch ends.
   const ready = isLoaded || (!loading && !boards?.length);
