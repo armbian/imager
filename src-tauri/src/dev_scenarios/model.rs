@@ -205,7 +205,7 @@ impl FakeDevice {
                     "{id}: a virtual disk takes its size from its file, sizeBytes must be 0"
                 ));
             }
-        } else if self.size_bytes == 0 || self.size_bytes % dev::SIM_SECTOR_SIZE != 0 {
+        } else if self.size_bytes == 0 || !self.size_bytes.is_multiple_of(dev::SIM_SECTOR_SIZE) {
             return Err(format!(
                 "{id}: sizeBytes must be a positive multiple of {}",
                 dev::SIM_SECTOR_SIZE
