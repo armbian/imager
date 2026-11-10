@@ -8,6 +8,7 @@ import { useAsyncData } from '../../hooks/useAsyncData';
 import { getBoards } from '../../hooks/useTauri';
 import { getArmbianBoardDetection } from '../../hooks/useSettings';
 import { EVENTS, SETTINGS } from '../../config';
+import { boardDisplayName } from '../../utils';
 import { DEV_DETECTION_NOTES, DEV_SCENARIOS, devDefaultHostBoard, devHostBoardOptions } from '../../config/devScenarios';
 import type { DevScenarioApi } from '../../hooks/useDevScenario';
 import type { ArmbianDetectionOutcome, BoardInfo, DevScenariosStatus } from '../../types';
@@ -48,7 +49,7 @@ export function DevHost({ dev, status, onRunDetection }: DevHostProps) {
 
   const setHost = (board: BoardInfo | null) => {
     setOutcome(null);
-    return dev.patch((s) => ({ ...s, armbianHost: board ? { board: board.slug, board_name: board.name } : null }));
+    return dev.patch((s) => ({ ...s, armbianHost: board ? { board: board.slug, board_name: boardDisplayName(board) } : null }));
   };
 
   const pick = (next: string) => {

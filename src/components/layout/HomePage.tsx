@@ -6,7 +6,7 @@ import { Factory, Cpu, Database, HardDrive, Usb, FolderOpen, Archive, Check, Arr
 import { useTranslation } from 'react-i18next';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { IMAGE_VARIANT } from '../../config';
-import { isDetectedBoard, formatImageIdentity, formatKernelLabel } from '../../utils';
+import { boardDisplayName, isDetectedBoard, formatImageIdentity, formatKernelLabel } from '../../utils';
 import type { BoardInfo, ImageInfo, BlockDevice, Manufacturer } from '../../types';
 import { deriveFlashMethod, isEdlImage } from '../../types';
 import { MarqueeText, MotdTip, BoardImage, UpdateEntry } from '../shared';
@@ -279,7 +279,7 @@ export function HomePage({
       summary={deviceSummary}
       boardImage={boardImage}
       boardSlug={selectedBoard && isDetectedBoard(selectedBoard) ? selectedBoard.slug : null}
-      boardName={selectedBoard && isDetectedBoard(selectedBoard) ? selectedBoard.name : null}
+      boardName={selectedBoard && isDetectedBoard(selectedBoard) ? boardDisplayName(selectedBoard) : null}
       selectedDevice={selectedDevice}
       onSelect={onSelectDevice}
       onConfirm={onConfirmDevice}

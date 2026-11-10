@@ -13,7 +13,7 @@ import { BoardBadges } from '../shared/BoardBadges';
 import { BoardImage } from '../shared/BoardImage';
 import { MarqueeText } from '../shared/MarqueeText';
 import { useToasts } from '../../hooks/useToasts';
-import { formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage, splitUfsKernel, hexToRgba } from '../../utils';
+import { boardDisplayName, formatBytes, parseArmbianFilename, formatRelativeTime, splitArmbianVersion, getErrorMessage, splitUfsKernel, hexToRgba } from '../../utils';
 import { EVENTS, UI, COLORS } from '../../config';
 import { getOsInfo } from '../../config/os-info';
 import { getMonoLogo } from '../../config/mono-logos';
@@ -201,7 +201,7 @@ function CacheManagerDialog({ onClose, returnFocusRef }: Omit<CacheManagerModalP
       const board = slug ? allBoards.find((b) => b.slug === slug) ?? null : null;
       return {
         key,
-        name: board?.name ?? images[0]?.board_name ?? t('settings.cache.unknownBoard'),
+        name: board ? boardDisplayName(board) : images[0]?.board_name ?? t('settings.cache.unknownBoard'),
         board,
         imageUrl: slug ? boardImageUrls[slug] ?? null : null,
         images,

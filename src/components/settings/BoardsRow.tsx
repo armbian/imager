@@ -63,9 +63,9 @@ export function BoardsRow({ boards, onEdit, onRemove, required = false, slots: f
 
   // The card fades out first, then the board leaves the list; the page clamps through safePage
   const remove = (slug: string) => leave(slug, () => onRemove(slug));
-  // Profiles store slug and name only; the vendor line comes from the cached catalog and is left out offline
+  // Profiles store slug and name only; the vendor line and API name come from the cached catalog, left out offline
   const { data: catalog } = useAsyncData<BoardInfo[]>(() => getBoards().catch(() => []), []);
-  const vendorOf = useMemo(() => new Map((catalog ?? []).map((b) => [b.slug, b.vendor_name || ''])), [catalog]);
+  const bySlug = useMemo(() => new Map((catalog ?? []).map((b) => [b.slug, b])), [catalog]);
 
   const addLabel = t('settings.autoconfig.editor.addBoard');
 
@@ -90,7 +90,8 @@ export function BoardsRow({ boards, onEdit, onRemove, required = false, slots: f
         <>
           <ul ref={listRef} className="boards-row__list" style={{ gridTemplateColumns: `repeat(${slots}, minmax(0, 1fr))` }}>
             {shown.map((b, index) => {
-              const vendor = vendorOf.get(b.slug) ?? '';
+              const entry = bySlug.get(b.slug);
+              const vendor = entry?.vendor_name || '';
               return (
                 <li key={b.slug}>
                   {/* Keyed by slug: a page change mounts new cards that play the home entrance, a removal replays nothing */}
@@ -104,7 +105,7 @@ export function BoardsRow({ boards, onEdit, onRemove, required = false, slots: f
                     <span className="bps-card__info">
                       {vendor && <span className="bps-card__vendor">{vendor}</span>}
                       <span className="bps-card__name" onMouseEnter={(e) => titleIfClamped(e, b.name)}>
-                        {stripVendorPrefix(b.name, vendor)}
+                        {stripVendorPrefix(entry?.name ?? b.name, vendor)}
                       </span>
                     </span>
                     <button
