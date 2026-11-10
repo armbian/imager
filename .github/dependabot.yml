@@ -10,18 +10,37 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "UTC"
-    # Group low-risk type definition updates together
+    # Majors come as single PRs; minors and patches are grouped
     groups:
-      dev-dependencies:
+      dev-tooling:
         patterns:
           - "@types/*"
+          - "@eslint/*"
+          - "@vitejs/*"
           - "eslint*"
+          - "globals"
+          - "typescript"
           - "typescript-eslint"
+          - "vite"
         exclude-patterns:
           - "@types/react"
           - "@types/react-dom"
-    # Maintain version constraints (don't update lock file only)
-    versioning-strategy: "increase"
+        update-types: ["minor", "patch"]
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+        update-types: ["minor", "patch"]
+      npm-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    # Tauri crates and @tauri-apps packages must share a minor or tauri build fails: bump those by hand
+    ignore:
+      - dependency-name: "@tauri-apps/*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+    versioning-strategy: "increase-if-necessary"
     open-pull-requests-limit: 10
     commit-message:
       prefix: "deps"
@@ -42,7 +61,28 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "UTC"
-    versioning-strategy: "increase"
+    # flate2 (gzip images) and nusb (QDL transport) sit on write paths: single PRs, tested on hardware
+    groups:
+      rust-minor-patch:
+        patterns: ["*"]
+        exclude-patterns:
+          - "flate2"
+          - "nusb"
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "tauri"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "tauri-build"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      - dependency-name: "tauri-plugin-*"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # zbus is pinned and moves only together with a udisks2 major
+      - dependency-name: "zbus"
+      - dependency-name: "udisks2"
+        update-types: ["version-update:semver-major"]
+      # qdlrs is pinned to a reviewed git rev (UFS provisioning path)
+      - dependency-name: "qdl"
+    versioning-strategy: "increase-if-necessary"
     open-pull-requests-limit: 10
     commit-message:
       prefix: "deps"
@@ -51,12 +91,6 @@ updates:
       - "dependencies"
       - "rust"
     rebase-strategy: "auto"
-    # Ignore major Tauri updates (requires manual migration)
-    ignore:
-      - dependency-name: "tauri"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "tauri-cli"
-        update-types: ["version-update:semver-major"]
 
   # ===========================================
   # GitHub Actions Dependencies
@@ -68,9 +102,9 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "UTC"
-    # Separate PRs for each action
-    groups: []
-    versioning-strategy: "increase"
+    groups:
+      github-actions:
+        patterns: ["*"]
     open-pull-requests-limit: 10
     commit-message:
       prefix: "ci"
