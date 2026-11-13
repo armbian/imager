@@ -12,8 +12,11 @@ use crate::utils::format_size;
 use crate::{log_error, log_info, log_warn};
 
 use super::types::{
-    classify_windows_disk, normalize_bus_type, parse_extent_disk_numbers, BlockDevice,
-    WindowsDiskSignals, DISK_EXTENTS_HEADER_SIZE, DISK_EXTENT_SIZE,
+    classify_windows_disk, normalize_bus_type, parse_disk_geometry_ex, parse_extent_disk_numbers,
+    parse_media_write_protection, BlockDevice, MediaWriteProtection, WindowsDiskSignals,
+    DEVICE_MEDIA_INFO_SIZE, DISK_EXTENTS_HEADER_SIZE, DISK_EXTENT_SIZE,
+    DISK_GEOMETRY_EX_SIZE_OFFSET, DISK_GEOMETRY_MEDIA_TYPE_OFFSET, MEDIA_CHARACTERISTICS_OFFSET,
+    MEDIA_TYPES_COUNT_OFFSET, MEDIA_TYPES_DEVICE_TYPE_OFFSET, MEDIA_TYPES_HEADER_SIZE,
 };
 
 #[cfg(target_os = "windows")]
@@ -27,8 +30,9 @@ use windows_sys::Win32::{
         FILE_SHARE_WRITE, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, OPEN_EXISTING,
     },
     System::Ioctl::{
-        RemovableMedia, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX, IOCTL_STORAGE_GET_HOTPLUG_INFO,
-        MEDIA_TYPE,
+        RemovableMedia, DEVICE_MEDIA_INFO, DEVICE_MEDIA_INFO_0_0, DEVICE_MEDIA_INFO_0_1,
+        DISK_GEOMETRY, DISK_GEOMETRY_EX, GET_MEDIA_TYPES, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
+        IOCTL_STORAGE_GET_HOTPLUG_INFO, IOCTL_STORAGE_GET_MEDIA_TYPES_EX,
     },
     System::SystemInformation::GetSystemWindowsDirectoryW,
     System::IO::DeviceIoControl,
@@ -36,14 +40,35 @@ use windows_sys::Win32::{
 
 // IOCTL Codes
 const IOCTL_STORAGE_QUERY_PROPERTY: u32 = 0x002D1400;
-/// Reports media characteristics incl. write protection; beats IOCTL_DISK_IS_WRITABLE for SD lock switches.
-const IOCTL_STORAGE_GET_MEDIA_TYPES_EX: u32 = 0x002D0030;
 
 const DEFAULT_DISK_MODEL: &str = "Physical Drive";
 
-// Write Protection Constants
-/// DeviceMediaInfo.media_characteristics bit set when the media is write-protected.
-const MEDIA_WRITE_PROTECTED: u32 = 0x00000100;
+const GEOMETRY_BUFFER_SIZE: usize = 256;
+const MEDIA_TYPES_BUFFER_SIZE: usize = 2048;
+
+// The byte parsers in types.rs must match the windows-sys layouts.
+const _: () = {
+    use std::mem::{offset_of, size_of};
+    use windows_sys::Win32::Storage::FileSystem::FILE_DEVICE_DISK;
+    use windows_sys::Win32::System::Ioctl::{MEDIA_CURRENTLY_MOUNTED, MEDIA_WRITE_PROTECTED};
+
+    assert!(offset_of!(GET_MEDIA_TYPES, DeviceType) == MEDIA_TYPES_DEVICE_TYPE_OFFSET);
+    assert!(offset_of!(GET_MEDIA_TYPES, MediaInfoCount) == MEDIA_TYPES_COUNT_OFFSET);
+    assert!(offset_of!(GET_MEDIA_TYPES, MediaInfo) == MEDIA_TYPES_HEADER_SIZE);
+    assert!(size_of::<DEVICE_MEDIA_INFO>() == DEVICE_MEDIA_INFO_SIZE);
+    assert!(
+        offset_of!(DEVICE_MEDIA_INFO_0_0, MediaCharacteristics) == MEDIA_CHARACTERISTICS_OFFSET
+    );
+    assert!(
+        offset_of!(DEVICE_MEDIA_INFO_0_1, MediaCharacteristics) == MEDIA_CHARACTERISTICS_OFFSET
+    );
+    assert!(offset_of!(DISK_GEOMETRY_EX, Geometry) == 0);
+    assert!(offset_of!(DISK_GEOMETRY, MediaType) == DISK_GEOMETRY_MEDIA_TYPE_OFFSET);
+    assert!(offset_of!(DISK_GEOMETRY_EX, DiskSize) == DISK_GEOMETRY_EX_SIZE_OFFSET);
+    assert!(super::types::FILE_DEVICE_DISK == FILE_DEVICE_DISK);
+    assert!(super::types::MEDIA_WRITE_PROTECTED == MEDIA_WRITE_PROTECTED);
+    assert!(super::types::MEDIA_CURRENTLY_MOUNTED == MEDIA_CURRENTLY_MOUNTED);
+};
 
 // Storage Property Constants
 const STORAGE_DEVICE_PROPERTY: u32 = 0;
@@ -74,53 +99,6 @@ struct STORAGE_PROPERTY_QUERY {
     property_id: u32,
     query_type: u32,
     additional_parameters: [u8; 1],
-}
-
-/// DISK_GEOMETRY_EX - returned by IOCTL_DISK_GET_DRIVE_GEOMETRY_EX
-#[repr(C)]
-#[derive(Debug, Clone)]
-struct DiskGeometryEx {
-    geometry: DiskGeometry,
-    disk_size: u64,
-    data: [u8; 1],
-}
-
-/// DISK_GEOMETRY - disk geometry parameters
-#[repr(C)]
-#[derive(Debug, Clone)]
-struct DiskGeometry {
-    cylinders: i64,
-    media_type: MEDIA_TYPE,
-    tracks_per_cylinder: u32,
-    sectors_per_track: u32,
-    bytes_per_sector: u32,
-}
-
-/// GET_MEDIA_TYPES structure header returned by IOCTL_STORAGE_GET_MEDIA_TYPES_EX
-/// See: https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ni-winioctl-ioctl_storage_get_media_types_ex
-#[repr(C)]
-#[derive(Debug, Clone)]
-struct GetMediaTypes {
-    /// Device type (FILE_DEVICE_*)
-    device_type: u32,
-    /// Number of DEVICE_MEDIA_INFO structures that follow
-    media_info_count: u32,
-    // Followed by array of DEVICE_MEDIA_INFO
-}
-
-/// DEVICE_MEDIA_INFO: media characteristics incl. write protection.
-/// See: https://learn.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-device_media_info
-#[repr(C)]
-#[derive(Debug, Clone)]
-struct DeviceMediaInfo {
-    cylinders: i64,
-    media_type: u32,
-    tracks_per_cylinder: u32,
-    sectors_per_track: u32,
-    bytes_per_sector: u32,
-    number_media_sides: u32,
-    /// Bitmask of media characteristics - check MEDIA_WRITE_PROTECTED (0x100)
-    media_characteristics: u32,
 }
 
 // External Win32 API
@@ -212,11 +190,9 @@ fn extract_ascii_string(buffer: &[u8], offset: usize) -> String {
     }
 }
 
-/// Check MEDIA_WRITE_PROTECTED via IOCTL_STORAGE_GET_MEDIA_TYPES_EX: detects an SD
-/// card's physical lock switch, which IOCTL_DISK_IS_WRITABLE misses.
-#[cfg(target_os = "windows")]
-fn is_disk_read_only(handle: HANDLE) -> bool {
-    let mut buffer = [0u8; 2048];
+// Err carries GetLastError; callers treat it as writable.
+fn query_write_protection(handle: HANDLE) -> Result<MediaWriteProtection, u32> {
+    let mut buffer = [0u8; MEDIA_TYPES_BUFFER_SIZE];
     let mut bytes_returned: u32 = 0;
 
     let result = unsafe {
@@ -232,28 +208,24 @@ fn is_disk_read_only(handle: HANDLE) -> bool {
         )
     };
 
-    const HEADER_SIZE: u32 = 8; // device_type + media_info_count
-    const MEDIA_INFO_SIZE: u32 = 32;
-
-    // On failure or short data, assume writable.
-    if result == 0 || bytes_returned < HEADER_SIZE {
-        return false;
+    if result == 0 {
+        return Err(unsafe { GetLastError() });
     }
+    Ok(parse_media_write_protection(&buffer, bytes_returned))
+}
 
-    let header = unsafe { &*(buffer.as_ptr() as *const GetMediaTypes) };
-
-    if header.media_info_count == 0 {
-        return false;
+fn format_write_protection(protection: &Result<MediaWriteProtection, u32>) -> String {
+    match protection {
+        Ok(MediaWriteProtection {
+            characteristics: Some(c),
+            ..
+        }) => format!("media_characteristics=0x{c:08X}"),
+        Ok(MediaWriteProtection {
+            characteristics: None,
+            ..
+        }) => "media_characteristics=none".to_string(),
+        Err(err) => format!("media_types_error={err}"),
     }
-
-    if bytes_returned < HEADER_SIZE + MEDIA_INFO_SIZE {
-        return false;
-    }
-
-    let media_info =
-        unsafe { &*(buffer.as_ptr().add(HEADER_SIZE as usize) as *const DeviceMediaInfo) };
-
-    (media_info.media_characteristics & MEDIA_WRITE_PROTECTED) != 0
 }
 
 struct DeviceDescriptor {
@@ -580,7 +552,7 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
                 _ => continue,
             };
 
-            let mut geometry_bytes = [0u8; 256];
+            let mut geometry_bytes = [0u8; GEOMETRY_BUFFER_SIZE];
             let mut bytes_returned = 0u32;
 
             let result = unsafe {
@@ -612,19 +584,25 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
                 continue;
             }
 
-            let geometry = unsafe { &*(geometry_bytes.as_ptr() as *const DiskGeometryEx) };
-            let size = geometry.disk_size;
-            let media_type = geometry.geometry.media_type;
+            let Some((media_type, size)) = parse_disk_geometry_ex(&geometry_bytes, bytes_returned)
+            else {
+                unsafe { CloseHandle(handle) };
+                continue;
+            };
 
-            // Must query before closing the handle.
-            let is_read_only = is_disk_read_only(handle);
+            if size == 0 {
+                unsafe { CloseHandle(handle) };
+                continue;
+            }
+
+            let write_protection = query_write_protection(handle);
             let hotplug_flags = query_hotplug_flags(handle);
 
             unsafe { CloseHandle(handle) };
 
-            if size == 0 {
-                continue;
-            }
+            let is_read_only = write_protection
+                .as_ref()
+                .is_ok_and(|protection| protection.is_read_only);
 
             let descriptor = query_device_properties(disk_number);
             let drive_letters = get_drive_letters_for_disk(disk_number);
@@ -647,13 +625,15 @@ pub fn get_block_devices() -> Result<Vec<BlockDevice>, String> {
 
             classification_lines.push(format!(
                 "Disk {disk_number} \"{}\": bus={:?} ({:?}), geometry_media_type={media_type}, \
-                 descriptor_removable={:?}, {}, on_windows_disk={on_windows_disk}, \
-                 has_c_drive={has_c_drive}, is_removable={}, is_system={}",
+                 descriptor_removable={:?}, {}, {}, read_only={is_read_only}, \
+                 on_windows_disk={on_windows_disk}, has_c_drive={has_c_drive}, \
+                 is_removable={}, is_system={}",
                 descriptor.model,
                 descriptor.bus_code,
                 descriptor.bus_type,
                 descriptor.removable_media_byte,
                 format_hotplug_flags(hotplug_flags),
+                format_write_protection(&write_protection),
                 class.is_removable,
                 class.is_system,
             ));
