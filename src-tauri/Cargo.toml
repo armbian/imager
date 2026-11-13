@@ -41,7 +41,7 @@ hex = "0.4"
 base64 = "0.22"
 dirs = "5"
 # QDL (Qualcomm Device Loader) for EDL-based board flashing (e.g., Arduino UNO Q)
-qdl = { git = "https://github.com/qualcomm/qdlrs", rev = "4cc11c81bad548504ec243493d30f5fb33c6ceff", features = ["usb"] }
+qdl = { git = "https://github.com/armbian/qdlrs", rev = "f7b27972916ce2a29887b34a48ebe22ba9756edf", features = ["usb"] }
 nusb = "0.2"
 tar = "0.4"
 xmltree = { version = "0.11", features = ["attribute-order"] }

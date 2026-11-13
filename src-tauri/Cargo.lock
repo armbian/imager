@@ -3777,7 +3777,7 @@ checksum = "d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea"
 [[package]]
 name = "qdl"
 version = "0.1.0"
-source = "git+https://github.com/qualcomm/qdlrs?rev=4cc11c81bad548504ec243493d30f5fb33c6ceff#4cc11c81bad548504ec243493d30f5fb33c6ceff"
+source = "git+https://github.com/armbian/qdlrs?rev=f7b27972916ce2a29887b34a48ebe22ba9756edf#f7b27972916ce2a29887b34a48ebe22ba9756edf"
 dependencies = [
  "anstream",
  "anyhow",
