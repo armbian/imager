@@ -50,6 +50,8 @@ export function getDeviceType(device: BlockDevice): DeviceType {
   const path = device.path.toLowerCase();
   const model = device.model.toLowerCase();
 
+  if (busType !== 'usb' && model.includes('card reader')) return 'sd';
+
   // Bus type detection (most reliable)
   if (busType === 'nvme' || busType.includes('nvme')) return 'nvme';
   if (busType === 'sas') return 'sas';
