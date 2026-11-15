@@ -363,7 +363,7 @@ export type FlashExit = () => void | Promise<void>;
 
 // === Dev scenarios emulator (debug builds only; mirrors src-tauri/src/dev_scenarios/model.rs) ===
 
-export type DevFlashOutcome = 'success' | 'writeError' | 'verifyMismatch' | 'unplug' | 'authDenied';
+export type DevFlashOutcome = 'success' | 'writeError' | 'verifyMismatch' | 'unplug' | 'authDenied' | 'gptFinalizing' | 'gptRelocateSkipped' | 'gptFakeCapacity' | 'gptRelocateFailed';
 export type DevApiFault = 'normal' | 'offline' | 'slow' | 'empty' | 'serverError';
 export type DevDownloadFault = 'normal' | 'offline' | 'slow' | 'shaMismatch';
 

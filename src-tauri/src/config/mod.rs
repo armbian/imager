@@ -330,6 +330,10 @@ pub mod dev {
         "0000000000000000000000000000000000000000000000000000000000000000";
     pub const QDL_STAGE_MS: u64 = 400;
     pub const QDL_SIM_PARTITIONS: [&str; 3] = ["boot", "dtb", "rootfs"];
+    /// How long the simulated backup GPT relocation keeps `is_finalizing` set
+    pub const SIM_FINALIZE_MS: u64 = 1_500;
+    /// Detail after the tag of a simulated relocation warning or error
+    pub const SIM_GPT_DETAIL: &str = "sim";
 
     pub const TEST_IMAGE_DIR: &str = "dev-test-images";
     /// Generated test image name: `<prefix><size><unit>[<unaligned>]<ext>`
