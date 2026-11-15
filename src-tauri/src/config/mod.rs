@@ -106,6 +106,12 @@ pub mod flash {
     /// `prep_stage` values; twin of `FLASH_PREP_STAGE` in src/config/constants.ts
     pub const PREP_STAGE_COPYING: &str = "copying";
     pub const PREP_STAGE_APPLYING_PROFILE: &str = "applying_profile";
+
+    /// Logical sector size the backup GPT relocation runs on; image GPTs are built for 512
+    pub const GPT_IMAGE_SECTOR_SIZE: u64 = 512;
+
+    /// Largest GPT partition entry array the relocation accepts (bytes)
+    pub const GPT_MAX_ENTRY_ARRAY_BYTES: u64 = 1024 * 1024;
 }
 
 /// First-boot autoconfig preset injection

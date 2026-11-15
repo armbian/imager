@@ -14,9 +14,13 @@ use std::sync::Arc;
 
 use crate::config;
 use crate::devices::{device_changed_error, FlashTarget, TAG_INVALID_PATH};
-use crate::flash::{open_image, reject_simulated, sync_device, unmount_device, FlashState};
+use crate::flash::gpt::DeviceGeometry;
+use crate::flash::{
+    finalize_gpt, may_finalize, open_image, reject_simulated, sync_device, unmount_device,
+    FileSectorDevice, FlashState,
+};
 use crate::utils::{bytes_to_gb, ProgressTracker};
-use crate::{log_debug, log_error, log_info};
+use crate::{log_debug, log_error, log_info, log_warn};
 
 const MODULE: &str = "flash::linux::writer";
 
@@ -85,7 +89,21 @@ fn open_device_direct(device_path: &str) -> Result<File, String> {
         .map_err(|e| format!("Failed to open device {}: {}", device_path, e))
 }
 
-fn check_opened_device(device: &mut File, target: &FlashTarget) -> Result<(), String> {
+/// Logical sector size from BLKSSZGET; 0 (relocation skips) when the ioctl fails.
+fn logical_sector_size(device: &File) -> u64 {
+    let mut size: libc::c_int = 0;
+    if unsafe { libc::ioctl(device.as_raw_fd(), libc::BLKSSZGET, &mut size) } != 0 {
+        log_warn!(
+            MODULE,
+            "Could not read the logical sector size: {}",
+            std::io::Error::last_os_error()
+        );
+        return 0;
+    }
+    u64::try_from(size).unwrap_or(0)
+}
+
+fn check_opened_device(device: &mut File, target: &FlashTarget) -> Result<u64, String> {
     let metadata = device
         .metadata()
         .map_err(|e| format!("Failed to stat device {}: {}", target.path(), e))?;
@@ -106,7 +124,7 @@ fn check_opened_device(device: &mut File, target: &FlashTarget) -> Result<(), St
     if size != target.size() {
         return Err(device_changed_error(target.path(), target.size(), size));
     }
-    Ok(())
+    Ok(size)
 }
 
 /// Flash an image to a block device
@@ -157,10 +175,13 @@ pub async fn flash_image(
         }
     };
 
-    if let Err(e) = check_opened_device(&mut device, target) {
-        log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
-        return Err(e);
-    }
+    let device_size = match check_opened_device(&mut device, target) {
+        Ok(size) => size,
+        Err(e) => {
+            log_error!(MODULE, "Refusing to write {}: {}", device_path, e);
+            return Err(e);
+        }
+    };
 
     let device_fd = device.as_raw_fd();
 
@@ -231,7 +252,7 @@ pub async fn flash_image(
     crate::flash::fsync_checked(device_fd, written)?;
     sync_device(device_path);
 
-    if verify {
+    let verified = if verify {
         log_info!(MODULE, "Starting verification...");
         state.is_verifying.store(true, Ordering::SeqCst);
         state.verified_bytes.store(0, Ordering::SeqCst);
@@ -245,8 +266,27 @@ pub async fn flash_image(
             .seek(SeekFrom::Start(0))
             .map_err(|e| format!("Failed to seek device: {}", e))?;
 
-        verify_written_data(&mut image_file, &mut device, state.clone())?;
+        verify_written_data(&mut image_file, &mut device, state.clone())
+    } else {
+        Ok(())
+    };
+    if !may_finalize(&verified) {
+        return verified;
     }
+
+    let geometry = DeviceGeometry {
+        size: device_size,
+        sector_size: logical_sector_size(&device),
+    };
+    finalize_gpt(
+        &mut FileSectorDevice(&device),
+        &mut image_file,
+        image_size,
+        geometry,
+        &state,
+    )?;
+    sync_device(device_path);
+    verified?;
 
     log_info!(MODULE, "Flash complete!");
     Ok(())

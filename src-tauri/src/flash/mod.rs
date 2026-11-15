@@ -4,6 +4,7 @@
 //! Platform-specific image flashing: privilege escalation + raw device writing.
 //! macOS uses authopen (Touch ID), Linux uses pkexec, Windows needs Administrator.
 
+pub(crate) mod gpt;
 pub(crate) mod verify;
 
 #[cfg(target_os = "linux")]
@@ -120,9 +121,12 @@ pub struct FlashState {
     pub verified_bytes: AtomicU64,
     pub is_verifying: AtomicBool,
     pub is_cancelled: AtomicBool,
+    /// The write is done and the backup GPT is being moved; cancel no longer stops anything.
+    pub is_finalizing: AtomicBool,
     pub error: Mutex<Option<String>>,
     pub qdl: QdlProgress,
     prep_stage: std::sync::Mutex<Option<&'static str>>,
+    warning: std::sync::Mutex<Option<String>>,
     slot: Arc<Mutex<()>>,
     session_generation: AtomicU64,
     cancelled_generation: AtomicU64,
@@ -137,9 +141,11 @@ impl FlashState {
             verified_bytes: AtomicU64::new(0),
             is_verifying: AtomicBool::new(false),
             is_cancelled: AtomicBool::new(false),
+            is_finalizing: AtomicBool::new(false),
             error: Mutex::new(None),
             qdl: QdlProgress::new(),
             prep_stage: std::sync::Mutex::new(None),
+            warning: std::sync::Mutex::new(None),
             slot: Arc::new(Mutex::new(())),
             session_generation: AtomicU64::new(0),
             cancelled_generation: AtomicU64::new(0),
@@ -212,8 +218,10 @@ impl FlashState {
         self.written_bytes.store(0, Ordering::SeqCst);
         self.verified_bytes.store(0, Ordering::SeqCst);
         self.is_verifying.store(false, Ordering::SeqCst);
+        self.is_finalizing.store(false, Ordering::SeqCst);
         self.qdl.reset();
         self.set_prep_stage(None);
+        self.set_warning(None);
     }
 
     pub fn set_prep_stage(&self, stage: Option<&'static str>) {
@@ -222,6 +230,18 @@ impl FlashState {
 
     pub fn prep_stage(&self) -> Option<&'static str> {
         *self.prep_stage.lock().unwrap_or_else(|p| p.into_inner())
+    }
+
+    pub fn set_warning(&self, warning: Option<String>) {
+        *self.warning.lock().unwrap_or_else(|p| p.into_inner()) = warning;
+    }
+
+    /// Tagged warning from a flash that still succeeded; kept until the next flash starts.
+    pub fn warning(&self) -> Option<String> {
+        self.warning
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone()
     }
 
     pub fn ensure_not_cancelled(&self) -> Result<(), String> {
@@ -439,6 +459,117 @@ pub(crate) fn sync_device(_device_path: &str) {
     #[cfg(any(target_os = "linux", target_os = "macos"))]
     {
         let _ = Command::new("sync").output();
+    }
+}
+
+/// The full image is on the device after a passed, skipped or cancelled verify; other verify errors stop the flash.
+pub(crate) fn may_finalize(verified: &Result<(), String>) -> bool {
+    verified
+        .as_ref()
+        .err()
+        .is_none_or(|e| verify::is_verify_cancel(e))
+}
+
+/// Move the backup GPT to the device end; a warning lands in the flash state, `Err` means the device needs a new flash.
+pub(crate) fn finalize_gpt<D: gpt::SectorDevice, I: io::Read + io::Seek>(
+    dev: &mut D,
+    image: &mut I,
+    image_size: u64,
+    geometry: gpt::DeviceGeometry,
+    state: &FlashState,
+) -> Result<(), String> {
+    state.is_finalizing.store(true, Ordering::SeqCst);
+    let result = gpt::relocate_backup_gpt(dev, image, image_size, geometry);
+    state.is_finalizing.store(false, Ordering::SeqCst);
+    if let Ok(gpt::Outcome::Warning(w)) = &result {
+        state.set_warning(Some(w.clone()));
+    }
+    result.map(|_| ())
+}
+
+/// Zeroed `len` bytes starting on an `align` boundary, for raw devices that reject unaligned buffers.
+pub(crate) struct AlignedBuf {
+    raw: Vec<u8>,
+    start: usize,
+    len: usize,
+}
+
+impl AlignedBuf {
+    pub(crate) fn new(len: usize, align: usize) -> io::Result<Self> {
+        if !align.is_power_of_two() {
+            return Err(io::Error::other(format!(
+                "buffer alignment {align} is not a power of two"
+            )));
+        }
+        let total = len
+            .checked_add(align)
+            .ok_or_else(|| io::Error::other(format!("buffer of {len} bytes is too large")))?;
+        let raw = vec![0u8; total];
+        let start = raw.as_ptr().align_offset(align);
+        if start >= align {
+            return Err(io::Error::other("cannot align the I/O buffer"));
+        }
+        Ok(Self { raw, start, len })
+    }
+}
+
+impl std::ops::Deref for AlignedBuf {
+    type Target = [u8];
+    fn deref(&self) -> &[u8] {
+        &self.raw[self.start..self.start + self.len]
+    }
+}
+
+impl std::ops::DerefMut for AlignedBuf {
+    fn deref_mut(&mut self) -> &mut [u8] {
+        &mut self.raw[self.start..self.start + self.len]
+    }
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn page_size() -> io::Result<usize> {
+    let page = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
+    usize::try_from(page)
+        .ok()
+        .filter(|p| p.is_power_of_two())
+        .ok_or_else(|| io::Error::other(format!("system page size {page} is unusable")))
+}
+
+/// Positional I/O on the opened device fd through page-aligned buffers; fsync to flush, page cache dropped before Linux read-backs.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub(crate) struct FileSectorDevice<'a>(pub &'a File);
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+impl gpt::SectorDevice for FileSectorDevice<'_> {
+    fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> io::Result<()> {
+        let mut aligned = AlignedBuf::new(buf.len(), page_size()?)?;
+        std::os::unix::fs::FileExt::read_exact_at(self.0, &mut aligned, offset)?;
+        buf.copy_from_slice(&aligned);
+        Ok(())
+    }
+
+    fn write_at(&mut self, offset: u64, buf: &[u8]) -> io::Result<()> {
+        let mut aligned = AlignedBuf::new(buf.len(), page_size()?)?;
+        aligned.copy_from_slice(buf);
+        std::os::unix::fs::FileExt::write_all_at(self.0, &aligned, offset)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        use std::os::unix::io::AsRawFd;
+        if unsafe { libc::fsync(self.0.as_raw_fd()) } != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    fn drop_cache(&mut self, offset: u64, len: u64) {
+        use std::os::unix::io::AsRawFd;
+        if let (Ok(offset), Ok(len)) = (i64::try_from(offset), i64::try_from(len)) {
+            unsafe {
+                libc::posix_fadvise(self.0.as_raw_fd(), offset, len, libc::POSIX_FADV_DONTNEED);
+            }
+        }
     }
 }
 
@@ -734,6 +865,72 @@ mod tests {
             assert!(validate_sector_size(bad, chunk).is_err(), "{bad} accepted");
         }
         assert!(validate_sector_size(4096, 4096 + 512).is_err());
+    }
+
+    #[test]
+    fn only_a_passed_skipped_or_cancelled_verify_moves_the_gpt() {
+        assert!(may_finalize(&Ok(())));
+        assert!(may_finalize(&Err(verify::verify_cancelled_err())));
+        assert!(!may_finalize(&Err(verify::data_mismatch_err(0))));
+        assert!(!may_finalize(&Err(cancelled_err())));
+    }
+
+    #[test]
+    fn a_relocation_warning_is_kept_until_the_next_flash() {
+        use gpt::test_support::{build_image, Layout, MemDisk};
+        let image = build_image(&Layout::uefi(16384));
+        let mut disk = MemDisk::with_image(&image, 40000 * 512);
+        disk.fail_write = Some(0);
+        let state = FlashState::new();
+        let geometry = gpt::DeviceGeometry {
+            size: 40000 * 512,
+            sector_size: 512,
+        };
+        finalize_gpt(
+            &mut disk,
+            &mut io::Cursor::new(image.clone()),
+            image.len() as u64,
+            geometry,
+            &state,
+        )
+        .unwrap();
+        let warning = state.warning().unwrap();
+        assert!(
+            warning.starts_with(gpt::TAG_GPT_RELOCATE_SKIPPED),
+            "{warning}"
+        );
+        assert!(!state.is_finalizing.load(Ordering::SeqCst));
+        state.reset_progress();
+        assert_eq!(state.warning(), None);
+    }
+
+    #[test]
+    fn aligned_buf_starts_on_the_boundary_and_is_zeroed() {
+        for (len, align) in [(512, 4096), (16384, 16384), (0, 512), (513, 4096)] {
+            let buf = AlignedBuf::new(len, align).unwrap();
+            assert_eq!(buf.len(), len);
+            assert_eq!(buf.as_ptr() as usize % align, 0, "{len}/{align}");
+            assert!(buf.iter().all(|b| *b == 0));
+        }
+        assert!(AlignedBuf::new(512, 3000).is_err());
+        assert!(AlignedBuf::new(usize::MAX, 4096).is_err());
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[test]
+    fn file_sector_device_round_trips_through_aligned_buffers() {
+        use gpt::SectorDevice;
+        let file = tempfile::tempfile().unwrap();
+        file.set_len(64 * 512).unwrap();
+        let mut dev = FileSectorDevice(&file);
+        let data: Vec<u8> = (0..3 * 512).map(|i| (i % 251) as u8).collect();
+        dev.write_at(5 * 512, &data).unwrap();
+        dev.flush().unwrap();
+        let mut back = vec![0u8; data.len()];
+        dev.read_at(5 * 512, &mut back).unwrap();
+        assert_eq!(back, data);
+        let mut past_end = vec![0u8; 512];
+        assert!(dev.read_at(64 * 512, &mut past_end).is_err());
     }
 
     #[test]
