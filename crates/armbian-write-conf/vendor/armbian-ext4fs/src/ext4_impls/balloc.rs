@@ -173,7 +173,8 @@ impl Ext4 {
                 Ext4BlockGroup::load_new(&self.block_device, super_block, bgid as usize);
 
             let free_blocks = block_group.get_free_blocks_count();
-            if free_blocks == 0 {
+            // A BLOCK_UNINIT group's bitmap is not valid on disk.
+            if free_blocks == 0 || block_group.has_flag(EXT4_BG_BLOCK_UNINIT) {
                 // Try next block group
                 bgid = (bgid + 1) % block_group_count;
                 count -= 1;
@@ -293,7 +294,7 @@ impl Ext4 {
                 Ext4BlockGroup::load_new(&self.block_device, super_block, bgid as usize);
 
             let free_blocks = block_group.get_free_blocks_count();
-            if free_blocks == 0 {
+            if free_blocks == 0 || block_group.has_flag(EXT4_BG_BLOCK_UNINIT) {
                 // Try next block group
                 bgid = (bgid + 1) % block_group_count;
                 count -= 1;
@@ -527,8 +528,8 @@ impl Ext4 {
             
             // Check if this group has free blocks
             let free_blocks = block_group.get_free_blocks_count();
-            if free_blocks == 0 {
-                log::debug!("[Block Alloc] Block group {} has no free blocks", bgid);
+            if free_blocks == 0 || block_group.has_flag(EXT4_BG_BLOCK_UNINIT) {
+                log::debug!("[Block Alloc] Block group {} has no usable free blocks", bgid);
                 bgid = (bgid + 1) % block_group_count;
                 groups_checked += 1;
                 continue;

@@ -39,5 +39,15 @@ Modifications made to the upstream source
 7. `ialloc_alloc_inode` scans each group once and returns ENOSPC instead of
    wrapping forever, and refuses a group whose bitmap has no clear bit.
 
+8. `set_used_dirs_count` writes the used-directories counter instead of
+   `bg_itable_unused`, and `get_used_dirs_count` shifts the high half by 16,
+   so creating a directory keeps the group summary e2fsck-clean.
+
+9. `ialloc_alloc_inode` skips block groups flagged INODE_UNINIT, and
+   `balloc_alloc_block`, `balloc_alloc_block_from` and
+   `balloc_alloc_block_batch` skip groups flagged BLOCK_UNINIT, because the
+   on-disk bitmaps of those groups are not valid. When only such groups have
+   room the allocation returns ENOSPC instead of initializing them.
+
 The upstream binary (src/main.rs) and its [[bin]] target were removed; only
 the library is retained.
