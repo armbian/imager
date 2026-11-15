@@ -13,9 +13,11 @@ use std::sync::{Arc, Mutex};
 use armbian_ext4fs::{BlockDevice, Ext4, BLOCK_SIZE};
 
 mod detect;
+mod entries;
 mod validate;
 
 pub use detect::Scheme;
+pub use entries::{Entry, EntryKind, WriteEntriesReport};
 
 /// Outcome of a successful write-and-validate operation.
 #[derive(Debug, Clone)]
@@ -47,6 +49,8 @@ pub enum WriteConfError {
     Ext4(String),
     /// Post-write validation failed (checksum/corruption/mismatch).
     ValidationFailed(String),
+    /// A path crosses a link or a non-directory, or its target has the wrong type; refused before any write.
+    UnsafeTarget(String),
 }
 
 impl fmt::Display for WriteConfError {
@@ -57,6 +61,7 @@ impl fmt::Display for WriteConfError {
             WriteConfError::NoExt4Rootfs(m) => write!(f, "no ext4 rootfs: {m}"),
             WriteConfError::Ext4(m) => write!(f, "ext4 write error: {m}"),
             WriteConfError::ValidationFailed(m) => write!(f, "validation failed: {m}"),
+            WriteConfError::UnsafeTarget(m) => write!(f, "unsafe target: {m}"),
         }
     }
 }
@@ -188,4 +193,61 @@ pub fn write_file_into_bare_ext4_image(
         bytes_written: written,
         validated: true,
     })
+}
+
+/// Write `entries` in order into the image's ext4 rootfs with their exact mode and owner, then validate read-only.
+/// Every parent must exist as a plain directory or be created by an earlier entry; links are never followed.
+pub fn write_entries_into_image(
+    image_path: &Path,
+    entries: &[Entry],
+) -> Result<WriteEntriesReport, WriteConfError> {
+    let part = detect::detect_rootfs(image_path)?;
+    detect::verify_supported_ext4(image_path, part.offset)?;
+    let replaced = entries::write_entries_at(image_path, part.offset, entries)?;
+    Ok(WriteEntriesReport {
+        scheme: part.scheme.as_str(),
+        partition_offset: part.offset,
+        partition_len: part.len,
+        entries: entries.len(),
+        replaced,
+        validated: true,
+    })
+}
+
+/// [`write_entries_into_image`] for a BARE ext4 image (no partition table, superblock at byte 0).
+pub fn write_entries_into_bare_ext4_image(
+    image_path: &Path,
+    entries: &[Entry],
+) -> Result<WriteEntriesReport, WriteConfError> {
+    detect::verify_ext4(image_path, 0)?;
+    detect::verify_supported_ext4(image_path, 0)?;
+    let replaced = entries::write_entries_at(image_path, 0, entries)?;
+    Ok(WriteEntriesReport {
+        scheme: "bare-ext4",
+        partition_offset: 0,
+        partition_len: std::fs::metadata(image_path)?.len(),
+        entries: entries.len(),
+        replaced,
+        validated: true,
+    })
+}
+
+/// Read a regular file of at most `cap` bytes from the image's ext4 rootfs. Read-only.
+pub fn read_rootfs_file_capped(
+    image_path: &Path,
+    path: &str,
+    cap: u64,
+) -> Result<Vec<u8>, WriteConfError> {
+    let part = detect::detect_rootfs(image_path)?;
+    validate::read_file_capped(image_path, part.offset, path, cap)
+}
+
+/// [`read_rootfs_file_capped`] for a BARE ext4 image. Read-only.
+pub fn read_bare_ext4_file_capped(
+    image_path: &Path,
+    path: &str,
+    cap: u64,
+) -> Result<Vec<u8>, WriteConfError> {
+    detect::verify_ext4(image_path, 0)?;
+    validate::read_file_capped(image_path, 0, path, cap)
 }
