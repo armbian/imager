@@ -106,6 +106,7 @@ pub mod flash {
     /// `prep_stage` values; twin of `FLASH_PREP_STAGE` in src/config/constants.ts
     pub const PREP_STAGE_COPYING: &str = "copying";
     pub const PREP_STAGE_APPLYING_PROFILE: &str = "applying_profile";
+    pub const PREP_STAGE_FETCHING_KEYS: &str = "fetching_keys";
 }
 
 /// First-boot autoconfig preset injection
@@ -125,6 +126,75 @@ pub mod autoconfig {
 
     /// Working copy name when the source path has no file name
     pub const COPY_FALLBACK_NAME: &str = "image.img";
+
+    /// Root's SSH directory and key file, written at flash time instead of a PRESET_ROOT_KEY fetch at first boot
+    pub const ROOT_SSH_DIR: &str = "/root/.ssh";
+    pub const ROOT_AUTHORIZED_KEYS: &str = "/root/.ssh/authorized_keys";
+
+    /// Root-only file holding the first user's keys; first login copies it through PRESET_USER_KEY
+    pub const USER_KEYS_FILE: &str = "/root/.imager-user-authorized-keys";
+    pub const USER_KEYS_URL_SCHEME: &str = "file://";
+
+    /// Account names in the key-fetch log lines and error messages
+    pub const KEYS_ACCOUNT_ROOT: &str = "root";
+    pub const KEYS_ACCOUNT_USER: &str = "user";
+
+    /// In-image modes and owner (root) of the SSH directory, the key files and the preset
+    pub const IMAGE_DIR_MODE: u16 = 0o700;
+    pub const IMAGE_FILE_MODE: u16 = 0o600;
+    pub const IMAGE_ROOT_ID: u32 = 0;
+
+    /// Account databases a preset user name must not collide with, read with this cap
+    pub const PASSWD_PATH: &str = "/etc/passwd";
+    pub const GROUP_PATH: &str = "/etc/group";
+    pub const USERS_FILE_MAX_BYTES: u64 = 1024 * 1024;
+
+    /// Longest user name accepted; twin of AUTOCONFIG.USER_NAME_MAX in src/config/constants.ts
+    pub const USER_NAME_MAX_CHARS: usize = 32;
+
+    /// Region written when the profile leaves it unset or the host value is unusable (Armbian build defaults)
+    pub const DEFAULT_LOCALE: &str = "en_US.UTF-8";
+    pub const DEFAULT_TIMEZONE: &str = "Etc/UTC";
+    pub const LOCALE_SUFFIX: &str = ".UTF-8";
+
+    /// Windows time zone names some hosts report, mapped to IANA zones
+    pub const WINDOWS_TIMEZONES: &[(&str, &str)] = &[
+        ("UTC", "Etc/UTC"),
+        ("GMT Standard Time", "Europe/London"),
+        ("Greenwich Standard Time", "Atlantic/Reykjavik"),
+        ("W. Europe Standard Time", "Europe/Berlin"),
+        ("Central Europe Standard Time", "Europe/Budapest"),
+        ("Central European Standard Time", "Europe/Warsaw"),
+        ("Romance Standard Time", "Europe/Paris"),
+        ("E. Europe Standard Time", "Europe/Chisinau"),
+        ("FLE Standard Time", "Europe/Kiev"),
+        ("GTB Standard Time", "Europe/Bucharest"),
+        ("Russian Standard Time", "Europe/Moscow"),
+        ("Turkey Standard Time", "Europe/Istanbul"),
+        ("Israel Standard Time", "Asia/Jerusalem"),
+        ("South Africa Standard Time", "Africa/Johannesburg"),
+        ("Egypt Standard Time", "Africa/Cairo"),
+        ("Arabian Standard Time", "Asia/Dubai"),
+        ("India Standard Time", "Asia/Kolkata"),
+        ("China Standard Time", "Asia/Shanghai"),
+        ("Taipei Standard Time", "Asia/Taipei"),
+        ("Singapore Standard Time", "Asia/Singapore"),
+        ("Tokyo Standard Time", "Asia/Tokyo"),
+        ("Korea Standard Time", "Asia/Seoul"),
+        ("AUS Eastern Standard Time", "Australia/Sydney"),
+        ("New Zealand Standard Time", "Pacific/Auckland"),
+        ("Eastern Standard Time", "America/New_York"),
+        ("Central Standard Time", "America/Chicago"),
+        ("Mountain Standard Time", "America/Denver"),
+        ("US Mountain Standard Time", "America/Phoenix"),
+        ("Pacific Standard Time", "America/Los_Angeles"),
+        ("Alaskan Standard Time", "America/Anchorage"),
+        ("Hawaiian Standard Time", "Pacific/Honolulu"),
+        ("Atlantic Standard Time", "America/Halifax"),
+        ("E. South America Standard Time", "America/Sao_Paulo"),
+        ("Argentina Standard Time", "America/Buenos_Aires"),
+        ("Central Standard Time (Mexico)", "America/Mexico_City"),
+    ];
 }
 
 /// Log file management settings

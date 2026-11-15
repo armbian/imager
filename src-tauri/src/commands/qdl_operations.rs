@@ -6,7 +6,7 @@
 use std::path::PathBuf;
 use tauri::State;
 
-use crate::autoconfig::{prepare_flash_copy, PrepError};
+use crate::autoconfig::{prepare_flash_copy, resolve_profile, PrepError};
 use crate::flash::{reject_simulated, FlashSession, FlashState, SessionRefusal};
 use crate::qdl;
 use crate::qdl::QdlDevice;
@@ -55,6 +55,13 @@ pub async fn get_qdl_devices() -> Result<Vec<QdlDevice>, String> {
         return Ok(devices);
     }
     qdl::detect::get_qdl_devices()
+}
+
+fn qdl_prep_error(e: PrepError) -> String {
+    match e {
+        PrepError::Cancelled => qdl::QDL_CANCELLED_ERROR.to_string(),
+        PrepError::Failed(message) => format!("{} {message}", qdl::TAG_QDL_AUTOCONFIG_FAILED),
+    }
 }
 
 /// Fail fast before extraction or downloads; the flash re-resolves right before connecting.
@@ -108,6 +115,16 @@ pub async fn flash_qdl_image(
 
     let tar_path = PathBuf::from(&tar_path);
     ensure_regular_nonempty(&tar_path)?;
+
+    // Keys are fetched here, before extracting: the blocking flash never touches the network.
+    let autoconfig = match autoconfig {
+        Some(cfg) => Some(
+            resolve_profile(cfg, &flash_state)
+                .await
+                .map_err(qdl_prep_error)?,
+        ),
+        None => None,
+    };
     let extract_dir = qdl_temp_dir();
 
     let flash_dir = qdl::extract::extract_qdl_archive(&tar_path, &extract_dir).map_err(|e| {
@@ -228,12 +245,7 @@ pub async fn flash_qdl_ufs_image(
                 flash_state.clone(),
             )
             .await
-            .map_err(|e| match e {
-                PrepError::Cancelled => qdl::QDL_CANCELLED_ERROR.to_string(),
-                PrepError::Failed(message) => {
-                    format!("{} {message}", qdl::TAG_QDL_AUTOCONFIG_FAILED)
-                }
-            })?,
+            .map_err(qdl_prep_error)?,
         ),
         None => None,
     };
