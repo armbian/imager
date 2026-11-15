@@ -47,7 +47,8 @@ export async function getDownloadProgress(): Promise<DownloadProgress> {
 }
 
 /** Flash an image to a device. With `autoconfig`, the Armbian first-boot file is written
- * into the image; omitting it keeps default behaviour. */
+ * into the image; omitting it keeps default behaviour. Resolves only after the backup GPT
+ * relocation; read `getFlashProgress().warning` afterwards (also after a verify cancel). */
 export async function flashImage(
   imagePath: string,
   devicePath: string,

@@ -15,6 +15,7 @@ import {
   Layers,
   FolderOpen,
   FileCog,
+  ArrowDownToLine,
 } from 'lucide-react';
 import { UI, FLASH_PREP_STAGE } from '../../config';
 
@@ -29,6 +30,7 @@ export type FlashStage =
   | 'qdl_firehose'
   | 'flashing'
   | 'verifying'
+  | 'finalizing'
   | 'complete'
   | 'cancelled'
   | 'error';
@@ -60,6 +62,8 @@ export function FlashStageIcon({ stage, size = UI.ICON_SIZE.FLASH_STAGE }: Flash
       return <HardDrive size={size} className="stage-icon flashing" />;
     case 'verifying':
       return <Check size={size} className="stage-icon verifying" />;
+    case 'finalizing':
+      return <ArrowDownToLine size={size} className="stage-icon flashing" />;
     case 'complete':
       return <CircleCheck size={size} className="stage-icon complete" />;
     case 'cancelled':
@@ -92,6 +96,8 @@ export function getStageKey(stage: FlashStage): string {
       return 'flash.writing';
     case 'verifying':
       return 'flash.verifying';
+    case 'finalizing':
+      return 'flash.finalizing';
     case 'complete':
       return 'flash.complete';
     case 'cancelled':
@@ -108,7 +114,7 @@ export type FlashPhase = 'download' | 'prepare' | 'write' | 'verify';
 // eslint-disable-next-line react-refresh/only-export-components
 export const PHASE_ORDER: FlashPhase[] = ['download', 'prepare', 'write', 'verify'];
 
-/** Maps a stage to its macro phase, or null for stages without a dot (authorizing/complete/cancelled/error). */
+/** Maps a stage to its macro phase, or null for stages without a dot (authorizing/finalizing/complete/cancelled/error). */
 // eslint-disable-next-line react-refresh/only-export-components
 export function stagePhase(stage: FlashStage): FlashPhase | null {
   switch (stage) {
@@ -126,6 +132,7 @@ export function stagePhase(stage: FlashStage): FlashPhase | null {
     case 'verifying':
       return 'verify';
     case 'authorizing':
+    case 'finalizing':
     case 'complete':
     case 'cancelled':
     case 'error':
@@ -135,7 +142,7 @@ export function stagePhase(stage: FlashStage): FlashPhase | null {
 
 /** Stages shown with an indeterminate (breathing) bar instead of a percentage. */
 const INDETERMINATE_STAGES: FlashStage[] = [
-  'decompressing', 'verifying_sha', 'extracting', FLASH_PREP_STAGE.APPLYING_PROFILE, 'qdl_sahara',
+  'decompressing', 'verifying_sha', 'extracting', FLASH_PREP_STAGE.APPLYING_PROFILE, 'qdl_sahara', 'finalizing',
 ];
 
 /** True when a stage has no meaningful percentage and uses the indeterminate bar. */

@@ -11,6 +11,7 @@ interface FlashActionsProps {
   onBack: () => void;
   onRetry: () => void;
   onCancel: () => void;
+  cancelPending: boolean;
 }
 
 export function FlashActions({
@@ -19,6 +20,7 @@ export function FlashActions({
   onBack,
   onRetry,
   onCancel,
+  cancelPending,
 }: FlashActionsProps) {
   const { t } = useTranslation();
 
@@ -51,8 +53,12 @@ export function FlashActions({
 
   return (
     <div className="flash-actions-inline">
-      <button className="btn btn-secondary" onClick={onCancel}>
-        {t('flash.cancel')}
+      <button
+        className="btn btn-secondary"
+        onClick={onCancel}
+        disabled={cancelPending || stage === 'finalizing'}
+      >
+        {cancelPending ? t('flash.cancelling') : t('flash.cancel')}
       </button>
     </div>
   );

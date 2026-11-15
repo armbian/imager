@@ -184,6 +184,10 @@ export interface FlashProgress {
   prep_stage: FlashPrepStage | null;
   /** A flash waits for the previous one to finish; the other fields still describe that one */
   is_waiting: boolean;
+  /** The write is done and the backup GPT is being moved to the device end; Cancel has no effect */
+  is_finalizing: boolean;
+  /** Tagged warning from a block flash that still succeeded ([GPT_RELOCATE_SKIPPED], [GPT_FAKE_CAPACITY]); kept until the next flash */
+  warning: string | null;
 }
 
 export type FlashPrepStage = (typeof FLASH_PREP_STAGE)[keyof typeof FLASH_PREP_STAGE];

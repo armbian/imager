@@ -30,7 +30,15 @@ import {
 import { getCacheEnabled, getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS, FLASH_PREP_STAGE, QDL_STAGE } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
-import { isDeviceRefusalError, isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
+import {
+  isCancelledError,
+  isDeviceRefusalError,
+  isGptRelocateFailedError,
+  isShaUnavailableError,
+  isVerifyCancelledError,
+  translateFlashError,
+  translateFlashWarning,
+} from '../utils/errorUtils';
 
 interface UseFlashOperationProps {
   image: ImageInfo;
@@ -51,6 +59,9 @@ interface UseFlashOperationReturn {
   error: string | null;
   showShaWarning: boolean;
   verifyAborted: boolean;
+  /** Translated caveat from a block flash that still succeeded, e.g. the backup GPT stayed in place. */
+  warning: string | null;
+  cancelPending: boolean;
   /** An EDL flash cancelled after the board's storage started to change. */
   cancelledAfterWrite: boolean;
   handleCancel: () => Promise<void>;
@@ -80,6 +91,13 @@ async function cleanupImageSafely(
   }
 }
 
+async function readFlashWarning(): Promise<string | null> {
+  try {
+    return (await getFlashProgress()).warning;
+  } catch {
+    return null;
+  }
+}
 
 function buildPhases(opts: { download: boolean; prepare: boolean; verify: boolean }): FlashPhase[] {
   const phases: FlashPhase[] = [];
@@ -110,6 +128,8 @@ export function useFlashOperation({
   const [error, setError] = useState<string | null>(null);
   const [showShaWarning, setShowShaWarning] = useState(false);
   const [verifyAborted, setVerifyAborted] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [cancelPending, setCancelPending] = useState(false);
   const [cancelledAfterWrite, setCancelledAfterWrite] = useState(false);
 
   // Refs for lifecycle management
@@ -119,6 +139,10 @@ export function useFlashOperation({
   // True once this flash's write phase is observed; guards against a stale is_verifying from a
   // previous run latching the UI onto "verifying" with a full bar before this run writes.
   const flashWriteSeenRef = useRef<boolean>(false);
+  // Latched: is_verifying is never reset, so polls after the GPT move must not reopen "verifying".
+  const finalizingRef = useRef<boolean>(false);
+  // The in-flight block flash; it settles only after the backup GPT move, even after a cancel.
+  const blockFlashRef = useRef<Promise<void> | null>(null);
   const prepRef = useRef<PrepTracking>('none');
   const hasStartedRef = useRef<boolean>(false);
   const deviceDisconnectedRef = useRef<boolean>(false);
@@ -242,7 +266,7 @@ export function useFlashOperation({
     const activeStages: FlashStage[] = isEdlFlash
       ? ['downloading', 'verifying_sha', 'decompressing']
       : ['downloading', 'verifying_sha', 'decompressing',
-         FLASH_PREP_STAGE.APPLYING_PROFILE, 'flashing', 'verifying'];
+         FLASH_PREP_STAGE.APPLYING_PROFILE, 'flashing', 'verifying', 'finalizing'];
     if (!activeStages.includes(stage)) {
       if (deviceMonitorRef.current) {
         clearInterval(deviceMonitorRef.current);
@@ -369,11 +393,21 @@ export function useFlashOperation({
     setProgress(0);
     maxProgressRef.current = 0;
     flashWriteSeenRef.current = false;
+    finalizingRef.current = false;
+    // A poll still in flight when the run settles must not paint over the final screen.
+    let settled = false;
 
     intervalRef.current = window.setInterval(async () => {
       try {
         const prog = await getFlashProgress();
-        if (prog.is_waiting || isAborted()) return;
+        if (settled || prog.is_waiting || !mountedRef.current) return;
+        // Still polled after Cancel: the GPT move ignores it, and the run ends when it does.
+        if (prog.is_finalizing) finalizingRef.current = true;
+        if (finalizingRef.current) {
+          setStage('finalizing');
+          return;
+        }
+        if (userCancelledRef.current) return;
 
         if (prepRef.current !== 'none') {
           if (prog.prep_stage) {
@@ -455,22 +489,37 @@ export function useFlashOperation({
         // QDL path: TAR archive → extract → Sahara → Firehose
         await flashQdlImage(path, device.path, autoconfigRef.current ?? undefined);
       } else {
-        await flashImage(path, device.path, device.size, !skipVerifyRef.current, autoconfigRef.current ?? undefined);
+        blockFlashRef.current = flashImage(path, device.path, device.size, !skipVerifyRef.current, autoconfigRef.current ?? undefined);
+        await blockFlashRef.current;
       }
+      settled = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
-      setStage('complete');
-      setProgress(100);
-      setFlashFailureCount(0);
-      // QDL: backend handles temp dir cleanup; don't delete the source TAR
-      if (!isQdlMode) {
-        await cleanupImageSafely(path, image.is_custom);
-      }
+      // Ok after a Cancel too: the cancel came too late and the device holds the full image.
+      await completeFlash(path, false);
     } catch (err) {
+      settled = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
 
       const rawError = getErrorMessage(err, String(err));
-      // User-initiated cancel: handleCancel owns navigation/messaging.
-      if (userCancelledRef.current) return;
+      if (userCancelledRef.current) {
+        // handleCancel already shows the EDL cancelled screen.
+        if (isEdlFlash) return;
+        if (!isGptRelocateFailedError(rawError)) {
+          // Verify only starts once the write is flushed and fsynced, so the device already
+          // holds the full image; cancelling here drops the read-back check, not the flash.
+          if (isVerifyCancelledError(rawError)) {
+            await completeFlash(path, true);
+            return;
+          }
+          if (isCancelledError(rawError)) {
+            await cleanupImageSafely(path, image.is_custom);
+            onBack();
+            return;
+          }
+        }
+        // Not a cancel: the cancel never took effect, so this is reported like any failure.
+        userCancelledRef.current = false;
+      }
       // Cancel-shaped rejection triggered by the disconnect handler's own cancelOperation:
       // the generic disconnect message is already on screen and more truthful.
       const causedByDisconnectCancel = deviceDisconnectedRef.current && /cancel/i.test(rawError);
@@ -479,9 +528,16 @@ export function useFlashOperation({
       }
 
       let fileGone = false;
-      // Increment failure count for cached (non-custom) images; skip on disconnect or a device
-      // refusal (e.g. card too small, previous flash still finishing) so neither burns down a good cached image.
-      if (!image.is_custom && !isQdlMode && !deviceDisconnectedRef.current && !isDeviceRefusalError(rawError)) {
+      // Increment failure count for cached (non-custom) images; skip on disconnect, a device refusal
+      // (e.g. card too small, previous flash still finishing) or a failed GPT move after a good write,
+      // so none of them burns down a good cached image.
+      if (
+        !image.is_custom &&
+        !isQdlMode &&
+        !deviceDisconnectedRef.current &&
+        !isDeviceRefusalError(rawError) &&
+        !isGptRelocateFailedError(rawError)
+      ) {
         const currentCount = getFlashFailureCount() + 1;
         setFlashFailureCount(currentCount);
 
@@ -502,6 +558,23 @@ export function useFlashOperation({
       }
       // Retry must redo the download or decompression that produced a deleted file.
       if (fileGone) imagePathRef.current = null;
+    } finally {
+      blockFlashRef.current = null;
+    }
+  }
+
+  async function completeFlash(path: string, verifyStopped: boolean) {
+    if (!isEdlFlash) {
+      const raw = await readFlashWarning();
+      setWarning(raw ? translateFlashWarning(raw, t) : null);
+    }
+    setVerifyAborted(verifyStopped);
+    setStage('complete');
+    setProgress(100);
+    setFlashFailureCount(0);
+    // QDL: backend handles temp dir cleanup; don't delete the source TAR
+    if (!isQdlMode) {
+      await cleanupImageSafely(path, image.is_custom);
     }
   }
 
@@ -599,20 +672,25 @@ export function useFlashOperation({
   };
 
   const handleCancel = async () => {
+    if (userCancelledRef.current) return;
     userCancelledRef.current = true;
+    setCancelPending(true);
     try {
       await cancelOperation();
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      // Verify only starts once the write is flushed and fsynced, so the device already
-      // holds the full image; cancelling here drops the read-back check, not the flash.
-      if (stage === 'verifying') {
-        setVerifyAborted(true);
-        setStage('complete');
-        setProgress(100);
-        setFlashFailureCount(0);
-        await cleanupImageSafely(imagePathRef.current, image.is_custom);
-        return;
-      }
+    } catch {
+      // The backend never heard the cancel, so the run goes on as if it was not pressed.
+      userCancelledRef.current = false;
+      setCancelPending(false);
+      return;
+    }
+    // startFlash shows the outcome: complete, verify stopped, back, or the error.
+    const blockFlash = blockFlashRef.current;
+    if (blockFlash) {
+      await blockFlash.catch(() => undefined);
+      return;
+    }
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    try {
       // EDL: stay put so the blocking flash command can detect cancel and clean up
       if (isEdlFlash) {
         setCancelledAfterWrite(await boardWriteStarted());
@@ -683,6 +761,8 @@ export function useFlashOperation({
       if (!mountedRef.current) return;
       setError(null);
       setVerifyAborted(false);
+      setWarning(null);
+      setCancelPending(false);
       deviceDisconnectedRef.current = false;
       userCancelledRef.current = false;
       shownErrorRef.current = null;
@@ -732,6 +812,8 @@ export function useFlashOperation({
     error,
     showShaWarning,
     verifyAborted,
+    warning,
+    cancelPending,
     cancelledAfterWrite,
     handleCancel,
     handleRetry,

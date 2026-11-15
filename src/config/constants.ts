@@ -302,6 +302,7 @@ export const UI = {
     BUTTON: 16,
     CHEVRON: 14,
     UPDATE_ENTRY: 15,
+    CAVEAT: 15,
     ERROR_HERO: 72,
     REMEDY_ROW: 18,
     PASTE_LINK: 12,

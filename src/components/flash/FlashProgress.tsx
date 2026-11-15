@@ -2,14 +2,14 @@
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
 import { useState, useEffect, useEffectEvent } from 'react';
-import { Usb, Disc, FileImage, ShieldOff } from 'lucide-react';
+import { Usb, Disc, FileImage, ShieldOff, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { BoardInfo, ImageInfo, BlockDevice, AutoconfigConfig, FlashExit } from '../../types';
 import { isEdlImage } from '../../types';
 import { getMonoLogo } from '../../config/mono-logos';
 import { distroBlock } from '../../utils/distroTheme';
 import { boardDisplayName, formatImageIdentity } from '../../utils';
-import { SLUGS, getOsName } from '../../config';
+import { SLUGS, UI, getOsName } from '../../config';
 import { getCachedBoardImage } from '../../hooks/useTauri';
 import { useFlashOperation } from '../../hooks/useFlashOperation';
 import { getDeviceType } from '../../utils/deviceUtils';
@@ -49,6 +49,8 @@ export function FlashProgress({
     error,
     showShaWarning,
     verifyAborted,
+    warning,
+    cancelPending,
     cancelledAfterWrite,
     handleCancel,
     handleRetry,
@@ -194,6 +196,12 @@ export function FlashProgress({
                       {t('flash.successHintVerifySkipped')}
                     </p>
                   )}
+                  {warning && (
+                    <p className="flash-success-caveat is-attention" role="status">
+                      <TriangleAlert size={UI.ICON_SIZE.CAVEAT} aria-hidden="true" />
+                      {warning}
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -204,6 +212,7 @@ export function FlashProgress({
               onBack={handleBack}
               onRetry={handleRetry}
               onCancel={handleCancel}
+              cancelPending={cancelPending}
             />
           </div>
         </div>
@@ -230,6 +239,7 @@ export function FlashProgress({
             onBack={handleBack}
             onRetry={handleRetry}
             onCancel={handleCancel}
+            cancelPending={cancelPending}
           />
         </div>
       )}
