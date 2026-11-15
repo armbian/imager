@@ -11,20 +11,22 @@ interface PasswordInputProps {
   placeholder?: string;
   id?: string;
   trailing?: ReactNode;
+  invalid?: boolean;
 }
 
 /** Password field: never autofilled, autocorrected or sent to a cloud spellchecker. */
-export function PasswordInput({ value, onChange, placeholder, id, trailing }: PasswordInputProps) {
+export function PasswordInput({ value, onChange, placeholder, id, trailing, invalid = false }: PasswordInputProps) {
   const { t } = useTranslation();
   const [show, setShow] = useState(false);
   return (
-    <div className="ac-input">
+    <div className={`ac-input${invalid ? ' is-invalid' : ''}`}>
       <Lock size={15} className="ac-input__icon" aria-hidden="true" />
       <input
         id={id}
         type={show ? 'text' : 'password'}
         value={value ?? ''}
         placeholder={placeholder}
+        aria-invalid={invalid || undefined}
         autoComplete="new-password"
         autoCapitalize="off"
         autoCorrect="off"

@@ -55,6 +55,7 @@
     "noShaMessage": "Kontrolna vsota SHA za to sliko ni na voljo. Zapisovanje bo nadaljevalo brez preverjanja celovitosti.",
     "extracting": "Razpakiranje arhiva...",
     "applyingProfile": "Uveljavljanje profila...",
+    "fetchingKeys": "Pridobivanje ključev SSH...",
     "qdlSahara": "Nalaganje zaganjalnika strojne programske opreme...",
     "qdlFirehose": "Zapisovanje particij...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "Povezava z napravo EDL ni uspela. Preverite, ali je naprava v načinu EDL in povezana prek USB.",
     "qdlAutoconfigFailed": "Profila samodejne konfiguracije ni bilo mogoče uporabiti za sliko QDL.",
     "autoconfigNotArmbian": "Ta slika nima Armbianove nastavitve ob prvem zagonu, zato profila ni mogoče uporabiti. Zapišite jo brez profila ali izberite sliko Armbian.",
+    "autoconfigUserNameInvalid": "Uporabniško ime v profilu se mora začeti s črko in vsebovati samo črke in števke, največ 32 znakov. Uredite profil in poskusite znova.",
+    "autoconfigUserNameTaken": "Uporabniško ime iz profila v tej sliki že obstaja. Uredite profil in izberite drugo.",
+    "autoconfigUsersUnreadable": "Seznama uporabnikov slike ni bilo mogoče prebrati, da bi preverili uporabniško ime iz profila. Nič ni bilo zapisano.",
+    "autoconfigUnsafeTarget": "Slika ima nekaj nepričakovanega tam, kamor profil zapisuje nastavitve, zato je ostala nespremenjena. Nič ni bilo zapisano.",
+    "sshKeysInvalidKey": "Vir ključev SSH iz profila je vrnil nekaj, kar ni javni ključ SSH. Nič ni bilo zapisano.",
+    "sshKeysNotFound": "Vira ključev SSH iz profila ni bilo mogoče najti. Preverite uporabniško ime ali povezavo v profilu.",
+    "sshKeysNone": "Vir ključev SSH iz profila nima javnih ključev. Tam dodajte ključ ali uredite profil.",
+    "sshKeysTooLarge": "Vir ključev SSH iz profila je vrnil preveč podatkov za seznam javnih ključev. Nič ni bilo zapisano.",
+    "sshKeysNetwork": "Ključev SSH iz profila ni bilo mogoče prenesti. Preverite internetno povezavo in poskusite znova.",
+    "sshKeysInvalidInput": "Vir ključev SSH v profilu ni veljavno uporabniško ime ali povezava https. Uredite profil in poskusite znova.",
     "deviceInvalidPath": "Na to napravo ni mogoče pisati. Napravo izberite znova.",
     "deviceNotFound": "Izbrana naprava ni več povezana. Ponovno jo povežite in znova izberite.",
     "deviceChanged": "Izbrana naprava se je spremenila, odkar ste jo izbrali. Pred pisanjem jo izberite znova.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Privzete nastavitve Armbiana",
       "keys": {
         "checking": "Preverjanje ključev...",
-        "found_one": "Najden je {{count}} ključ. Plošča ga prenese ob prvem zagonu.",
-        "found_other": "Najdenih ključev: {{count}}. Plošča jih prenese ob prvem zagonu.",
+        "foundAtFlash_one": "Najden je {{count}} ključ. Imager ga doda na kartico SD ob zapisovanju.",
+        "foundAtFlash_other": "Najdenih ključev: {{count}}. Imager jih doda na kartico SD ob zapisovanju.",
         "notFoundForge": "Računa {{forge}} s tem uporabniškim imenom ni.",
         "notFoundLink": "Na tej povezavi ni bilo najdeno nič.",
         "noneForge": "Ta račun {{forge}} še nima javnih ključev SSH.",
@@ -334,7 +345,8 @@
         "tooLarge": "Ta naslov streže preveč podatkov za seznam javnih ključev.",
         "invalidForge": "To ni veljavno uporabniško ime {{forge}}.",
         "invalidLink": "Tu je mogoče preveriti samo povezave https.",
-        "unreachable": "Ključev trenutno ni mogoče preveriti. Plošča jih prenese ob prvem zagonu."
+        "invalidKey": "Ta naslov vrača vrstice, ki niso javni ključi SSH",
+        "unreachableAtFlash": "Ključev trenutno ni mogoče preveriti. Imager jih prenese ob zapisovanju, zato boste takrat potrebovali internet."
       },
       "ipInvalid": "Vnesite veljaven naslov IPv4 (npr. 192.168.1.50)",
       "ipNotHost": "To je omrežni ali broadcast naslov podomrežja, ne uporaben naslov naprave. Izberite takega, kot je 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Izpolni obrazec",
       "fillFormHint": "Vse možnosti na eni strani",
       "wifiKeyFits": "Primerno za Wi-Fi (od 8 do 63 znakov)",
-      "wifiKeyLength": "Gesla Wi-Fi imajo običajno od 8 do 63 znakov",
       "wizard": {
         "eyebrow": "Nov profil",
         "unnamed": "Še brez imena",
@@ -393,8 +404,7 @@
           "review": "Pregled"
         },
         "pending": {
-          "network": "Ohrani privzete nastavitve Armbiana",
-          "locale": "Privzete nastavitve Armbiana"
+          "network": "Ohrani privzete nastavitve Armbiana"
         },
         "sum": {
           "keysFrom": "Ključi SSH z {{forge}}",
@@ -431,16 +441,16 @@
           "later": "Ob prvi prijavi",
           "more": "Polno ime in lupina za prijavo",
           "shellDefault": "Privzeto v Armbianu",
-          "laterLine": "Ob prvi prijavi, prek SSH ali s tipkovnico in zaslonom, vas Armbian pozove, da ustvarite uporabnika. Jezik in čas iz tega profila se takrat ne uporabita."
+          "laterStops": "Plošča se ustavi ob prvi prijavi in počaka, da ustvarite račun, prek SSH ali s tipkovnico in zaslonom."
         },
         "locale": {
           "title": "Jezik in čas",
           "sub": "Nastavljeno ob prvi prijavi, ne glede na to, ali se uporabnik ustvari zdaj.",
-          "location": "Glede na lokacijo",
+          "thisComputer": "Kot ta računalnik",
           "choose": "Izberem sam",
           "language": "Jezik",
           "searchTimezone": "Išči časovne pasove",
-          "locationLine": "Armbian nastavi jezik in časovni pas glede na kraj, od koder se plošča poveže v internet."
+          "thisComputerLine": "Plošča dobi jezik in časovni pas tega računalnika, prebrana ob zapisovanju."
         },
         "access": {
           "title": "Kako vstopate?",
@@ -484,33 +494,47 @@
         "connection": "Povezava",
         "cableHint": "Kabel priključite pred prvim zagonom",
         "wifiKeyEmpty": "Pustite prazno za odprto omrežje",
+        "wifiBadChars": "Odstranite vse znake \" ali \\",
+        "wifiKeyLeadingSpace": "Geslo se ne sme začeti s presledkom",
+        "wifiKeyLengthNeeded": "Uporabite od {{min}} do {{max}} znakov ali pustite prazno za odprto omrežje",
+        "wifiKeyRawPsk": "Surov ključ Wi-Fi (64 šestnajstiških znakov)",
         "countryHint": "Določa dovoljene kanale Wi-Fi",
         "ipAutoHint": "Naslov dodeli vaš usmerjevalnik",
         "ipFixedHint": "Izberite prost naslov v svojem omrežju",
         "ipLabelWifi": "Naslov IP (Wi-Fi)",
         "bothCableAuto": "Kabel vedno dobi samodejni naslov",
+        "wifiNoAdapterHint": "Če plošča nima Wi-Fi, se prvi zagon ustavi. Izberite Kabel.",
         "addressOk": "Veljaven naslov",
+        "maskRequired": "Vnesite omrežno masko (npr. 255.255.255.0)",
         "moreOptions": "Več možnosti",
         "netFixed": "Stalni, {{ip}}",
         "netAuto": "Samodejni naslov",
         "whoLogsIn": "Kdo se prijavlja",
         "laterHint": "Armbian vpraša ob prvi prijavi",
-        "userOk": "Male črke, začne se s črko",
+        "userValid": "Veljavno uporabniško ime",
         "userCreatedAs": "Ustvarjen kot {{name}}",
-        "userInvalid": "Uporabite male črke, števke, - in _",
+        "userLettersDigits": "Uporabite samo črke in števke, začnite s črko",
+        "userTooLong": "Uporabite največ {{max}} znakov",
+        "userReserved": "{{name}} je sistemski račun. Izberite drugo ime.",
         "passwordRequired": "Potrebno za prijavo",
-        "fullNameRequired": "Potrebno za nastavitev jezika in časovnega pasu",
+        "realNameColon": "Odstranite dvopičje (:)",
+        "realNameDefault": "Če je prazno, plošča uporabi {{name}}",
         "fullNameNotSet": "Polno ime ni nastavljeno",
         "howYouGetIn": "Kako se prijavite",
         "passwordLoginHint": "Prijava z geslom",
         "keysFrom": "Ključi iz",
         "keyUserRequired": "Vnesite uporabniško ime",
         "keyLinkRequired": "Prilepite povezavo do javnih ključev",
+        "keysNeedInternet": "Imager prenese ključe ob zapisovanju, zato zapisovanje potrebuje internet",
         "rootSet": "Geslo root je nastavljeno",
         "rootNotSet": "Geslo root ni nastavljeno",
         "rootPlaceholder": "Ni nastavljeno",
         "rootHint": "Če je prazno, ga Armbian vpraša ob prvi prijavi",
-        "locationHint": "Nastavljeno glede na to, od kod se plošča poveže",
+        "rootHintUser": "Če je prazno, root dobi isto geslo kot uporabnik",
+        "rootSameAsUser": "Isto kot uporabnikovo",
+        "thisComputerHint": "Prebrano s tega računalnika ob zapisovanju",
+        "regionNeedsBoth": "Izberite jezik in časovni pas",
+        "regionDefaults": "Privzete nastavitve Armbiana: angleščina (ZDA) in UTC",
         "remoteHint": "Uporabljeno ob prvem zagonu",
         "atFirstBoot": "Ob prvem zagonu",
         "factCableWifi": "Kabel + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Zavrzi",
         "profileActions": "Dejanja profila",
         "boardPages": "Strani plošč",
-        "done": "Končano"
+        "done": "Končano",
+        "verdictFinishes": "Prvi zagon se konča sam",
+        "verdictRootFromUser": "Root dobi isto geslo kot {{name}}.",
+        "verdictAsksUser": "Prvi zagon se ustavi in počaka, da ustvarite uporabnika",
+        "verdictAsksRootAndUser": "Prvi zagon se ustavi in počaka na geslo root ter uporabnika",
+        "verdictConsoleHint": "Plošča je videti zataknjena, dokler nekdo ne odgovori na njeni konzoli, prek SSH ali s tipkovnico in zaslonom. Uporabnika ustvarite tukaj, da se temu izognete.",
+        "verdictRemote": "Oddaljena konfiguracija določa, kako poteka prvi zagon",
+        "verdictRemoteHint": "Plošča jo prenese ob prvem zagonu, preden se nastavi omrežje iz tega profila, in nadomesti ta profil. Potrebuje kabel z internetom in pravilno uro.",
+        "verdictRemoteWifi": "Samo z Wi-Fi je plošča ne more prenesti: pridobi se pred nastavitvijo Wi-Fi. Dodajte kabel ali odstranite URL.",
+        "verdictNeedsFix": "Nekatere nastavitve je treba najprej popraviti",
+        "verdictNeedsFixHint": "Popravite jih, da vidite, kaj se zgodi ob prvem zagonu."
       },
       "boardSheet": {
         "searchPlaceholder": "Iščite plošče ali proizvajalce",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} plošč",
       "pagerLabel": "Strani profilov",
       "discardTitle": "Zavreči spremembe?",
-      "discardBody": "Neshranjene spremembe tega profila bodo izgubljene."
+      "discardBody": "Neshranjene spremembe tega profila bodo izgubljene.",
+      "needsFix": "Potreben je popravek"
     }
   },
   "update": {

@@ -55,6 +55,7 @@
     "noShaMessage": "This image has no SHA checksum, so the written data can't be verified. Flashing will continue anyway.",
     "extracting": "Extracting archive...",
     "applyingProfile": "Applying your profile...",
+    "fetchingKeys": "Getting SSH keys...",
     "qdlSahara": "Uploading firmware loader...",
     "qdlFirehose": "Writing partitions...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "Couldn't connect to the EDL device. Make sure it's in EDL mode and connected via USB.",
     "qdlAutoconfigFailed": "Failed to apply the autoconfig profile to the QDL image.",
     "autoconfigNotArmbian": "This image has no Armbian first-boot setup, so the profile can't be applied. Flash it without a profile or pick an Armbian image.",
+    "autoconfigUserNameInvalid": "The username in the profile must start with a letter and use only letters and digits, up to 32 characters. Edit the profile and try again.",
+    "autoconfigUserNameTaken": "The username in the profile already exists in this image. Edit the profile and choose another one.",
+    "autoconfigUsersUnreadable": "Could not read the image's user list to check the profile's username. Nothing was written.",
+    "autoconfigUnsafeTarget": "The image has something unexpected where the profile's settings go, so it was left untouched. Nothing was written.",
+    "sshKeysInvalidKey": "The profile's SSH key source returned something that is not a public SSH key. Nothing was written.",
+    "sshKeysNotFound": "The profile's SSH key source was not found. Check the username or link in the profile.",
+    "sshKeysNone": "The profile's SSH key source has no public keys. Add a key there or edit the profile.",
+    "sshKeysTooLarge": "The profile's SSH key source returned too much to be a list of public keys. Nothing was written.",
+    "sshKeysNetwork": "Could not download the profile's SSH keys. Check the internet connection and try again.",
+    "sshKeysInvalidInput": "The SSH key source in the profile is not a valid username or https link. Edit the profile and try again.",
     "deviceInvalidPath": "This device can't be written to. Select the device again.",
     "deviceNotFound": "The selected device is no longer connected. Reconnect it and select it again.",
     "deviceChanged": "The selected device changed since you picked it. Select it again before writing.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Armbian defaults",
       "keys": {
         "checking": "Checking the keys...",
-        "found_one": "{{count}} key found. The board fetches it at first start.",
-        "found_other": "{{count}} keys found. The board fetches them at first start.",
+        "foundAtFlash_one": "{{count}} key found. Imager adds it to the card when you flash.",
+        "foundAtFlash_other": "{{count}} keys found. Imager adds them to the card when you flash.",
         "notFoundForge": "No {{forge}} account with this username.",
         "notFoundLink": "Nothing found at this link.",
         "noneForge": "This {{forge}} account has no public SSH keys yet.",
@@ -334,7 +345,8 @@
         "tooLarge": "This address serves too much to be a list of public keys.",
         "invalidForge": "This is not a valid {{forge}} username.",
         "invalidLink": "Only https links can be checked here.",
-        "unreachable": "Could not check the keys right now. The board fetches them at first start."
+        "invalidKey": "This address returns lines that are not public SSH keys",
+        "unreachableAtFlash": "Could not check the keys right now. Imager downloads them when you flash, so you need internet then."
       },
       "ipInvalid": "Enter a valid IPv4 address (e.g. 192.168.1.50)",
       "ipNotHost": "This is the network or broadcast address of the subnet, not a usable device address. Pick one like 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Fill in the form",
       "fillFormHint": "Every option on one page",
       "wifiKeyFits": "Fits Wi-Fi (8 to 63 characters)",
-      "wifiKeyLength": "Wi-Fi passwords usually have 8 to 63 characters",
       "wizard": {
         "eyebrow": "New profile",
         "unnamed": "No name yet",
@@ -393,8 +404,7 @@
           "review": "Review"
         },
         "pending": {
-          "network": "Keeps Armbian defaults",
-          "locale": "Armbian defaults"
+          "network": "Keeps Armbian defaults"
         },
         "sum": {
           "keysFrom": "SSH keys from {{forge}}",
@@ -431,16 +441,16 @@
           "later": "At first login",
           "more": "Full name and login shell",
           "shellDefault": "Armbian default",
-          "laterLine": "The first time you log in, over SSH or with a keyboard and monitor, Armbian asks you to create it. The language and time from this profile are not applied then."
+          "laterStops": "The board stops at the first login and waits for you to create the account, over SSH or with a keyboard and monitor."
         },
         "locale": {
           "title": "Language and time",
           "sub": "Set on the first login, whether or not a user is created now.",
-          "location": "From the location",
+          "thisComputer": "Like this computer",
           "choose": "I choose",
           "language": "Language",
           "searchTimezone": "Search time zones",
-          "locationLine": "Armbian sets the language and time zone from where the board connects to the internet."
+          "thisComputerLine": "The board gets this computer's language and time zone, read when you flash."
         },
         "access": {
           "title": "How do you get in?",
@@ -484,33 +494,47 @@
         "connection": "Connection",
         "cableHint": "Plug in the cable before the first boot",
         "wifiKeyEmpty": "Leave empty for an open network",
+        "wifiBadChars": "Remove any \" or \\ character",
+        "wifiKeyLeadingSpace": "The password cannot start with a space",
+        "wifiKeyLengthNeeded": "Use {{min}} to {{max}} characters, or leave it empty for an open network",
+        "wifiKeyRawPsk": "Raw Wi-Fi key (64 hex characters)",
         "countryHint": "Sets the allowed Wi-Fi channels",
         "ipAutoHint": "Your router assigns the address",
         "ipFixedHint": "Pick a free address on your network",
         "ipLabelWifi": "IP address (Wi-Fi)",
         "bothCableAuto": "The cable always gets an automatic address",
+        "wifiNoAdapterHint": "If the board has no Wi-Fi, first boot stops. Choose Cable instead.",
         "addressOk": "Valid address",
+        "maskRequired": "Enter the netmask (e.g. 255.255.255.0)",
         "moreOptions": "More options",
         "netFixed": "Fixed, {{ip}}",
         "netAuto": "Automatic address",
         "whoLogsIn": "Who logs in",
         "laterHint": "Armbian asks at first login",
-        "userOk": "Lowercase, starts with a letter",
+        "userValid": "Valid username",
         "userCreatedAs": "Created as {{name}}",
-        "userInvalid": "Use lowercase letters, digits, - and _",
+        "userLettersDigits": "Use only letters and digits, starting with a letter",
+        "userTooLong": "Use at most {{max}} characters",
+        "userReserved": "{{name}} is a system account. Pick another name.",
         "passwordRequired": "Needed to log in",
-        "fullNameRequired": "Needed to set language and time zone",
+        "realNameColon": "Remove the colon (:)",
+        "realNameDefault": "If empty, the board uses {{name}}",
         "fullNameNotSet": "Full name not set",
         "howYouGetIn": "How you log in",
         "passwordLoginHint": "Log in with your password",
         "keysFrom": "Keys from",
         "keyUserRequired": "Enter a username",
         "keyLinkRequired": "Paste a link to the public keys",
+        "keysNeedInternet": "Imager downloads the keys when you flash, so flashing needs internet",
         "rootSet": "Root password set",
         "rootNotSet": "Root password not set",
         "rootPlaceholder": "Not set",
         "rootHint": "If empty, Armbian asks for it at first login",
-        "locationHint": "Set from where the board connects",
+        "rootHintUser": "If empty, root gets the same password as the user",
+        "rootSameAsUser": "Same as the user's",
+        "thisComputerHint": "Read from this computer when you flash",
+        "regionNeedsBoth": "Pick both a language and a time zone",
+        "regionDefaults": "Armbian defaults: English (US) and UTC",
         "remoteHint": "Applied at first boot",
         "atFirstBoot": "At first boot",
         "factCableWifi": "Cable + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Discard",
         "profileActions": "Profile actions",
         "boardPages": "Board pages",
-        "done": "Done"
+        "done": "Done",
+        "verdictFinishes": "First boot finishes on its own",
+        "verdictRootFromUser": "Root gets the same password as {{name}}.",
+        "verdictAsksUser": "First boot stops and waits for you to create a user",
+        "verdictAsksRootAndUser": "First boot stops and waits for a root password and a user",
+        "verdictConsoleHint": "The board looks stuck until someone answers at its console, over SSH or with a keyboard and monitor. Create the user here to avoid it.",
+        "verdictRemote": "The remote config decides how first boot goes",
+        "verdictRemoteHint": "The board downloads it at first boot, before this profile's network is set up, and it replaces this profile. It needs a cable with internet and a correct clock.",
+        "verdictRemoteWifi": "With Wi-Fi only, the board cannot download it: it is fetched before Wi-Fi is set up. Add a cable or remove the URL.",
+        "verdictNeedsFix": "Some settings need a fix first",
+        "verdictNeedsFixHint": "Correct them to see what happens at first boot."
       },
       "boardSheet": {
         "searchPlaceholder": "Search boards or brands",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} boards",
       "pagerLabel": "Profile pages",
       "discardTitle": "Discard changes?",
-      "discardBody": "Your unsaved changes to this profile will be lost."
+      "discardBody": "Your unsaved changes to this profile will be lost.",
+      "needsFix": "Needs a fix"
     }
   },
   "update": {

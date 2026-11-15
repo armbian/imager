@@ -4,11 +4,12 @@
 import { useTranslation } from 'react-i18next';
 import { IdCard, Monitor, Terminal, User } from 'lucide-react';
 import { AUTOCONFIG_PLACEHOLDERS, USER_SHELLS } from '../../config/autoconfig';
-import { firstLoginUserName, isValidUserName, type UserMode } from '../../config/profileEditorModel';
+import { realNameIssue, realNamePlaceholder, userNameIssue, type UserMode } from '../../config/profileEditorModel';
 import type { ProfileWizardState } from '../../hooks/useProfileWizard';
 import type { UserShell } from '../../types';
 import { SegmentedControl, SelectMenu } from '../settings/controls';
 import { FieldHint } from '../settings/editor/EditorParts';
+import { UserNameHint } from '../settings/editor/EditorParts';
 import { PasswordInput } from '../shared/PasswordInput';
 import { WizardField, WizardMore, WizardTextField } from './WizardFields';
 
@@ -17,19 +18,8 @@ export function WizardUserStep({ wizard, uid }: { wizard: ProfileWizardState; ui
   const { model, more, attempted, patch, toggleMore } = wizard;
   const user = model.user;
   const named = !!user.name.trim();
-  const createdName = firstLoginUserName(user.name);
-
-  const nameHint = !named ? (
-    attempted ? <FieldHint tone="warn">{t('settings.autoconfig.wizard.usernameRequired')}</FieldHint> : undefined
-  ) : isValidUserName(user.name) ? (
-    <FieldHint tone="ok">
-      {createdName === user.name.trim()
-        ? t('settings.autoconfig.editor.userOk')
-        : t('settings.autoconfig.editor.userCreatedAs', { name: createdName })}
-    </FieldHint>
-  ) : (
-    <FieldHint tone="warn">{t('settings.autoconfig.editor.userInvalid')}</FieldHint>
-  );
+  const nameIssue = userNameIssue(user.name);
+  const realNameError = realNameIssue(user.realName);
   const passwordMissing = attempted && !user.password;
 
   return (
@@ -46,14 +36,14 @@ export function WizardUserStep({ wizard, uid }: { wizard: ProfileWizardState; ui
       {user.mode === 'now' ? (
         <>
           <div className="pw-two">
-            <WizardField label={t('settings.autoconfig.userName')} htmlFor={`${uid}-user`} hint={nameHint}>
+            <WizardField label={t('settings.autoconfig.userName')} htmlFor={`${uid}-user`} hint={named || attempted ? <UserNameHint name={user.name} /> : undefined}>
               <WizardTextField
                 id={`${uid}-user`}
                 mono
                 value={user.name}
                 icon={<User size={15} className="pe-input__icon" aria-hidden="true" />}
                 placeholder={AUTOCONFIG_PLACEHOLDERS.USER_NAME}
-                invalid={(attempted && !named) || (named && !isValidUserName(user.name))}
+                invalid={!!nameIssue && (attempted || named)}
                 onChange={(name) => patch('user', { name })}
               />
             </WizardField>
@@ -62,18 +52,28 @@ export function WizardUserStep({ wizard, uid }: { wizard: ProfileWizardState; ui
               htmlFor={`${uid}-upw`}
               hint={passwordMissing ? <FieldHint tone="warn">{t('settings.autoconfig.editor.passwordRequired')}</FieldHint> : undefined}
             >
-              <PasswordInput id={`${uid}-upw`} value={user.password} onChange={(password) => patch('user', { password })} />
+              <PasswordInput
+                id={`${uid}-upw`}
+                value={user.password}
+                invalid={passwordMissing}
+                onChange={(password) => patch('user', { password })}
+              />
             </WizardField>
           </div>
           <WizardMore label={t('settings.autoconfig.wizard.user.more')} open={!!more.user} onToggle={() => toggleMore('user')} />
           {more.user && (
             <div className="pw-two">
-              <WizardField label={t('settings.autoconfig.userRealName')} htmlFor={`${uid}-real`}>
+              <WizardField
+                label={t('settings.autoconfig.userRealName')}
+                htmlFor={`${uid}-real`}
+                hint={realNameError ? <FieldHint tone="warn">{t(realNameError)}</FieldHint> : undefined}
+              >
                 <WizardTextField
                   id={`${uid}-real`}
                   value={user.realName}
                   icon={<IdCard size={15} className="pe-input__icon" aria-hidden="true" />}
-                  placeholder={AUTOCONFIG_PLACEHOLDERS.USER_REAL_NAME}
+                  placeholder={realNamePlaceholder(user.name)}
+                  invalid={!!realNameError}
                   onChange={(realName) => patch('user', { realName })}
                 />
               </WizardField>
@@ -92,7 +92,7 @@ export function WizardUserStep({ wizard, uid }: { wizard: ProfileWizardState; ui
           )}
         </>
       ) : (
-        <p className="pw-line">{t('settings.autoconfig.wizard.user.laterLine')}</p>
+        <p className="pw-line">{t('settings.autoconfig.wizard.user.laterStops')}</p>
       )}
     </>
   );

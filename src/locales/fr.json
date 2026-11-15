@@ -55,6 +55,7 @@
     "noShaMessage": "Cette image n'a pas de somme de contrôle SHA, les données écrites ne peuvent donc pas être vérifiées. Le flash se poursuivra malgré tout.",
     "extracting": "Extraction de l'archive...",
     "applyingProfile": "Application du profil...",
+    "fetchingKeys": "Récupération des clés SSH...",
     "qdlSahara": "Chargement du chargeur de firmware...",
     "qdlFirehose": "Écriture des partitions...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "Impossible de se connecter à l'appareil EDL. Assurez-vous qu'il est en mode EDL et connecté en USB.",
     "qdlAutoconfigFailed": "Impossible d'appliquer le profil de configuration automatique à l'image QDL.",
     "autoconfigNotArmbian": "Cette image n'a pas de configuration de premier démarrage Armbian, le profil ne peut donc pas être appliqué. Flashez-la sans profil ou choisissez une image Armbian.",
+    "autoconfigUserNameInvalid": "Le nom d'utilisateur du profil doit commencer par une lettre et ne contenir que des lettres et des chiffres, 32 caractères au maximum. Modifiez le profil et réessayez.",
+    "autoconfigUserNameTaken": "Le nom d'utilisateur du profil existe déjà dans cette image. Modifiez le profil et choisissez-en un autre.",
+    "autoconfigUsersUnreadable": "Impossible de lire la liste des utilisateurs de l'image pour vérifier le nom d'utilisateur du profil. Rien n'a été écrit.",
+    "autoconfigUnsafeTarget": "L'image contient un élément inattendu à l'endroit où le profil écrit ses réglages, elle a donc été laissée intacte. Rien n'a été écrit.",
+    "sshKeysInvalidKey": "La source de clés SSH du profil a renvoyé quelque chose qui n'est pas une clé SSH publique. Rien n'a été écrit.",
+    "sshKeysNotFound": "La source de clés SSH du profil est introuvable. Vérifiez le nom d'utilisateur ou le lien dans le profil.",
+    "sshKeysNone": "La source de clés SSH du profil ne contient aucune clé publique. Ajoutez-y une clé ou modifiez le profil.",
+    "sshKeysTooLarge": "La source de clés SSH du profil a renvoyé trop de données pour être une liste de clés publiques. Rien n'a été écrit.",
+    "sshKeysNetwork": "Impossible de télécharger les clés SSH du profil. Vérifiez la connexion Internet et réessayez.",
+    "sshKeysInvalidInput": "La source de clés SSH du profil n'est ni un nom d'utilisateur valide ni un lien https. Modifiez le profil et réessayez.",
     "deviceInvalidPath": "Impossible d'écrire sur ce périphérique. Sélectionnez-le à nouveau.",
     "deviceNotFound": "Le périphérique sélectionné n'est plus connecté. Reconnectez-le et sélectionnez-le à nouveau.",
     "deviceChanged": "Le périphérique sélectionné a changé depuis votre choix. Sélectionnez-le à nouveau avant d'écrire.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Valeurs par défaut d'Armbian",
       "keys": {
         "checking": "Vérification des clés...",
-        "found_one": "{{count}} clé trouvée. La carte la récupère au premier démarrage.",
-        "found_other": "{{count}} clés trouvées. La carte les récupère au premier démarrage.",
+        "foundAtFlash_one": "{{count}} clé trouvée. Imager l'ajoute à la carte SD au moment du flashage.",
+        "foundAtFlash_other": "{{count}} clés trouvées. Imager les ajoute à la carte SD au moment du flashage.",
         "notFoundForge": "Aucun compte {{forge}} avec ce nom d'utilisateur.",
         "notFoundLink": "Rien n'a été trouvé à ce lien.",
         "noneForge": "Ce compte {{forge}} n'a pas encore de clés SSH publiques.",
@@ -334,7 +345,8 @@
         "tooLarge": "Cette adresse renvoie trop de données pour être une liste de clés publiques.",
         "invalidForge": "Ce n'est pas un nom d'utilisateur {{forge}} valide.",
         "invalidLink": "Seuls les liens https peuvent être vérifiés ici.",
-        "unreachable": "Impossible de vérifier les clés pour le moment. La carte les récupère au premier démarrage."
+        "invalidKey": "Cette adresse renvoie des lignes qui ne sont pas des clés SSH publiques",
+        "unreachableAtFlash": "Impossible de vérifier les clés pour le moment. Imager les télécharge au moment du flashage, il vous faudra alors Internet."
       },
       "ipInvalid": "Saisissez une adresse IPv4 valide (ex. 192.168.1.50)",
       "ipNotHost": "Il s'agit de l'adresse réseau ou de diffusion du sous-réseau, pas d'une adresse utilisable pour l'appareil. Choisissez-en une comme 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Remplir le formulaire",
       "fillFormHint": "Toutes les options sur une page",
       "wifiKeyFits": "Convient au Wi-Fi (8 à 63 caractères)",
-      "wifiKeyLength": "Les mots de passe Wi-Fi comptent généralement de 8 à 63 caractères",
       "wizard": {
         "eyebrow": "Nouveau profil",
         "unnamed": "Pas encore de nom",
@@ -393,8 +404,7 @@
           "review": "Vérification"
         },
         "pending": {
-          "network": "Conserve les valeurs par défaut d'Armbian",
-          "locale": "Valeurs par défaut d'Armbian"
+          "network": "Conserve les valeurs par défaut d'Armbian"
         },
         "sum": {
           "keysFrom": "Clés SSH depuis {{forge}}",
@@ -431,16 +441,16 @@
           "later": "À la première connexion",
           "more": "Nom complet et shell de connexion",
           "shellDefault": "Valeur par défaut d'Armbian",
-          "laterLine": "À votre première connexion, via SSH ou avec un clavier et un écran, Armbian vous demande de créer un utilisateur. La langue et l'heure de ce profil ne sont alors pas appliquées."
+          "laterStops": "La carte s'arrête à la première connexion et attend que vous créiez le compte, via SSH ou avec un clavier et un écran."
         },
         "locale": {
           "title": "Langue et heure",
           "sub": "Défini à la première connexion, qu'un utilisateur soit créé maintenant ou non.",
-          "location": "Selon la localisation",
+          "thisComputer": "Comme cet ordinateur",
           "choose": "Je choisis",
           "language": "Langue",
           "searchTimezone": "Rechercher un fuseau horaire",
-          "locationLine": "Armbian définit la langue et le fuseau horaire d'après l'endroit d'où la carte se connecte à Internet."
+          "thisComputerLine": "La carte reçoit la langue et le fuseau horaire de cet ordinateur, lus au moment du flashage."
         },
         "access": {
           "title": "Comment vous connectez-vous ?",
@@ -484,33 +494,47 @@
         "connection": "Connexion",
         "cableHint": "Branchez le câble avant le premier démarrage",
         "wifiKeyEmpty": "Laissez vide pour un réseau ouvert",
+        "wifiBadChars": "Supprimez tout caractère \" ou \\",
+        "wifiKeyLeadingSpace": "Le mot de passe ne peut pas commencer par une espace",
+        "wifiKeyLengthNeeded": "Utilisez de {{min}} à {{max}} caractères, ou laissez vide pour un réseau ouvert",
+        "wifiKeyRawPsk": "Clé Wi-Fi brute (64 caractères hexadécimaux)",
         "countryHint": "Définit les canaux Wi-Fi autorisés",
         "ipAutoHint": "Votre routeur attribue l'adresse",
         "ipFixedHint": "Choisissez une adresse libre sur votre réseau",
         "ipLabelWifi": "Adresse IP (Wi-Fi)",
         "bothCableAuto": "Le câble reçoit toujours une adresse automatique",
+        "wifiNoAdapterHint": "Si la carte n'a pas de Wi-Fi, le premier démarrage s'arrête. Choisissez Câble.",
         "addressOk": "Adresse valide",
+        "maskRequired": "Saisissez le masque de réseau (ex. 255.255.255.0)",
         "moreOptions": "Plus d'options",
         "netFixed": "Fixe, {{ip}}",
         "netAuto": "Adresse automatique",
         "whoLogsIn": "Qui se connecte",
         "laterHint": "Armbian le demande à la première connexion",
-        "userOk": "Minuscules, commence par une lettre",
+        "userValid": "Nom d'utilisateur valide",
         "userCreatedAs": "Créé sous le nom {{name}}",
-        "userInvalid": "Utilisez des minuscules, des chiffres, - et _",
+        "userLettersDigits": "Utilisez uniquement des lettres et des chiffres, en commençant par une lettre",
+        "userTooLong": "Utilisez {{max}} caractères au maximum",
+        "userReserved": "{{name}} est un compte système. Choisissez un autre nom.",
         "passwordRequired": "Nécessaire pour se connecter",
-        "fullNameRequired": "Nécessaire pour définir la langue et le fuseau horaire",
+        "realNameColon": "Supprimez les deux-points (:)",
+        "realNameDefault": "Si vide, la carte utilise {{name}}",
         "fullNameNotSet": "Nom complet non défini",
         "howYouGetIn": "Comment vous vous connectez",
         "passwordLoginHint": "Connexion avec votre mot de passe",
         "keysFrom": "Clés depuis",
         "keyUserRequired": "Saisissez un nom d'utilisateur",
         "keyLinkRequired": "Collez un lien vers les clés publiques",
+        "keysNeedInternet": "Imager télécharge les clés au moment du flashage, qui nécessite donc Internet",
         "rootSet": "Mot de passe root défini",
         "rootNotSet": "Mot de passe root non défini",
         "rootPlaceholder": "Non défini",
         "rootHint": "Si vide, Armbian le demande à la première connexion",
-        "locationHint": "Défini d'après l'endroit d'où la carte se connecte",
+        "rootHintUser": "Si vide, root reçoit le même mot de passe que l'utilisateur",
+        "rootSameAsUser": "Identique à l'utilisateur",
+        "thisComputerHint": "Lu depuis cet ordinateur au moment du flashage",
+        "regionNeedsBoth": "Choisissez à la fois une langue et un fuseau horaire",
+        "regionDefaults": "Valeurs par défaut d'Armbian : anglais (US) et UTC",
         "remoteHint": "Appliqué au premier démarrage",
         "atFirstBoot": "Au premier démarrage",
         "factCableWifi": "Câble + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Abandonner",
         "profileActions": "Actions du profil",
         "boardPages": "Pages des cartes",
-        "done": "Terminé"
+        "done": "Terminé",
+        "verdictFinishes": "Le premier démarrage se termine tout seul",
+        "verdictRootFromUser": "Root reçoit le même mot de passe que {{name}}.",
+        "verdictAsksUser": "Le premier démarrage s'arrête et attend que vous créiez un utilisateur",
+        "verdictAsksRootAndUser": "Le premier démarrage s'arrête et attend un mot de passe root et un utilisateur",
+        "verdictConsoleHint": "La carte semble bloquée tant que personne ne répond sur sa console, via SSH ou avec un clavier et un écran. Créez l'utilisateur ici pour l'éviter.",
+        "verdictRemote": "La configuration distante décide du déroulement du premier démarrage",
+        "verdictRemoteHint": "La carte la télécharge au premier démarrage, avant la mise en place du réseau de ce profil, et elle remplace ce profil. Il faut un câble avec Internet et une horloge correcte.",
+        "verdictRemoteWifi": "Avec le Wi-Fi seul, la carte ne peut pas la télécharger : elle est récupérée avant la configuration du Wi-Fi. Ajoutez un câble ou retirez l'URL.",
+        "verdictNeedsFix": "Certains réglages doivent d'abord être corrigés",
+        "verdictNeedsFixHint": "Corrigez-les pour voir ce qui se passe au premier démarrage."
       },
       "boardSheet": {
         "searchPlaceholder": "Rechercher des cartes ou des fabricants",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} cartes",
       "pagerLabel": "Pages des profils",
       "discardTitle": "Abandonner les modifications ?",
-      "discardBody": "Vos modifications non enregistrées de ce profil seront perdues."
+      "discardBody": "Vos modifications non enregistrées de ce profil seront perdues.",
+      "needsFix": "À corriger"
     }
   },
   "update": {

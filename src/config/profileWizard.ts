@@ -4,13 +4,20 @@
 import type { AutoconfigProfile, ProfileBoard } from '../types';
 import type { TFn } from '../utils/errorUtils';
 import {
+  REGION_NEEDS_BOTH,
+  USER_NAME_ISSUE_KEY,
   editorIpErrors,
+  editorIpMissing,
+  firstBootVerdict,
   fromEditorModel,
-  hasWifi,
-  isValidUserName,
   keySourceError,
   profileFacts,
+  realNameIssue,
+  regionIncomplete,
   toEditorModel,
+  userNameIssue,
+  wifiIssues,
+  type BootVerdict,
   type EditorModel,
   type ProfileFact,
 } from './profileEditorModel';
@@ -52,15 +59,21 @@ export function wizardStepError(step: WizardStep, m: EditorModel): string | null
     case 'name':
       if (!m.name.trim()) return 'settings.autoconfig.nameRequired';
       return m.scope === 'some' && !m.boards.length ? 'settings.autoconfig.editor.pickBoard' : null;
-    case 'network':
+    case 'network': {
       if (!m.network.apply) return null;
-      if (hasWifi(m.network.mode) && !m.network.ssid.trim()) return 'settings.autoconfig.wizard.ssidRequired';
-      return m.network.ip === 'fixed' && !m.network.address.trim() ? 'settings.autoconfig.wizard.addressRequired' : null;
-    case 'user':
+      const wifi = wifiIssues(m.network);
+      const missing = wizardIpMissing(m);
+      return wifi.ssid ?? wifi.key ?? missing ?? null;
+    }
+    case 'user': {
       if (m.user.mode !== 'now') return null;
-      if (!m.user.name.trim()) return 'settings.autoconfig.wizard.usernameRequired';
-      if (!isValidUserName(m.user.name)) return 'settings.autoconfig.editor.userInvalid';
-      return m.user.password ? null : 'settings.autoconfig.editor.passwordRequired';
+      const issue = userNameIssue(m.user.name);
+      if (issue) return USER_NAME_ISSUE_KEY[issue];
+      if (!m.user.password) return 'settings.autoconfig.editor.passwordRequired';
+      return realNameIssue(m.user.realName);
+    }
+    case 'locale':
+      return regionIncomplete(m.region) ? REGION_NEEDS_BOTH : null;
     case 'access': {
       const error = keySourceError(m.access);
       return error ? `settings.autoconfig.${error}` : null;
@@ -68,6 +81,13 @@ export function wizardStepError(step: WizardStep, m: EditorModel): string | null
     default:
       return null;
   }
+}
+
+/** i18n key of the first static IP field Next needs (address, then mask), or null */
+export function wizardIpMissing(m: EditorModel): string | null {
+  const missing = editorIpMissing(m.network);
+  const key = missing.ip ?? missing.mask;
+  return key ? `settings.autoconfig.${key}` : null;
 }
 
 export const wizardStepBlocked = (step: WizardStep, m: EditorModel): boolean =>
@@ -86,6 +106,9 @@ export function wizardModel(m: EditorModel, skipped: WizardSkips): EditorModel {
 
 export const wizardProfile = (m: EditorModel, skipped: WizardSkips): Pick<AutoconfigProfile, 'name' | 'config' | 'boards'> =>
   fromEditorModel(wizardModel(m, skipped));
+
+export const wizardVerdict = (m: EditorModel, skipped: WizardSkips, t: TFn): BootVerdict =>
+  firstBootVerdict(wizardModel(m, skipped), t);
 
 /** profileFacts of what the wizard saves; a skipped area reads as the Armbian default it keeps */
 export function wizardFacts(m: EditorModel, skipped: WizardSkips, keyCount: number | null, keyProblem: boolean, t: TFn): ProfileFact[] {

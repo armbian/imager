@@ -15,8 +15,10 @@ import {
   Layers,
   FolderOpen,
   FileCog,
+  KeyRound,
 } from 'lucide-react';
 import { UI, FLASH_PREP_STAGE } from '../../config';
+import type { FlashPrepStage } from '../../types';
 
 export type FlashStage =
   | 'authorizing'
@@ -24,6 +26,7 @@ export type FlashStage =
   | 'verifying_sha'
   | 'decompressing'
   | 'extracting'
+  | typeof FLASH_PREP_STAGE.FETCHING_KEYS
   | typeof FLASH_PREP_STAGE.APPLYING_PROFILE
   | 'qdl_sahara'
   | 'qdl_firehose'
@@ -50,6 +53,8 @@ export function FlashStageIcon({ stage, size = UI.ICON_SIZE.FLASH_STAGE }: Flash
       return <Archive size={size} className="stage-icon decompressing" />;
     case 'extracting':
       return <FolderOpen size={size} className="stage-icon decompressing" />;
+    case FLASH_PREP_STAGE.FETCHING_KEYS:
+      return <KeyRound size={size} className="stage-icon decompressing" />;
     case FLASH_PREP_STAGE.APPLYING_PROFILE:
       return <FileCog size={size} className="stage-icon decompressing" />;
     case 'qdl_sahara':
@@ -82,6 +87,8 @@ export function getStageKey(stage: FlashStage): string {
       return 'flash.decompressing';
     case 'extracting':
       return 'flash.extracting';
+    case FLASH_PREP_STAGE.FETCHING_KEYS:
+      return 'flash.fetchingKeys';
     case FLASH_PREP_STAGE.APPLYING_PROFILE:
       return 'flash.applyingProfile';
     case 'qdl_sahara':
@@ -101,6 +108,12 @@ export function getStageKey(stage: FlashStage): string {
   }
 }
 
+/** The stage a live `prep_stage` shows: fetching the keys, or copying the image and writing the profile */
+// eslint-disable-next-line react-refresh/only-export-components
+export function prepScreenStage(prep: FlashPrepStage): FlashStage {
+  return prep === FLASH_PREP_STAGE.FETCHING_KEYS ? FLASH_PREP_STAGE.FETCHING_KEYS : FLASH_PREP_STAGE.APPLYING_PROFILE;
+}
+
 /** Macro phases shown as progress dots: Download · Prepare · Write · Verify. */
 export type FlashPhase = 'download' | 'prepare' | 'write' | 'verify';
 
@@ -117,6 +130,7 @@ export function stagePhase(stage: FlashStage): FlashPhase | null {
       return 'download';
     case 'decompressing':
     case 'extracting':
+    case FLASH_PREP_STAGE.FETCHING_KEYS:
     case FLASH_PREP_STAGE.APPLYING_PROFILE:
       return 'prepare';
     case 'qdl_sahara':
@@ -135,7 +149,8 @@ export function stagePhase(stage: FlashStage): FlashPhase | null {
 
 /** Stages shown with an indeterminate (breathing) bar instead of a percentage. */
 const INDETERMINATE_STAGES: FlashStage[] = [
-  'decompressing', 'verifying_sha', 'extracting', FLASH_PREP_STAGE.APPLYING_PROFILE, 'qdl_sahara',
+  'decompressing', 'verifying_sha', 'extracting', FLASH_PREP_STAGE.FETCHING_KEYS, FLASH_PREP_STAGE.APPLYING_PROFILE,
+  'qdl_sahara',
 ];
 
 /** True when a stage has no meaningful percentage and uses the indeterminate bar. */

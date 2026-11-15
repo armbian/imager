@@ -55,6 +55,7 @@
     "noShaMessage": "Dit image heeft geen SHA-checksum, dus de geschreven data kan niet worden geverifieerd. Het flashen gaat toch door.",
     "extracting": "Archief uitpakken...",
     "applyingProfile": "Profiel toepassen...",
+    "fetchingKeys": "SSH-sleutels ophalen...",
     "qdlSahara": "Firmware-loader uploaden...",
     "qdlFirehose": "Partities schrijven...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "Verbinding met EDL-apparaat mislukt. Controleer of het apparaat in EDL-modus staat en via USB is aangesloten.",
     "qdlAutoconfigFailed": "Het toepassen van het autoconfig-profiel op de QDL-image is mislukt.",
     "autoconfigNotArmbian": "Deze image heeft geen eerste-opstartinstelling van Armbian, dus het profiel kan niet worden toegepast. Flash zonder profiel of kies een Armbian-image.",
+    "autoconfigUserNameInvalid": "De gebruikersnaam in het profiel moet met een letter beginnen en mag alleen letters en cijfers bevatten, maximaal 32 tekens. Bewerk het profiel en probeer het opnieuw.",
+    "autoconfigUserNameTaken": "De gebruikersnaam in het profiel bestaat al in deze image. Bewerk het profiel en kies een andere.",
+    "autoconfigUsersUnreadable": "De gebruikerslijst van de image kon niet worden gelezen om de gebruikersnaam in het profiel te controleren. Er is niets geschreven.",
+    "autoconfigUnsafeTarget": "De image bevat iets onverwachts op de plek waar het profiel zijn instellingen schrijft, dus is hij ongewijzigd gelaten. Er is niets geschreven.",
+    "sshKeysInvalidKey": "De bron van SSH-sleutels in het profiel gaf iets terug dat geen openbare SSH-sleutel is. Er is niets geschreven.",
+    "sshKeysNotFound": "De bron van SSH-sleutels in het profiel is niet gevonden. Controleer de gebruikersnaam of link in het profiel.",
+    "sshKeysNone": "De bron van SSH-sleutels in het profiel heeft geen openbare sleutels. Voeg daar een sleutel toe of bewerk het profiel.",
+    "sshKeysTooLarge": "De bron van SSH-sleutels in het profiel gaf te veel terug voor een lijst met openbare sleutels. Er is niets geschreven.",
+    "sshKeysNetwork": "De SSH-sleutels van het profiel konden niet worden gedownload. Controleer de internetverbinding en probeer het opnieuw.",
+    "sshKeysInvalidInput": "De bron van SSH-sleutels in het profiel is geen geldige gebruikersnaam of https-link. Bewerk het profiel en probeer het opnieuw.",
     "deviceInvalidPath": "Er kan niet naar dit apparaat worden geschreven. Selecteer het apparaat opnieuw.",
     "deviceNotFound": "Het geselecteerde apparaat is niet meer aangesloten. Sluit het opnieuw aan en selecteer het opnieuw.",
     "deviceChanged": "Het geselecteerde apparaat is gewijzigd sinds je het koos. Selecteer het opnieuw voordat je schrijft.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Armbian-standaarden",
       "keys": {
         "checking": "Sleutels controleren...",
-        "found_one": "{{count}} sleutel gevonden. Het board haalt die op bij de eerste start.",
-        "found_other": "{{count}} sleutels gevonden. Het board haalt ze op bij de eerste start.",
+        "foundAtFlash_one": "{{count}} sleutel gevonden. Imager voegt die bij het flashen toe aan de SD-kaart.",
+        "foundAtFlash_other": "{{count}} sleutels gevonden. Imager voegt ze bij het flashen toe aan de SD-kaart.",
         "notFoundForge": "Geen {{forge}}-account met deze gebruikersnaam.",
         "notFoundLink": "Op deze link is niets gevonden.",
         "noneForge": "Dit {{forge}}-account heeft nog geen openbare SSH-sleutels.",
@@ -334,7 +345,8 @@
         "tooLarge": "Dit adres levert te veel om een lijst met openbare sleutels te zijn.",
         "invalidForge": "Dit is geen geldige {{forge}}-gebruikersnaam.",
         "invalidLink": "Hier kunnen alleen https-links worden gecontroleerd.",
-        "unreachable": "De sleutels kunnen nu niet worden gecontroleerd. Het board haalt ze op bij de eerste start."
+        "invalidKey": "Dit adres geeft regels terug die geen openbare SSH-sleutels zijn",
+        "unreachableAtFlash": "De sleutels kunnen nu niet worden gecontroleerd. Imager downloadt ze bij het flashen, dus dan heb je internet nodig."
       },
       "ipInvalid": "Voer een geldig IPv4-adres in (bijv. 192.168.1.50)",
       "ipNotHost": "Dit is het netwerk- of broadcastadres van het subnet, geen bruikbaar apparaatadres. Kies er een zoals 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Formulier invullen",
       "fillFormHint": "Alle opties op één pagina",
       "wifiKeyFits": "Geschikt voor Wi-Fi (8 tot 63 tekens)",
-      "wifiKeyLength": "Wi-Fi-wachtwoorden hebben meestal 8 tot 63 tekens",
       "wizard": {
         "eyebrow": "Nieuw profiel",
         "unnamed": "Nog geen naam",
@@ -393,8 +404,7 @@
           "review": "Controle"
         },
         "pending": {
-          "network": "Behoudt de Armbian-standaarden",
-          "locale": "Armbian-standaarden"
+          "network": "Behoudt de Armbian-standaarden"
         },
         "sum": {
           "keysFrom": "SSH-sleutels van {{forge}}",
@@ -431,16 +441,16 @@
           "later": "Bij de eerste login",
           "more": "Volledige naam en login-shell",
           "shellDefault": "Armbian-standaard",
-          "laterLine": "De eerste keer dat je inlogt, via SSH of met toetsenbord en monitor, vraagt Armbian je een gebruiker aan te maken. De taal en tijd uit dit profiel worden dan niet toegepast."
+          "laterStops": "Het board stopt bij de eerste login en wacht tot je het account aanmaakt, via SSH of met toetsenbord en monitor."
         },
         "locale": {
           "title": "Taal en tijd",
           "sub": "Ingesteld bij de eerste login, ook als er nu geen gebruiker wordt aangemaakt.",
-          "location": "Op basis van de locatie",
+          "thisComputer": "Zoals deze computer",
           "choose": "Ik kies",
           "language": "Taal",
           "searchTimezone": "Tijdzones zoeken",
-          "locationLine": "Armbian stelt de taal en tijdzone in op basis van waar het board verbinding maakt met internet."
+          "thisComputerLine": "Het board krijgt de taal en tijdzone van deze computer, uitgelezen bij het flashen."
         },
         "access": {
           "title": "Hoe kom je binnen?",
@@ -484,33 +494,47 @@
         "connection": "Verbinding",
         "cableHint": "Steek de kabel erin vóór de eerste start",
         "wifiKeyEmpty": "Laat leeg voor een open netwerk",
+        "wifiBadChars": "Verwijder elk teken \" of \\",
+        "wifiKeyLeadingSpace": "Het wachtwoord mag niet met een spatie beginnen",
+        "wifiKeyLengthNeeded": "Gebruik {{min}} tot {{max}} tekens, of laat leeg voor een open netwerk",
+        "wifiKeyRawPsk": "Ruwe Wi-Fi-sleutel (64 hex-tekens)",
         "countryHint": "Bepaalt de toegestane Wi-Fi-kanalen",
         "ipAutoHint": "Je router wijst het adres toe",
         "ipFixedHint": "Kies een vrij adres op je netwerk",
         "ipLabelWifi": "IP-adres (Wi-Fi)",
         "bothCableAuto": "De kabel krijgt altijd een automatisch adres",
+        "wifiNoAdapterHint": "Heeft het board geen Wi-Fi, dan stopt de eerste start. Kies Kabel.",
         "addressOk": "Geldig adres",
+        "maskRequired": "Voer het subnetmasker in (bijv. 255.255.255.0)",
         "moreOptions": "Meer opties",
         "netFixed": "Vast, {{ip}}",
         "netAuto": "Automatisch adres",
         "whoLogsIn": "Wie er inlogt",
         "laterHint": "Armbian vraagt erom bij de eerste login",
-        "userOk": "Kleine letters, begint met een letter",
+        "userValid": "Geldige gebruikersnaam",
         "userCreatedAs": "Aangemaakt als {{name}}",
-        "userInvalid": "Gebruik kleine letters, cijfers, - en _",
+        "userLettersDigits": "Gebruik alleen letters en cijfers, beginnend met een letter",
+        "userTooLong": "Gebruik maximaal {{max}} tekens",
+        "userReserved": "{{name}} is een systeemaccount. Kies een andere naam.",
         "passwordRequired": "Nodig om in te loggen",
-        "fullNameRequired": "Nodig om taal en tijdzone in te stellen",
+        "realNameColon": "Verwijder de dubbele punt (:)",
+        "realNameDefault": "Als het leeg is, gebruikt het board {{name}}",
         "fullNameNotSet": "Volledige naam niet ingesteld",
         "howYouGetIn": "Hoe je inlogt",
         "passwordLoginHint": "Inloggen met je wachtwoord",
         "keysFrom": "Sleutels van",
         "keyUserRequired": "Voer een gebruikersnaam in",
         "keyLinkRequired": "Plak een link naar de openbare sleutels",
+        "keysNeedInternet": "Imager downloadt de sleutels bij het flashen, dus flashen heeft internet nodig",
         "rootSet": "Root-wachtwoord ingesteld",
         "rootNotSet": "Root-wachtwoord niet ingesteld",
         "rootPlaceholder": "Niet ingesteld",
         "rootHint": "Als het leeg is, vraagt Armbian erom bij de eerste login",
-        "locationHint": "Ingesteld op basis van waar het board verbinding maakt",
+        "rootHintUser": "Als het leeg is, krijgt root hetzelfde wachtwoord als de gebruiker",
+        "rootSameAsUser": "Zelfde als de gebruiker",
+        "thisComputerHint": "Wordt bij het flashen van deze computer gelezen",
+        "regionNeedsBoth": "Kies zowel een taal als een tijdzone",
+        "regionDefaults": "Armbian-standaarden: Engels (VS) en UTC",
         "remoteHint": "Toegepast bij de eerste start",
         "atFirstBoot": "Bij de eerste start",
         "factCableWifi": "Kabel + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Verwerpen",
         "profileActions": "Profielacties",
         "boardPages": "Boardpagina's",
-        "done": "Klaar"
+        "done": "Klaar",
+        "verdictFinishes": "De eerste start rondt zichzelf af",
+        "verdictRootFromUser": "Root krijgt hetzelfde wachtwoord als {{name}}.",
+        "verdictAsksUser": "De eerste start stopt en wacht tot je een gebruiker aanmaakt",
+        "verdictAsksRootAndUser": "De eerste start stopt en wacht op een rootwachtwoord en een gebruiker",
+        "verdictConsoleHint": "Het board lijkt vast te zitten tot iemand antwoordt op de console, via SSH of met toetsenbord en monitor. Maak de gebruiker hier aan om dat te voorkomen.",
+        "verdictRemote": "De externe configuratie bepaalt hoe de eerste start verloopt",
+        "verdictRemoteHint": "Het board downloadt deze bij de eerste start, voordat het netwerk van dit profiel is ingesteld, en deze vervangt dit profiel. Daarvoor is een kabel met internet en een juiste klok nodig.",
+        "verdictRemoteWifi": "Met alleen Wi-Fi kan het board de configuratie niet downloaden: die wordt opgehaald voordat Wi-Fi is ingesteld. Voeg een kabel toe of verwijder de URL.",
+        "verdictNeedsFix": "Sommige instellingen moeten eerst worden gecorrigeerd",
+        "verdictNeedsFixHint": "Corrigeer ze om te zien wat er bij de eerste start gebeurt."
       },
       "boardSheet": {
         "searchPlaceholder": "Zoek boards of fabrikanten",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} boards",
       "pagerLabel": "Profielpagina's",
       "discardTitle": "Wijzigingen verwerpen?",
-      "discardBody": "Je niet-opgeslagen wijzigingen aan dit profiel gaan verloren."
+      "discardBody": "Je niet-opgeslagen wijzigingen aan dit profiel gaan verloren.",
+      "needsFix": "Aanpassing nodig"
     }
   },
   "update": {

@@ -3,18 +3,20 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock, Globe, MapPin } from 'lucide-react';
+import { Clock, Globe, Laptop } from 'lucide-react';
 import { COMMON_LOCALES, getTimezones, localeLabel, timezoneOffset } from '../../config/autoconfig';
-import { localeCountry, type RegionMode } from '../../config/profileEditorModel';
+import { REGION_NEEDS_BOTH, localeCountry, regionIncomplete, type RegionMode } from '../../config/profileEditorModel';
 import type { ProfileWizardState } from '../../hooks/useProfileWizard';
 import { SegmentedControl, SelectMenu, type SelectOption } from '../settings/controls';
-import { CountryFlag } from '../settings/editor/EditorParts';
+import { CountryFlag, FieldHint } from '../settings/editor/EditorParts';
 import { WizardField } from './WizardFields';
 
 export function WizardLocaleStep({ wizard }: { wizard: ProfileWizardState }) {
   const { t, i18n } = useTranslation();
-  const { model, patch } = wizard;
+  const { model, attempted, patch } = wizard;
   const region = model.region;
+  const missing = attempted && regionIncomplete(region);
+  const missingHint = <FieldHint tone="warn">{t(REGION_NEEDS_BOTH)}</FieldHint>;
   const placeholder = t('settings.autoconfig.selectPlaceholder');
 
   const timezones = useMemo<SelectOption<string>[]>(() => {
@@ -46,18 +48,19 @@ export function WizardLocaleStep({ wizard }: { wizard: ProfileWizardState }) {
         value={region.apply ? region.mode : null}
         ariaLabel={t('settings.autoconfig.wizard.locale.title')}
         options={[
-          { value: 'location', label: t('settings.autoconfig.wizard.locale.location'), icon: <MapPin aria-hidden="true" /> },
+          { value: 'location', label: t('settings.autoconfig.wizard.locale.thisComputer'), icon: <Laptop aria-hidden="true" /> },
           { value: 'choose', label: t('settings.autoconfig.wizard.locale.choose'), icon: <Globe aria-hidden="true" /> },
         ]}
         onChange={(mode) => patch('region', { mode, apply: true })}
       />
       {!region.apply ? (
-        <p className="pw-line">{t('settings.autoconfig.wizard.pending.locale')}</p>
+        <p className="pw-line">{t('settings.autoconfig.editor.regionDefaults')}</p>
       ) : region.mode === 'choose' ? (
         <div className="pw-two">
-          <WizardField label={t('settings.autoconfig.wizard.locale.language')}>
+          <WizardField label={t('settings.autoconfig.wizard.locale.language')} hint={missing && !region.locale ? missingHint : undefined}>
             <SelectMenu
               value={region.locale}
+              invalid={missing && !region.locale}
               options={locales}
               onChange={(locale) => patch('region', { locale })}
               ariaLabel={t('settings.autoconfig.wizard.locale.language')}
@@ -65,9 +68,10 @@ export function WizardLocaleStep({ wizard }: { wizard: ProfileWizardState }) {
               searchPlaceholder={t('settings.searchLanguage')}
             />
           </WizardField>
-          <WizardField label={t('settings.autoconfig.timezone')}>
+          <WizardField label={t('settings.autoconfig.timezone')} hint={missing && !region.timezone ? missingHint : undefined}>
             <SelectMenu
               value={region.timezone}
+              invalid={missing && !region.timezone}
               options={timezones}
               onChange={(timezone) => patch('region', { timezone })}
               ariaLabel={t('settings.autoconfig.timezone')}
@@ -77,7 +81,7 @@ export function WizardLocaleStep({ wizard }: { wizard: ProfileWizardState }) {
           </WizardField>
         </div>
       ) : (
-        <p className="pw-line">{t('settings.autoconfig.wizard.locale.locationLine')}</p>
+        <p className="pw-line">{t('settings.autoconfig.wizard.locale.thisComputerLine')}</p>
       )}
     </>
   );

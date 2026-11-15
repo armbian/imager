@@ -7,6 +7,7 @@
 export const FLASH_PREP_STAGE = {
   COPYING: 'copying',
   APPLYING_PROFILE: 'applying_profile',
+  FETCHING_KEYS: 'fetching_keys',
 } as const;
 
 /** `qdl_stage` values from get_flash_progress; twin of qdl::STAGE_* in Rust */
@@ -410,9 +411,13 @@ export const UI = {
 
 /** Autoconfig limits and timings for the profile forms */
 export const AUTOCONFIG = {
-  /** WPA passphrase length; a 64-character hex PSK also works, so the check never blocks */
+  /** WPA passphrase length, enforced before a profile saves */
   WIFI_KEY_MIN: 8,
   WIFI_KEY_MAX: 63,
+  /** A raw WPA PSK: exactly this many hex digits */
+  WIFI_PSK_HEX_LENGTH: 64,
+  /** Longest first user name, checked again by the backend at flash time */
+  USER_NAME_MAX: 32,
   KEY_LOOKUP_DEBOUNCE_MS: 600,
 } as const;
 

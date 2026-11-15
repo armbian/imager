@@ -2,6 +2,8 @@
 
 .pe {
   --select-w: 280px;
+  /* The verdict's height with its hint line, so the header stays put while the hint comes and goes */
+  --verdict-min-h: 58px;
 }
 
 .pe-back {
@@ -184,6 +186,84 @@
   text-decoration-color: var(--border-color);
 }
 
+/* How first boot ends: a full-width strip above the header, also closing the wizard review */
+.pe-verdict {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-light);
+}
+
+.pe > .pe-verdict {
+  min-height: var(--verdict-min-h);
+  margin-bottom: var(--space-lg);
+}
+
+.pe-verdict.is-brief {
+  align-items: center;
+}
+
+.pe-verdict__icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+.pe-verdict.is-brief .pe-verdict__icon {
+  margin-top: 0;
+}
+
+.pe-verdict__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.pe-verdict__text strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.pe-verdict.is-ok {
+  background: rgba(var(--color-success-rgb), 0.08);
+  box-shadow: inset 0 0 0 1px rgba(var(--color-success-rgb), 0.24);
+}
+
+.pe-verdict.is-ok .pe-verdict__icon {
+  color: var(--color-success-dark);
+}
+
+.pe-verdict.is-warn {
+  background: rgba(var(--color-warning-rgb), 0.1);
+  box-shadow: inset 0 0 0 1px rgba(var(--color-warning-rgb), 0.32);
+}
+
+.pe-verdict.is-warn .pe-verdict__icon {
+  color: var(--color-warning-ink);
+}
+
+.theme-dark .pe-verdict.is-ok .pe-verdict__icon {
+  color: var(--color-success);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light):not(.theme-dark) .pe-verdict.is-ok .pe-verdict__icon {
+    color: var(--color-success);
+  }
+}
+
 /* Groups: eyebrow and one-line purpose above the card */
 .pe-group + .pe-group {
   margin-top: 24px;
@@ -267,7 +347,8 @@
   box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px rgba(var(--accent-rgb), 0.16);
 }
 
-.pe-input.is-invalid {
+.pe-input.is-invalid,
+.pe .ac-input.is-invalid {
   box-shadow: inset 0 0 0 1px var(--attention);
 }
 

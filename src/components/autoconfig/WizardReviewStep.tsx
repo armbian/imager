@@ -8,6 +8,7 @@ import { UI } from '../../config';
 import { profileScopeLabel, type ProfileFact } from '../../config/profileEditorModel';
 import { WIZARD_ITEMS, WIZARD_STEPS, wizardItemFact } from '../../config/profileWizard';
 import type { ProfileWizardState } from '../../hooks/useProfileWizard';
+import { BootVerdictNote } from '../settings/editor/BootVerdictNote';
 import { WizardItemIcon } from './WizardSide';
 
 interface ReviewRowProps {
@@ -40,31 +41,34 @@ function ReviewRow({ icon, label, value, tone = 'ok', onEdit }: ReviewRowProps) 
 
 export function WizardReviewStep({ wizard }: { wizard: ProfileWizardState }) {
   const { t } = useTranslation();
-  const { model, facts, go } = wizard;
+  const { model, facts, verdict, empty, go } = wizard;
   const scoped = model.scope === 'some' ? model.boards : [];
   const ScopeIcon = scoped.length ? Cpu : Layers;
 
   return (
-    <dl className="pw-review">
-      <ReviewRow
-        icon={<ScopeIcon size={UI.ICON_SIZE.WIZARD_ITEM} />}
-        label={t('settings.autoconfig.editor.offeredFor')}
-        value={profileScopeLabel(scoped, t)}
-        onEdit={() => go(0)}
-      />
-      {WIZARD_ITEMS.map((item) => {
-        const fact = wizardItemFact(item, facts);
-        return (
-          <ReviewRow
-            key={item}
-            icon={<WizardItemIcon item={item} cable={model.network.apply && model.network.mode === 'cable'} />}
-            label={t(`settings.autoconfig.wizard.steps.${item}`)}
-            value={fact.text}
-            tone={fact.tone}
-            onEdit={() => go(WIZARD_STEPS.indexOf(item))}
-          />
-        );
-      })}
-    </dl>
+    <>
+      <dl className="pw-review">
+        <ReviewRow
+          icon={<ScopeIcon size={UI.ICON_SIZE.WIZARD_ITEM} />}
+          label={t('settings.autoconfig.editor.offeredFor')}
+          value={profileScopeLabel(scoped, t)}
+          onEdit={() => go(0)}
+        />
+        {WIZARD_ITEMS.map((item) => {
+          const fact = wizardItemFact(item, facts);
+          return (
+            <ReviewRow
+              key={item}
+              icon={<WizardItemIcon item={item} cable={model.network.apply && model.network.mode === 'cable'} />}
+              label={t(`settings.autoconfig.wizard.steps.${item}`)}
+              value={fact.text}
+              tone={fact.tone}
+              onEdit={() => go(WIZARD_STEPS.indexOf(item))}
+            />
+          );
+        })}
+      </dl>
+      {!empty && <BootVerdictNote verdict={verdict} />}
+    </>
   );
 }

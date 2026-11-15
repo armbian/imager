@@ -8,6 +8,7 @@ import { keyLookupSource, localeForLanguage } from '../../config/autoconfig';
 import {
   blockingReason,
   firstBlockingGroup,
+  firstBootVerdict,
   fromEditorModel,
   keySourceError,
   profileFacts,
@@ -24,13 +25,14 @@ import { useSshKeyCheck } from '../../hooks/useSshKeyCheck';
 import { logWarn } from '../../hooks/useTauri';
 import { useToasts } from '../../hooks/useToasts';
 import type { AutoconfigProfile, LeaveGuard } from '../../types';
-import { focusAfterInput } from '../../utils';
+import { firstInvalidField, focusAfterInput } from '../../utils';
 import { isSshKeysSourceError } from '../../utils/errorUtils';
 import { ConfirmationDialog } from '../shared/ConfirmationDialog';
 import { AccessGroup } from './editor/AccessGroup';
 import { SettingsGroup, SettingsRow } from './controls';
 import { ActionPill } from './editor/ActionPill';
 import { AdvancedGroup } from './editor/AdvancedGroup';
+import { BootVerdictNote } from './editor/BootVerdictNote';
 import { EditorHeader } from './editor/EditorHeader';
 import { NameScopeGroup } from './editor/NameScopeGroup';
 import { NetworkGroup } from './editor/NetworkGroup';
@@ -51,7 +53,7 @@ const NO_MORE: Record<MoreKey, boolean> = { network: false, user: false, access:
 function revealGroup(root: HTMLElement | null, group: EditorGroup, behavior: ScrollBehavior) {
   const section = root?.querySelector<HTMLElement>(`[data-group="${group}"]`);
   section?.scrollIntoView({ block: 'start', behavior });
-  section?.querySelector<HTMLElement>('[aria-invalid="true"], input')?.focus({ preventScroll: true });
+  firstInvalidField(section)?.focus({ preventScroll: true });
 }
 
 export function ProfileEditor({ profile, onSaved, onDeleted, onCancel, registerLeaveGuard }: ProfileEditorProps) {
@@ -69,9 +71,13 @@ export function ProfileEditor({ profile, onSaved, onDeleted, onCancel, registerL
       locale: localeForLanguage(i18n.language),
     })
   );
+  const [openOn] = useState(() => {
+    const target = isNew ? null : firstBlockingGroup(initial);
+    return target && !target.empty ? target : null;
+  });
   const [saved, setSaved] = useState(initial);
   const [model, setModel] = useState(initial);
-  const [more, setMore] = useState(NO_MORE);
+  const [more, setMore] = useState(() => (openOn?.more ? { ...NO_MORE, [openOn.more]: true } : NO_MORE));
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState<'delete' | 'discard' | null>(null);
   const [leaving, setLeaving] = useState<((ok: boolean) => void) | null>(null);
@@ -89,6 +95,7 @@ export function ProfileEditor({ profile, onSaved, onDeleted, onCancel, registerL
   const keyCount = keyCheck.status === 'found' ? keyCheck.lookup.total : null;
   const progress = profileProgress(model, keyProblem);
   const facts = useMemo(() => profileFacts(model, keyCount, keyProblem, t), [model, keyCount, keyProblem, t]);
+  const verdict = useMemo(() => firstBootVerdict(model, t), [model, t]);
 
   const dirtyRef = useRef(dirty);
   useEffect(() => {
@@ -121,6 +128,12 @@ export function ProfileEditor({ profile, onSaved, onDeleted, onCancel, registerL
     });
   };
   const toggleMore = (key: MoreKey) => setMore((m) => ({ ...m, [key]: !m[key] }));
+
+  // A saved profile that stopped passing the rules opens on the field to fix
+  useEffect(() => {
+    if (openOn) requestAnimationFrame(() => revealGroup(rootRef.current, openOn.group, 'auto'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on open
+  }, []);
 
   const save = async () => {
     if (saving || (!isNew && !dirty)) return;
@@ -181,6 +194,7 @@ export function ProfileEditor({ profile, onSaved, onDeleted, onCancel, registerL
         {t('settings.nav.profiles')}
       </button>
 
+      <BootVerdictNote verdict={verdict} />
       <EditorHeader model={model} isNew={isNew} progress={progress} facts={facts} />
 
       <div className="pe-form">

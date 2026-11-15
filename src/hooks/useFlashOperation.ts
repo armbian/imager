@@ -7,7 +7,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ImageInfo, BlockDevice, AutoconfigConfig } from '../types';
 import { FLASH_METHOD, deriveFlashMethod, isEdlMethod, isIdleFlashProgress, isQdlWriteStage } from '../types';
-import { PHASE_ORDER, type FlashStage, type FlashPhase } from '../components/flash/FlashStageIcon';
+import { PHASE_ORDER, prepScreenStage, type FlashStage, type FlashPhase } from '../components/flash/FlashStageIcon';
+import { profileFetchesKeys } from '../config/autoconfig';
 import {
   downloadImage,
   flashImage,
@@ -30,7 +31,7 @@ import {
 import { getCacheEnabled, getSkipVerify } from './useSettings';
 import { POLLING, CACHE, STORAGE_KEYS, FLASH_PREP_STAGE, QDL_STAGE } from '../config';
 import { getErrorMessage, armbianIdentityKey, isCompressedImage } from '../utils';
-import { isDeviceRefusalError, isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
+import { isDeviceRefusalError, isProfileRefusalError, isShaUnavailableError, translateFlashError } from '../utils/errorUtils';
 
 interface UseFlashOperationProps {
   image: ImageInfo;
@@ -242,7 +243,7 @@ export function useFlashOperation({
     const activeStages: FlashStage[] = isEdlFlash
       ? ['downloading', 'verifying_sha', 'decompressing']
       : ['downloading', 'verifying_sha', 'decompressing',
-         FLASH_PREP_STAGE.APPLYING_PROFILE, 'flashing', 'verifying'];
+         FLASH_PREP_STAGE.FETCHING_KEYS, FLASH_PREP_STAGE.APPLYING_PROFILE, 'flashing', 'verifying'];
     if (!activeStages.includes(stage)) {
       if (deviceMonitorRef.current) {
         clearInterval(deviceMonitorRef.current);
@@ -365,7 +366,12 @@ export function useFlashOperation({
     // The TAR path injects the profile during extraction, so only block and UFS flashes prep first.
     const awaitPrep = !isQdlMode && hasProfile;
     prepRef.current = awaitPrep ? 'pending' : 'none';
-    setStage(awaitPrep ? FLASH_PREP_STAGE.APPLYING_PROFILE : writeStage);
+    // The TAR path fetches the profile's keys before it extracts
+    const tarKeys = isQdlMode && hasProfile;
+    const firstPrep = autoconfigRef.current && profileFetchesKeys(autoconfigRef.current)
+      ? FLASH_PREP_STAGE.FETCHING_KEYS
+      : FLASH_PREP_STAGE.APPLYING_PROFILE;
+    setStage(awaitPrep ? firstPrep : writeStage);
     setProgress(0);
     maxProgressRef.current = 0;
     flashWriteSeenRef.current = false;
@@ -378,6 +384,7 @@ export function useFlashOperation({
         if (prepRef.current !== 'none') {
           if (prog.prep_stage) {
             prepRef.current = 'active';
+            setStage(prepScreenStage(prog.prep_stage));
           } else if (prepRef.current === 'active' || (prepRef.current === 'idle' && !isIdleFlashProgress(prog))) {
             // Prep ended, or finished between two polls and the write has begun.
             prepRef.current = 'none';
@@ -387,7 +394,11 @@ export function useFlashOperation({
           }
         }
 
-        const preparing = prepRef.current !== 'none';
+        const fetchingKeys = tarKeys && prog.prep_stage === FLASH_PREP_STAGE.FETCHING_KEYS;
+        if (fetchingKeys) setStage(FLASH_PREP_STAGE.FETCHING_KEYS);
+        else if (tarKeys) setStage((s) => (s === FLASH_PREP_STAGE.FETCHING_KEYS ? writeStage : s));
+
+        const preparing = prepRef.current !== 'none' || fetchingKeys;
         if (!preparing && prog.is_qdl_mode && prog.qdl_stage) {
           const qdlStage = prog.qdl_stage;
           if (isQdlWriteStage(qdlStage)) {
@@ -479,9 +490,9 @@ export function useFlashOperation({
       }
 
       let fileGone = false;
-      // Increment failure count for cached (non-custom) images; skip on disconnect or a device
-      // refusal (e.g. card too small, previous flash still finishing) so neither burns down a good cached image.
-      if (!image.is_custom && !isQdlMode && !deviceDisconnectedRef.current && !isDeviceRefusalError(rawError)) {
+      // Increment failure count for cached (non-custom) images; skip on disconnect, a device refusal
+      // (card too small, previous flash still finishing) or a profile refusal, none of which means a bad image.
+      if (!image.is_custom && !isQdlMode && !deviceDisconnectedRef.current && !isDeviceRefusalError(rawError) && !isProfileRefusalError(rawError)) {
         const currentCount = getFlashFailureCount() + 1;
         setFlashFailureCount(currentCount);
 

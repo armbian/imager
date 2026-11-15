@@ -4,11 +4,16 @@
 import type { AutoconfigConfig, AutoconfigProfile, ProfileBoard, UserShell } from '../types';
 import { isHttpUrl, trimmedOrUndefined } from '../utils';
 import type { TFn } from '../utils/errorUtils';
-import { UI } from './constants';
+import type { StaticIpErrors } from '../utils';
+import { AUTOCONFIG, UI } from './constants';
 import {
+  AUTOCONFIG_PLACEHOLDERS,
+  RESERVED_USER_NAMES,
   SSH_KEY_FORGES,
   forgeKeysUrl,
+  hasNetplanUnsafeChar,
   isValidKeyUser,
+  isWifiKeyLength,
   parseForgeKeysUrl,
   presetIsEmpty,
   profileBoards,
@@ -35,17 +40,43 @@ export const PROFILE_EDITOR = {
   SEPARATOR: UI.SUMMARY_SEPARATOR,
 } as const;
 
-// Debian adduser's default NAME_REGEX, without the trailing "$" of machine accounts.
-const USER_NAME_PATTERN = /^[a-z][-a-z0-9_]*$/;
+// The raw name armbian-firstlogin 26.8 accepts; master also allows - and _, so this is the common subset.
+const USER_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9]*$/;
 
-/** The account armbian-firstlogin creates: lowercased, anything but [a-z0-9_-] dropped. */
+/** The account armbian-firstlogin creates from a valid name */
 export function firstLoginUserName(name: string): string {
-  return name.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  return name.trim().toLowerCase();
 }
 
-export function isValidUserName(name: string): boolean {
-  return USER_NAME_PATTERN.test(firstLoginUserName(name));
+export type UserNameIssue = 'required' | 'pattern' | 'tooLong' | 'reserved';
+
+export const USER_NAME_ISSUE_KEY: Record<UserNameIssue, string> = {
+  required: 'settings.autoconfig.wizard.usernameRequired',
+  pattern: 'settings.autoconfig.editor.userLettersDigits',
+  tooLong: 'settings.autoconfig.editor.userTooLong',
+  reserved: 'settings.autoconfig.editor.userReserved',
+};
+
+export function userNameIssue(name: string): UserNameIssue | null {
+  const raw = name.trim();
+  if (!raw) return 'required';
+  if (!USER_NAME_PATTERN.test(raw)) return 'pattern';
+  if (raw.length > AUTOCONFIG.USER_NAME_MAX) return 'tooLong';
+  return RESERVED_USER_NAMES.has(raw.toLowerCase()) ? 'reserved' : null;
 }
+
+/** i18n key of what is wrong with the full name, or null; ':' would break the passwd entry */
+export const realNameIssue = (realName: string): string | null =>
+  realName.includes(':') ? 'settings.autoconfig.editor.realNameColon' : null;
+
+/** The full name written when none is typed: the account with its first letter uppercased */
+export function defaultRealName(name: string): string {
+  const account = firstLoginUserName(name);
+  return account ? account[0].toUpperCase() + account.slice(1) : '';
+}
+
+/** The empty full name field shows what the board writes when it stays empty */
+export const realNamePlaceholder = (name: string): string => defaultRealName(name) || AUTOCONFIG_PLACEHOLDERS.USER_REAL_NAME;
 
 export interface EditorModel {
   name: string;
@@ -72,6 +103,15 @@ export interface EditorModel {
 }
 
 export const hasWifi = (mode: NetMode) => mode !== 'cable';
+
+export const createsUser = (m: EditorModel): boolean => m.user.mode === 'now' && !!m.user.name.trim();
+
+/** i18n keys of the root password field: left empty, it takes the created user's password, else Armbian asks for it */
+export function rootPasswordCopy(m: EditorModel): { hint: string; placeholder: string } {
+  return createsUser(m)
+    ? { hint: 'settings.autoconfig.editor.rootHintUser', placeholder: 'settings.autoconfig.editor.rootSameAsUser' }
+    : { hint: 'settings.autoconfig.editor.rootHint', placeholder: 'settings.autoconfig.editor.rootPlaceholder' };
+}
 const hasCable = (mode: NetMode) => mode !== 'wifi';
 
 function splitKeyUrl(url: string): Pick<EditorModel['access'], 'source' | 'keyUser' | 'keyLink'> {
@@ -116,11 +156,12 @@ export function toEditorModel(profile: AutoconfigProfile | null, defaults: { tim
       rootPassword: c.rootPassword ?? '',
       extraRootKeyUrl: c.userKeyUrl && c.rootKeyUrl && c.rootKeyUrl !== c.userKeyUrl ? c.rootKeyUrl : '',
     },
+    // A saved half-chosen region must show what it misses, so defaults never fill it
     region: {
       apply: regionSet,
       mode: chooses ? 'choose' : 'location',
-      locale: c.locale ?? defaults.locale,
-      timezone: c.timezone ?? defaults.timezone,
+      locale: c.locale ?? (chooses ? '' : defaults.locale),
+      timezone: c.timezone ?? (chooses ? '' : defaults.timezone),
     },
     remote: c.remoteConfigUrl ?? '',
   };
@@ -201,12 +242,58 @@ export function editorIpErrors(n: EditorModel['network']) {
   return n.ip === 'fixed' ? staticIpConfigErrors({ staticIp: n.address, staticMask: n.mask, staticGateway: n.gateway, staticDns: n.dns }) : {};
 }
 
-function networkBlocked(n: EditorModel['network']): boolean {
-  if (!n.apply) return false;
-  if (hasWifi(n.mode) && !n.ssid.trim()) return true;
-  if (n.ip !== 'fixed') return false;
-  return !n.address.trim() || Object.keys(editorIpErrors(n)).length > 0;
+/** The static IP fields a fixed address cannot do without, keyed like editorIpErrors */
+export function editorIpMissing(n: EditorModel['network']): Pick<StaticIpErrors, 'ip' | 'mask'> {
+  if (n.ip !== 'fixed') return {};
+  return {
+    ip: n.address.trim() ? undefined : 'wizard.addressRequired',
+    mask: n.mask.trim() ? undefined : 'editor.maskRequired',
+  };
 }
+
+const WIFI_BAD_CHARS = 'settings.autoconfig.editor.wifiBadChars';
+
+/** i18n keys of what stops the Wi-Fi name and password from being written */
+export function wifiIssues(n: EditorModel['network']): { ssid?: string; key?: string } {
+  if (!n.apply || !hasWifi(n.mode)) return {};
+  const ssid = !n.ssid.trim()
+    ? 'settings.autoconfig.wizard.ssidRequired'
+    : hasNetplanUnsafeChar(n.ssid)
+      ? WIFI_BAD_CHARS
+      : undefined;
+  let key: string | undefined;
+  // An empty key is an open network
+  if (n.key) {
+    if (/^\s/.test(n.key)) key = 'settings.autoconfig.editor.wifiKeyLeadingSpace';
+    else if (hasNetplanUnsafeChar(n.key)) key = WIFI_BAD_CHARS;
+    else if (!isWifiKeyLength(n.key)) key = 'settings.autoconfig.editor.wifiKeyLengthNeeded';
+  }
+  return { ssid, key };
+}
+
+const hasIssue = (issues: object) => Object.values(issues).some(Boolean);
+
+function wifiBlocked(n: EditorModel['network']): boolean {
+  return hasIssue(wifiIssues(n));
+}
+
+function ipBlocked(n: EditorModel['network']): boolean {
+  return n.ip === 'fixed' && (hasIssue(editorIpMissing(n)) || hasIssue(editorIpErrors(n)));
+}
+
+function networkBlocked(n: EditorModel['network']): boolean {
+  return n.apply && (wifiBlocked(n) || ipBlocked(n));
+}
+
+function userBlocked(u: EditorModel['user']): boolean {
+  return u.mode === 'now' && (!!userNameIssue(u.name) || !u.password || !!realNameIssue(u.realName));
+}
+
+export const REGION_NEEDS_BOTH = 'settings.autoconfig.editor.regionNeedsBoth';
+
+/** "I choose" writes both the language and the time zone, or neither */
+export const regionIncomplete = (r: EditorModel['region']): boolean =>
+  r.apply && r.mode === 'choose' && !(r.locale && r.timezone);
 
 export interface ProfileProgress {
   status: Record<EditorGroup, GroupStatus>;
@@ -220,28 +307,37 @@ export function profileProgress(m: EditorModel, keyProblem = false): ProfileProg
   const status: Record<EditorGroup, GroupStatus> = {
     name: m.name.trim() && (m.scope === 'all' || m.boards.length) ? 'set' : 'attn',
     network: !n.apply ? 'none' : networkBlocked(n) ? 'attn' : 'set',
-    user: m.user.mode === 'later' ? 'none' : isValidUserName(m.user.name) && m.user.password ? 'set' : 'attn',
+    user: m.user.mode === 'later' ? 'none' : userBlocked(m.user) ? 'attn' : 'set',
     access: m.access.mode === 'password' ? 'none' : keySourceError(m.access) || keyProblem ? 'attn' : 'set',
-    region: !m.region.apply ? 'none' : m.region.mode === 'location' || (m.region.locale && m.region.timezone) ? 'set' : 'attn',
+    region: !m.region.apply ? 'none' : regionIncomplete(m.region) ? 'attn' : 'set',
     advanced: !m.remote.trim() ? 'none' : isHttpUrl(m.remote) ? 'set' : 'attn',
   };
   const done = EDITOR_GROUPS.filter((g) => status[g] === 'set').length;
   return { status, done, total: EDITOR_GROUPS.length };
 }
 
-/** The first group that stops a save, with the folded "More options" that holds the problem; null when it can save */
-export function firstBlockingGroup(m: EditorModel): { group: EditorGroup; more?: MoreKey; empty?: boolean } | null {
-  if (!m.name.trim() || (m.scope === 'some' && !m.boards.length)) return { group: 'name' };
-  if (networkBlocked(m.network)) {
-    const inMore = !(hasWifi(m.network.mode) && !m.network.ssid.trim());
-    return { group: 'network', more: inMore ? 'network' : undefined };
+type BlockingGroup = { group: EditorGroup; more?: MoreKey; empty?: boolean };
+
+/** The first group whose fields first boot cannot be given as they are, with the folded "More options" that holds the problem */
+function firstBootBlockingGroup(m: EditorModel): BlockingGroup | null {
+  if (networkBlocked(m.network)) return { group: 'network', more: wifiBlocked(m.network) ? undefined : 'network' };
+  if (userBlocked(m.user)) {
+    const inMore = !userNameIssue(m.user.name) && !!m.user.password;
+    return { group: 'user', more: inMore ? 'user' : undefined };
   }
-  if (m.user.mode === 'now' && !(isValidUserName(m.user.name) && m.user.password)) return { group: 'user' };
   if (keySourceError(m.access)) return { group: 'access' };
+  if (regionIncomplete(m.region)) return { group: 'region' };
   if (m.remote.trim() && !isHttpUrl(m.remote)) return { group: 'advanced' };
-  // A profile that leaves every area at Armbian's defaults would write an empty preset
-  if (presetIsEmpty(editorConfig(m))) return { group: 'network', empty: true };
   return null;
+}
+
+/** The first group that stops a save, with the folded "More options" that holds the problem; null when it can save */
+export function firstBlockingGroup(m: EditorModel): BlockingGroup | null {
+  if (!m.name.trim() || (m.scope === 'some' && !m.boards.length)) return { group: 'name' };
+  const blocking = firstBootBlockingGroup(m);
+  if (blocking) return blocking;
+  // A profile that leaves every area at Armbian's defaults would write an empty preset
+  return presetIsEmpty(editorConfig(m)) ? { group: 'network', empty: true } : null;
 }
 
 /** i18n key of why the profile cannot be saved (or created) yet, from the first blocking field; null when it can */
@@ -251,6 +347,14 @@ export function blockingReason(m: EditorModel, isNew: boolean): string | null {
   const key = !m.name.trim() ? 'Name' : blocking.group === 'name' ? 'Board' : blocking.empty ? 'Something' : 'Fix';
   if (isNew && key === 'Name') return 'settings.autoconfig.editor.addNameToCreate';
   return `settings.autoconfig.editor.${isNew ? 'create' : 'save'}Needs${key}`;
+}
+
+const NO_DEFAULTS = { timezone: '', locale: '' };
+
+/** The group a saved profile must fix before it can be flashed under the current rules, or null */
+export function profileNeedsFix(profile: AutoconfigProfile): EditorGroup | null {
+  const blocking = firstBlockingGroup(toEditorModel(profile, NO_DEFAULTS));
+  return blocking && !blocking.empty ? blocking.group : null;
 }
 
 export function sameModel(a: EditorModel, b: EditorModel): boolean {
@@ -295,7 +399,7 @@ export function profileFacts(m: EditorModel, keyCount: number | null, keyProblem
           ? t('settings.autoconfig.editor.factBothFixed', { address })
           : t('settings.autoconfig.editor.factCableWifi');
 
-  const userNow = m.user.mode === 'now' && !!m.user.name.trim();
+  const userNow = createsUser(m);
   const a = m.access;
   const forge = a.source === 'link' ? null : SSH_KEY_FORGES[a.source].label;
   let access: ProfileFact;
@@ -309,14 +413,13 @@ export function profileFacts(m: EditorModel, keyCount: number | null, keyProblem
     access = { icon: 'keys', text, tone: 'ok' };
   }
 
-  // An area left unapplied writes nothing, so it reads as the Armbian default it keeps
   const region: ProfileFact = !m.region.apply
     ? { icon: 'globe', text: t('settings.autoconfig.armbianDefaults'), tone: 'plain' }
     : {
         icon: 'globe',
         text:
           m.region.mode === 'location'
-            ? t('settings.autoconfig.wizard.locale.location')
+            ? t('settings.autoconfig.wizard.locale.thisComputer')
             : m.region.timezone || t('settings.autoconfig.editor.factTzUnset'),
         tone: 'ok',
       };
@@ -328,12 +431,49 @@ export function profileFacts(m: EditorModel, keyCount: number | null, keyProblem
     network,
     {
       icon: 'user',
-      text: userNow ? t('settings.autoconfig.editor.factUser', { name: m.user.name.trim() }) : t('settings.autoconfig.wizard.user.later'),
+      text: userNow ? t('settings.autoconfig.editor.factUser', { name: firstLoginUserName(m.user.name) }) : t('settings.autoconfig.wizard.user.later'),
       tone: userNow ? 'ok' : 'plain',
     },
     access,
     region,
   ];
+}
+
+export interface BootVerdict {
+  tone: 'ok' | 'warn' | 'plain';
+  title: string;
+  hint: string | null;
+}
+
+/** Whether armbian-firstlogin finishes with this profile or stops at the board's console, and why */
+export function firstBootVerdict(m: EditorModel, t: TFn): BootVerdict {
+  // Until every first-boot field can be written the outcome is unknown; the name and boards play no part in it
+  if (firstBootBlockingGroup(m)) {
+    return { tone: 'warn', title: t('settings.autoconfig.editor.verdictNeedsFix'), hint: t('settings.autoconfig.editor.verdictNeedsFixHint') };
+  }
+  const remote = m.remote.trim();
+  if (remote && isHttpUrl(remote)) {
+    // The remote config is fetched before the profile's network comes up, so Wi-Fi alone cannot reach it
+    const wifiOnly = m.network.apply && m.network.mode === 'wifi';
+    return {
+      tone: wifiOnly ? 'warn' : 'plain',
+      title: t('settings.autoconfig.editor.verdictRemote'),
+      hint: t(wifiOnly ? 'settings.autoconfig.editor.verdictRemoteWifi' : 'settings.autoconfig.editor.verdictRemoteHint'),
+    };
+  }
+  if (createsUser(m)) {
+    const name = firstLoginUserName(m.user.name);
+    return {
+      tone: 'ok',
+      title: t('settings.autoconfig.editor.verdictFinishes'),
+      hint: m.access.rootPassword ? null : t('settings.autoconfig.editor.verdictRootFromUser', { name }),
+    };
+  }
+  return {
+    tone: 'warn',
+    title: t(m.access.rootPassword ? 'settings.autoconfig.editor.verdictAsksUser' : 'settings.autoconfig.editor.verdictAsksRootAndUser'),
+    hint: t('settings.autoconfig.editor.verdictConsoleHint'),
+  };
 }
 
 export interface ProfileSpec extends ProfileFact {

@@ -55,6 +55,7 @@
     "noShaMessage": "Questa immagine non ha un checksum SHA, quindi non è possibile verificare i dati scritti. La scrittura proseguirà comunque.",
     "extracting": "Estrazione dell'archivio...",
     "applyingProfile": "Applicazione del profilo...",
+    "fetchingKeys": "Recupero delle chiavi SSH...",
     "qdlSahara": "Caricamento del bootloader del firmware...",
     "qdlFirehose": "Scrittura delle partizioni...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "Impossibile connettersi al dispositivo EDL. Assicurati che sia in modalità EDL e collegato via USB.",
     "qdlAutoconfigFailed": "Impossibile applicare il profilo di configurazione all'immagine QDL.",
     "autoconfigNotArmbian": "Questa immagine non ha la configurazione di primo avvio di Armbian, quindi il profilo non può essere applicato. Scrivila senza profilo o scegli un'immagine Armbian.",
+    "autoconfigUserNameInvalid": "Il nome utente nel profilo deve iniziare con una lettera e usare solo lettere e cifre, fino a 32 caratteri. Modifica il profilo e riprova.",
+    "autoconfigUserNameTaken": "Il nome utente nel profilo esiste già in questa immagine. Modifica il profilo e scegline un altro.",
+    "autoconfigUsersUnreadable": "Non è stato possibile leggere l'elenco utenti dell'immagine per verificare il nome utente del profilo. Non è stato scritto nulla.",
+    "autoconfigUnsafeTarget": "L'immagine contiene qualcosa di inatteso dove il profilo scrive le sue impostazioni, quindi è stata lasciata intatta. Non è stato scritto nulla.",
+    "sshKeysInvalidKey": "La fonte delle chiavi SSH del profilo ha restituito qualcosa che non è una chiave SSH pubblica. Non è stato scritto nulla.",
+    "sshKeysNotFound": "La fonte delle chiavi SSH del profilo non è stata trovata. Controlla il nome utente o il link nel profilo.",
+    "sshKeysNone": "La fonte delle chiavi SSH del profilo non ha chiavi pubbliche. Aggiungi una chiave lì o modifica il profilo.",
+    "sshKeysTooLarge": "La fonte delle chiavi SSH del profilo ha restituito troppi dati per essere un elenco di chiavi pubbliche. Non è stato scritto nulla.",
+    "sshKeysNetwork": "Non è stato possibile scaricare le chiavi SSH del profilo. Controlla la connessione a internet e riprova.",
+    "sshKeysInvalidInput": "La fonte delle chiavi SSH nel profilo non è un nome utente valido né un link https. Modifica il profilo e riprova.",
     "deviceInvalidPath": "Non è possibile scrivere su questo dispositivo. Seleziona di nuovo il dispositivo.",
     "deviceNotFound": "Il dispositivo selezionato non è più collegato. Ricollegalo e selezionalo di nuovo.",
     "deviceChanged": "Il dispositivo selezionato è cambiato dopo la tua scelta. Selezionalo di nuovo prima di scrivere.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Impostazioni predefinite di Armbian",
       "keys": {
         "checking": "Controllo delle chiavi...",
-        "found_one": "{{count}} chiave trovata. La scheda la scarica al primo avvio.",
-        "found_other": "{{count}} chiavi trovate. La scheda le scarica al primo avvio.",
+        "foundAtFlash_one": "{{count}} chiave trovata. Imager la aggiunge alla scheda SD durante la scrittura.",
+        "foundAtFlash_other": "{{count}} chiavi trovate. Imager le aggiunge alla scheda SD durante la scrittura.",
         "notFoundForge": "Nessun account {{forge}} con questo nome utente.",
         "notFoundLink": "Non è stato trovato nulla a questo link.",
         "noneForge": "Questo account {{forge}} non ha ancora chiavi SSH pubbliche.",
@@ -334,7 +345,8 @@
         "tooLarge": "Questo indirizzo serve troppi dati per essere un elenco di chiavi pubbliche.",
         "invalidForge": "Questo non è un nome utente {{forge}} valido.",
         "invalidLink": "Qui si possono controllare solo link https.",
-        "unreachable": "Impossibile controllare le chiavi in questo momento. La scheda le scarica al primo avvio."
+        "invalidKey": "Questo indirizzo restituisce righe che non sono chiavi SSH pubbliche",
+        "unreachableAtFlash": "Impossibile controllare le chiavi in questo momento. Imager le scarica durante la scrittura, quindi allora serve internet."
       },
       "ipInvalid": "Inserisci un indirizzo IPv4 valido (es. 192.168.1.50)",
       "ipNotHost": "Questo è l'indirizzo di rete o di broadcast della subnet, non un indirizzo utilizzabile dal dispositivo. Scegline uno come 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Compila il modulo",
       "fillFormHint": "Tutte le opzioni in una pagina",
       "wifiKeyFits": "Adatta al Wi-Fi (da 8 a 63 caratteri)",
-      "wifiKeyLength": "Le password Wi-Fi hanno di solito da 8 a 63 caratteri",
       "wizard": {
         "eyebrow": "Nuovo profilo",
         "unnamed": "Ancora senza nome",
@@ -393,8 +404,7 @@
           "review": "Verifica"
         },
         "pending": {
-          "network": "Mantiene le impostazioni predefinite di Armbian",
-          "locale": "Impostazioni predefinite di Armbian"
+          "network": "Mantiene le impostazioni predefinite di Armbian"
         },
         "sum": {
           "keysFrom": "Chiavi SSH da {{forge}}",
@@ -431,16 +441,16 @@
           "later": "Al primo accesso",
           "more": "Nome completo e shell di accesso",
           "shellDefault": "Predefinita di Armbian",
-          "laterLine": "La prima volta che accedi, via SSH o con tastiera e monitor, Armbian ti chiede di creare un utente. La lingua e l'ora di questo profilo non vengono applicate in quel caso."
+          "laterStops": "La scheda si ferma al primo accesso e aspetta che tu crei l'account, via SSH o con tastiera e monitor."
         },
         "locale": {
           "title": "Lingua e ora",
           "sub": "Impostati al primo accesso, sia che un utente venga creato ora, sia che no.",
-          "location": "Dalla posizione",
+          "thisComputer": "Come questo computer",
           "choose": "Scelgo io",
           "language": "Lingua",
           "searchTimezone": "Cerca fusi orari",
-          "locationLine": "Armbian imposta la lingua e il fuso orario in base al luogo da cui la scheda si collega a internet."
+          "thisComputerLine": "La scheda riceve la lingua e il fuso orario di questo computer, letti durante la scrittura."
         },
         "access": {
           "title": "Come entri?",
@@ -484,33 +494,47 @@
         "connection": "Connessione",
         "cableHint": "Collega il cavo prima del primo avvio",
         "wifiKeyEmpty": "Lascia vuoto per una rete aperta",
+        "wifiBadChars": "Rimuovi ogni carattere \" o \\",
+        "wifiKeyLeadingSpace": "La password non può iniziare con uno spazio",
+        "wifiKeyLengthNeeded": "Usa da {{min}} a {{max}} caratteri, oppure lascia vuoto per una rete aperta",
+        "wifiKeyRawPsk": "Chiave Wi-Fi grezza (64 caratteri esadecimali)",
         "countryHint": "Imposta i canali Wi-Fi consentiti",
         "ipAutoHint": "Il router assegna l'indirizzo",
         "ipFixedHint": "Scegli un indirizzo libero sulla tua rete",
         "ipLabelWifi": "Indirizzo IP (Wi-Fi)",
         "bothCableAuto": "Il cavo riceve sempre un indirizzo automatico",
+        "wifiNoAdapterHint": "Se la scheda non ha il Wi-Fi, il primo avvio si ferma. Scegli Cavo.",
         "addressOk": "Indirizzo valido",
+        "maskRequired": "Inserisci la netmask (es. 255.255.255.0)",
         "moreOptions": "Altre opzioni",
         "netFixed": "Fisso, {{ip}}",
         "netAuto": "Indirizzo automatico",
         "whoLogsIn": "Chi accede",
         "laterHint": "Armbian lo chiede al primo accesso",
-        "userOk": "Minuscole, inizia con una lettera",
+        "userValid": "Nome utente valido",
         "userCreatedAs": "Creato come {{name}}",
-        "userInvalid": "Usa lettere minuscole, cifre, - e _",
+        "userLettersDigits": "Usa solo lettere e cifre, iniziando con una lettera",
+        "userTooLong": "Usa al massimo {{max}} caratteri",
+        "userReserved": "{{name}} è un account di sistema. Scegli un altro nome.",
         "passwordRequired": "Necessaria per accedere",
-        "fullNameRequired": "Necessario per impostare lingua e fuso orario",
+        "realNameColon": "Rimuovi i due punti (:)",
+        "realNameDefault": "Se vuoto, la scheda usa {{name}}",
         "fullNameNotSet": "Nome completo non impostato",
         "howYouGetIn": "Come accedi",
         "passwordLoginHint": "Accedi con la tua password",
         "keysFrom": "Chiavi da",
         "keyUserRequired": "Inserisci un nome utente",
         "keyLinkRequired": "Incolla un link alle chiavi pubbliche",
+        "keysNeedInternet": "Imager scarica le chiavi durante la scrittura, quindi serve internet",
         "rootSet": "Password root impostata",
         "rootNotSet": "Password root non impostata",
         "rootPlaceholder": "Non impostata",
         "rootHint": "Se vuota, Armbian la chiede al primo accesso",
-        "locationHint": "Impostati in base al luogo da cui la scheda si collega",
+        "rootHintUser": "Se vuota, root riceve la stessa password dell'utente",
+        "rootSameAsUser": "Come l'utente",
+        "thisComputerHint": "Letti da questo computer durante la scrittura",
+        "regionNeedsBoth": "Scegli sia una lingua sia un fuso orario",
+        "regionDefaults": "Predefiniti di Armbian: inglese (US) e UTC",
         "remoteHint": "Applicata al primo avvio",
         "atFirstBoot": "Al primo avvio",
         "factCableWifi": "Cavo + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Scarta",
         "profileActions": "Azioni del profilo",
         "boardPages": "Pagine delle schede",
-        "done": "Fine"
+        "done": "Fine",
+        "verdictFinishes": "Il primo avvio si completa da solo",
+        "verdictRootFromUser": "Root riceve la stessa password di {{name}}.",
+        "verdictAsksUser": "Il primo avvio si ferma e aspetta che tu crei un utente",
+        "verdictAsksRootAndUser": "Il primo avvio si ferma e aspetta una password root e un utente",
+        "verdictConsoleHint": "La scheda sembra bloccata finché qualcuno non risponde sulla sua console, via SSH o con tastiera e monitor. Crea qui l'utente per evitarlo.",
+        "verdictRemote": "La configurazione remota decide come va il primo avvio",
+        "verdictRemoteHint": "La scheda la scarica al primo avvio, prima che la rete di questo profilo sia configurata, e sostituisce questo profilo. Servono un cavo con internet e un orologio corretto.",
+        "verdictRemoteWifi": "Solo con il Wi-Fi la scheda non può scaricarla: viene recuperata prima della configurazione del Wi-Fi. Aggiungi un cavo o rimuovi l'URL.",
+        "verdictNeedsFix": "Alcune impostazioni vanno prima corrette",
+        "verdictNeedsFixHint": "Correggile per vedere cosa succede al primo avvio."
       },
       "boardSheet": {
         "searchPlaceholder": "Cerca schede o produttori",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} schede",
       "pagerLabel": "Pagine dei profili",
       "discardTitle": "Scartare le modifiche?",
-      "discardBody": "Le modifiche non salvate a questo profilo andranno perse."
+      "discardBody": "Le modifiche non salvate a questo profilo andranno perse.",
+      "needsFix": "Da correggere"
     }
   },
   "update": {

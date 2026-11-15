@@ -55,6 +55,7 @@
     "noShaMessage": "このイメージにはSHAチェックサムがないため、書き込んだデータを検証できません。このまま書き込みを続行します。",
     "extracting": "アーカイブを展開しています...",
     "applyingProfile": "プロファイルを適用しています...",
+    "fetchingKeys": "SSHキーを取得しています...",
     "qdlSahara": "ファームウェアローダーをアップロードしています...",
     "qdlFirehose": "パーティションを書き込んでいます...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "EDLデバイスに接続できませんでした。EDLモードになっていて、USBで接続されていることを確認してください。",
     "qdlAutoconfigFailed": "自動設定プロファイルをQDLイメージに適用できませんでした。",
     "autoconfigNotArmbian": "このイメージにはArmbianの初回起動セットアップがないため、プロファイルを適用できません。プロファイルなしで書き込むか、Armbianのイメージを選んでください。",
+    "autoconfigUserNameInvalid": "プロファイルのユーザー名は、英字で始め、英字と数字のみ、32文字以内にしてください。プロファイルを編集して、もう一度お試しください。",
+    "autoconfigUserNameTaken": "プロファイルのユーザー名は、このイメージにすでにあります。プロファイルを編集して、別の名前を選んでください。",
+    "autoconfigUsersUnreadable": "プロファイルのユーザー名を確認するためのイメージのユーザー一覧を読み取れませんでした。何も書き込まれていません。",
+    "autoconfigUnsafeTarget": "プロファイルの設定を書き込む場所に想定外のものがあったため、イメージは変更していません。何も書き込まれていません。",
+    "sshKeysInvalidKey": "プロファイルのSSHキーの取得元が、公開SSHキーではないものを返しました。何も書き込まれていません。",
+    "sshKeysNotFound": "プロファイルのSSHキーの取得元が見つかりません。プロファイルのユーザー名またはリンクを確認してください。",
+    "sshKeysNone": "プロファイルのSSHキーの取得元に公開キーがありません。そこにキーを追加するか、プロファイルを編集してください。",
+    "sshKeysTooLarge": "プロファイルのSSHキーの取得元が、公開キーの一覧にしては大きすぎるデータを返しました。何も書き込まれていません。",
+    "sshKeysNetwork": "プロファイルのSSHキーをダウンロードできませんでした。インターネット接続を確認して、もう一度お試しください。",
+    "sshKeysInvalidInput": "プロファイルのSSHキーの取得元が、有効なユーザー名でもhttpsのリンクでもありません。プロファイルを編集して、もう一度お試しください。",
     "deviceInvalidPath": "このデバイスには書き込めません。デバイスを選択し直してください。",
     "deviceNotFound": "選択したデバイスは接続されていません。接続し直してから、もう一度選択してください。",
     "deviceChanged": "選択したデバイスが選択後に変更されました。書き込む前にもう一度選択してください。",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Armbianの既定値",
       "keys": {
         "checking": "キーを確認しています...",
-        "found_one": "{{count}}件のキーが見つかりました。ボードが初回起動時に取得します。",
-        "found_other": "{{count}}件のキーが見つかりました。ボードが初回起動時に取得します。",
+        "foundAtFlash_one": "{{count}}件のキーが見つかりました。書き込み時にImagerがSDカードに追加します。",
+        "foundAtFlash_other": "{{count}}件のキーが見つかりました。書き込み時にImagerがSDカードに追加します。",
         "notFoundForge": "このユーザー名の{{forge}}アカウントはありません。",
         "notFoundLink": "このリンクでは何も見つかりませんでした。",
         "noneForge": "この{{forge}}アカウントには公開SSHキーがまだありません。",
@@ -334,7 +345,8 @@
         "tooLarge": "このアドレスは、公開キーの一覧にしては大きすぎるデータを返しています。",
         "invalidForge": "有効な{{forge}}のユーザー名ではありません。",
         "invalidLink": "ここで確認できるのはhttpsのリンクだけです。",
-        "unreachable": "今はキーを確認できません。ボードが初回起動時に取得します。"
+        "invalidKey": "このアドレスは、公開SSHキーではない行を返しています",
+        "unreachableAtFlash": "今はキーを確認できません。書き込み時にImagerがダウンロードするため、そのときはインターネットが必要です。"
       },
       "ipInvalid": "有効なIPv4アドレスを入力してください（例: 192.168.1.50）",
       "ipNotHost": "これはサブネットのネットワークアドレスまたはブロードキャストアドレスで、デバイスには使えません。192.168.1.50 のようなアドレスを指定してください",
@@ -367,7 +379,6 @@
       "fillForm": "フォームに入力",
       "fillFormHint": "すべてのオプションを1ページで",
       "wifiKeyFits": "Wi-Fiに使えます（8文字から63文字）",
-      "wifiKeyLength": "Wi-Fiのパスワードは通常8文字から63文字です",
       "wizard": {
         "eyebrow": "新しいプロファイル",
         "unnamed": "名前未設定",
@@ -393,8 +404,7 @@
           "review": "確認"
         },
         "pending": {
-          "network": "Armbianの既定値のまま",
-          "locale": "Armbianの既定値"
+          "network": "Armbianの既定値のまま"
         },
         "sum": {
           "keysFrom": "{{forge}}のSSHキー",
@@ -431,16 +441,16 @@
           "later": "初回ログイン時",
           "more": "フルネームとログインシェル",
           "shellDefault": "Armbianの既定",
-          "laterLine": "初回ログイン時に、SSH、またはキーボードとモニターで、Armbianがユーザーの作成を求めます。そのとき、このプロファイルの言語と時刻は適用されません。"
+          "laterStops": "ボードは初回ログインで止まり、アカウントの作成を待ちます。SSH、またはキーボードとモニターで作成してください。"
         },
         "locale": {
           "title": "言語と時刻",
           "sub": "初回ログイン時に設定されます。ユーザーを今作成するかどうかは関係ありません。",
-          "location": "位置情報から",
+          "thisComputer": "このコンピューターと同じ",
           "choose": "自分で選ぶ",
           "language": "言語",
           "searchTimezone": "タイムゾーンを検索",
-          "locationLine": "Armbianは、ボードがインターネットに接続した場所から言語とタイムゾーンを設定します。"
+          "thisComputerLine": "ボードには、書き込み時に読み取ったこのコンピューターの言語とタイムゾーンが設定されます。"
         },
         "access": {
           "title": "どうやって入りますか？",
@@ -484,33 +494,47 @@
         "connection": "接続",
         "cableHint": "初回起動の前にケーブルを接続してください",
         "wifiKeyEmpty": "空欄にするとオープンネットワークになります",
+        "wifiBadChars": "\" と \\ の文字を削除してください",
+        "wifiKeyLeadingSpace": "パスワードの先頭にスペースは使えません",
+        "wifiKeyLengthNeeded": "{{min}}文字から{{max}}文字で入力してください。オープンネットワークにする場合は空欄にします",
+        "wifiKeyRawPsk": "生のWi-Fiキー（16進数64文字）",
         "countryHint": "使用できるWi-Fiチャンネルが決まります",
         "ipAutoHint": "アドレスはルーターが割り当てます",
         "ipFixedHint": "ネットワーク内で空いているアドレスを指定してください",
         "ipLabelWifi": "IPアドレス (Wi-Fi)",
         "bothCableAuto": "ケーブルには常に自動でアドレスが割り当てられます",
+        "wifiNoAdapterHint": "ボードにWi-Fiがないと、初回起動が止まります。「ケーブル」を選んでください。",
         "addressOk": "有効なアドレスです",
+        "maskRequired": "ネットマスクを入力してください（例: 255.255.255.0）",
         "moreOptions": "詳細オプション",
         "netFixed": "固定、{{ip}}",
         "netAuto": "自動アドレス",
         "whoLogsIn": "ログインするユーザー",
         "laterHint": "初回ログイン時にArmbianが確認します",
-        "userOk": "小文字、先頭は英字",
+        "userValid": "有効なユーザー名です",
         "userCreatedAs": "{{name}} として作成",
-        "userInvalid": "小文字の英字、数字、- と _ を使ってください",
+        "userLettersDigits": "英字と数字のみ使えます。先頭は英字にしてください",
+        "userTooLong": "{{max}}文字以内にしてください",
+        "userReserved": "{{name}} はシステムのアカウントです。別の名前を選んでください。",
         "passwordRequired": "ログインに必要です",
-        "fullNameRequired": "言語とタイムゾーンの設定に必要です",
+        "realNameColon": "コロン（:）を削除してください",
+        "realNameDefault": "空欄の場合、ボードは {{name}} を使います",
         "fullNameNotSet": "フルネーム未設定",
         "howYouGetIn": "ログイン方法",
         "passwordLoginHint": "パスワードでログインします",
         "keysFrom": "キーの取得元",
         "keyUserRequired": "ユーザー名を入力してください",
         "keyLinkRequired": "公開キーへのリンクを貼り付けてください",
+        "keysNeedInternet": "Imagerは書き込み時にキーをダウンロードするため、書き込みにはインターネットが必要です",
         "rootSet": "rootパスワード設定済み",
         "rootNotSet": "rootパスワード未設定",
         "rootPlaceholder": "未設定",
         "rootHint": "空欄の場合、初回ログイン時にArmbianが確認します",
-        "locationHint": "ボードが接続した場所から設定されます",
+        "rootHintUser": "空欄の場合、rootにはユーザーと同じパスワードが設定されます",
+        "rootSameAsUser": "ユーザーと同じ",
+        "thisComputerHint": "書き込み時にこのコンピューターから読み取ります",
+        "regionNeedsBoth": "言語とタイムゾーンの両方を選んでください",
+        "regionDefaults": "Armbianの既定値: 英語（米国）とUTC",
         "remoteHint": "初回起動時に適用されます",
         "atFirstBoot": "初回起動時",
         "factCableWifi": "ケーブル + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "破棄",
         "profileActions": "プロファイル操作",
         "boardPages": "ボードのページ",
-        "done": "完了"
+        "done": "完了",
+        "verdictFinishes": "初回起動は自動で完了します",
+        "verdictRootFromUser": "rootには {{name}} と同じパスワードが設定されます。",
+        "verdictAsksUser": "初回起動は止まり、ユーザーの作成を待ちます",
+        "verdictAsksRootAndUser": "初回起動は止まり、rootパスワードとユーザーの作成を待ちます",
+        "verdictConsoleHint": "ボードのコンソールで、SSH、またはキーボードとモニターから誰かが応答するまで、ボードは止まっているように見えます。ここでユーザーを作成すると避けられます。",
+        "verdictRemote": "初回起動の流れはリモート設定で決まります",
+        "verdictRemoteHint": "ボードは初回起動時、このプロファイルのネットワークが設定される前にこれをダウンロードし、このプロファイルを置き換えます。インターネットにつながったケーブルと、正しい時刻が必要です。",
+        "verdictRemoteWifi": "Wi-Fiだけではボードはダウンロードできません。Wi-Fiの設定前に取得されるためです。ケーブルを追加するか、URLを削除してください。",
+        "verdictNeedsFix": "先に修正が必要な設定があります",
+        "verdictNeedsFixHint": "修正すると、初回起動で何が起こるか確認できます。"
       },
       "boardSheet": {
         "searchPlaceholder": "ボードまたはメーカーを検索",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} 件のボード",
       "pagerLabel": "プロファイルのページ",
       "discardTitle": "変更を破棄しますか？",
-      "discardBody": "このプロファイルへの未保存の変更は失われます。"
+      "discardBody": "このプロファイルへの未保存の変更は失われます。",
+      "needsFix": "修正が必要"
     }
   },
   "update": {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
-import { useId, type RefObject } from 'react';
+import { useEffect, useId, useRef, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Cable, Check, Globe, Info, KeyRound, Tag, User, Wifi, X } from 'lucide-react';
@@ -12,6 +12,7 @@ import { useModalExitAnimation } from '../../hooks/useModalExitAnimation';
 import { useProfileWizard, type ProfileWizardState } from '../../hooks/useProfileWizard';
 import { FieldHint } from '../settings/editor/EditorParts';
 import type { AutoconfigProfile, ProfileBoard } from '../../types';
+import { firstInvalidField } from '../../utils';
 import { WizardAccessStep } from './WizardAccessStep';
 import { WizardLocaleStep } from './WizardLocaleStep';
 import { WizardNameStep } from './WizardNameStep';
@@ -59,8 +60,13 @@ export function ProfileWizard({ board, boardImage, fromFlash = false, returnFocu
     onCreated(profile);
     handleClose();
   });
-  const { model, step, stepIndex, saving, blocked, empty, attempted, go, next, skip, create } = wizard;
+  const { model, step, stepIndex, saving, blocked, empty, attempted, refusals, go, next, skip, create } = wizard;
   const dialogRef = useDialogFocus<HTMLDivElement>({ onEscape: saving ? undefined : handleClose, returnFocusRef });
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (refusals) firstInvalidField(bodyRef.current)?.focus();
+  }, [refusals]);
 
   const reviewEmpty = step === 'review' && empty;
   const HeadIcon = reviewEmpty
@@ -101,7 +107,7 @@ export function ProfileWizard({ board, boardImage, fromFlash = false, returnFocu
               <X size={17} aria-hidden="true" />
             </button>
           </header>
-          <div key={step} className="pw-body">
+          <div key={step} ref={bodyRef} className="pw-body">
             <WizardStepBody wizard={wizard} uid={uid} board={board} />
           </div>
           <footer className="pw-foot">

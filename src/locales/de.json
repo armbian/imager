@@ -55,6 +55,7 @@
     "noShaMessage": "Für dieses Image gibt es keine SHA-Prüfsumme, daher lassen sich die geschriebenen Daten nicht überprüfen. Das Flashen wird trotzdem fortgesetzt.",
     "extracting": "Archiv wird entpackt...",
     "applyingProfile": "Profil wird angewendet...",
+    "fetchingKeys": "SSH-Schlüssel werden geholt...",
     "qdlSahara": "Firmware-Loader wird hochgeladen...",
     "qdlFirehose": "Partitionen werden geschrieben...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "Verbindung zum EDL-Gerät fehlgeschlagen. Stelle sicher, dass es im EDL-Modus ist und per USB verbunden ist.",
     "qdlAutoconfigFailed": "Das Autoconfig-Profil konnte nicht auf das QDL-Image angewendet werden.",
     "autoconfigNotArmbian": "Dieses Image enthält keine Armbian-Ersteinrichtung, daher kann das Profil nicht angewendet werden. Flashe es ohne Profil oder wähle ein Armbian-Image.",
+    "autoconfigUserNameInvalid": "Der Benutzername im Profil muss mit einem Buchstaben beginnen und darf nur Buchstaben und Ziffern enthalten, höchstens 32 Zeichen. Bearbeite das Profil und versuche es erneut.",
+    "autoconfigUserNameTaken": "Der Benutzername im Profil existiert in diesem Image bereits. Bearbeite das Profil und wähle einen anderen.",
+    "autoconfigUsersUnreadable": "Die Benutzerliste des Images konnte nicht gelesen werden, um den Benutzernamen im Profil zu prüfen. Es wurde nichts geschrieben.",
+    "autoconfigUnsafeTarget": "Im Image liegt an der Stelle, an die das Profil schreibt, etwas Unerwartetes. Es blieb daher unverändert. Es wurde nichts geschrieben.",
+    "sshKeysInvalidKey": "Die SSH-Schlüsselquelle des Profils hat etwas geliefert, das kein öffentlicher SSH-Schlüssel ist. Es wurde nichts geschrieben.",
+    "sshKeysNotFound": "Die SSH-Schlüsselquelle des Profils wurde nicht gefunden. Prüfe den Benutzernamen oder Link im Profil.",
+    "sshKeysNone": "Die SSH-Schlüsselquelle des Profils enthält keine öffentlichen Schlüssel. Füge dort einen Schlüssel hinzu oder bearbeite das Profil.",
+    "sshKeysTooLarge": "Die SSH-Schlüsselquelle des Profils hat zu viel geliefert, um eine Liste öffentlicher Schlüssel zu sein. Es wurde nichts geschrieben.",
+    "sshKeysNetwork": "Die SSH-Schlüssel des Profils konnten nicht heruntergeladen werden. Prüfe die Internetverbindung und versuche es erneut.",
+    "sshKeysInvalidInput": "Die SSH-Schlüsselquelle im Profil ist kein gültiger Benutzername und kein https-Link. Bearbeite das Profil und versuche es erneut.",
     "deviceInvalidPath": "Auf dieses Gerät kann nicht geschrieben werden. Wähle das Gerät erneut aus.",
     "deviceNotFound": "Das ausgewählte Gerät ist nicht mehr verbunden. Verbinde es erneut und wähle es noch einmal aus.",
     "deviceChanged": "Das ausgewählte Gerät hat sich seit der Auswahl geändert. Wähle es vor dem Schreiben erneut aus.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Armbian-Standardwerte",
       "keys": {
         "checking": "Schlüssel werden geprüft...",
-        "found_one": "{{count}} Schlüssel gefunden. Das Board holt ihn beim ersten Start ab.",
-        "found_other": "{{count}} Schlüssel gefunden. Das Board holt sie beim ersten Start ab.",
+        "foundAtFlash_one": "{{count}} Schlüssel gefunden. Imager fügt ihn beim Flashen zur SD-Karte hinzu.",
+        "foundAtFlash_other": "{{count}} Schlüssel gefunden. Imager fügt sie beim Flashen zur SD-Karte hinzu.",
         "notFoundForge": "Kein {{forge}}-Konto mit diesem Benutzernamen.",
         "notFoundLink": "Unter diesem Link wurde nichts gefunden.",
         "noneForge": "Dieses {{forge}}-Konto hat noch keine öffentlichen SSH-Schlüssel.",
@@ -334,7 +345,8 @@
         "tooLarge": "Diese Adresse liefert zu viel für eine Liste öffentlicher Schlüssel.",
         "invalidForge": "Das ist kein gültiger {{forge}}-Benutzername.",
         "invalidLink": "Hier lassen sich nur https-Links prüfen.",
-        "unreachable": "Die Schlüssel lassen sich gerade nicht prüfen. Das Board holt sie beim ersten Start ab."
+        "invalidKey": "Diese Adresse liefert Zeilen, die keine öffentlichen SSH-Schlüssel sind",
+        "unreachableAtFlash": "Die Schlüssel lassen sich gerade nicht prüfen. Imager lädt sie beim Flashen herunter, dafür brauchst du dann Internet."
       },
       "ipInvalid": "Gib eine gültige IPv4-Adresse ein (z. B. 192.168.1.50)",
       "ipNotHost": "Das ist die Netz- oder Broadcast-Adresse des Subnetzes, keine nutzbare Geräteadresse. Wähle eine wie 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Formular ausfüllen",
       "fillFormHint": "Alle Optionen auf einer Seite",
       "wifiKeyFits": "Passt für WLAN (8 bis 63 Zeichen)",
-      "wifiKeyLength": "WLAN-Passwörter haben meist 8 bis 63 Zeichen",
       "wizard": {
         "eyebrow": "Neues Profil",
         "unnamed": "Noch kein Name",
@@ -393,8 +404,7 @@
           "review": "Überprüfen"
         },
         "pending": {
-          "network": "Behält die Armbian-Standardwerte",
-          "locale": "Armbian-Standardwerte"
+          "network": "Behält die Armbian-Standardwerte"
         },
         "sum": {
           "keysFrom": "SSH-Schlüssel von {{forge}}",
@@ -431,16 +441,16 @@
           "later": "Bei der ersten Anmeldung",
           "more": "Vollständiger Name und Anmelde-Shell",
           "shellDefault": "Armbian-Standard",
-          "laterLine": "Bei der ersten Anmeldung, per SSH oder mit Tastatur und Monitor, fordert Armbian dich auf, einen Benutzer zu erstellen. Sprache und Zeit aus diesem Profil werden dann nicht angewendet."
+          "laterStops": "Das Board hält bei der ersten Anmeldung an und wartet darauf, dass du das Konto erstellst, per SSH oder mit Tastatur und Monitor."
         },
         "locale": {
           "title": "Sprache und Zeit",
           "sub": "Wird bei der ersten Anmeldung festgelegt, egal ob jetzt ein Benutzer erstellt wird.",
-          "location": "Vom Standort",
+          "thisComputer": "Wie dieser Computer",
           "choose": "Ich wähle",
           "language": "Sprache",
           "searchTimezone": "Zeitzonen suchen",
-          "locationLine": "Armbian legt Sprache und Zeitzone danach fest, von wo sich das Board mit dem Internet verbindet."
+          "thisComputerLine": "Das Board erhält Sprache und Zeitzone dieses Computers, ausgelesen beim Flashen."
         },
         "access": {
           "title": "Wie kommst du rein?",
@@ -484,33 +494,47 @@
         "connection": "Verbindung",
         "cableHint": "Stecke das Kabel vor dem ersten Start ein",
         "wifiKeyEmpty": "Leer lassen für ein offenes Netzwerk",
+        "wifiBadChars": "Entferne alle Zeichen \" und \\",
+        "wifiKeyLeadingSpace": "Das Passwort darf nicht mit einem Leerzeichen beginnen",
+        "wifiKeyLengthNeeded": "Verwende {{min}} bis {{max}} Zeichen oder lass das Feld für ein offenes Netzwerk leer",
+        "wifiKeyRawPsk": "Roher WLAN-Schlüssel (64 Hex-Zeichen)",
         "countryHint": "Legt die erlaubten WLAN-Kanäle fest",
         "ipAutoHint": "Dein Router vergibt die Adresse",
         "ipFixedHint": "Wähle eine freie Adresse in deinem Netzwerk",
         "ipLabelWifi": "IP-Adresse (WLAN)",
         "bothCableAuto": "Das Kabel erhält immer eine automatische Adresse",
+        "wifiNoAdapterHint": "Hat das Board kein WLAN, stoppt der erste Start. Wähle Kabel.",
         "addressOk": "Gültige Adresse",
+        "maskRequired": "Gib die Netzmaske ein (z. B. 255.255.255.0)",
         "moreOptions": "Weitere Optionen",
         "netFixed": "Fest, {{ip}}",
         "netAuto": "Automatische Adresse",
         "whoLogsIn": "Wer sich anmeldet",
         "laterHint": "Armbian fragt bei der ersten Anmeldung",
-        "userOk": "Kleinbuchstaben, beginnt mit einem Buchstaben",
+        "userValid": "Gültiger Benutzername",
         "userCreatedAs": "Erstellt als {{name}}",
-        "userInvalid": "Verwende Kleinbuchstaben, Ziffern, - und _",
+        "userLettersDigits": "Verwende nur Buchstaben und Ziffern, beginnend mit einem Buchstaben",
+        "userTooLong": "Verwende höchstens {{max}} Zeichen",
+        "userReserved": "{{name}} ist ein Systemkonto. Wähle einen anderen Namen.",
         "passwordRequired": "Nötig für die Anmeldung",
-        "fullNameRequired": "Nötig, um Sprache und Zeitzone festzulegen",
+        "realNameColon": "Entferne den Doppelpunkt (:)",
+        "realNameDefault": "Wenn leer, verwendet das Board {{name}}",
         "fullNameNotSet": "Vollständiger Name nicht festgelegt",
         "howYouGetIn": "Wie du dich anmeldest",
         "passwordLoginHint": "Mit deinem Passwort anmelden",
         "keysFrom": "Schlüssel von",
         "keyUserRequired": "Gib einen Benutzernamen ein",
         "keyLinkRequired": "Füge einen Link zu den öffentlichen Schlüsseln ein",
+        "keysNeedInternet": "Imager lädt die Schlüssel beim Flashen herunter, daher braucht das Flashen Internet",
         "rootSet": "Root-Passwort festgelegt",
         "rootNotSet": "Root-Passwort nicht festgelegt",
         "rootPlaceholder": "Nicht festgelegt",
         "rootHint": "Wenn leer, fragt Armbian bei der ersten Anmeldung danach",
-        "locationHint": "Wird danach festgelegt, von wo sich das Board verbindet",
+        "rootHintUser": "Wenn leer, erhält root dasselbe Passwort wie der Benutzer",
+        "rootSameAsUser": "Wie beim Benutzer",
+        "thisComputerHint": "Wird beim Flashen von diesem Computer gelesen",
+        "regionNeedsBoth": "Wähle Sprache und Zeitzone",
+        "regionDefaults": "Armbian-Standard: Englisch (US) und UTC",
         "remoteHint": "Wird beim ersten Start angewendet",
         "atFirstBoot": "Beim ersten Start",
         "factCableWifi": "Kabel + WLAN",
@@ -539,7 +563,17 @@
         "discard": "Verwerfen",
         "profileActions": "Profilaktionen",
         "boardPages": "Board-Seiten",
-        "done": "Fertig"
+        "done": "Fertig",
+        "verdictFinishes": "Der erste Start läuft von allein durch",
+        "verdictRootFromUser": "Root erhält dasselbe Passwort wie {{name}}.",
+        "verdictAsksUser": "Der erste Start hält an und wartet darauf, dass du einen Benutzer erstellst",
+        "verdictAsksRootAndUser": "Der erste Start hält an und wartet auf ein Root-Passwort und einen Benutzer",
+        "verdictConsoleHint": "Das Board wirkt hängengeblieben, bis jemand an seiner Konsole antwortet, per SSH oder mit Tastatur und Monitor. Erstelle den Benutzer hier, um das zu vermeiden.",
+        "verdictRemote": "Die Remote-Konfiguration bestimmt den Ablauf des ersten Starts",
+        "verdictRemoteHint": "Das Board lädt sie beim ersten Start herunter, bevor das Netzwerk dieses Profils eingerichtet ist, und sie ersetzt dieses Profil. Dafür braucht es ein Kabel mit Internet und eine richtige Uhrzeit.",
+        "verdictRemoteWifi": "Nur mit WLAN kann das Board sie nicht herunterladen: Sie wird vor der WLAN-Einrichtung geholt. Füge ein Kabel hinzu oder entferne die URL.",
+        "verdictNeedsFix": "Einige Einstellungen müssen zuerst korrigiert werden",
+        "verdictNeedsFixHint": "Korrigiere sie, um zu sehen, was beim ersten Start passiert."
       },
       "boardSheet": {
         "searchPlaceholder": "Boards oder Hersteller suchen",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} Boards",
       "pagerLabel": "Profilseiten",
       "discardTitle": "Änderungen verwerfen?",
-      "discardBody": "Deine nicht gespeicherten Änderungen an diesem Profil gehen verloren."
+      "discardBody": "Deine nicht gespeicherten Änderungen an diesem Profil gehen verloren.",
+      "needsFix": "Muss korrigiert werden"
     }
   },
   "update": {

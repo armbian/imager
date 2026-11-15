@@ -8,7 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { UI } from '../../config';
 import { useAnchoredPopover } from '../../hooks/useAnchoredPopover';
 import { useListboxKeys } from '../../hooks/useListboxKeys';
+import { profileNeedsFix } from '../../config/profileEditorModel';
 import type { AutoconfigProfile } from '../../types';
+import { NeedsFixPill } from './NeedsFixPill';
 import { ProfileGlyphs } from './ProfileGlyphs';
 
 interface ProfileMenuProps {
@@ -26,6 +28,8 @@ export function ProfileMenu({ anchorRef, profiles, selectedId, onSelect, onNewPr
   const listRef = useRef<HTMLDivElement>(null);
   const ids = ['', ...profiles.map((p) => p.id)];
   const newIndex = ids.length;
+  // A profile the current rules refuse stays listed so it is not mistaken for lost, but cannot be picked
+  const broken = new Set(profiles.filter((p) => profileNeedsFix(p) !== null).map((p) => p.id));
 
   const close = () => {
     onClose();
@@ -33,7 +37,7 @@ export function ProfileMenu({ anchorRef, profiles, selectedId, onSelect, onNewPr
   };
   const pick = (index: number) => {
     if (index === newIndex) onNewProfile();
-    else onSelect(ids[index]);
+    else if (!broken.has(ids[index])) onSelect(ids[index]);
   };
   const keys = useListboxKeys(ids.length + 1, pick, close);
   const { popRef, style, placement } = useAnchoredPopover<HTMLDivElement>(anchorRef, true, {
@@ -69,6 +73,7 @@ export function ProfileMenu({ anchorRef, profiles, selectedId, onSelect, onNewPr
         {ids.map((id, index) => {
           const profile = profiles.find((p) => p.id === id) ?? null;
           const isSelected = id === selectedId;
+          const disabled = broken.has(id);
           const label = profile ? profile.name : t('flash.profile.none');
           return (
             <div
@@ -76,12 +81,13 @@ export function ProfileMenu({ anchorRef, profiles, selectedId, onSelect, onNewPr
               id={optionId(index)}
               role="option"
               aria-selected={isSelected}
-              className={rowClass(index, `${isSelected ? ' is-sel' : ''}${profile ? '' : ' is-none'}`)}
+              aria-disabled={disabled || undefined}
+              className={rowClass(index, `${isSelected ? ' is-sel' : ''}${profile ? '' : ' is-none'}${disabled ? ' is-disabled' : ''}`)}
               onPointerMove={() => keys.setActive(index)}
               onClick={() => pick(index)}
             >
               <span className="profile-menu__name">{label}</span>
-              {profile && <ProfileGlyphs config={profile.config} />}
+              {profile && (disabled ? <NeedsFixPill /> : <ProfileGlyphs config={profile.config} />)}
               <span className="profile-menu__check" aria-hidden="true">
                 {isSelected && <Check size={16} />}
               </span>

@@ -132,6 +132,14 @@
   outline-offset: 2px;
 }
 
+.profile-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .profile-card__scope {
   display: inline-flex;
   align-items: center;

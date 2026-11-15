@@ -55,6 +55,7 @@
     "noShaMessage": "Bu imajın SHA sağlama toplamı yok, bu nedenle yazılan veriler doğrulanamaz. Yazma işlemi yine de sürecek.",
     "extracting": "Arşiv çıkarılıyor...",
     "applyingProfile": "Profiliniz uygulanıyor...",
+    "fetchingKeys": "SSH anahtarları alınıyor...",
     "qdlSahara": "Donanım yazılımı yükleyicisi gönderiliyor...",
     "qdlFirehose": "Bölümler yazılıyor...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "EDL cihazına bağlanılamadı. Cihazın EDL modunda olduğundan ve USB ile bağlı olduğundan emin olun.",
     "qdlAutoconfigFailed": "Otomatik yapılandırma profili QDL imajına uygulanamadı.",
     "autoconfigNotArmbian": "Bu imajda Armbian ilk açılış kurulumu yok, bu yüzden profil uygulanamaz. Profilsiz yazın veya bir Armbian imajı seçin.",
+    "autoconfigUserNameInvalid": "Profildeki kullanıcı adı bir harfle başlamalı ve yalnızca harf ve rakam içermelidir, en fazla 32 karakter. Profili düzenleyin ve yeniden deneyin.",
+    "autoconfigUserNameTaken": "Profildeki kullanıcı adı bu imajda zaten var. Profili düzenleyin ve başka bir ad seçin.",
+    "autoconfigUsersUnreadable": "Profildeki kullanıcı adını denetlemek için imajın kullanıcı listesi okunamadı. Hiçbir şey yazılmadı.",
+    "autoconfigUnsafeTarget": "İmajda, profilin ayarlarını yazdığı yerde beklenmeyen bir şey var, bu yüzden imaj değiştirilmedi. Hiçbir şey yazılmadı.",
+    "sshKeysInvalidKey": "Profildeki SSH anahtarı kaynağı, genel SSH anahtarı olmayan bir şey döndürdü. Hiçbir şey yazılmadı.",
+    "sshKeysNotFound": "Profildeki SSH anahtarı kaynağı bulunamadı. Profildeki kullanıcı adını veya bağlantıyı denetleyin.",
+    "sshKeysNone": "Profildeki SSH anahtarı kaynağında genel anahtar yok. Oraya bir anahtar ekleyin veya profili düzenleyin.",
+    "sshKeysTooLarge": "Profildeki SSH anahtarı kaynağı, genel anahtar listesi olamayacak kadar fazla veri döndürdü. Hiçbir şey yazılmadı.",
+    "sshKeysNetwork": "Profildeki SSH anahtarları indirilemedi. İnternet bağlantısını denetleyin ve yeniden deneyin.",
+    "sshKeysInvalidInput": "Profildeki SSH anahtarı kaynağı geçerli bir kullanıcı adı ya da https bağlantısı değil. Profili düzenleyin ve yeniden deneyin.",
     "deviceInvalidPath": "Bu cihaza yazılamıyor. Cihazı yeniden seçin.",
     "deviceNotFound": "Seçilen cihaz artık bağlı değil. Yeniden bağlayıp tekrar seçin.",
     "deviceChanged": "Seçtiğinizden beri seçilen cihaz değişti. Yazmadan önce cihazı yeniden seçin.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Armbian varsayılanları",
       "keys": {
         "checking": "Anahtarlar denetleniyor...",
-        "found_one": "{{count}} anahtar bulundu. Kart bunu ilk açılışta alır.",
-        "found_other": "{{count}} anahtar bulundu. Kart bunları ilk açılışta alır.",
+        "foundAtFlash_one": "{{count}} anahtar bulundu. Imager bunu yazarken SD karta ekler.",
+        "foundAtFlash_other": "{{count}} anahtar bulundu. Imager bunları yazarken SD karta ekler.",
         "notFoundForge": "Bu kullanıcı adına sahip bir {{forge}} hesabı yok.",
         "notFoundLink": "Bu bağlantıda hiçbir şey bulunamadı.",
         "noneForge": "Bu {{forge}} hesabında henüz açık SSH anahtarı yok.",
@@ -334,7 +345,8 @@
         "tooLarge": "Bu adres, açık anahtar listesi olamayacak kadar fazla veri sunuyor.",
         "invalidForge": "Bu geçerli bir {{forge}} kullanıcı adı değil.",
         "invalidLink": "Burada yalnızca https bağlantıları denetlenebilir.",
-        "unreachable": "Anahtarlar şu anda denetlenemiyor. Kart bunları ilk açılışta alır."
+        "invalidKey": "Bu adres, genel SSH anahtarı olmayan satırlar döndürüyor",
+        "unreachableAtFlash": "Anahtarlar şu anda denetlenemiyor. Imager bunları yazarken indirir, bu yüzden o sırada internet gerekir."
       },
       "ipInvalid": "Geçerli bir IPv4 adresi girin (örn. 192.168.1.50)",
       "ipNotHost": "Bu, alt ağın ağ veya yayın (broadcast) adresidir, cihaz için kullanılabilir bir adres değildir. 192.168.1.50 gibi bir adres seçin",
@@ -367,7 +379,6 @@
       "fillForm": "Formu doldur",
       "fillFormHint": "Tüm seçenekler tek sayfada",
       "wifiKeyFits": "Wi-Fi için uygun (8 ile 63 karakter)",
-      "wifiKeyLength": "Wi-Fi parolaları genellikle 8 ile 63 karakter uzunluğundadır",
       "wizard": {
         "eyebrow": "Yeni profil",
         "unnamed": "Henüz ad yok",
@@ -393,8 +404,7 @@
           "review": "Gözden geçir"
         },
         "pending": {
-          "network": "Armbian varsayılanlarını korur",
-          "locale": "Armbian varsayılanları"
+          "network": "Armbian varsayılanlarını korur"
         },
         "sum": {
           "keysFrom": "{{forge}} üzerinden SSH anahtarları",
@@ -431,16 +441,16 @@
           "later": "İlk oturum açmada",
           "more": "Tam ad ve oturum açma kabuğu",
           "shellDefault": "Armbian varsayılanı",
-          "laterLine": "İlk oturum açışınızda, SSH ile veya klavye ve monitörle, Armbian sizden bir kullanıcı oluşturmanızı ister. Bu profildeki dil ve saat o zaman uygulanmaz."
+          "laterStops": "Kart ilk oturum açmada durur ve hesabı oluşturmanızı bekler, SSH ile veya klavye ve monitörle."
         },
         "locale": {
           "title": "Dil ve saat",
           "sub": "İlk oturum açmada ayarlanır, kullanıcı şimdi oluşturulsa da oluşturulmasa da.",
-          "location": "Konumdan",
+          "thisComputer": "Bu bilgisayar gibi",
           "choose": "Ben seçerim",
           "language": "Dil",
           "searchTimezone": "Saat dilimi ara",
-          "locationLine": "Armbian dili ve saat dilimini, kartın internete bağlandığı yere göre ayarlar."
+          "thisComputerLine": "Kart, yazarken okunan bu bilgisayarın dilini ve saat dilimini alır."
         },
         "access": {
           "title": "Nasıl giriyorsunuz?",
@@ -484,33 +494,47 @@
         "connection": "Bağlantı",
         "cableHint": "İlk açılıştan önce kabloyu takın",
         "wifiKeyEmpty": "Açık ağ için boş bırakın",
+        "wifiBadChars": "\" veya \\ karakterlerini kaldırın",
+        "wifiKeyLeadingSpace": "Parola boşlukla başlayamaz",
+        "wifiKeyLengthNeeded": "{{min}} ile {{max}} arasında karakter kullanın veya açık ağ için boş bırakın",
+        "wifiKeyRawPsk": "Ham Wi-Fi anahtarı (64 onaltılık karakter)",
         "countryHint": "İzin verilen Wi-Fi kanallarını belirler",
         "ipAutoHint": "Adresi yönlendiriciniz atar",
         "ipFixedHint": "Ağınızda boş bir adres seçin",
         "ipLabelWifi": "IP adresi (Wi-Fi)",
         "bothCableAuto": "Kablo her zaman otomatik adres alır",
+        "wifiNoAdapterHint": "Kartta Wi-Fi yoksa ilk açılış durur. Bunun yerine Kablo seçin.",
         "addressOk": "Geçerli adres",
+        "maskRequired": "Ağ maskesini girin (örn. 255.255.255.0)",
         "moreOptions": "Diğer seçenekler",
         "netFixed": "Sabit, {{ip}}",
         "netAuto": "Otomatik adres",
         "whoLogsIn": "Kim oturum açıyor",
         "laterHint": "Armbian ilk oturum açmada sorar",
-        "userOk": "Küçük harf, harfle başlar",
+        "userValid": "Geçerli kullanıcı adı",
         "userCreatedAs": "{{name}} olarak oluşturulur",
-        "userInvalid": "Küçük harf, rakam, - ve _ kullanın",
+        "userLettersDigits": "Yalnızca harf ve rakam kullanın, harfle başlayın",
+        "userTooLong": "En fazla {{max}} karakter kullanın",
+        "userReserved": "{{name}} bir sistem hesabıdır. Başka bir ad seçin.",
         "passwordRequired": "Oturum açmak için gerekli",
-        "fullNameRequired": "Dil ve saat dilimini ayarlamak için gerekli",
+        "realNameColon": "İki noktayı (:) kaldırın",
+        "realNameDefault": "Boşsa kart {{name}} adını kullanır",
         "fullNameNotSet": "Tam ad ayarlanmadı",
         "howYouGetIn": "Nasıl oturum açıyorsunuz",
         "passwordLoginHint": "Parolanızla oturum açın",
         "keysFrom": "Anahtarların kaynağı",
         "keyUserRequired": "Bir kullanıcı adı girin",
         "keyLinkRequired": "Açık anahtarların bağlantısını yapıştırın",
+        "keysNeedInternet": "Imager anahtarları yazarken indirir, bu yüzden yazmak için internet gerekir",
         "rootSet": "Root parolası ayarlandı",
         "rootNotSet": "Root parolası ayarlanmadı",
         "rootPlaceholder": "Ayarlanmadı",
         "rootHint": "Boşsa Armbian ilk oturum açmada sorar",
-        "locationHint": "Kartın bağlandığı yere göre ayarlanır",
+        "rootHintUser": "Boşsa root, kullanıcıyla aynı parolayı alır",
+        "rootSameAsUser": "Kullanıcınınkiyle aynı",
+        "thisComputerHint": "Yazarken bu bilgisayardan okunur",
+        "regionNeedsBoth": "Hem bir dil hem bir saat dilimi seçin",
+        "regionDefaults": "Armbian varsayılanları: İngilizce (ABD) ve UTC",
         "remoteHint": "İlk açılışta uygulanır",
         "atFirstBoot": "İlk açılışta",
         "factCableWifi": "Kablo + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Vazgeç",
         "profileActions": "Profil işlemleri",
         "boardPages": "Kart sayfaları",
-        "done": "Bitti"
+        "done": "Bitti",
+        "verdictFinishes": "İlk açılış kendiliğinden biter",
+        "verdictRootFromUser": "Root, {{name}} ile aynı parolayı alır.",
+        "verdictAsksUser": "İlk açılış durur ve bir kullanıcı oluşturmanızı bekler",
+        "verdictAsksRootAndUser": "İlk açılış durur ve bir root parolası ile bir kullanıcı bekler",
+        "verdictConsoleHint": "Biri kartın konsolunda, SSH ile veya klavye ve monitörle yanıt verene kadar kart takılmış görünür. Bunu önlemek için kullanıcıyı burada oluşturun.",
+        "verdictRemote": "İlk açılışın nasıl gideceğine uzak yapılandırma karar verir",
+        "verdictRemoteHint": "Kart bunu ilk açılışta, bu profilin ağı kurulmadan önce indirir ve bu profilin yerini alır. İnternete bağlı bir kablo ve doğru bir saat gerekir.",
+        "verdictRemoteWifi": "Yalnızca Wi-Fi ile kart bunu indiremez: Wi-Fi kurulmadan önce alınır. Bir kablo ekleyin veya URL'yi kaldırın.",
+        "verdictNeedsFix": "Bazı ayarların önce düzeltilmesi gerekiyor",
+        "verdictNeedsFixHint": "İlk açılışta ne olacağını görmek için bunları düzeltin."
       },
       "boardSheet": {
         "searchPlaceholder": "Kart veya üretici ara",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} kart",
       "pagerLabel": "Profil sayfaları",
       "discardTitle": "Değişikliklerden vazgeçilsin mi?",
-      "discardBody": "Bu profildeki kaydedilmemiş değişiklikler kaybolacak."
+      "discardBody": "Bu profildeki kaydedilmemiş değişiklikler kaybolacak.",
+      "needsFix": "Düzeltme gerekli"
     }
   },
   "update": {

@@ -4,7 +4,7 @@
 import { useTranslation } from 'react-i18next';
 import { Github, Gitlab, KeyRound, Link2, Loader2, Lock } from 'lucide-react';
 import { AUTOCONFIG_PLACEHOLDERS, SSH_KEY_FORGES, type SshKeySource } from '../../../config/autoconfig';
-import { keySourceError, type AccessMode } from '../../../config/profileEditorModel';
+import { createsUser, keySourceError, rootPasswordCopy, type AccessMode } from '../../../config/profileEditorModel';
 import type { SshKeyCheck } from '../../../hooks/useSshKeyCheck';
 import { isSshKeysSourceError, translateSshKeysError } from '../../../utils/errorUtils';
 import { PasswordInput } from '../../shared/PasswordInput';
@@ -14,7 +14,7 @@ import { fieldId, type AccessGroupProps } from './types';
 
 const FORGE_ICON = { github: Github, gitlab: Gitlab } as const;
 
-// Only a hint: the board fetches the keys itself at first boot.
+// Only a hint: Imager fetches the keys again when it flashes and refuses to write without them.
 export function KeyCheckHint({ check, forge }: { check: SshKeyCheck; forge: string | null }) {
   const { t } = useTranslation();
   switch (check.status) {
@@ -28,7 +28,7 @@ export function KeyCheckHint({ check, forge }: { check: SshKeyCheck; forge: stri
         </span>
       );
     case 'found':
-      return <FieldHint tone="ok">{t('settings.autoconfig.keys.found', { count: check.lookup.total })}</FieldHint>;
+      return <FieldHint tone="ok">{t('settings.autoconfig.keys.foundAtFlash', { count: check.lookup.total })}</FieldHint>;
     case 'failed':
       return (
         <FieldHint tone={isSshKeysSourceError(check.error) ? 'warn' : 'plain'}>
@@ -46,6 +46,8 @@ export function AccessGroup({ model, status, uid, patch, more, toggleMore, keyCh
   const forge = a.source === 'link' ? null : SSH_KEY_FORGES[a.source];
   const ForgeIcon = a.source === 'link' ? Link2 : FORGE_ICON[a.source];
   const inputError = keySourceError(a);
+  const userNow = createsUser(model);
+  const rootCopy = rootPasswordCopy(model);
 
   return (
     <EditorSection
@@ -56,8 +58,12 @@ export function AccessGroup({ model, status, uid, patch, more, toggleMore, keyCh
     >
       <SettingsRow
         label={t('settings.autoconfig.editor.howYouGetIn')}
-        tall={a.mode === 'password'}
-        description={a.mode === 'password' ? <FieldHint>{t('settings.autoconfig.editor.passwordLoginHint')}</FieldHint> : undefined}
+        tall
+        description={
+          <FieldHint>
+            {t(a.mode === 'password' ? 'settings.autoconfig.editor.passwordLoginHint' : 'settings.autoconfig.editor.keysNeedInternet')}
+          </FieldHint>
+        }
         control={
           <SegmentedControl<AccessMode>
             value={a.mode}
@@ -114,7 +120,13 @@ export function AccessGroup({ model, status, uid, patch, more, toggleMore, keyCh
       )}
       <MoreRow
         label={t('settings.autoconfig.editor.moreOptions')}
-        value={t(a.rootPassword ? 'settings.autoconfig.editor.rootSet' : 'settings.autoconfig.editor.rootNotSet')}
+        value={t(
+          a.rootPassword
+            ? 'settings.autoconfig.editor.rootSet'
+            : userNow
+              ? 'settings.autoconfig.editor.rootSameAsUser'
+              : 'settings.autoconfig.editor.rootNotSet'
+        )}
         open={more}
         controls={subId}
         onToggle={() => toggleMore('access')}
@@ -124,12 +136,12 @@ export function AccessGroup({ model, status, uid, patch, more, toggleMore, keyCh
           label={t('settings.autoconfig.rootPassword')}
           controlId={fieldId(uid, 'root')}
           tall
-          description={<FieldHint>{t('settings.autoconfig.editor.rootHint')}</FieldHint>}
+          description={<FieldHint>{t(rootCopy.hint)}</FieldHint>}
           control={
             <PasswordInput
               id={fieldId(uid, 'root')}
               value={a.rootPassword}
-              placeholder={t('settings.autoconfig.editor.rootPlaceholder')}
+              placeholder={t(rootCopy.placeholder)}
               onChange={(rootPassword) => patch('access', { rootPassword })}
             />
           }
