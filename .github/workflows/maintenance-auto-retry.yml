@@ -1,0 +1,98 @@
+# Re-runs jobs GitHub never assigned to a hosted runner (macOS arm64 shortage); real failures stay red.
+# A superseded run is skipped: both workflows cancel per branch, so an old re-run would kill the new one.
+name: "Maintenance: Auto-retry"
+
+on:
+  workflow_run:
+    workflows:
+      - "Maintenance: PR check"
+      - "Maintenance: Release"
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Run ID to retry (the numeric id from the run URL); skips the attempt cap only"
+        type: string
+        required: true
+
+permissions:
+  actions: write
+  checks: read
+
+concurrency:
+  group: auto-retry-${{ github.event.workflow_run.id || inputs.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  retry:
+    name: "Re-run jobs not acquired by a runner"
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MAX_ATTEMPTS: "5"
+      EVENT_NAME: ${{ github.event_name }}
+      RUN_ID_EVENT: ${{ github.event.workflow_run.id }}
+      RUN_ID_INPUT: ${{ inputs.run_id }}
+    steps:
+      - name: "Re-run failed jobs if a runner shortage caused them"
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            RUN_ID="$RUN_ID_INPUT"
+          else
+            RUN_ID="$RUN_ID_EVENT"
+          fi
+
+          run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")"
+          workflow_id="$(jq -r '.workflow_id' <<<"$run_json")"
+          head_branch="$(jq -r '.head_branch // ""' <<<"$run_json")"
+          run_event="$(jq -r '.event' <<<"$run_json")"
+          head_repo="$(jq -r '.head_repository.full_name // ""' <<<"$run_json")"
+          attempt="$(jq -r '.run_attempt' <<<"$run_json")"
+          conclusion="$(jq -r '.conclusion // ""' <<<"$run_json")"
+
+          echo "Run ${RUN_ID}: attempt ${attempt}, conclusion '${conclusion}', branch '${head_branch}', event '${run_event}'."
+
+          if [ "$conclusion" != "failure" ]; then
+            echo "::notice::Run ${RUN_ID} did not fail (conclusion '${conclusion}'), nothing to retry."
+            exit 0
+          fi
+
+          if [ "$EVENT_NAME" != "workflow_dispatch" ] && [ "$attempt" -ge "$MAX_ATTEMPTS" ]; then
+            echo "::notice::Run ${RUN_ID} used all ${MAX_ATTEMPTS} attempts, leaving it red."
+            exit 0
+          fi
+
+          # -f/-F make gh api default to POST, so GET is explicit.
+          newer="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/runs" \
+            -f branch="$head_branch" -f event="$run_event" -F per_page=20 \
+            --jq "[.workflow_runs[] | select((.head_repository.full_name // \"\") == \"${head_repo}\" and .id > ${RUN_ID})] | length")"
+          if [ "$newer" -gt 0 ]; then
+            echo "::notice::Run ${RUN_ID} is superseded by a newer run on '${head_branch}', not re-running it."
+            exit 0
+          fi
+
+          # A job id is also its check run id, which is where the annotations live.
+          job_lines="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs" \
+            --jq '.jobs[] | select(.conclusion == "failure" or .conclusion == "cancelled") | "\(.id)\t\(.name)"')"
+
+          matches=0
+          while IFS=$'\t' read -r job_id job_name; do
+            [ -n "$job_id" ] || continue
+            # Captured first: grep -q exiting early would SIGPIPE gh and, under pipefail, read as no match.
+            messages="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/check-runs/${job_id}/annotations" --jq '.[].message')"
+            if grep -qF "was not acquired by Runner" <<<"$messages"; then
+              echo "Runner shortage: ${job_name}"
+              matches=$((matches + 1))
+            fi
+          done <<<"$job_lines"
+
+          if [ "$matches" -eq 0 ]; then
+            echo "::notice::Run ${RUN_ID} failure is not a runner shortage, leaving it red."
+            exit 0
+          fi
+
+          gh run rerun "$RUN_ID" --failed --repo "$GITHUB_REPOSITORY"
+          echo "::notice::Re-ran run ${RUN_ID} (${matches} job(s) not acquired), attempt ${attempt} of ${MAX_ATTEMPTS}."
