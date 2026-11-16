@@ -1,5 +1,6 @@
 # Re-runs jobs GitHub never assigned to a hosted runner (macOS arm64 shortage); real failures stay red.
 # A superseded run is skipped: both workflows cancel per branch, so an old re-run would kill the new one.
+# A run of a merged or closed PR is skipped too, so it does not take one of the few macOS slots.
 name: "Maintenance: Auto-retry"
 
 on:
@@ -18,6 +19,7 @@ on:
 permissions:
   actions: write
   checks: read
+  pull-requests: read
 
 concurrency:
   group: auto-retry-${{ github.event.workflow_run.id || inputs.run_id }}
@@ -50,6 +52,7 @@ jobs:
           head_branch="$(jq -r '.head_branch // ""' <<<"$run_json")"
           run_event="$(jq -r '.event' <<<"$run_json")"
           head_repo="$(jq -r '.head_repository.full_name // ""' <<<"$run_json")"
+          head_owner="$(jq -r '.head_repository.owner.login // ""' <<<"$run_json")"
           attempt="$(jq -r '.run_attempt' <<<"$run_json")"
           conclusion="$(jq -r '.conclusion // ""' <<<"$run_json")"
 
@@ -72,6 +75,15 @@ jobs:
           if [ "$newer" -gt 0 ]; then
             echo "::notice::Run ${RUN_ID} is superseded by a newer run on '${head_branch}', not re-running it."
             exit 0
+          fi
+
+          if [ "$run_event" = "pull_request" ]; then
+            open_prs="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/pulls" \
+              -f state=open -f head="${head_owner}:${head_branch}" --jq 'length')"
+            if [ "$open_prs" -eq 0 ]; then
+              echo "::notice::Run ${RUN_ID} belongs to a PR that is no longer open, not re-running it."
+              exit 0
+            fi
           fi
 
           # A job id is also its check run id, which is where the annotations live.
