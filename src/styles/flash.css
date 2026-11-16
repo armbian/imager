@@ -550,11 +550,10 @@
     filter: none;
   }
 
-  /* Error screen: kill the hero animation, ripples, glow, float, card entrances. */
+  /* Error screen: kill the hero animation, ripples, glow, float, text entrances. */
   .error-screen__hero,
   .error-screen__title,
-  .error-screen__hint,
-  .error-screen__card {
+  .error-screen__hint {
     animation: none;
   }
   .error-screen__hero::before,
@@ -564,21 +563,6 @@
   }
   .error-screen__ring {
     opacity: 0;
-  }
-  .error-screen__row,
-  .error-screen__row::before,
-  .error-screen__chip,
-  .error-screen__arrow {
-    transition: none;
-  }
-
-  /* Share link: drop the glyph-nudge micro-motion. */
-  .paste-url,
-  .paste-url svg {
-    transition: none;
-  }
-  .paste-url:hover svg {
-    transform: none;
   }
 }
 
@@ -646,46 +630,6 @@
   border-radius: var(--radius-lg);
   color: var(--color-error);
   font-size: 13px;
-}
-
-/* Link affordance: accent, trailing external-link glyph, hover color + glyph nudge. */
-.paste-url {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  padding: 2px 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 600;
-  text-align: left;
-  text-decoration: none;
-  word-break: break-all;
-  border-radius: var(--radius-sm);
-  transition: color var(--dur-fast) var(--ease-out-expo);
-}
-
-.paste-url svg {
-  flex-shrink: 0;
-  opacity: 0.8;
-  transition: transform var(--dur-fast) var(--ease-out-expo);
-}
-
-.paste-url:hover {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.paste-url:hover svg {
-  transform: translate(1px, -1px);
-}
-
-.paste-url:focus-visible {
-  outline: 2px solid rgba(var(--accent-rgb), 0.5);
-  outline-offset: 3px;
 }
 
 .btn-icon {
@@ -997,7 +941,7 @@
   filter: drop-shadow(0 14px 26px rgba(var(--screen-tint-rgb), 0.28));
 }
 
-/* Right column: title + diagnosis + remedy card + actions, left-aligned. */
+/* Right column: title + diagnosis + actions + log footnote, left-aligned. */
 .error-screen__main {
   flex: 1 1 0;
   min-width: 0;
@@ -1027,138 +971,49 @@
   animation: confirmContentIn 0.45s var(--ease-out-expo) 0.2s both;
 }
 
-/* Remedy card: one surface, hairline border (mirrors .offline__actions). */
-.error-screen__card {
+/* Log upload footnote under the actions: lead-in text plus one link-styled button. */
+.error-screen__footnote {
   display: flex;
-  flex-direction: column;
-  width: 100%;
-  border-radius: var(--radius-xl);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-light);
-  overflow: hidden;
-  animation: confirmContentIn 0.45s var(--ease-out-expo) 0.28s both;
-}
-
-/* Upload-logs row — quiet accent affordance with a dormant glow. */
-.error-screen__row {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  width: 100%;
-  padding: var(--space-lg);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  color: var(--text-primary);
-  font: inherit;
-  transition: background var(--dur-base) var(--ease-standard);
-}
-
-.error-screen__row::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(
-    120% 140% at 14% 50%,
-    rgba(var(--accent-rgb), 0.1) 0%,
-    transparent 60%
-  );
-  opacity: 0;
-  transition: opacity var(--dur-medium) var(--ease-standard);
-}
-
-.error-screen__chip {
-  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-lg);
-  background: rgba(var(--accent-rgb), 0.1);
-  color: var(--accent);
-  transition: background var(--dur-base) var(--ease-standard);
-}
-
-.error-screen__label {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.2px;
-}
-
-.error-screen__arrow {
-  flex-shrink: 0;
-  color: var(--text-muted);
-  transition:
-    color var(--dur-base) var(--ease-standard),
-    transform var(--dur-base) var(--ease-standard);
-}
-
-.error-screen__row:hover:not(:disabled) {
-  background: rgba(var(--accent-rgb), 0.05);
-}
-.error-screen__row:hover:not(:disabled)::before {
-  opacity: 1;
-}
-.error-screen__row:hover:not(:disabled) .error-screen__chip {
-  background: rgba(var(--accent-rgb), 0.16);
-}
-.error-screen__row:hover:not(:disabled) .error-screen__arrow {
-  color: var(--accent);
-  transform: translateX(3px);
-}
-.error-screen__row:active:not(:disabled) {
-  background: rgba(var(--accent-rgb), 0.09);
-}
-.error-screen__row:focus-visible {
-  outline: none;
-  background: rgba(var(--accent-rgb), 0.08);
-  box-shadow: inset 0 0 0 1.5px rgba(var(--accent-rgb), 0.5);
-}
-.error-screen__row:disabled {
-  cursor: default;
-}
-
-/* Remedy: QR tile + share link, occupying the card once logs are uploaded. */
-.error-screen__paste {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  width: 100%;
-  padding: var(--space-lg);
-}
-
-.error-screen__qr {
-  flex-shrink: 0;
-  box-sizing: border-box;
-  display: block;
-  width: 116px;
-  height: 116px;
-  padding: 8px;
-  background: #fff;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-}
-
-.error-screen__paste-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
   gap: var(--space-xs);
-  align-items: flex-start;
+  width: 100%;
+  margin-top: var(--space-lg);
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
 }
 
-.error-screen__paste-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  line-height: 1.35;
+.error-screen__footnote-ok {
+  flex-shrink: 0;
+  color: var(--color-success-ink);
+}
+
+.error-screen__footnote-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.error-screen__footnote-action:hover:not(:disabled) {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+.error-screen__footnote-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+.error-screen__footnote-action:disabled {
+  cursor: default;
 }
 
 /* Inline upload-failure chip. */
@@ -1166,6 +1021,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
+  align-self: center;
   margin-top: var(--space-md);
   padding: 6px 12px;
   background: var(--color-error-bg);
@@ -1180,14 +1036,10 @@
   display: flex;
   gap: var(--space-md);
   width: 100%;
-  margin-top: var(--space-xl);
 }
 .error-screen__buttons .btn {
   flex: 1;
   justify-content: center;
-}
-.error-screen.is-cancelled .error-screen__buttons {
-  margin-top: 0;
 }
 
 /* ============================ KEYFRAMES ============================ */

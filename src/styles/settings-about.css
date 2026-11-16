@@ -208,7 +208,6 @@
 }
 
 .about-link:focus-visible,
-.about-page__paste:focus-visible,
 .about-page__notes-link:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -296,35 +295,6 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-}
-
-.about-page__value {
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 20px;
-  white-space: nowrap;
-}
-
-.about-page__paste {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 280px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--accent);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.about-page__paste:hover {
-  text-decoration: underline;
 }
 
 .about-page__upload-error {

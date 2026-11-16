@@ -85,6 +85,8 @@ export function BoardPickerSheet({ selected, onDone, onCancel, profileId, return
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Keys from a dialog portalled out of this subtree (the log share modal) still bubble here through React.
+    if (!event.currentTarget.contains(event.target as Node)) return;
     const typing = (event.target as HTMLElement).closest('input');
     if (typing || menu || event.defaultPrevented) return;
     if (event.key === UI.BOARD_SHEET.SEARCH_KEY && !review) {

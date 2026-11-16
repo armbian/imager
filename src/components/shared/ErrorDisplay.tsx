@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { Upload, ExternalLink, CircleAlert, CircleX, RotateCcw } from 'lucide-react';
+import { Upload, CircleAlert, CircleX, Loader2, QrCode, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useLogUpload } from '../../hooks/useLogUpload';
+import { useLogShare } from '../../hooks/useLogShare';
 import { UI } from '../../config';
+import { LogShareModal } from './LogShareModal';
 import { LogUploadRemedy } from './LogUploadRemedy';
 
 interface ErrorDisplayProps {
@@ -17,42 +18,52 @@ interface ErrorDisplayProps {
 
 function CompactErrorDisplay({ message, onRetry }: { message: string; onRetry?: () => void }) {
   const { t } = useTranslation();
-  const { upload, uploading, url: pasteUrl, error: uploadError, open } = useLogUpload();
+  const { share, uploading, uploaded, error: uploadError, triggerRef, modalProps } = useLogShare();
+
+  const shareLabel = uploading
+    ? t('errorDisplay.uploadingLogs')
+    : uploaded
+      ? t('errorDisplay.showLogLink')
+      : t('errorDisplay.uploadLogs');
 
   return (
     <div className="error-display-compact">
       <div className="error-display-message">
-        <CircleAlert size={18} />
+        <CircleAlert size={UI.ICON_SIZE.BUTTON} />
         <span>{message}</span>
       </div>
       <div className="error-display-actions">
         {onRetry && (
-          <button onClick={onRetry} className="btn btn-primary btn-sm">
+          <button type="button" onClick={onRetry} className="btn btn-primary btn-sm">
             {t('errorDisplay.retry')}
           </button>
         )}
-        {!pasteUrl ? (
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={upload}
-            disabled={uploading}
-          >
-            <Upload size={14} />
-            {uploading ? t('errorDisplay.uploading') : t('errorDisplay.uploadLogs')}
-          </button>
-        ) : (
-          <button className="btn btn-secondary btn-sm" onClick={open}>
-            <ExternalLink size={14} />
-            {t('errorDisplay.viewLogs')}
-          </button>
-        )}
+        <button
+          type="button"
+          ref={triggerRef}
+          className="btn btn-secondary btn-sm"
+          onClick={share}
+          disabled={uploading}
+          aria-busy={uploading}
+        >
+          {uploading ? (
+            <Loader2 size={UI.ICON_SIZE.UPLOAD_ERROR} className="spinning" />
+          ) : uploaded ? (
+            <QrCode size={UI.ICON_SIZE.UPLOAD_ERROR} />
+          ) : (
+            <Upload size={UI.ICON_SIZE.UPLOAD_ERROR} />
+          )}
+          {shareLabel}
+        </button>
       </div>
       {uploadError && (
-        <div className="error-display-upload-error">
-          <CircleAlert size={12} />
+        <div className="error-display-upload-error" role="alert">
+          <CircleAlert size={UI.ICON_SIZE.UPLOAD_ERROR} />
           <span>{uploadError}</span>
         </div>
       )}
+
+      <LogShareModal {...modalProps} />
     </div>
   );
 }
@@ -76,8 +87,6 @@ export function ErrorDisplay({ error, onRetry, onCancel, compact = false }: Erro
         <h2 className="error-screen__title">{t('flash.failed')}</h2>
         <p className="error-screen__hint">{message}</p>
 
-        <LogUploadRemedy />
-
         {(onRetry || onCancel) && (
           <div className="error-screen__buttons">
             {onCancel && (
@@ -87,12 +96,14 @@ export function ErrorDisplay({ error, onRetry, onCancel, compact = false }: Erro
             )}
             {onRetry && (
               <button className="btn btn-primary" onClick={onRetry}>
-                <RotateCcw size={16} />
+                <RotateCcw size={UI.ICON_SIZE.BUTTON} />
                 {t('flash.retry')}
               </button>
             )}
           </div>
         )}
+
+        <LogUploadRemedy />
       </div>
     </div>
   );

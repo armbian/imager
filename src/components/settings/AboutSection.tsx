@@ -15,6 +15,7 @@ import {
   Globe,
   Heart,
   Loader2,
+  QrCode,
   RefreshCw,
   ScrollText,
   TriangleAlert,
@@ -25,12 +26,13 @@ import {
 import { getTauriVersion, getSystemInfo, openExternal } from '../../hooks/useTauri';
 import { getDeveloperMode, setDeveloperMode } from '../../hooks/useSettings';
 import { useAsyncData } from '../../hooks/useAsyncData';
-import { useLogUpload } from '../../hooks/useLogUpload';
+import { useLogShare } from '../../hooks/useLogShare';
 import { useSettingToggle } from '../../hooks/useSettingToggle';
 import { useUpdate } from '../../contexts/UpdateContext';
 import { ChangelogModal, ErrorDisplay, UpdateProgressBar } from '../shared';
 import { SettingsGroup, SettingsRow, ToggleRow } from './controls';
 import { LogsModal } from './LogsModal';
+import { LogShareModal } from '../shared/LogShareModal';
 import { LINKS, PLATFORM_LABEL, SETTINGS, UI } from '../../config/constants';
 import { displayUrl } from '../../utils';
 import armbianLogo from '../../../src-tauri/icons/icon.png';
@@ -170,11 +172,16 @@ function UpdateStrip({ version }: { version: string }) {
 export function AboutSection() {
   const { t } = useTranslation();
   const [logsOpen, setLogsOpen] = useState(false);
-  const { upload, uploading, url: pasteUrl, error: uploadError } = useLogUpload();
+  const { share, uploading, uploaded, error: uploadError, triggerRef, modalProps } = useLogShare();
   const developerMode = useSettingToggle(getDeveloperMode, setDeveloperMode, { fallback: SETTINGS.DEFAULTS.DEVELOPER_MODE });
   const titleId = useId();
   const linksId = useId();
   const { update } = useUpdate();
+  const shareLabel = uploading
+    ? t('errorDisplay.uploading')
+    : uploaded
+      ? t('errorDisplay.showLogLink')
+      : t('settings.about.upload');
 
   const { data: appInfo, error, reload } = useAsyncData(async () => {
     const [appVersion, tauriVersion, systemInfo] = await Promise.all([getVersion(), getTauriVersion(), getSystemInfo()]);
@@ -229,7 +236,7 @@ export function AboutSection() {
                 <b>{t(labelKey)}</b>
                 <small>{subKey ? t(subKey) : displayUrl(url)}</small>
               </span>
-              <ExternalLink className="about-link__arrow" size={16} aria-hidden="true" />
+              <ExternalLink className="about-link__arrow" size={UI.ICON_SIZE.BUTTON} aria-hidden="true" />
             </button>
           ))}
         </div>
@@ -238,46 +245,39 @@ export function AboutSection() {
       <SettingsGroup eyebrow={t('settings.about.logsEyebrow')}>
         <SettingsRow
           label={t('settings.about.sessionLog')}
-          description={t('settings.about.sessionLogDesc')}
-          control={
-            <span className="about-page__actions">
-              <button type="button" className="btn btn-secondary btn-pill" onClick={() => setLogsOpen(true)}>
-                <FileText size={16} aria-hidden="true" />
-                {t('settings.about.open')}
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-pill"
-                onClick={() => upload()}
-                disabled={uploading}
-                aria-busy={uploading || undefined}
-              >
-                {uploading ? <Loader2 size={16} className="spinning" aria-hidden="true" /> : <Upload size={16} aria-hidden="true" />}
-                {uploading ? t('errorDisplay.uploading') : t('settings.about.upload')}
-              </button>
-            </span>
-          }
-        />
-        <SettingsRow
-          label={t('settings.about.sharedLogs')}
           description={
             uploadError ? (
               <span className="about-page__upload-error" role="alert">
                 {uploadError}
               </span>
             ) : (
-              t('settings.about.sharedLogsDesc', { host: LINKS.PASTE_HOST })
+              t('settings.about.sessionLogDesc')
             )
           }
           control={
-            pasteUrl ? (
-              <button type="button" className="about-page__paste" onClick={() => openExternal(pasteUrl)}>
-                {displayUrl(pasteUrl)}
-                <ExternalLink size={14} aria-hidden="true" />
+            <span className="about-page__actions">
+              <button type="button" className="btn btn-secondary btn-pill" onClick={() => setLogsOpen(true)}>
+                <FileText size={UI.ICON_SIZE.BUTTON} aria-hidden="true" />
+                {t('settings.about.open')}
               </button>
-            ) : (
-              <span className="about-page__value">{LINKS.PASTE_HOST}</span>
-            )
+              <button
+                ref={triggerRef}
+                type="button"
+                className="btn btn-secondary btn-pill"
+                onClick={share}
+                disabled={uploading}
+                aria-busy={uploading}
+              >
+                {uploading ? (
+                  <Loader2 size={UI.ICON_SIZE.BUTTON} className="spinning" aria-hidden="true" />
+                ) : uploaded ? (
+                  <QrCode size={UI.ICON_SIZE.BUTTON} aria-hidden="true" />
+                ) : (
+                  <Upload size={UI.ICON_SIZE.BUTTON} aria-hidden="true" />
+                )}
+                {shareLabel}
+              </button>
+            </span>
           }
         />
       </SettingsGroup>
@@ -297,6 +297,7 @@ export function AboutSection() {
       {appInfo && <p className="about-page__credits">{t('settings.about.credits', { tauri: appInfo.tauriVersion })}</p>}
 
       <LogsModal isOpen={logsOpen} onClose={() => setLogsOpen(false)} />
+      <LogShareModal {...modalProps} />
     </div>
   );
 }

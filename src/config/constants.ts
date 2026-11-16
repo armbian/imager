@@ -44,8 +44,6 @@ export const LINKS = {
   MOTD: 'https://github.armbian.com/featured.json',
   WEBSITE: 'https://www.armbian.com',
   DONATE: 'https://www.armbian.com/donate',
-  /** Shown in the log upload description; the upload endpoint itself lives in the backend config */
-  PASTE_HOST: 'paste.armbian.com',
 } as const;
 
 /** Timing constants in milliseconds */
@@ -303,8 +301,6 @@ export const UI = {
     CHEVRON: 14,
     UPDATE_ENTRY: 15,
     ERROR_HERO: 72,
-    REMEDY_ROW: 18,
-    PASTE_LINK: 12,
     UPLOAD_ERROR: 14,
   },
   /** Minimum margin between an anchored popover and the window edge */
