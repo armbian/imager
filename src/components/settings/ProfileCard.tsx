@@ -6,9 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { ChevronRight, Cpu, Layers } from 'lucide-react';
 import { UI } from '../../config';
 import { profileBoards } from '../../config/autoconfig';
-import { profileScopeLabel, profileSpec } from '../../config/profileEditorModel';
+import { profileNeedsFix, profileScopeLabel, profileSpec } from '../../config/profileEditorModel';
 import type { AutoconfigProfile } from '../../types';
 import { staggerDelay } from '../../utils';
+import { NeedsFixPill } from '../autoconfig/NeedsFixPill';
 import { FactGlyph } from './editor/FactGlyph';
 import { ProfileTile } from './ProfileTile';
 
@@ -30,6 +31,7 @@ export function ProfileCard({ profile, onEdit, index = 0 }: ProfileCardProps) {
   const { t } = useTranslation();
   const boards = profileBoards(profile);
   const spec = profileSpec(profile, t);
+  const needsFix = profileNeedsFix(profile) !== null;
   const ref = useRef<HTMLElement>(null);
   const [wide, setWide] = useState(false);
 
@@ -55,9 +57,12 @@ export function ProfileCard({ profile, onEdit, index = 0 }: ProfileCardProps) {
           <button type="button" className="profile-card__open">
             {profile.name}
           </button>
-          <span className="profile-card__scope">
-            {boards.length ? <Cpu size={13} aria-hidden="true" /> : <Layers size={13} aria-hidden="true" />}
-            <span>{profileScopeLabel(boards, t)}</span>
+          <span className="profile-card__meta">
+            <span className="profile-card__scope">
+              {boards.length ? <Cpu size={13} aria-hidden="true" /> : <Layers size={13} aria-hidden="true" />}
+              <span>{profileScopeLabel(boards, t)}</span>
+            </span>
+            {needsFix && <NeedsFixPill />}
           </span>
         </div>
         <dl className="profile-card__spec">

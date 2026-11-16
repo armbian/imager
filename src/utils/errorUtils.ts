@@ -34,6 +34,20 @@ const IMAGE_ERROR_KEYS = {
   '[IMAGE_INVALID]': 'error.imageInvalid',
 } as const;
 
+/** Twins of the TAG_USER_NAME_*, TAG_USERS_UNREADABLE, TAG_UNSAFE_TARGET (autoconfig.rs) and ssh_keys::TAG_* consts: the flash refused the profile */
+const PROFILE_ERROR_KEYS = {
+  '[AUTOCONFIG_USER_NAME_INVALID]': 'error.autoconfigUserNameInvalid',
+  '[AUTOCONFIG_USER_NAME_TAKEN]': 'error.autoconfigUserNameTaken',
+  '[AUTOCONFIG_USERS_UNREADABLE]': 'error.autoconfigUsersUnreadable',
+  '[AUTOCONFIG_UNSAFE_TARGET]': 'error.autoconfigUnsafeTarget',
+  '[SSH_KEYS_INVALID_KEY]': 'error.sshKeysInvalidKey',
+  '[SSH_KEYS_NOT_FOUND]': 'error.sshKeysNotFound',
+  '[SSH_KEYS_NONE]': 'error.sshKeysNone',
+  '[SSH_KEYS_TOO_LARGE]': 'error.sshKeysTooLarge',
+  '[SSH_KEYS_NETWORK]': 'error.sshKeysNetwork',
+  '[SSH_KEYS_INVALID_INPUT]': 'error.sshKeysInvalidInput',
+} as const;
+
 const QDL_ERROR_KEYS = {
   '[QDL_DISCONNECTED]': 'error.qdlDisconnected',
   '[QDL_CANCELLED]': 'error.qdlCancelled',
@@ -58,15 +72,23 @@ export function isDeviceRefusalError(error: string): boolean {
   return DEVICE_TOO_SMALL_PATTERN.test(error) || findTaggedKey(error, DEVICE_ERROR_KEYS) !== undefined;
 }
 
+/** True when the flash refused the profile before writing, so the image itself is not at fault */
+export function isProfileRefusalError(error: string): boolean {
+  return error.includes(AUTOCONFIG_NOT_ARMBIAN_TAG) || findTaggedKey(error, PROFILE_ERROR_KEYS) !== undefined;
+}
+
 /** i18n key of a tagged image error, for callers that fall back to their own message instead of the raw string */
 export function imageErrorKey(error: unknown): string | undefined {
   return findTaggedKey(getErrorMessage(error, ''), IMAGE_ERROR_KEYS);
 }
 
-/** Map tagged backend flash errors ([AUTOCONFIG_NOT_ARMBIAN], [DEVICE_*], [FLASH_BUSY], [WRITE_FAILED:offset], image checks, [QDL_*]) to translated messages */
+/** Map tagged backend flash errors ([AUTOCONFIG_*], [SSH_KEYS_*], [DEVICE_*], [FLASH_BUSY], [WRITE_FAILED:offset], image checks, [QDL_*]) to translated messages */
 export function translateFlashError(error: string, t: TFn): string {
   // Block and QDL flashes both refuse a profile this way; the UFS path wraps it in [QDL_AUTOCONFIG_FAILED].
   if (error.includes(AUTOCONFIG_NOT_ARMBIAN_TAG)) return t('error.autoconfigNotArmbian');
+  // Checked before the [QDL_*] tags, so the reason inside [QDL_AUTOCONFIG_FAILED] wins
+  const profileKey = findTaggedKey(error, PROFILE_ERROR_KEYS);
+  if (profileKey) return t(profileKey);
   const tooSmall = error.match(DEVICE_TOO_SMALL_PATTERN);
   if (tooSmall) {
     return t('error.deviceTooSmall', {
@@ -102,6 +124,7 @@ const SSH_KEYS_ERROR_KEYS = {
   '[SSH_KEYS_NONE]': { forge: 'settings.autoconfig.keys.noneForge', link: 'settings.autoconfig.keys.noneLink' },
   '[SSH_KEYS_TOO_LARGE]': { forge: 'settings.autoconfig.keys.tooLarge', link: 'settings.autoconfig.keys.tooLarge' },
   '[SSH_KEYS_INVALID_INPUT]': { forge: 'settings.autoconfig.keys.invalidForge', link: 'settings.autoconfig.keys.invalidLink' },
+  '[SSH_KEYS_INVALID_KEY]': { forge: 'settings.autoconfig.keys.invalidKey', link: 'settings.autoconfig.keys.invalidKey' },
 } as const;
 
 function findSshKeysError(error: string) {
@@ -116,7 +139,7 @@ export function isSshKeysSourceError(error: string): boolean {
 /** Map an [SSH_KEYS_*] lookup error to a hint; `forge` is the brand label, or null for a link. Never shown verbatim. */
 export function translateSshKeysError(error: string, t: TFn, forge: string | null): string {
   const keys = findSshKeysError(error);
-  if (!keys) return t('settings.autoconfig.keys.unreachable');
+  if (!keys) return t('settings.autoconfig.keys.unreachableAtFlash');
   return forge ? t(keys.forge, { forge }) : t(keys.link);
 }
 

@@ -4,33 +4,34 @@
 import { useTranslation } from 'react-i18next';
 import { Monitor, User } from 'lucide-react';
 import { AUTOCONFIG_PLACEHOLDERS, USER_SHELLS } from '../../../config/autoconfig';
-import { PROFILE_EDITOR, firstLoginUserName, isValidUserName, type UserMode } from '../../../config/profileEditorModel';
+import {
+  PROFILE_EDITOR,
+  defaultRealName,
+  realNameIssue,
+  realNamePlaceholder,
+  userNameIssue,
+  type UserMode,
+} from '../../../config/profileEditorModel';
 import type { UserShell } from '../../../types';
 import { PasswordInput } from '../../shared/PasswordInput';
 import { SegmentedControl, SelectMenu, SettingsRow } from '../controls';
-import { EditorSection, FieldHint, MoreRow, TextField } from './EditorParts';
+import { EditorSection, FieldHint, MoreRow, TextField, UserNameHint } from './EditorParts';
 import { fieldId, type FoldingGroupProps } from './types';
 
 export function UserGroup({ model, status, uid, patch, more, toggleMore }: FoldingGroupProps) {
   const { t } = useTranslation();
   const u = model.user;
   const subId = fieldId(uid, 'user-more');
-  const createdName = firstLoginUserName(u.name);
-  const nameHint = !u.name.trim() ? (
-    <FieldHint tone="warn">{t('settings.autoconfig.wizard.usernameRequired')}</FieldHint>
-  ) : isValidUserName(u.name) ? (
-    <FieldHint tone="ok">
-      {createdName === u.name.trim()
-        ? t('settings.autoconfig.editor.userOk')
-        : t('settings.autoconfig.editor.userCreatedAs', { name: createdName })}
-    </FieldHint>
-  ) : (
-    <FieldHint tone="warn">{t('settings.autoconfig.editor.userInvalid')}</FieldHint>
-  );
-  const fullNameNeeded = !u.realName.trim() && model.region.mode === 'choose';
-  const summary = [u.realName.trim() || t('settings.autoconfig.editor.fullNameNotSet'), u.shell]
+  const realNameError = realNameIssue(u.realName);
+  const defaultName = defaultRealName(u.name);
+  const summary = [u.realName.trim() || defaultName || t('settings.autoconfig.editor.fullNameNotSet'), u.shell]
     .filter(Boolean)
     .join(PROFILE_EDITOR.SEPARATOR);
+  const realNameHint = realNameError ? (
+    <FieldHint tone="warn">{t(realNameError)}</FieldHint>
+  ) : !u.realName.trim() && defaultName ? (
+    <FieldHint>{t('settings.autoconfig.editor.realNameDefault', { name: defaultName })}</FieldHint>
+  ) : undefined;
 
   return (
     <EditorSection
@@ -61,13 +62,13 @@ export function UserGroup({ model, status, uid, patch, more, toggleMore }: Foldi
             label={t('settings.autoconfig.userName')}
             controlId={fieldId(uid, 'user')}
             tall
-            description={nameHint}
+            description={<UserNameHint name={u.name} />}
             control={
               <TextField
                 id={fieldId(uid, 'user')}
                 value={u.name}
                 placeholder={AUTOCONFIG_PLACEHOLDERS.USER_NAME}
-                invalid={!!u.name.trim() && !isValidUserName(u.name)}
+                invalid={!!userNameIssue(u.name)}
                 onChange={(name) => patch('user', { name })}
               />
             }
@@ -78,7 +79,12 @@ export function UserGroup({ model, status, uid, patch, more, toggleMore }: Foldi
             tall={!u.password}
             description={u.password ? undefined : <FieldHint tone="warn">{t('settings.autoconfig.editor.passwordRequired')}</FieldHint>}
             control={
-              <PasswordInput id={fieldId(uid, 'user-password')} value={u.password} onChange={(password) => patch('user', { password })} />
+              <PasswordInput
+                id={fieldId(uid, 'user-password')}
+                value={u.password}
+                invalid={!u.password}
+                onChange={(password) => patch('user', { password })}
+              />
             }
           />
           <MoreRow
@@ -92,17 +98,14 @@ export function UserGroup({ model, status, uid, patch, more, toggleMore }: Foldi
             <SettingsRow
               label={t('settings.autoconfig.userRealName')}
               controlId={fieldId(uid, 'full-name')}
-              tall={!u.realName.trim()}
-              description={
-                u.realName.trim() ? undefined : (
-                  <FieldHint tone={fullNameNeeded ? 'warn' : 'plain'}>{t('settings.autoconfig.editor.fullNameRequired')}</FieldHint>
-                )
-              }
+              tall={!!realNameHint}
+              description={realNameHint}
               control={
                 <TextField
                   id={fieldId(uid, 'full-name')}
                   value={u.realName}
-                  placeholder={AUTOCONFIG_PLACEHOLDERS.USER_REAL_NAME}
+                  placeholder={realNamePlaceholder(u.name)}
+                  invalid={!!realNameError}
                   onChange={(realName) => patch('user', { realName })}
                 />
               }

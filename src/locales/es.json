@@ -55,6 +55,7 @@
     "noShaMessage": "Esta imagen no tiene suma de verificación SHA, así que no se pueden comprobar los datos escritos. La escritura continuará de todos modos.",
     "extracting": "Extrayendo archivo...",
     "applyingProfile": "Aplicando tu perfil...",
+    "fetchingKeys": "Obteniendo las claves SSH...",
     "qdlSahara": "Cargando el cargador de firmware...",
     "qdlFirehose": "Escribiendo particiones...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "No se pudo conectar al dispositivo EDL. Asegúrate de que esté en modo EDL y conectado por USB.",
     "qdlAutoconfigFailed": "No se pudo aplicar el perfil de configuración automática a la imagen QDL.",
     "autoconfigNotArmbian": "Esta imagen no tiene la configuración de primer arranque de Armbian, así que no se puede aplicar el perfil. Grábala sin perfil o elige una imagen de Armbian.",
+    "autoconfigUserNameInvalid": "El nombre de usuario del perfil debe empezar por una letra y usar solo letras y dígitos, hasta 32 caracteres. Edita el perfil e inténtalo de nuevo.",
+    "autoconfigUserNameTaken": "El nombre de usuario del perfil ya existe en esta imagen. Edita el perfil y elige otro.",
+    "autoconfigUsersUnreadable": "No se pudo leer la lista de usuarios de la imagen para comprobar el nombre de usuario del perfil. No se escribió nada.",
+    "autoconfigUnsafeTarget": "La imagen tiene algo inesperado donde el perfil escribe sus ajustes, así que se dejó sin cambios. No se escribió nada.",
+    "sshKeysInvalidKey": "La fuente de claves SSH del perfil devolvió algo que no es una clave SSH pública. No se escribió nada.",
+    "sshKeysNotFound": "No se encontró la fuente de claves SSH del perfil. Revisa el nombre de usuario o el enlace del perfil.",
+    "sshKeysNone": "La fuente de claves SSH del perfil no tiene claves públicas. Añade una allí o edita el perfil.",
+    "sshKeysTooLarge": "La fuente de claves SSH del perfil devolvió demasiado para ser una lista de claves públicas. No se escribió nada.",
+    "sshKeysNetwork": "No se pudieron descargar las claves SSH del perfil. Revisa la conexión a internet e inténtalo de nuevo.",
+    "sshKeysInvalidInput": "La fuente de claves SSH del perfil no es un nombre de usuario válido ni un enlace https. Edita el perfil e inténtalo de nuevo.",
     "deviceInvalidPath": "No se puede escribir en este dispositivo. Selecciona el dispositivo de nuevo.",
     "deviceNotFound": "El dispositivo seleccionado ya no está conectado. Vuelve a conectarlo y selecciónalo de nuevo.",
     "deviceChanged": "El dispositivo seleccionado ha cambiado desde que lo elegiste. Selecciónalo de nuevo antes de escribir.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Valores de Armbian",
       "keys": {
         "checking": "Comprobando las claves...",
-        "found_one": "{{count}} clave encontrada. La placa la descarga en el primer arranque.",
-        "found_other": "{{count}} claves encontradas. La placa las descarga en el primer arranque.",
+        "foundAtFlash_one": "{{count}} clave encontrada. Imager la añade a la tarjeta SD al grabar.",
+        "foundAtFlash_other": "{{count}} claves encontradas. Imager las añade a la tarjeta SD al grabar.",
         "notFoundForge": "No existe ninguna cuenta de {{forge}} con este nombre de usuario.",
         "notFoundLink": "No se ha encontrado nada en este enlace.",
         "noneForge": "Esta cuenta de {{forge}} aún no tiene claves SSH públicas.",
@@ -334,7 +345,8 @@
         "tooLarge": "Esta dirección sirve demasiado contenido para ser una lista de claves públicas.",
         "invalidForge": "Este no es un nombre de usuario de {{forge}} válido.",
         "invalidLink": "Aquí solo se pueden comprobar enlaces https.",
-        "unreachable": "No se han podido comprobar las claves ahora. La placa las descarga en el primer arranque."
+        "invalidKey": "Esta dirección devuelve líneas que no son claves SSH públicas",
+        "unreachableAtFlash": "No se han podido comprobar las claves ahora. Imager las descarga al grabar, así que entonces necesitarás internet."
       },
       "ipInvalid": "Introduce una dirección IPv4 válida (p. ej. 192.168.1.50)",
       "ipNotHost": "Es la dirección de red o de difusión de la subred, no una dirección de dispositivo utilizable. Elige una como 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Rellenar el formulario",
       "fillFormHint": "Todas las opciones en una página",
       "wifiKeyFits": "Válida para Wi-Fi (de 8 a 63 caracteres)",
-      "wifiKeyLength": "Las contraseñas de Wi-Fi suelen tener de 8 a 63 caracteres",
       "wizard": {
         "eyebrow": "Nuevo perfil",
         "unnamed": "Sin nombre todavía",
@@ -393,8 +404,7 @@
           "review": "Revisión"
         },
         "pending": {
-          "network": "Mantiene los valores de Armbian",
-          "locale": "Valores de Armbian"
+          "network": "Mantiene los valores de Armbian"
         },
         "sum": {
           "keysFrom": "Claves SSH de {{forge}}",
@@ -431,16 +441,16 @@
           "later": "En el primer inicio de sesión",
           "more": "Nombre completo y shell de inicio de sesión",
           "shellDefault": "Predeterminado de Armbian",
-          "laterLine": "La primera vez que inicies sesión, por SSH o con teclado y monitor, Armbian te pide que crees un usuario. El idioma y la hora de este perfil no se aplican entonces."
+          "laterStops": "La placa se detiene en el primer inicio de sesión y espera a que crees la cuenta, por SSH o con teclado y monitor."
         },
         "locale": {
           "title": "Idioma y hora",
           "sub": "Se establece en el primer inicio de sesión, se cree o no un usuario ahora.",
-          "location": "Según la ubicación",
+          "thisComputer": "Como este equipo",
           "choose": "Elijo yo",
           "language": "Idioma",
           "searchTimezone": "Buscar zonas horarias",
-          "locationLine": "Armbian establece el idioma y la zona horaria según desde dónde se conecta la placa a internet."
+          "thisComputerLine": "La placa recibe el idioma y la zona horaria de este equipo, leídos al grabar."
         },
         "access": {
           "title": "¿Cómo entras?",
@@ -484,33 +494,47 @@
         "connection": "Conexión",
         "cableHint": "Conecta el cable antes del primer arranque",
         "wifiKeyEmpty": "Déjala vacía para una red abierta",
+        "wifiBadChars": "Quita cualquier carácter \" o \\",
+        "wifiKeyLeadingSpace": "La contraseña no puede empezar por un espacio",
+        "wifiKeyLengthNeeded": "Usa de {{min}} a {{max}} caracteres, o déjala vacía para una red abierta",
+        "wifiKeyRawPsk": "Clave Wi-Fi en bruto (64 caracteres hexadecimales)",
         "countryHint": "Define los canales Wi-Fi permitidos",
         "ipAutoHint": "Tu router asigna la dirección",
         "ipFixedHint": "Elige una dirección libre de tu red",
         "ipLabelWifi": "Dirección IP (Wi-Fi)",
         "bothCableAuto": "El cable siempre recibe una dirección automática",
+        "wifiNoAdapterHint": "Si la placa no tiene Wi-Fi, el primer arranque se detiene. Elige Cable.",
         "addressOk": "Dirección válida",
+        "maskRequired": "Introduce la máscara de red (p. ej., 255.255.255.0)",
         "moreOptions": "Más opciones",
         "netFixed": "Fija, {{ip}}",
         "netAuto": "Dirección automática",
         "whoLogsIn": "Quién inicia sesión",
         "laterHint": "Armbian lo pregunta en el primer inicio de sesión",
-        "userOk": "Minúsculas, empieza por una letra",
+        "userValid": "Nombre de usuario válido",
         "userCreatedAs": "Se creará como {{name}}",
-        "userInvalid": "Usa minúsculas, dígitos, - y _",
+        "userLettersDigits": "Usa solo letras y dígitos, empezando por una letra",
+        "userTooLong": "Usa como máximo {{max}} caracteres",
+        "userReserved": "{{name}} es una cuenta del sistema. Elige otro nombre.",
         "passwordRequired": "Necesaria para iniciar sesión",
-        "fullNameRequired": "Necesario para definir el idioma y la zona horaria",
+        "realNameColon": "Quita los dos puntos (:)",
+        "realNameDefault": "Si se deja vacío, la placa usa {{name}}",
         "fullNameNotSet": "Nombre completo sin definir",
         "howYouGetIn": "Cómo inicias sesión",
         "passwordLoginHint": "Inicia sesión con tu contraseña",
         "keysFrom": "Claves de",
         "keyUserRequired": "Introduce un nombre de usuario",
         "keyLinkRequired": "Pega un enlace a las claves públicas",
+        "keysNeedInternet": "Imager descarga las claves al grabar, así que grabar necesita internet",
         "rootSet": "Contraseña de root definida",
         "rootNotSet": "Contraseña de root sin definir",
         "rootPlaceholder": "Sin definir",
         "rootHint": "Si se deja vacía, Armbian la pide en el primer inicio de sesión",
-        "locationHint": "Se define según desde dónde se conecta la placa",
+        "rootHintUser": "Si se deja vacía, root recibe la misma contraseña que el usuario",
+        "rootSameAsUser": "La misma que la del usuario",
+        "thisComputerHint": "Se lee de este equipo al grabar",
+        "regionNeedsBoth": "Elige un idioma y una zona horaria",
+        "regionDefaults": "Valores de Armbian: inglés (EE. UU.) y UTC",
         "remoteHint": "Se aplica en el primer arranque",
         "atFirstBoot": "En el primer arranque",
         "factCableWifi": "Cable + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Descartar",
         "profileActions": "Acciones del perfil",
         "boardPages": "Páginas de placas",
-        "done": "Listo"
+        "done": "Listo",
+        "verdictFinishes": "El primer arranque termina solo",
+        "verdictRootFromUser": "Root recibe la misma contraseña que {{name}}.",
+        "verdictAsksUser": "El primer arranque se detiene y espera a que crees un usuario",
+        "verdictAsksRootAndUser": "El primer arranque se detiene y espera una contraseña de root y un usuario",
+        "verdictConsoleHint": "La placa parece atascada hasta que alguien responde en su consola, por SSH o con teclado y monitor. Crea aquí el usuario para evitarlo.",
+        "verdictRemote": "La configuración remota decide cómo va el primer arranque",
+        "verdictRemoteHint": "La placa la descarga en el primer arranque, antes de configurar la red de este perfil, y sustituye a este perfil. Necesita un cable con internet y un reloj correcto.",
+        "verdictRemoteWifi": "Solo con Wi-Fi, la placa no puede descargarla: se obtiene antes de configurar el Wi-Fi. Añade un cable o quita la URL.",
+        "verdictNeedsFix": "Primero hay que corregir algunos ajustes",
+        "verdictNeedsFixHint": "Corrígelos para ver qué pasa en el primer arranque."
       },
       "boardSheet": {
         "searchPlaceholder": "Buscar placas o fabricantes",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} placas",
       "pagerLabel": "Páginas de perfiles",
       "discardTitle": "¿Descartar los cambios?",
-      "discardBody": "Los cambios sin guardar de este perfil se perderán."
+      "discardBody": "Los cambios sin guardar de este perfil se perderán.",
+      "needsFix": "Requiere corrección"
     }
   },
   "update": {

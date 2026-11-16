@@ -80,6 +80,32 @@
   color: var(--accent);
 }
 
+.profile-menu__item.is-disabled {
+  cursor: not-allowed;
+}
+
+.profile-menu__item.is-disabled .profile-menu__name {
+  color: var(--text-muted);
+}
+
+/* "Needs a fix": a saved profile the current rules refuse (menu row and list card) */
+.profile-fix {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-warning-rgb), 0.14);
+  box-shadow: inset 0 0 0 1px rgba(var(--color-warning-rgb), 0.36);
+  color: var(--color-warning-ink);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
 .profile-menu__item.is-sel .profile-glyphs i {
   background: rgba(var(--accent-rgb), 0.12);
   color: var(--accent);
@@ -481,7 +507,8 @@
 .pw-body > .pw-two,
 .pw-body > .pw-four,
 .pw-body > .pw-field,
-.pw-body > .pw-review {
+.pw-body > .pw-review,
+.pw-body > .pe-verdict {
   width: 100%;
 }
 

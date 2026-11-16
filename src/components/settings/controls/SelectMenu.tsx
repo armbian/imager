@@ -30,6 +30,7 @@ interface SelectMenuProps<T extends string> {
   /** Trigger width in px; the menu opens at least UI.SELECT_MENU.MIN_WIDTH wide. */
   width?: number;
   disabled?: boolean;
+  invalid?: boolean;
 }
 
 function Lead({ option }: { option: SelectOption<string> }) {
@@ -60,6 +61,7 @@ export function SelectMenu<T extends string>({
   searchPlaceholder,
   width,
   disabled = false,
+  invalid = false,
 }: SelectMenuProps<T>) {
   const { t } = useTranslation();
   const listId = useId();
@@ -128,11 +130,12 @@ export function SelectMenu<T extends string>({
       <button
         ref={triggerRef}
         type="button"
-        className={`set-select${open ? ' is-open' : ''}`}
+        className={`set-select${open ? ' is-open' : ''}${invalid ? ' is-invalid' : ''}`}
         style={width ? ({ '--select-w': `${width}px` } as CSSProperties) : undefined}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
+        aria-invalid={invalid || undefined}
         disabled={disabled}
         onClick={() => (open ? setOpen(false) : openMenu())}
         onKeyDown={onTriggerKey}

@@ -46,7 +46,7 @@ export function WizardSide({ wizard, boardImage }: WizardSideProps) {
           const at = WIZARD_STEPS.indexOf(item);
           // Steps already passed keep their summary when Edit on the review jumps back.
           const fact = wizardItemFact(item, facts);
-          // A set step Armbian will not apply (the region without a user) reads like a skipped one.
+          // A set step that cannot be applied (keys not found) reads like a skipped one.
           const passed = skipped[item] || fact.tone === 'off' ? 'skip' : 'done';
           const state = stepIndex === at ? 'cur' : furthest > at ? passed : '';
           return (

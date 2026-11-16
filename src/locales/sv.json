@@ -55,6 +55,7 @@
     "noShaMessage": "Den här avbildningen saknar SHA-kontrollsumma, så den skrivna datan kan inte verifieras. Flashningen fortsätter ändå.",
     "extracting": "Extraherar arkiv...",
     "applyingProfile": "Tillämpar din profil...",
+    "fetchingKeys": "Hämtar SSH-nycklar...",
     "qdlSahara": "Laddar upp firmware-laddare...",
     "qdlFirehose": "Skriver partitioner...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "Det gick inte att ansluta till EDL-enheten. Kontrollera att den är i EDL-läge och ansluten via USB.",
     "qdlAutoconfigFailed": "Det gick inte att tillämpa autoconfig-profilen på QDL-avbildningen.",
     "autoconfigNotArmbian": "Den här avbilden har ingen Armbian-konfiguration för första uppstart, så profilen kan inte tillämpas. Flasha utan profil eller välj en Armbian-avbild.",
+    "autoconfigUserNameInvalid": "Användarnamnet i profilen måste börja med en bokstav och får bara innehålla bokstäver och siffror, högst 32 tecken. Redigera profilen och försök igen.",
+    "autoconfigUserNameTaken": "Användarnamnet i profilen finns redan i den här avbilden. Redigera profilen och välj ett annat.",
+    "autoconfigUsersUnreadable": "Det gick inte att läsa avbildens användarlista för att kontrollera profilens användarnamn. Inget skrevs.",
+    "autoconfigUnsafeTarget": "Avbilden har något oväntat där profilen skriver sina inställningar, så den lämnades orörd. Inget skrevs.",
+    "sshKeysInvalidKey": "Profilens källa för SSH-nycklar returnerade något som inte är en publik SSH-nyckel. Inget skrevs.",
+    "sshKeysNotFound": "Profilens källa för SSH-nycklar hittades inte. Kontrollera användarnamnet eller länken i profilen.",
+    "sshKeysNone": "Profilens källa för SSH-nycklar har inga publika nycklar. Lägg till en nyckel där eller redigera profilen.",
+    "sshKeysTooLarge": "Profilens källa för SSH-nycklar returnerade för mycket för att vara en lista med publika nycklar. Inget skrevs.",
+    "sshKeysNetwork": "Det gick inte att ladda ned profilens SSH-nycklar. Kontrollera internetanslutningen och försök igen.",
+    "sshKeysInvalidInput": "Källan för SSH-nycklar i profilen är varken ett giltigt användarnamn eller en https-länk. Redigera profilen och försök igen.",
     "deviceInvalidPath": "Det går inte att skriva till den här enheten. Välj enheten igen.",
     "deviceNotFound": "Den valda enheten är inte längre ansluten. Anslut den igen och välj den på nytt.",
     "deviceChanged": "Den valda enheten har ändrats sedan du valde den. Välj den igen innan du skriver.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Armbians standardvärden",
       "keys": {
         "checking": "Kontrollerar nycklarna...",
-        "found_one": "{{count}} nyckel hittades. Kortet hämtar den vid första uppstarten.",
-        "found_other": "{{count}} nycklar hittades. Kortet hämtar dem vid första uppstarten.",
+        "foundAtFlash_one": "{{count}} nyckel hittades. Imager lägger till den på SD-kortet när du flashar.",
+        "foundAtFlash_other": "{{count}} nycklar hittades. Imager lägger till dem på SD-kortet när du flashar.",
         "notFoundForge": "Inget {{forge}}-konto med det här användarnamnet.",
         "notFoundLink": "Ingenting hittades på den här länken.",
         "noneForge": "Det här {{forge}}-kontot har inga publika SSH-nycklar än.",
@@ -334,7 +345,8 @@
         "tooLarge": "Den här adressen serverar för mycket för att vara en lista med publika nycklar.",
         "invalidForge": "Det här är inget giltigt {{forge}}-användarnamn.",
         "invalidLink": "Här går det bara att kontrollera https-länkar.",
-        "unreachable": "Det gick inte att kontrollera nycklarna just nu. Kortet hämtar dem vid första uppstarten."
+        "invalidKey": "Den här adressen returnerar rader som inte är publika SSH-nycklar",
+        "unreachableAtFlash": "Det gick inte att kontrollera nycklarna just nu. Imager laddar ned dem när du flashar, så då behöver du internet."
       },
       "ipInvalid": "Ange en giltig IPv4-adress (t.ex. 192.168.1.50)",
       "ipNotHost": "Det här är nätverksadressen eller broadcast-adressen för subnätet, inte en användbar enhetsadress. Välj en som 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Fyll i formuläret",
       "fillFormHint": "Alla alternativ på en sida",
       "wifiKeyFits": "Passar för Wi-Fi (8 till 63 tecken)",
-      "wifiKeyLength": "Wi-Fi-lösenord har oftast 8 till 63 tecken",
       "wizard": {
         "eyebrow": "Ny profil",
         "unnamed": "Inget namn än",
@@ -393,8 +404,7 @@
           "review": "Granska"
         },
         "pending": {
-          "network": "Behåller Armbians standardvärden",
-          "locale": "Armbians standardvärden"
+          "network": "Behåller Armbians standardvärden"
         },
         "sum": {
           "keysFrom": "SSH-nycklar från {{forge}}",
@@ -431,16 +441,16 @@
           "later": "Vid första inloggningen",
           "more": "Fullständigt namn och inloggningsskal",
           "shellDefault": "Armbians standard",
-          "laterLine": "Första gången du loggar in, via SSH eller med tangentbord och bildskärm, ber Armbian dig skapa en användare. Språket och tiden från den här profilen tillämpas då inte."
+          "laterStops": "Kortet stannar vid första inloggningen och väntar på att du skapar kontot, via SSH eller med tangentbord och bildskärm."
         },
         "locale": {
           "title": "Språk och tid",
           "sub": "Ställs in vid första inloggningen, oavsett om en användare skapas nu.",
-          "location": "Från platsen",
+          "thisComputer": "Som den här datorn",
           "choose": "Jag väljer",
           "language": "Språk",
           "searchTimezone": "Sök tidszoner",
-          "locationLine": "Armbian ställer in språk och tidszon utifrån var kortet ansluter till internet."
+          "thisComputerLine": "Kortet får den här datorns språk och tidszon, som läses när du flashar."
         },
         "access": {
           "title": "Hur kommer du in?",
@@ -484,33 +494,47 @@
         "connection": "Anslutning",
         "cableHint": "Anslut kabeln före första uppstarten",
         "wifiKeyEmpty": "Lämna tomt för ett öppet nätverk",
+        "wifiBadChars": "Ta bort alla tecken \" eller \\",
+        "wifiKeyLeadingSpace": "Lösenordet får inte börja med ett mellanslag",
+        "wifiKeyLengthNeeded": "Använd {{min}} till {{max}} tecken, eller lämna tomt för ett öppet nätverk",
+        "wifiKeyRawPsk": "Rå Wi-Fi-nyckel (64 hextecken)",
         "countryHint": "Styr vilka Wi-Fi-kanaler som tillåts",
         "ipAutoHint": "Din router tilldelar adressen",
         "ipFixedHint": "Välj en ledig adress i ditt nätverk",
         "ipLabelWifi": "IP-adress (Wi-Fi)",
         "bothCableAuto": "Kabeln får alltid en automatisk adress",
+        "wifiNoAdapterHint": "Om kortet saknar Wi-Fi stannar första uppstarten. Välj Kabel.",
         "addressOk": "Giltig adress",
+        "maskRequired": "Ange nätmasken (t.ex. 255.255.255.0)",
         "moreOptions": "Fler alternativ",
         "netFixed": "Fast, {{ip}}",
         "netAuto": "Automatisk adress",
         "whoLogsIn": "Vem som loggar in",
         "laterHint": "Armbian frågar vid första inloggningen",
-        "userOk": "Gemener, börjar med en bokstav",
+        "userValid": "Giltigt användarnamn",
         "userCreatedAs": "Skapas som {{name}}",
-        "userInvalid": "Använd gemener, siffror, - och _",
+        "userLettersDigits": "Använd bara bokstäver och siffror, börja med en bokstav",
+        "userTooLong": "Använd högst {{max}} tecken",
+        "userReserved": "{{name}} är ett systemkonto. Välj ett annat namn.",
         "passwordRequired": "Behövs för att logga in",
-        "fullNameRequired": "Behövs för att ange språk och tidszon",
+        "realNameColon": "Ta bort kolonet (:)",
+        "realNameDefault": "Om tomt använder kortet {{name}}",
         "fullNameNotSet": "Fullständigt namn inte angivet",
         "howYouGetIn": "Hur du loggar in",
         "passwordLoginHint": "Logga in med ditt lösenord",
         "keysFrom": "Nycklar från",
         "keyUserRequired": "Ange ett användarnamn",
         "keyLinkRequired": "Klistra in en länk till de publika nycklarna",
+        "keysNeedInternet": "Imager laddar ned nycklarna när du flashar, så flashningen kräver internet",
         "rootSet": "Root-lösenord angivet",
         "rootNotSet": "Root-lösenord inte angivet",
         "rootPlaceholder": "Inte angivet",
         "rootHint": "Om tomt frågar Armbian efter det vid första inloggningen",
-        "locationHint": "Anges utifrån var kortet ansluter",
+        "rootHintUser": "Om tomt får root samma lösenord som användaren",
+        "rootSameAsUser": "Samma som användarens",
+        "thisComputerHint": "Läses från den här datorn när du flashar",
+        "regionNeedsBoth": "Välj både ett språk och en tidszon",
+        "regionDefaults": "Armbians standardvärden: engelska (USA) och UTC",
         "remoteHint": "Tillämpas vid första uppstarten",
         "atFirstBoot": "Vid första uppstarten",
         "factCableWifi": "Kabel + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Kassera",
         "profileActions": "Profilåtgärder",
         "boardPages": "Kortsidor",
-        "done": "Klart"
+        "done": "Klart",
+        "verdictFinishes": "Första uppstarten blir klar av sig själv",
+        "verdictRootFromUser": "Root får samma lösenord som {{name}}.",
+        "verdictAsksUser": "Första uppstarten stannar och väntar på att du skapar en användare",
+        "verdictAsksRootAndUser": "Första uppstarten stannar och väntar på ett root-lösenord och en användare",
+        "verdictConsoleHint": "Kortet ser ut att ha hängt sig tills någon svarar på dess konsol, via SSH eller med tangentbord och bildskärm. Skapa användaren här för att undvika det.",
+        "verdictRemote": "Fjärrkonfigurationen avgör hur första uppstarten går",
+        "verdictRemoteHint": "Kortet laddar ned den vid första uppstarten, innan den här profilens nätverk är inställt, och den ersätter den här profilen. Det kräver en kabel med internet och rätt klocka.",
+        "verdictRemoteWifi": "Med bara Wi-Fi kan kortet inte ladda ned den: den hämtas innan Wi-Fi är inställt. Lägg till en kabel eller ta bort URL:en.",
+        "verdictNeedsFix": "Vissa inställningar måste åtgärdas först",
+        "verdictNeedsFixHint": "Rätta till dem för att se vad som händer vid första uppstarten."
       },
       "boardSheet": {
         "searchPlaceholder": "Sök kort eller tillverkare",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} kort",
       "pagerLabel": "Profilsidor",
       "discardTitle": "Kassera ändringar?",
-      "discardBody": "Dina osparade ändringar i den här profilen går förlorade."
+      "discardBody": "Dina osparade ändringar i den här profilen går förlorade.",
+      "needsFix": "Behöver åtgärdas"
     }
   },
   "update": {

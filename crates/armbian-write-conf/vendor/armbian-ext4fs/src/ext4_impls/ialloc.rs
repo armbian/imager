@@ -14,7 +14,8 @@ impl Ext4 {
 
             let mut free_inodes = bg.get_free_inodes_count();
 
-            if free_inodes > 0 {
+            // An INODE_UNINIT group's bitmap is not valid on disk; using it would need the group initialized first.
+            if free_inodes > 0 && !bg.has_flag(EXT4_BG_INODE_UNINIT) {
                 let inode_bitmap_block = bg.get_inode_bitmap_block(&super_block);
 
                 let mut raw_data = self

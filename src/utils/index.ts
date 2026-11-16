@@ -514,6 +514,11 @@ export function focusAfterInput(el: HTMLElement, byPointer: boolean): void {
   el.focus({ preventScroll: true });
 }
 
+/** The field a refused save or Next points at: the first one marked invalid, else the first input. */
+export function firstInvalidField(root: ParentNode | null | undefined): HTMLElement | null {
+  return root?.querySelector<HTMLElement>('[aria-invalid="true"]') ?? root?.querySelector<HTMLElement>('input') ?? null;
+}
+
 export function changedEntries(prev: Record<string, string>, next: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(next).filter(([key, value]) => prev[key] !== value));
 }

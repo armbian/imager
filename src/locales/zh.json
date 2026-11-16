@@ -55,6 +55,7 @@
     "noShaMessage": "此镜像没有 SHA 校验和，因此无法校验已写入的数据。烧录仍会继续。",
     "extracting": "正在提取归档文件……",
     "applyingProfile": "正在应用配置文件……",
+    "fetchingKeys": "正在获取 SSH 密钥……",
     "qdlSahara": "正在上传固件加载器……",
     "qdlFirehose": "正在写入分区……",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "无法连接到 EDL 设备。请确认设备已进入 EDL 模式并通过 USB 连接。",
     "qdlAutoconfigFailed": "无法将自动配置文件应用到 QDL 镜像。",
     "autoconfigNotArmbian": "此镜像没有 Armbian 首次启动设置，因此无法应用配置文件。请不使用配置文件进行烧录，或选择 Armbian 镜像。",
+    "autoconfigUserNameInvalid": "配置文件中的用户名必须以字母开头，只能包含字母和数字，最多 32 个字符。请编辑配置文件后重试。",
+    "autoconfigUserNameTaken": "配置文件中的用户名在此镜像中已存在。请编辑配置文件并另选一个。",
+    "autoconfigUsersUnreadable": "无法读取镜像的用户列表，因此无法检查配置文件中的用户名。未写入任何内容。",
+    "autoconfigUnsafeTarget": "镜像中配置文件要写入的位置有意外内容，因此镜像保持原样。未写入任何内容。",
+    "sshKeysInvalidKey": "配置文件中的 SSH 密钥来源返回了不是公开 SSH 密钥的内容。未写入任何内容。",
+    "sshKeysNotFound": "找不到配置文件中的 SSH 密钥来源。请检查配置文件中的用户名或链接。",
+    "sshKeysNone": "配置文件中的 SSH 密钥来源没有公开密钥。请在那里添加密钥，或编辑配置文件。",
+    "sshKeysTooLarge": "配置文件中的 SSH 密钥来源返回的数据过多，不像公开密钥列表。未写入任何内容。",
+    "sshKeysNetwork": "无法下载配置文件中的 SSH 密钥。请检查网络连接后重试。",
+    "sshKeysInvalidInput": "配置文件中的 SSH 密钥来源不是有效的用户名或 https 链接。请编辑配置文件后重试。",
     "deviceInvalidPath": "无法写入此设备。请重新选择设备。",
     "deviceNotFound": "所选设备已不再连接。请重新连接后再次选择。",
     "deviceChanged": "所选设备在选择之后发生了变化。请在写入前重新选择。",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Armbian 默认设置",
       "keys": {
         "checking": "正在检查密钥...",
-        "found_one": "找到 {{count}} 个密钥。开发板会在首次启动时获取。",
-        "found_other": "找到 {{count}} 个密钥。开发板会在首次启动时获取。",
+        "foundAtFlash_one": "找到 {{count}} 个密钥。烧录时 Imager 会将其添加到 SD 卡。",
+        "foundAtFlash_other": "找到 {{count}} 个密钥。烧录时 Imager 会将它们添加到 SD 卡。",
         "notFoundForge": "没有使用此用户名的 {{forge}} 账号。",
         "notFoundLink": "此链接未找到任何内容。",
         "noneForge": "此 {{forge}} 账号还没有公开的 SSH 密钥。",
@@ -334,7 +345,8 @@
         "tooLarge": "此地址返回的内容过多，不像是公钥列表。",
         "invalidForge": "这不是有效的 {{forge}} 用户名。",
         "invalidLink": "这里只能检查 https 链接。",
-        "unreachable": "暂时无法检查密钥。开发板会在首次启动时获取。"
+        "invalidKey": "此地址返回的行不是公开 SSH 密钥",
+        "unreachableAtFlash": "暂时无法检查密钥。Imager 会在烧录时下载，届时需要联网。"
       },
       "ipInvalid": "请输入有效的 IPv4 地址（例如 192.168.1.50）",
       "ipNotHost": "这是子网的网络地址或广播地址，不能用作设备地址。请选择类似 192.168.1.50 的地址",
@@ -367,7 +379,6 @@
       "fillForm": "填写表单",
       "fillFormHint": "所有选项在同一页",
       "wifiKeyFits": "适用于 Wi-Fi（8 到 63 个字符）",
-      "wifiKeyLength": "Wi-Fi 密码通常为 8 到 63 个字符",
       "wizard": {
         "eyebrow": "新建配置文件",
         "unnamed": "尚未命名",
@@ -393,8 +404,7 @@
           "review": "检查"
         },
         "pending": {
-          "network": "保持 Armbian 默认设置",
-          "locale": "Armbian 默认设置"
+          "network": "保持 Armbian 默认设置"
         },
         "sum": {
           "keysFrom": "来自 {{forge}} 的 SSH 密钥",
@@ -431,16 +441,16 @@
           "later": "首次登录时",
           "more": "全名和登录 Shell",
           "shellDefault": "Armbian 默认",
-          "laterLine": "首次登录时，无论通过 SSH 还是键盘和显示器，Armbian 都会要求你创建用户。此时不会应用此配置文件中的语言和时间。"
+          "laterStops": "开发板会在首次登录时停下，等你创建账户，可通过 SSH 或键盘和显示器完成。"
         },
         "locale": {
           "title": "语言和时间",
           "sub": "在首次登录时设置，无论现在是否创建用户。",
-          "location": "根据位置",
+          "thisComputer": "与这台电脑相同",
           "choose": "我自己选",
           "language": "语言",
           "searchTimezone": "搜索时区",
-          "locationLine": "Armbian 会根据开发板连接互联网的位置设置语言和时区。"
+          "thisComputerLine": "开发板会使用烧录时读取的这台电脑的语言和时区。"
         },
         "access": {
           "title": "如何登录？",
@@ -484,33 +494,47 @@
         "connection": "连接",
         "cableHint": "首次启动前请插好网线",
         "wifiKeyEmpty": "留空表示开放网络",
+        "wifiBadChars": "请删除 \" 或 \\ 字符",
+        "wifiKeyLeadingSpace": "密码不能以空格开头",
+        "wifiKeyLengthNeeded": "请使用 {{min}} 到 {{max}} 个字符，开放网络则留空",
+        "wifiKeyRawPsk": "原始 Wi-Fi 密钥（64 位十六进制字符）",
         "countryHint": "决定可用的 Wi-Fi 信道",
         "ipAutoHint": "地址由路由器分配",
         "ipFixedHint": "请选择网络中的空闲地址",
         "ipLabelWifi": "IP 地址 (Wi-Fi)",
         "bothCableAuto": "网线始终自动获取地址",
+        "wifiNoAdapterHint": "如果开发板没有 Wi-Fi，首次启动会停止。请选择网线。",
         "addressOk": "地址有效",
+        "maskRequired": "请输入子网掩码（例如 255.255.255.0）",
         "moreOptions": "更多选项",
         "netFixed": "固定，{{ip}}",
         "netAuto": "自动获取地址",
         "whoLogsIn": "登录用户",
         "laterHint": "Armbian 会在首次登录时询问",
-        "userOk": "小写，以字母开头",
+        "userValid": "用户名有效",
         "userCreatedAs": "将创建为 {{name}}",
-        "userInvalid": "请使用小写字母、数字、- 和 _",
+        "userLettersDigits": "只能使用字母和数字，且以字母开头",
+        "userTooLong": "最多使用 {{max}} 个字符",
+        "userReserved": "{{name}} 是系统账户。请换一个名称。",
         "passwordRequired": "登录所需",
-        "fullNameRequired": "设置语言和时区需要全名",
+        "realNameColon": "请删除冒号（:）",
+        "realNameDefault": "留空时，开发板会使用 {{name}}",
         "fullNameNotSet": "未设置全名",
         "howYouGetIn": "登录方式",
         "passwordLoginHint": "使用密码登录",
         "keysFrom": "密钥来源",
         "keyUserRequired": "请输入用户名",
         "keyLinkRequired": "请粘贴公钥链接",
+        "keysNeedInternet": "Imager 会在烧录时下载密钥，因此烧录需要联网",
         "rootSet": "已设置 Root 密码",
         "rootNotSet": "未设置 Root 密码",
         "rootPlaceholder": "未设置",
         "rootHint": "留空时，Armbian 会在首次登录时询问",
-        "locationHint": "根据开发板连接网络的位置设置",
+        "rootHintUser": "留空时，root 会使用与用户相同的密码",
+        "rootSameAsUser": "与用户相同",
+        "thisComputerHint": "烧录时从这台电脑读取",
+        "regionNeedsBoth": "请同时选择语言和时区",
+        "regionDefaults": "Armbian 默认值：英语（美国）和 UTC",
         "remoteHint": "首次启动时应用",
         "atFirstBoot": "首次启动时",
         "factCableWifi": "网线 + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "放弃",
         "profileActions": "配置文件操作",
         "boardPages": "开发板分页",
-        "done": "完成"
+        "done": "完成",
+        "verdictFinishes": "首次启动会自动完成",
+        "verdictRootFromUser": "root 的密码与 {{name}} 相同。",
+        "verdictAsksUser": "首次启动会停下，等你创建用户",
+        "verdictAsksRootAndUser": "首次启动会停下，等待 root 密码和用户",
+        "verdictConsoleHint": "在有人通过 SSH 或键盘和显示器在开发板控制台上响应之前，开发板看起来像卡住了。在这里创建用户即可避免。",
+        "verdictRemote": "远程配置决定首次启动的流程",
+        "verdictRemoteHint": "开发板会在首次启动时下载它，此时还没有设置此配置文件的网络，它会替换此配置文件。需要接入互联网的网线和正确的时间。",
+        "verdictRemoteWifi": "仅用 Wi-Fi 时，开发板无法下载它：它在设置 Wi-Fi 之前获取。请接上网线或删除该 URL。",
+        "verdictNeedsFix": "有些设置需要先修正",
+        "verdictNeedsFixHint": "修正后即可查看首次启动会发生什么。"
       },
       "boardSheet": {
         "searchPlaceholder": "搜索开发板或制造商",
@@ -673,7 +707,8 @@
       "boardCount_other": "{{count}} 块开发板",
       "pagerLabel": "配置文件分页",
       "discardTitle": "放弃更改？",
-      "discardBody": "对此配置文件所做的未保存更改将丢失。"
+      "discardBody": "对此配置文件所做的未保存更改将丢失。",
+      "needsFix": "需要修正"
     }
   },
   "update": {

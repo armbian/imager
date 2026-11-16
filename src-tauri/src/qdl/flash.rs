@@ -37,7 +37,7 @@ pub fn qdl_flash(
     flash_dir: &Path,
     extract_root: &Path,
     device_path: &str,
-    autoconfig: Option<crate::autoconfig::AutoconfigConfig>,
+    autoconfig: Option<crate::autoconfig::ResolvedProfile>,
     state: Arc<FlashState>,
 ) -> Result<(), String> {
     // Every file rawprogram0.xml names must stay inside the extraction, checked before USB is touched.
@@ -45,6 +45,12 @@ pub fn qdl_flash(
     for entry in program_elements(&parse_xml(&rawprogram_path)?) {
         program_file(extract_root, flash_dir, &entry.attributes)?;
     }
+
+    // The user name is checked against the image read-only before the device is touched.
+    let rootfs = match autoconfig.as_ref() {
+        Some(profile) => autoconfig_rootfs(flash_dir, extract_root, profile)?,
+        None => None,
+    };
 
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
@@ -55,9 +61,9 @@ pub fn qdl_flash(
     // --- Autoconfig injection (still within the "configuring" stage) ---
     // Inject first-boot preset into the extracted ext4 rootfs blob IN PLACE before Firehose reads it.
     // Skipped silently when no profile selected or rootfs is not an injectable bare-ext4 image.
-    if let Some(cfg) = autoconfig.as_ref() {
+    if let (Some(profile), Some(found)) = (autoconfig.as_ref(), rootfs.as_ref()) {
         check_cancelled(&state)?;
-        inject_autoconfig(flash_dir, extract_root, cfg)?;
+        inject_autoconfig(found, profile)?;
     }
 
     // --- Stage 4: Program partitions from rawprogram0.xml ---
@@ -381,30 +387,38 @@ fn connect_and_configure(
 const EXT4_SB_OFFSET: u64 = 0x438;
 const EXT4_MAGIC: [u8; 2] = [0x53, 0xEF];
 
-/// Inject first-boot autoconfig preset into the extracted ext4 rootfs from rawprogram0.xml. Skips (warn) if non-injectable
-/// (non-ext4/sparse/readbackverify/file offset/multi-part, B3); ext4 write/validate fail or over window (B2) are fatal "[QDL_AUTOCONFIG_FAILED]".
-fn inject_autoconfig(
+/// The injectable ext4 rootfs from rawprogram0.xml with its window, after refusing a user name the image already has.
+/// None (warn) if non-injectable (non-ext4/sparse/readbackverify/file offset/multi-part, B3); read-only.
+fn autoconfig_rootfs(
     flash_dir: &Path,
     extract_root: &Path,
-    config: &crate::autoconfig::AutoconfigConfig,
-) -> Result<(), String> {
-    let rawprogram_path = flash_dir.join(RAWPROGRAM_XML);
-
+    profile: &crate::autoconfig::ResolvedProfile,
+) -> Result<Option<(PathBuf, u64)>, String> {
     let found = find_rootfs_image(extract_root, flash_dir)
         .map_err(|e| format!("{TAG_QDL_AUTOCONFIG_FAILED} {e}"))?;
-    let (rootfs_path, window_bytes) = match found {
-        Some(found) => found,
-        None => {
-            // B3: non-injectable rootfs -> skip, do not abort.
-            log_warn!(
-                "qdl::flash",
-                "Autoconfig: no injectable ext4 rootfs found in {}; skipping injection",
-                rawprogram_path.display()
-            );
-            return Ok(());
-        }
+    let Some((rootfs_path, window_bytes)) = found else {
+        // B3: non-injectable rootfs -> skip, do not abort.
+        log_warn!(
+            "qdl::flash",
+            "Autoconfig: no injectable ext4 rootfs found in {}; skipping injection",
+            flash_dir.join(RAWPROGRAM_XML).display()
+        );
+        return Ok(None);
     };
+    if let Some(user_name) = profile.user_name() {
+        crate::autoconfig::check_user_name_free_in_bare_ext4(&rootfs_path, user_name)
+            .map_err(|e| format!("{TAG_QDL_AUTOCONFIG_FAILED} {e}"))?;
+    }
+    Ok(Some((rootfs_path, window_bytes)))
+}
 
+/// Inject the first-boot preset and fetched keys into the located ext4 rootfs IN PLACE before Firehose reads it;
+/// ext4 write/validate failure or growth past the window (B2) are fatal "[QDL_AUTOCONFIG_FAILED]".
+fn inject_autoconfig(
+    (rootfs_path, window_bytes): &(PathBuf, u64),
+    profile: &crate::autoconfig::ResolvedProfile,
+) -> Result<(), String> {
+    let (rootfs_path, window_bytes) = (rootfs_path.as_path(), *window_bytes);
     log_info!(
         "qdl::flash",
         "Autoconfig: injecting preset into rootfs {}",
@@ -412,11 +426,11 @@ fn inject_autoconfig(
     );
 
     // A confirmed-ext4 rootfs that fails to write/validate is fatal.
-    crate::autoconfig::inject_into_bare_ext4_image(&rootfs_path, config)
+    crate::autoconfig::inject_into_bare_ext4_image(rootfs_path, profile)
         .map_err(|e| format!("{TAG_QDL_AUTOCONFIG_FAILED} {e}"))?;
 
     // B2: the mutated file must still fit within the partition window.
-    let file_len = fs::metadata(&rootfs_path)
+    let file_len = fs::metadata(rootfs_path)
         .map_err(|e| {
             format!("{TAG_QDL_AUTOCONFIG_FAILED} failed to stat rootfs after injection: {e}")
         })?

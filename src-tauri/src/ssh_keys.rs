@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-//! Looks up the public SSH keys a profile's key source serves, to show what the board fetches at first boot.
+//! Looks up the public SSH keys a profile's key source serves, and fetches them at flash time to write into the image.
 
 use std::time::Duration;
 
@@ -20,6 +20,8 @@ pub const TAG_NOT_FOUND: &str = "[SSH_KEYS_NOT_FOUND]";
 pub const TAG_NONE: &str = "[SSH_KEYS_NONE]";
 pub const TAG_TOO_LARGE: &str = "[SSH_KEYS_TOO_LARGE]";
 pub const TAG_NETWORK: &str = "[SSH_KEYS_NETWORK]";
+/// The key source served a line that is not a plain public key (twin in errorUtils.ts).
+pub const TAG_INVALID_KEY: &str = "[SSH_KEYS_INVALID_KEY]";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -161,10 +163,20 @@ fn next_token(s: &str) -> Option<(&str, &str)> {
     })
 }
 
-/// Parse one `type base64 [comment]` line; anything else (options, other types) yields None.
-pub fn parse_key_line(line: &str) -> Option<SshKeyInfo> {
+struct ParsedKey<'a> {
+    key_type: &'a str,
+    label: &'static str,
+    blob: Vec<u8>,
+    comment: Option<String>,
+}
+
+fn is_blank_or_comment(line: &str) -> bool {
+    line.is_empty() || line.starts_with('#')
+}
+
+fn parse_key(line: &str) -> Option<ParsedKey<'_>> {
     let line = line.trim();
-    if line.is_empty() || line.starts_with('#') {
+    if is_blank_or_comment(line) {
         return None;
     }
     let (key_type, rest) = next_token(line)?;
@@ -179,27 +191,72 @@ pub fn parse_key_line(line: &str) -> Option<SshKeyInfo> {
     if blob_key_type(&blob)? != key_type.as_bytes() {
         return None;
     }
-    Some(SshKeyInfo {
-        key_type: key_type.to_string(),
-        label: label.to_string(),
+    Some(ParsedKey {
+        key_type,
+        label,
+        blob,
         comment: sanitize_comment(comment),
-        fingerprint: fingerprint(&blob),
     })
 }
 
-/// Parse a keys body into the lookup result, or `TAG_NONE` when no line is a valid key.
-pub fn parse_keys(body: &str) -> Result<SshKeyLookup, String> {
-    let mut total = 0;
-    let mut keys = Vec::new();
-    for key in body.lines().filter_map(parse_key_line) {
-        total += 1;
-        if keys.len() < cfg::MAX_KEYS {
-            keys.push(key);
+impl ParsedKey<'_> {
+    fn into_info(self) -> SshKeyInfo {
+        SshKeyInfo {
+            key_type: self.key_type.to_string(),
+            label: self.label.to_string(),
+            comment: self.comment,
+            fingerprint: fingerprint(&self.blob),
         }
     }
-    if total == 0 {
+}
+
+/// Parse one `type base64 [comment]` line; anything else (options, other types) yields None.
+#[cfg(test)]
+fn parse_key_line(line: &str) -> Option<SshKeyInfo> {
+    parse_key(line).map(ParsedKey::into_info)
+}
+
+/// Every key of a keys body, in order; any other non-blank, non-`#` line (or non-UTF-8) refuses the whole body with
+/// `TAG_INVALID_KEY`, no key at all with `TAG_NONE`. The one parser behind the editor check and the flash-time write.
+fn parse_body(body: &[u8]) -> Result<Vec<ParsedKey<'_>>, String> {
+    let text = std::str::from_utf8(body).map_err(|_| TAG_INVALID_KEY.to_string())?;
+    let keys = text
+        .lines()
+        .filter(|line| !is_blank_or_comment(line.trim()))
+        .map(|line| parse_key(line).ok_or_else(|| TAG_INVALID_KEY.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
+    if keys.is_empty() {
         return Err(TAG_NONE.to_string());
     }
+    Ok(keys)
+}
+
+/// An authorized_keys body rebuilt line by line from parsed keys, plus the key count; refusals as [`parse_body`].
+pub fn authorized_keys(body: &[u8]) -> Result<(String, usize), String> {
+    let keys = parse_body(body)?;
+    let mut out = String::new();
+    for key in &keys {
+        out.push_str(key.key_type);
+        out.push(' ');
+        out.push_str(&base64::engine::general_purpose::STANDARD.encode(&key.blob));
+        if let Some(comment) = &key.comment {
+            out.push(' ');
+            out.push_str(comment);
+        }
+        out.push('\n');
+    }
+    Ok((out, keys.len()))
+}
+
+/// Parse a keys body into the lookup result; refusals as [`parse_body`], so the editor never accepts what the flash refuses.
+pub fn parse_keys(body: &[u8]) -> Result<SshKeyLookup, String> {
+    let keys = parse_body(body)?;
+    let total = keys.len();
+    let keys = keys
+        .into_iter()
+        .take(cfg::MAX_KEYS)
+        .map(ParsedKey::into_info)
+        .collect();
     Ok(SshKeyLookup { total, keys })
 }
 
@@ -262,13 +319,30 @@ async fn fetch_body(url: Url) -> Result<Vec<u8>, String> {
     Ok(body)
 }
 
+/// Log label of the forge or link a key URL points at; never the URL itself.
+pub fn url_kind(url: &str) -> &'static str {
+    let url = url.trim();
+    let source = if url.starts_with(cfg::GITHUB_KEYS_BASE) {
+        SshKeySource::Github
+    } else if url.starts_with(cfg::GITLAB_KEYS_BASE) {
+        SshKeySource::Gitlab
+    } else {
+        SshKeySource::Url
+    };
+    source.log_label()
+}
+
+/// Fetch a profile's key URL and rebuild it as an authorized_keys body with its key count; errors are `TAG_*` codes.
+pub async fn fetch_authorized_keys(url: &str) -> Result<(String, usize), String> {
+    let url = parse_key_url(url.trim()).ok_or_else(|| TAG_INVALID_INPUT.to_string())?;
+    authorized_keys(&fetch_body(url).await?)
+}
+
 /// Errors are the `TAG_*` codes only; logs carry the source kind and outcome, never the URL or the body.
 pub async fn lookup(source: SshKeySource, value: &str) -> Result<SshKeyLookup, String> {
     let kind = source.log_label();
     let result = match source_url(source, value) {
-        Some(url) => fetch_body(url)
-            .await
-            .and_then(|body| parse_keys(&String::from_utf8_lossy(&body))),
+        Some(url) => fetch_body(url).await.and_then(|body| parse_keys(&body)),
         None => Err(TAG_INVALID_INPUT.to_string()),
     };
     match &result {
@@ -442,9 +516,9 @@ mod tests {
     }
 
     #[test]
-    fn body_with_crlf_comments_and_junk() {
-        let body = format!("# keys\r\n{ED25519}\r\n\r\njunk line\r\n{RSA}\r\nssh-rsa AAAA\r\n");
-        let found = parse_keys(&body).unwrap();
+    fn body_with_crlf_and_comments() {
+        let body = format!("# keys\r\n{ED25519}\r\n\r\n  # note\r\n{RSA}\r\n");
+        let found = parse_keys(body.as_bytes()).unwrap();
         assert_eq!(found.total, 2);
         assert_eq!(found.keys[0].fingerprint, ED25519_FP);
         assert_eq!(found.keys[1].fingerprint, RSA_FP);
@@ -452,15 +526,41 @@ mod tests {
     }
 
     #[test]
-    fn empty_or_invalid_body_is_none() {
-        assert_eq!(parse_keys("").unwrap_err(), TAG_NONE);
-        assert_eq!(parse_keys("Not Found\n<html>").unwrap_err(), TAG_NONE);
+    fn empty_body_is_none_and_junk_is_invalid() {
+        assert_eq!(parse_keys(b"").unwrap_err(), TAG_NONE);
+        assert_eq!(parse_keys(b"# nothing\n\n").unwrap_err(), TAG_NONE);
+        assert_eq!(
+            parse_keys(b"Not Found\n<html>").unwrap_err(),
+            TAG_INVALID_KEY
+        );
+    }
+
+    #[test]
+    fn the_editor_check_and_the_flash_write_agree_on_every_body() {
+        let blob = ED25519.split(' ').nth(1).unwrap();
+        for body in [
+            format!("{ED25519}\n{RSA}\n"),
+            format!("# keys\r\n{ED25519}\r\n\r\njunk line\r\n{RSA}\r\n"),
+            format!("{ED25519}\nssh-rsa AAAA\n"),
+            format!("command=\"x\" ssh-ed25519 {blob}"),
+            "<html><body>Sign in</body></html>".to_string(),
+            String::new(),
+            "# only comments\n".to_string(),
+        ] {
+            let lookup = parse_keys(body.as_bytes()).map(|found| found.total);
+            let write = authorized_keys(body.as_bytes()).map(|(_, count)| count);
+            assert_eq!(lookup, write, "{body:?}");
+        }
+        assert_eq!(
+            parse_keys(b"\xff\xfe").unwrap_err(),
+            authorized_keys(b"\xff\xfe").unwrap_err()
+        );
     }
 
     #[test]
     fn key_list_is_capped_but_total_counts_all() {
         let body = format!("{ED25519}\n").repeat(cfg::MAX_KEYS + 7);
-        let found = parse_keys(&body).unwrap();
+        let found = parse_keys(body.as_bytes()).unwrap();
         assert_eq!(found.total, cfg::MAX_KEYS + 7);
         assert_eq!(found.keys.len(), cfg::MAX_KEYS);
     }
@@ -485,6 +585,65 @@ mod tests {
             )
             .unwrap_err(),
             TAG_TOO_LARGE
+        );
+    }
+
+    #[test]
+    fn authorized_keys_are_rebuilt_from_parsed_tokens() {
+        let body = format!("# keys\r\n{ED25519}\r\n\r\n  {RSA}  \n{SK_ED25519}\n");
+        let (out, count) = authorized_keys(body.as_bytes()).unwrap();
+        assert_eq!(count, 3);
+        assert_eq!(out, format!("{ED25519}\n{RSA}\n{SK_ED25519}\n"));
+        let blob = ED25519.split(' ').nth(1).unwrap();
+        let (out, _) =
+            authorized_keys(format!("ssh-ed25519\t{blob}   me\u{7}@\u{202E}host").as_bytes())
+                .unwrap();
+        assert_eq!(out, format!("ssh-ed25519 {blob} me@host\n"));
+        let (out, _) = authorized_keys(format!("ssh-ed25519 {blob}").as_bytes()).unwrap();
+        assert_eq!(out, format!("ssh-ed25519 {blob}\n"));
+    }
+
+    #[test]
+    fn any_bad_line_refuses_the_whole_body() {
+        for bad in [
+            format!("{ED25519}\nNot Found"),
+            format!("{ED25519}\n<html><body>Sign in</body></html>"),
+            format!("command=\"x\" {ED25519}"),
+            format!("{ED25519}\nssh-dss AAAAB3NzaC1kc3M= old"),
+            format!("{ED25519}\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5"),
+        ] {
+            assert_eq!(
+                authorized_keys(bad.as_bytes()).unwrap_err(),
+                TAG_INVALID_KEY,
+                "{bad}"
+            );
+        }
+        assert_eq!(authorized_keys(b"\xff\xfe").unwrap_err(), TAG_INVALID_KEY);
+        assert_eq!(authorized_keys(b"").unwrap_err(), TAG_NONE);
+        assert_eq!(
+            authorized_keys(b"# only a comment\n\n").unwrap_err(),
+            TAG_NONE
+        );
+    }
+
+    #[test]
+    fn url_kinds_never_echo_the_url() {
+        assert_eq!(url_kind("https://github.com/octocat.keys"), "github");
+        assert_eq!(url_kind(" https://gitlab.com/j.doe.keys"), "gitlab");
+        assert_eq!(url_kind("https://example.com/keys"), "link");
+    }
+
+    #[tokio::test]
+    async fn a_non_https_key_url_is_refused_before_any_request() {
+        assert_eq!(
+            fetch_authorized_keys("http://example.com/keys")
+                .await
+                .unwrap_err(),
+            TAG_INVALID_INPUT
+        );
+        assert_eq!(
+            fetch_authorized_keys("  ").await.unwrap_err(),
+            TAG_INVALID_INPUT
         );
     }
 

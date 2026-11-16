@@ -120,6 +120,7 @@ dependencies = [
  "flate2",
  "futures-util",
  "hex",
+ "iana-time-zone",
  "indexmap 2.13.0",
  "libc",
  "lzma-rust2",

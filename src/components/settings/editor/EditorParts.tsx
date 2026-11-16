@@ -4,8 +4,15 @@
 import { forwardRef, useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, CircleCheck, RotateCcw, TriangleAlert } from 'lucide-react';
+import { AUTOCONFIG } from '../../../config/constants';
+import { isWifiRawPsk } from '../../../config/autoconfig';
 import { loadCountryFlag } from '../../../config/countryFlags';
-import type { EditorGroup } from '../../../config/profileEditorModel';
+import {
+  USER_NAME_ISSUE_KEY,
+  firstLoginUserName,
+  userNameIssue,
+  type EditorGroup,
+} from '../../../config/profileEditorModel';
 
 interface EditorSectionProps {
   id: EditorGroup;
@@ -57,6 +64,35 @@ export function FieldHint({ tone = 'plain', children }: { tone?: HintTone; child
       {tone === 'warn' && <TriangleAlert size={12} aria-hidden="true" />}
       <span className="pe-hint__text">{children}</span>
     </span>
+  );
+}
+
+export function UserNameHint({ name }: { name: string }) {
+  const { t } = useTranslation();
+  const issue = userNameIssue(name);
+  if (issue) {
+    return (
+      <FieldHint tone="warn">{t(USER_NAME_ISSUE_KEY[issue], { max: AUTOCONFIG.USER_NAME_MAX, name: name.trim() })}</FieldHint>
+    );
+  }
+  const account = firstLoginUserName(name);
+  return (
+    <FieldHint tone="ok">
+      {account === name.trim()
+        ? t('settings.autoconfig.editor.userValid')
+        : t('settings.autoconfig.editor.userCreatedAs', { name: account })}
+    </FieldHint>
+  );
+}
+
+export function WifiKeyHint({ wifiKey, issue }: { wifiKey: string; issue?: string }) {
+  const { t } = useTranslation();
+  if (issue) return <FieldHint tone="warn">{t(issue, { min: AUTOCONFIG.WIFI_KEY_MIN, max: AUTOCONFIG.WIFI_KEY_MAX })}</FieldHint>;
+  if (!wifiKey) return <FieldHint>{t('settings.autoconfig.editor.wifiKeyEmpty')}</FieldHint>;
+  return (
+    <FieldHint tone="ok">
+      {t(isWifiRawPsk(wifiKey) ? 'settings.autoconfig.editor.wifiKeyRawPsk' : 'settings.autoconfig.wifiKeyFits')}
+    </FieldHint>
   );
 }
 

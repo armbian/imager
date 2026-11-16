@@ -3,9 +3,9 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, MapPin } from 'lucide-react';
+import { Globe, Laptop } from 'lucide-react';
 import { COMMON_LOCALES, getTimezones, localeLabel, timezoneOffset } from '../../../config/autoconfig';
-import { localeCountry, type RegionMode } from '../../../config/profileEditorModel';
+import { REGION_NEEDS_BOTH, localeCountry, regionIncomplete, type RegionMode } from '../../../config/profileEditorModel';
 import { SegmentedControl, SelectMenu, SettingsRow, type SelectOption } from '../controls';
 import { CountryFlag, DefaultsAction, EditorSection, FieldHint } from './EditorParts';
 import type { EditorGroupProps } from './types';
@@ -14,6 +14,8 @@ export function RegionGroup({ model, status, patch, keepDefaults }: EditorGroupP
   const { t, i18n } = useTranslation();
   const r = model.region;
   const choose = r.apply && r.mode === 'choose';
+  const incomplete = regionIncomplete(r);
+  const missingHint = <FieldHint tone="warn">{t(REGION_NEEDS_BOTH)}</FieldHint>;
   const placeholder = t('settings.autoconfig.selectPlaceholder');
 
   const locales = useMemo<SelectOption<string>[]>(
@@ -52,7 +54,7 @@ export function RegionGroup({ model, status, patch, keepDefaults }: EditorGroupP
         tall={!choose}
         description={
           choose ? undefined : (
-            <FieldHint>{t(r.apply ? 'settings.autoconfig.editor.locationHint' : 'settings.autoconfig.armbianDefaults')}</FieldHint>
+            <FieldHint>{t(r.apply ? 'settings.autoconfig.editor.thisComputerHint' : 'settings.autoconfig.editor.regionDefaults')}</FieldHint>
           )
         }
         control={
@@ -60,7 +62,7 @@ export function RegionGroup({ model, status, patch, keepDefaults }: EditorGroupP
             value={r.apply ? r.mode : null}
             ariaLabel={t('settings.autoconfig.wizard.steps.locale')}
             options={[
-              { value: 'location', label: t('settings.autoconfig.wizard.locale.location'), icon: <MapPin aria-hidden="true" /> },
+              { value: 'location', label: t('settings.autoconfig.wizard.locale.thisComputer'), icon: <Laptop aria-hidden="true" /> },
               { value: 'choose', label: t('settings.autoconfig.wizard.locale.choose'), icon: <Globe aria-hidden="true" /> },
             ]}
             onChange={(mode) => patch('region', { mode })}
@@ -71,9 +73,12 @@ export function RegionGroup({ model, status, patch, keepDefaults }: EditorGroupP
         <>
           <SettingsRow
             label={t('settings.autoconfig.wizard.locale.language')}
+            tall={incomplete && !r.locale}
+            description={incomplete && !r.locale ? missingHint : undefined}
             control={
               <SelectMenu
                 value={r.locale}
+                invalid={incomplete && !r.locale}
                 options={locales}
                 onChange={(locale) => patch('region', { locale })}
                 ariaLabel={t('settings.autoconfig.wizard.locale.language')}
@@ -84,9 +89,12 @@ export function RegionGroup({ model, status, patch, keepDefaults }: EditorGroupP
           />
           <SettingsRow
             label={t('settings.autoconfig.timezone')}
+            tall={incomplete && !r.timezone}
+            description={incomplete && !r.timezone ? missingHint : undefined}
             control={
               <SelectMenu
                 value={r.timezone}
+                invalid={incomplete && !r.timezone}
                 options={timezones}
                 onChange={(timezone) => patch('region', { timezone })}
                 ariaLabel={t('settings.autoconfig.timezone')}

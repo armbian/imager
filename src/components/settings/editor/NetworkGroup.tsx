@@ -4,19 +4,21 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cable, Network, Wifi } from 'lucide-react';
-import { AUTOCONFIG_PLACEHOLDERS, WIFI_COUNTRY_CODES, isWifiKeyLength } from '../../../config/autoconfig';
+import { AUTOCONFIG_PLACEHOLDERS, WIFI_COUNTRY_CODES } from '../../../config/autoconfig';
 import {
   PROFILE_EDITOR,
   countryName,
   editorIpErrors,
+  editorIpMissing,
   hasWifi,
+  wifiIssues,
   type IpMode,
   type NetMode,
 } from '../../../config/profileEditorModel';
 import type { StaticIpErrors } from '../../../utils';
 import { PasswordInput } from '../../shared/PasswordInput';
 import { SegmentedControl, SelectMenu, SettingsRow, type SelectOption } from '../controls';
-import { CountryFlag, DefaultsAction, EditorSection, FieldHint, MoreRow, TextField } from './EditorParts';
+import { CountryFlag, DefaultsAction, EditorSection, FieldHint, MoreRow, TextField, WifiKeyHint } from './EditorParts';
 import { fieldId, type FoldingGroupProps } from './types';
 
 const IP_FIELDS: { field: keyof StaticIpErrors; key: 'address' | 'mask' | 'gateway' | 'dns'; label: string; placeholder: string }[] = [
@@ -32,6 +34,8 @@ export function NetworkGroup({ model, status, uid, patch, keepDefaults, more, to
   const wifi = n.apply && hasWifi(n.mode);
   const both = n.mode === 'both';
   const ipErrors = editorIpErrors(n);
+  const ipMissing = editorIpMissing(n);
+  const wifiProblems = wifiIssues(n);
   const subId = fieldId(uid, 'network-more');
 
   const countries = useMemo<SelectOption<string>[]>(
@@ -47,14 +51,6 @@ export function NetworkGroup({ model, status, uid, patch, keepDefaults, more, to
     [t, i18n.language]
   );
 
-  const keyHint = !n.key ? (
-    <FieldHint>{t('settings.autoconfig.editor.wifiKeyEmpty')}</FieldHint>
-  ) : isWifiKeyLength(n.key) ? (
-    <FieldHint tone="ok">{t('settings.autoconfig.wifiKeyFits')}</FieldHint>
-  ) : (
-    <FieldHint tone="warn">{t('settings.autoconfig.wifiKeyLength')}</FieldHint>
-  );
-
   const summary = [
     n.ip === 'fixed'
       ? n.address.trim()
@@ -66,12 +62,11 @@ export function NetworkGroup({ model, status, uid, patch, keepDefaults, more, to
     .filter(Boolean)
     .join(PROFILE_EDITOR.SEPARATOR);
 
+  const ipProblem = (field: keyof StaticIpErrors) => ipErrors[field] ?? (field === 'ip' || field === 'mask' ? ipMissing[field] : undefined);
   const ipHint = (field: keyof StaticIpErrors) => {
-    const error = ipErrors[field];
-    if (error) return <FieldHint tone="warn">{t(`settings.autoconfig.${error}`)}</FieldHint>;
-    if (field !== 'ip') return undefined;
-    if (!n.address.trim()) return <FieldHint tone="warn">{t('settings.autoconfig.wizard.addressRequired')}</FieldHint>;
-    return <FieldHint tone="ok">{t('settings.autoconfig.editor.addressOk')}</FieldHint>;
+    const problem = ipProblem(field);
+    if (problem) return <FieldHint tone="warn">{t(`settings.autoconfig.${problem}`)}</FieldHint>;
+    return field === 'ip' ? <FieldHint tone="ok">{t('settings.autoconfig.editor.addressOk')}</FieldHint> : undefined;
   };
 
   return (
@@ -84,11 +79,17 @@ export function NetworkGroup({ model, status, uid, patch, keepDefaults, more, to
     >
       <SettingsRow
         label={t('settings.autoconfig.editor.connection')}
-        tall={!wifi}
+        tall
         description={
-          wifi ? undefined : (
-            <FieldHint>{t(n.apply ? 'settings.autoconfig.editor.cableHint' : 'settings.autoconfig.armbianDefaults')}</FieldHint>
-          )
+          <FieldHint>
+            {t(
+              !n.apply
+                ? 'settings.autoconfig.armbianDefaults'
+                : wifi
+                  ? 'settings.autoconfig.editor.wifiNoAdapterHint'
+                  : 'settings.autoconfig.editor.cableHint'
+            )}
+          </FieldHint>
         }
         control={
           <SegmentedControl<NetMode>
@@ -108,15 +109,15 @@ export function NetworkGroup({ model, status, uid, patch, keepDefaults, more, to
           <SettingsRow
             label={t('settings.autoconfig.wizard.network.ssid')}
             controlId={fieldId(uid, 'ssid')}
-            tall={!n.ssid.trim()}
-            description={n.ssid.trim() ? undefined : <FieldHint tone="warn">{t('settings.autoconfig.wizard.ssidRequired')}</FieldHint>}
+            tall={!!wifiProblems.ssid}
+            description={wifiProblems.ssid ? <FieldHint tone="warn">{t(wifiProblems.ssid)}</FieldHint> : undefined}
             control={
               <TextField
                 id={fieldId(uid, 'ssid')}
                 value={n.ssid}
                 icon={<Wifi size={16} className="pe-input__icon" aria-hidden="true" />}
                 placeholder={AUTOCONFIG_PLACEHOLDERS.WIFI_SSID}
-                invalid={!n.ssid.trim()}
+                invalid={!!wifiProblems.ssid}
                 onChange={(ssid) => patch('network', { ssid })}
               />
             }
@@ -125,8 +126,15 @@ export function NetworkGroup({ model, status, uid, patch, keepDefaults, more, to
             label={t('settings.autoconfig.wizard.password')}
             controlId={fieldId(uid, 'wifi-key')}
             tall
-            description={keyHint}
-            control={<PasswordInput id={fieldId(uid, 'wifi-key')} value={n.key} onChange={(key) => patch('network', { key })} />}
+            description={<WifiKeyHint wifiKey={n.key} issue={wifiProblems.key} />}
+            control={
+              <PasswordInput
+                id={fieldId(uid, 'wifi-key')}
+                value={n.key}
+                invalid={!!wifiProblems.key}
+                onChange={(key) => patch('network', { key })}
+              />
+            }
           />
         </>
       )}
@@ -200,7 +208,7 @@ export function NetworkGroup({ model, status, uid, patch, keepDefaults, more, to
                     mono
                     value={n[key]}
                     placeholder={placeholder}
-                    invalid={!!ipErrors[field]}
+                    invalid={!!ipProblem(field)}
                     onChange={(value) => patch('network', { [key]: value })}
                   />
                 }

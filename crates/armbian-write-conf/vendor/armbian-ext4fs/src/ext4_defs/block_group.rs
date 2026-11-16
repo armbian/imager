@@ -87,16 +87,16 @@ impl Ext4BlockGroup {
     pub fn get_used_dirs_count(&self, s: &Ext4Superblock) -> u32 {
         let mut v = self.used_dirs_count_lo as u32;
         if s.desc_size() > EXT4_MIN_BLOCK_GROUP_DESCRIPTOR_SIZE {
-            v |= ((self.used_dirs_count_hi as u64) << 32) as u32;
+            v |= (self.used_dirs_count_hi as u32) << 16;
         }
         v
     }
 
     /// Set the count of used directories in this block group.
     pub fn set_used_dirs_count(&mut self, s: &Ext4Superblock, cnt: u32) {
-        self.itable_unused_lo = (cnt & 0xffff) as u16; 
+        self.used_dirs_count_lo = (cnt & 0xffff) as u16;
         if s.desc_size() > EXT4_MIN_BLOCK_GROUP_DESCRIPTOR_SIZE {
-            self.itable_unused_hi = (cnt >> 16) as u16;
+            self.used_dirs_count_hi = (cnt >> 16) as u16;
         }
     }
 
@@ -114,6 +114,12 @@ impl Ext4BlockGroup {
         if s.desc_size() > EXT4_MIN_BLOCK_GROUP_DESCRIPTOR_SIZE {
             self.free_inodes_count_hi = (cnt >> 16) as u16;
         }
+    }
+
+    /// True when `flag` (an `EXT4_BG_*` value) is set on this group.
+    pub fn has_flag(&self, flag: u16) -> bool {
+        let flags = self.flags;
+        flags & flag != 0
     }
 
     /// Get the count of free inodes in this block group.

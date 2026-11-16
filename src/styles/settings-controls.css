@@ -280,6 +280,12 @@ label.set-row__label {
   box-shadow: inset 0 0 0 1px var(--text-muted);
 }
 
+/* Before the focus ring, so a focused invalid select still shows where focus is */
+.set-select.is-invalid,
+.set-select.is-invalid:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1px var(--attention);
+}
+
 .set-select.is-open,
 .set-select:focus-visible {
   outline: none;

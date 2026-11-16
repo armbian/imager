@@ -55,6 +55,7 @@
     "noShaMessage": "Ten obraz nie ma sumy kontrolnej SHA, więc nie można zweryfikować zapisanych danych. Zapis i tak będzie kontynuowany.",
     "extracting": "Wyodrębnianie archiwum...",
     "applyingProfile": "Stosowanie profilu...",
+    "fetchingKeys": "Pobieranie kluczy SSH...",
     "qdlSahara": "Przesyłanie programu ładującego firmware...",
     "qdlFirehose": "Zapisywanie partycji...",
     "profile": {
@@ -177,6 +178,16 @@
     "qdlConnectionFailed": "Nie udało się połączyć z urządzeniem EDL. Upewnij się, że jest w trybie EDL i podłączone przez USB.",
     "qdlAutoconfigFailed": "Nie udało się zastosować profilu autokonfiguracji do obrazu QDL.",
     "autoconfigNotArmbian": "Ten obraz nie ma konfiguracji pierwszego uruchomienia Armbiana, więc nie można zastosować profilu. Zapisz go bez profilu albo wybierz obraz Armbiana.",
+    "autoconfigUserNameInvalid": "Nazwa użytkownika w profilu musi zaczynać się od litery i zawierać tylko litery i cyfry, do 32 znaków. Edytuj profil i spróbuj ponownie.",
+    "autoconfigUserNameTaken": "Nazwa użytkownika z profilu już istnieje w tym obrazie. Edytuj profil i wybierz inną.",
+    "autoconfigUsersUnreadable": "Nie udało się odczytać listy użytkowników obrazu, by sprawdzić nazwę użytkownika z profilu. Nic nie zapisano.",
+    "autoconfigUnsafeTarget": "W obrazie jest coś nieoczekiwanego tam, gdzie profil zapisuje ustawienia, więc został pozostawiony bez zmian. Nic nie zapisano.",
+    "sshKeysInvalidKey": "Źródło kluczy SSH z profilu zwróciło coś, co nie jest publicznym kluczem SSH. Nic nie zapisano.",
+    "sshKeysNotFound": "Nie znaleziono źródła kluczy SSH z profilu. Sprawdź nazwę użytkownika lub link w profilu.",
+    "sshKeysNone": "Źródło kluczy SSH z profilu nie ma kluczy publicznych. Dodaj tam klucz albo edytuj profil.",
+    "sshKeysTooLarge": "Źródło kluczy SSH z profilu zwróciło zbyt dużo danych jak na listę kluczy publicznych. Nic nie zapisano.",
+    "sshKeysNetwork": "Nie udało się pobrać kluczy SSH z profilu. Sprawdź połączenie z internetem i spróbuj ponownie.",
+    "sshKeysInvalidInput": "Źródło kluczy SSH w profilu nie jest prawidłową nazwą użytkownika ani linkiem https. Edytuj profil i spróbuj ponownie.",
     "deviceInvalidPath": "Na to urządzenie nie można zapisywać. Wybierz urządzenie ponownie.",
     "deviceNotFound": "Wybrane urządzenie nie jest już podłączone. Podłącz je ponownie i wybierz jeszcze raz.",
     "deviceChanged": "Wybrane urządzenie zmieniło się od momentu wyboru. Wybierz je ponownie przed zapisem.",
@@ -325,8 +336,8 @@
       "armbianDefaults": "Ustawienia domyślne Armbiana",
       "keys": {
         "checking": "Sprawdzanie kluczy...",
-        "found_one": "Znaleziono {{count}} klucz. Płytka pobiera go przy pierwszym uruchomieniu.",
-        "found_other": "Znaleziono kluczy: {{count}}. Płytka pobiera je przy pierwszym uruchomieniu.",
+        "foundAtFlash_one": "Znaleziono {{count}} klucz. Imager doda go na kartę SD podczas zapisu.",
+        "foundAtFlash_other": "Znaleziono kluczy: {{count}}. Imager doda je na kartę SD podczas zapisu.",
         "notFoundForge": "Nie ma konta {{forge}} o tej nazwie użytkownika.",
         "notFoundLink": "Pod tym linkiem nic nie znaleziono.",
         "noneForge": "To konto {{forge}} nie ma jeszcze publicznych kluczy SSH.",
@@ -334,7 +345,8 @@
         "tooLarge": "Ten adres udostępnia zbyt dużo danych jak na listę kluczy publicznych.",
         "invalidForge": "To nie jest prawidłowa nazwa użytkownika {{forge}}.",
         "invalidLink": "Tutaj można sprawdzać tylko linki https.",
-        "unreachable": "Nie można teraz sprawdzić kluczy. Płytka pobiera je przy pierwszym uruchomieniu."
+        "invalidKey": "Ten adres zwraca wiersze, które nie są publicznymi kluczami SSH",
+        "unreachableAtFlash": "Nie można teraz sprawdzić kluczy. Imager pobierze je podczas zapisu, więc wtedy potrzebny będzie internet."
       },
       "ipInvalid": "Wpisz prawidłowy adres IPv4 (np. 192.168.1.50)",
       "ipNotHost": "To adres sieci lub adres rozgłoszeniowy podsieci, a nie adres, którego może używać urządzenie. Wybierz taki jak 192.168.1.50",
@@ -367,7 +379,6 @@
       "fillForm": "Wypełnij formularz",
       "fillFormHint": "Wszystkie opcje na jednej stronie",
       "wifiKeyFits": "Pasuje do Wi-Fi (od 8 do 63 znaków)",
-      "wifiKeyLength": "Hasła Wi-Fi mają zwykle od 8 do 63 znaków",
       "wizard": {
         "eyebrow": "Nowy profil",
         "unnamed": "Jeszcze bez nazwy",
@@ -393,8 +404,7 @@
           "review": "Przegląd"
         },
         "pending": {
-          "network": "Zachowuje ustawienia domyślne Armbiana",
-          "locale": "Ustawienia domyślne Armbiana"
+          "network": "Zachowuje ustawienia domyślne Armbiana"
         },
         "sum": {
           "keysFrom": "Klucze SSH z {{forge}}",
@@ -431,16 +441,16 @@
           "later": "Przy pierwszym logowaniu",
           "more": "Imię i nazwisko oraz powłoka logowania",
           "shellDefault": "Domyślna Armbiana",
-          "laterLine": "Przy pierwszym logowaniu, przez SSH albo z klawiaturą i monitorem, Armbian poprosi o utworzenie użytkownika. Język i czas z tego profilu nie są wtedy stosowane."
+          "laterStops": "Płytka zatrzymuje się przy pierwszym logowaniu i czeka, aż utworzysz konto, przez SSH albo z klawiaturą i monitorem."
         },
         "locale": {
           "title": "Język i czas",
           "sub": "Ustawiane przy pierwszym logowaniu, niezależnie od tego, czy użytkownik jest tworzony teraz.",
-          "location": "Z lokalizacji",
+          "thisComputer": "Jak ten komputer",
           "choose": "Wybieram sam",
           "language": "Język",
           "searchTimezone": "Szukaj stref czasowych",
-          "locationLine": "Armbian ustawia język i strefę czasową na podstawie miejsca, z którego płytka łączy się z internetem."
+          "thisComputerLine": "Płytka dostanie język i strefę czasową tego komputera, odczytane podczas zapisu."
         },
         "access": {
           "title": "Jak się dostajesz?",
@@ -484,33 +494,47 @@
         "connection": "Połączenie",
         "cableHint": "Podłącz kabel przed pierwszym uruchomieniem",
         "wifiKeyEmpty": "Zostaw puste dla sieci otwartej",
+        "wifiBadChars": "Usuń znaki \" i \\",
+        "wifiKeyLeadingSpace": "Hasło nie może zaczynać się od spacji",
+        "wifiKeyLengthNeeded": "Użyj od {{min}} do {{max}} znaków albo zostaw puste dla sieci otwartej",
+        "wifiKeyRawPsk": "Surowy klucz Wi-Fi (64 znaki szesnastkowe)",
         "countryHint": "Określa dozwolone kanały Wi-Fi",
         "ipAutoHint": "Adres przydziela Twój router",
         "ipFixedHint": "Wybierz wolny adres w swojej sieci",
         "ipLabelWifi": "Adres IP (Wi-Fi)",
         "bothCableAuto": "Kabel zawsze dostaje adres automatyczny",
+        "wifiNoAdapterHint": "Jeśli płytka nie ma Wi-Fi, pierwsze uruchomienie się zatrzyma. Wybierz Kabel.",
         "addressOk": "Prawidłowy adres",
+        "maskRequired": "Wpisz maskę sieci (np. 255.255.255.0)",
         "moreOptions": "Więcej opcji",
         "netFixed": "Stały, {{ip}}",
         "netAuto": "Adres automatyczny",
         "whoLogsIn": "Kto się loguje",
         "laterHint": "Armbian zapyta przy pierwszym logowaniu",
-        "userOk": "Małe litery, zaczyna się od litery",
+        "userValid": "Prawidłowa nazwa użytkownika",
         "userCreatedAs": "Zostanie utworzony jako {{name}}",
-        "userInvalid": "Użyj małych liter, cyfr, - i _",
+        "userLettersDigits": "Użyj tylko liter i cyfr, zaczynając od litery",
+        "userTooLong": "Użyj najwyżej {{max}} znaków",
+        "userReserved": "{{name}} to konto systemowe. Wybierz inną nazwę.",
         "passwordRequired": "Potrzebne do logowania",
-        "fullNameRequired": "Potrzebne do ustawienia języka i strefy czasowej",
+        "realNameColon": "Usuń dwukropek (:)",
+        "realNameDefault": "Jeśli puste, płytka użyje {{name}}",
         "fullNameNotSet": "Imię i nazwisko nie ustawione",
         "howYouGetIn": "Jak się logujesz",
         "passwordLoginHint": "Zaloguj się hasłem",
         "keysFrom": "Klucze z",
         "keyUserRequired": "Wpisz nazwę użytkownika",
         "keyLinkRequired": "Wklej link do kluczy publicznych",
+        "keysNeedInternet": "Imager pobiera klucze podczas zapisu, więc zapis wymaga internetu",
         "rootSet": "Hasło root ustawione",
         "rootNotSet": "Hasło root nie ustawione",
         "rootPlaceholder": "Nie ustawiono",
         "rootHint": "Jeśli puste, Armbian zapyta o nie przy pierwszym logowaniu",
-        "locationHint": "Ustawiane na podstawie miejsca, z którego płytka się łączy",
+        "rootHintUser": "Jeśli puste, root dostanie to samo hasło co użytkownik",
+        "rootSameAsUser": "Takie jak użytkownika",
+        "thisComputerHint": "Odczytywane z tego komputera podczas zapisu",
+        "regionNeedsBoth": "Wybierz zarówno język, jak i strefę czasową",
+        "regionDefaults": "Domyślne w Armbianie: angielski (USA) i UTC",
         "remoteHint": "Stosowane przy pierwszym uruchomieniu",
         "atFirstBoot": "Przy pierwszym uruchomieniu",
         "factCableWifi": "Kabel + Wi-Fi",
@@ -539,7 +563,17 @@
         "discard": "Odrzuć",
         "profileActions": "Działania profilu",
         "boardPages": "Strony płytek",
-        "done": "Gotowe"
+        "done": "Gotowe",
+        "verdictFinishes": "Pierwsze uruchomienie zakończy się samo",
+        "verdictRootFromUser": "Root dostanie to samo hasło co {{name}}.",
+        "verdictAsksUser": "Pierwsze uruchomienie zatrzyma się i poczeka, aż utworzysz użytkownika",
+        "verdictAsksRootAndUser": "Pierwsze uruchomienie zatrzyma się i poczeka na hasło roota i użytkownika",
+        "verdictConsoleHint": "Płytka będzie wyglądać na zawieszoną, dopóki ktoś nie odpowie w jej konsoli, przez SSH albo z klawiaturą i monitorem. Utwórz tu użytkownika, aby tego uniknąć.",
+        "verdictRemote": "O przebiegu pierwszego uruchomienia decyduje zdalna konfiguracja",
+        "verdictRemoteHint": "Płytka pobiera ją przy pierwszym uruchomieniu, zanim skonfiguruje sieć z tego profilu, i zastępuje ona ten profil. Potrzebny jest kabel z internetem i poprawny czas.",
+        "verdictRemoteWifi": "Tylko przez Wi-Fi płytka nie pobierze jej: jest pobierana przed konfiguracją Wi-Fi. Dodaj kabel albo usuń adres URL.",
+        "verdictNeedsFix": "Niektóre ustawienia trzeba najpierw poprawić",
+        "verdictNeedsFixHint": "Popraw je, aby zobaczyć, co się stanie przy pierwszym uruchomieniu."
       },
       "boardSheet": {
         "searchPlaceholder": "Szukaj płytek lub producentów",
@@ -673,7 +707,8 @@
       "boardCount_other": "płytek: {{count}}",
       "pagerLabel": "Strony profili",
       "discardTitle": "Odrzucić zmiany?",
-      "discardBody": "Niezapisane zmiany w tym profilu zostaną utracone."
+      "discardBody": "Niezapisane zmiany w tym profilu zostaną utracone.",
+      "needsFix": "Wymaga poprawki"
     }
   },
   "update": {

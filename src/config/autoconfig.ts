@@ -121,10 +121,25 @@ export function localeForLanguage(language: string): string {
   return exact || COMMON_LOCALES.find((l) => l.startsWith(`${lang}_`)) || '';
 }
 
-/** Whether a Wi-Fi key has a WPA passphrase length; purely visual, nothing is blocked on it. */
-export function isWifiKeyLength(key: string): boolean {
-  return key.length >= AUTOCONFIG.WIFI_KEY_MIN && key.length <= AUTOCONFIG.WIFI_KEY_MAX;
+export function isWifiRawPsk(key: string): boolean {
+  return key.length === AUTOCONFIG.WIFI_PSK_HEX_LENGTH && /^[0-9a-fA-F]+$/.test(key);
 }
+
+/** A WPA passphrase of 8 to 63 characters, or a raw 64-digit hex PSK */
+export function isWifiKeyLength(key: string): boolean {
+  return (key.length >= AUTOCONFIG.WIFI_KEY_MIN && key.length <= AUTOCONFIG.WIFI_KEY_MAX) || isWifiRawPsk(key);
+}
+
+// armbian-firstlogin writes the SSID and key into netplan YAML with no escaping that survives every release.
+export const hasNetplanUnsafeChar = (value: string): boolean => /["\\]/.test(value);
+
+/** System users and groups of a stock Armbian image; the backend also refuses any name already in the image. */
+export const RESERVED_USER_NAMES: ReadonlySet<string> = new Set([
+  'root', 'daemon', 'bin', 'sys', 'sync', 'games', 'man', 'lp', 'mail', 'news', 'uucp', 'proxy', 'backup', 'list',
+  'irc', 'gnats', 'nobody', 'sshd', 'messagebus', 'avahi', 'polkitd', 'ntp', 'chrony',
+  'adm', 'tty', 'disk', 'kmem', 'dialout', 'cdrom', 'floppy', 'sudo', 'audio', 'dip', 'video', 'plugdev', 'users',
+  'staff', 'input', 'render', 'kvm', 'netdev', 'lpadmin', 'sgx',
+]);
 
 export type ProfileGlyph = 'wifi' | 'cable' | 'user' | 'timezone' | 'keys';
 
@@ -140,7 +155,7 @@ export function profileGlyphs(c: AutoconfigConfig): ProfileGlyph[] {
   return glyphs;
 }
 
-// Twin of render_preset in src-tauri/src/autoconfig.rs: true when it would write nothing.
+// Twin of has_content in src-tauri/src/autoconfig.rs; render_preset appends its defaults only after that check.
 export function presetIsEmpty(c: AutoconfigConfig): boolean {
   const verbatim = (v?: string | null) => !!v;
   const trimmed = (v?: string | null) => !!v?.trim();
@@ -158,6 +173,11 @@ export function presetIsEmpty(c: AutoconfigConfig): boolean {
     trimmed(c.userRealName) ||
     trimmed(c.remoteConfigUrl)
   );
+}
+
+/** Whether the flash fetches SSH keys for this profile; mirrors resolve_profile in src-tauri/src/autoconfig.rs */
+export function profileFetchesKeys(c: AutoconfigConfig): boolean {
+  return !!c.rootKeyUrl?.trim() || (!!c.userName?.trim() && !!c.userKeyUrl?.trim());
 }
 
 /** Where public SSH keys come from: a forge account the app turns into a URL, or any link. */

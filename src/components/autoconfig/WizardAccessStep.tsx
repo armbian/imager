@@ -4,7 +4,7 @@
 import { useTranslation } from 'react-i18next';
 import { Github, Gitlab, KeyRound, Link2, Lock } from 'lucide-react';
 import { AUTOCONFIG_PLACEHOLDERS, SSH_KEY_FORGES, type SshKeySource } from '../../config/autoconfig';
-import { keySourceError, type AccessMode } from '../../config/profileEditorModel';
+import { keySourceError, rootPasswordCopy, type AccessMode } from '../../config/profileEditorModel';
 import type { ProfileWizardState } from '../../hooks/useProfileWizard';
 import { SegmentedControl } from '../settings/controls';
 import { KeyCheckHint } from '../settings/editor/AccessGroup';
@@ -24,6 +24,7 @@ export function WizardAccessStep({ wizard, uid }: { wizard: ProfileWizardState; 
   const inputError = keySourceError(a);
   // An empty field only complains once Next was pressed; a malformed one complains as you type, as in the editor.
   const showError = !!inputError && (attempted || !!value.trim());
+  const rootCopy = rootPasswordCopy(model);
 
   return (
     <>
@@ -38,7 +39,7 @@ export function WizardAccessStep({ wizard, uid }: { wizard: ProfileWizardState; 
       />
       {a.mode === 'keys' ? (
         <>
-          <WizardField label={t('settings.autoconfig.editor.keysFrom')}>
+          <WizardField label={t('settings.autoconfig.editor.keysFrom')} hint={<FieldHint>{t('settings.autoconfig.editor.keysNeedInternet')}</FieldHint>}>
             <SegmentedControl<SshKeySource>
               value={a.source}
               ariaLabel={t('settings.autoconfig.editor.keysFrom')}
@@ -82,12 +83,12 @@ export function WizardAccessStep({ wizard, uid }: { wizard: ProfileWizardState; 
         <WizardField
           label={t('settings.autoconfig.rootPassword')}
           htmlFor={`${uid}-root`}
-          hint={<FieldHint>{t('settings.autoconfig.editor.rootHint')}</FieldHint>}
+          hint={<FieldHint>{t(rootCopy.hint)}</FieldHint>}
         >
           <PasswordInput
             id={`${uid}-root`}
             value={a.rootPassword}
-            placeholder={t('settings.autoconfig.editor.rootPlaceholder')}
+            placeholder={t(rootCopy.placeholder)}
             onChange={(rootPassword) => patch('access', { rootPassword })}
           />
         </WizardField>

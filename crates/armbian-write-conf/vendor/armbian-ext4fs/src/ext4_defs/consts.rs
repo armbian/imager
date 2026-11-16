@@ -35,6 +35,8 @@ pub const MAX_EXTENT_INDEX_COUNT: usize = 340;
 /// BLock group descriptor flags.
 pub const EXT4_MIN_BLOCK_GROUP_DESCRIPTOR_SIZE: u16 = 32;
 pub const EXT4_MAX_BLOCK_GROUP_DESCRIPTOR_SIZE: u16 = 64;
+pub const EXT4_BG_INODE_UNINIT: u16 = 0x0001;
+pub const EXT4_BG_BLOCK_UNINIT: u16 = 0x0002;
 
 /// SuperBlock
 pub const SUPERBLOCK_OFFSET: usize = 1024;
