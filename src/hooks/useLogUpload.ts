@@ -13,14 +13,14 @@ interface LogUpload {
   upload: () => Promise<string | null>;
   uploading: boolean;
   url: string | null;
-  /** QR code of the paste URL as a data URL, only with `withQr` */
+  /** QR code of the paste URL as a data URL */
   qr: string | null;
   error: string | null;
   open: () => Promise<void>;
 }
 
 /** Uploads the session log to the paste service and keeps the resulting link. */
-export function useLogUpload({ withQr = false }: { withQr?: boolean } = {}): LogUpload {
+export function useLogUpload(): LogUpload {
   const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -39,20 +39,18 @@ export function useLogUpload({ withQr = false }: { withQr?: boolean } = {}): Log
       setUploading(false);
       return null;
     }
-    if (withQr) {
-      try {
-        setQr(await QRCode.toDataURL(pasteUrl, {
-          width: QR_CODE.WIDTH,
-          margin: QR_CODE.MARGIN,
-          color: { dark: COLORS.QR_DARK, light: COLORS.QR_LIGHT },
-        }));
-      } catch (err) {
-        setError(getErrorMessage(err, t('error.uploadFailed')));
-      }
+    try {
+      setQr(await QRCode.toDataURL(pasteUrl, {
+        width: QR_CODE.WIDTH,
+        margin: QR_CODE.MARGIN,
+        color: { dark: COLORS.QR_DARK, light: COLORS.QR_LIGHT },
+      }));
+    } catch (err) {
+      setError(getErrorMessage(err, t('error.uploadFailed')));
     }
     setUploading(false);
     return pasteUrl;
-  }, [t, withQr]);
+  }, [t]);
 
   const open = useCallback(async () => {
     if (url) await openExternal(url);

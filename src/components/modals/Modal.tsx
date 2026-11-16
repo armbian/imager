@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Copyright (c) 2025-2026 Daniele Briguglio, superkali@armbian.com
 
-import { type ReactNode, useEffect, useId } from 'react';
+import { type ReactNode, type RefObject, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,7 @@ interface ModalProps {
   className?: string;
   showBack?: boolean;
   onBack?: () => void;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
 export function Modal({ isOpen, ...props }: ModalProps) {
@@ -39,10 +40,21 @@ export function Modal({ isOpen, ...props }: ModalProps) {
 type ModalFrameProps = Omit<ModalProps, 'isOpen'> & { isExiting: boolean; onDismiss: () => void };
 
 // Mounted only while visible, so useDialogFocus takes focus on open and hands it back on close.
-function ModalFrame({ title, children, searchBar, footer, className, showBack, onBack, isExiting, onDismiss }: ModalFrameProps) {
+function ModalFrame({
+  title,
+  children,
+  searchBar,
+  footer,
+  className,
+  showBack,
+  onBack,
+  returnFocusRef,
+  isExiting,
+  onDismiss,
+}: ModalFrameProps) {
   const { t } = useTranslation();
   const titleId = useId();
-  const dialogRef = useDialogFocus<HTMLDivElement>({ onEscape: showBack && onBack ? onBack : onDismiss });
+  const dialogRef = useDialogFocus<HTMLDivElement>({ onEscape: showBack && onBack ? onBack : onDismiss, returnFocusRef });
   const animationClass = isExiting ? 'modal-exiting' : 'modal-entering';
 
   return (

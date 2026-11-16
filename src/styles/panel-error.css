@@ -84,8 +84,7 @@
   opacity: 0.75;
 }
 
-/* Log upload result: the QR on a tilted phone beside the steps and the link. The body is display: contents so the
-   modal header, body parts and footer share one grid, title and Done in the right column. */
+/* Body is display: contents so header, steps, link and footer share the phone's grid; the 1fr rows centre them on it. */
 .modal.log-share-modal {
   --log-share-w: 560px;
   --log-share-pad: 28px;
@@ -110,15 +109,15 @@
   position: relative;
   display: grid;
   grid-template-columns: var(--log-share-phone-w) minmax(0, 1fr);
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: 1fr auto auto auto auto 1fr;
   grid-template-areas:
+    'phone .'
     'phone header'
     'phone steps'
     'phone link'
-    'phone .'
-    'phone footer';
+    'phone footer'
+    'phone .';
   column-gap: var(--log-share-gap);
-  row-gap: var(--space-md);
   max-width: var(--log-share-w);
   padding: var(--log-share-pad);
   border-radius: var(--radius-island);
@@ -154,6 +153,7 @@
 
 .log-share-modal .modal-footer {
   grid-area: footer;
+  margin-top: var(--space-lg);
   padding: 0;
 }
 
@@ -226,7 +226,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  margin: 0;
+  margin: var(--space-md) 0 0;
   padding: 0;
   list-style: none;
   counter-reset: log-share-step;
@@ -279,8 +279,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  height: var(--log-share-field-h);
-  padding: 0 6px 0 14px;
+  min-height: var(--log-share-field-h);
+  margin-top: var(--space-md);
+  padding: 6px 6px 6px 14px;
   border-radius: var(--radius-xl);
   background: var(--bg-secondary);
   box-shadow: inset 0 0 0 1px var(--border-light);
@@ -289,12 +290,11 @@
 .log-share__url {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
   color: var(--text-muted);
   font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Menlo', monospace;
   font-size: 13px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
   user-select: text;
 }
 

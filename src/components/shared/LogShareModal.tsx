@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Daniele Briguglio, superkali@armbian.com
 
 import { Check, Copy, ExternalLink } from 'lucide-react';
+import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LINKS, UI } from '../../config';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
@@ -15,9 +16,10 @@ interface LogShareModalProps {
   url: string | null;
   qr: string | null;
   onOpen: () => void;
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
-export function LogShareModal({ isOpen, onClose, url, qr, onOpen }: LogShareModalProps) {
+export function LogShareModal({ isOpen, onClose, url, qr, onOpen, returnFocusRef }: LogShareModalProps) {
   const { t } = useTranslation();
   const { copied, copy } = useCopyFeedback(url);
 
@@ -38,6 +40,7 @@ export function LogShareModal({ isOpen, onClose, url, qr, onOpen }: LogShareModa
       onClose={onClose}
       title={t('errorDisplay.logsUploaded')}
       className="log-share-modal"
+      returnFocusRef={returnFocusRef}
       footer={(close) => (
         <button type="button" className="btn btn-primary btn-pill" onClick={close}>
           {t('common.done')}
@@ -63,8 +66,9 @@ export function LogShareModal({ isOpen, onClose, url, qr, onOpen }: LogShareModa
       </ol>
 
       <div className="log-share__link">
-        <span className="log-share__url" title={url ?? undefined}>
+        <span className="log-share__url">
           {urlHead}
+          <wbr />
           <b>{urlTail}</b>
         </span>
         <button
