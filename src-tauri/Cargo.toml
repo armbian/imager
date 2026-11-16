@@ -6,7 +6,7 @@ authors = ["Armbian", "Daniele Briguglio <superkali@armbian.com>"]
 edition = "2021"
 rust-version = "1.90"
 license = "GPL-2.0-or-later"
-homepage = "https://github.com/armbian/imager"
+homepage = "https://armbian.com/imager"
 repository = "https://github.com/armbian/imager"
 
 [build-dependencies]
