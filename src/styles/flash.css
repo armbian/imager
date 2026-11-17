@@ -618,6 +618,17 @@
   color: var(--text-muted);
 }
 
+/* The flash succeeded, so a caveat that needs action is amber, never red. */
+.flash-success-caveat.is-attention {
+  align-items: flex-start;
+  color: var(--text-secondary);
+}
+
+.flash-success-caveat.is-attention svg {
+  height: 1lh;
+  color: var(--attention);
+}
+
 .error-message {
   display: flex;
   align-items: center;

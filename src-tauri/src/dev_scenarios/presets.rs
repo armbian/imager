@@ -182,6 +182,30 @@ pub fn presets() -> Vec<Preset> {
             scenario: sd_with(FlashOutcome::Unplug),
         },
         Preset {
+            id: "gpt-finalizing",
+            label: "GPT finalizing",
+            description: "After write and verify, the backup GPT move holds \"finishing\" briefly.",
+            scenario: sd_with(FlashOutcome::GptFinalizing),
+        },
+        Preset {
+            id: "gpt-relocate-skipped",
+            label: "GPT not moved",
+            description: "The flash succeeds with a [GPT_RELOCATE_SKIPPED] warning.",
+            scenario: sd_with(FlashOutcome::GptRelocateSkipped),
+        },
+        Preset {
+            id: "gpt-fake-capacity",
+            label: "Fake capacity",
+            description: "The flash succeeds with a [GPT_FAKE_CAPACITY] warning.",
+            scenario: sd_with(FlashOutcome::GptFakeCapacity),
+        },
+        Preset {
+            id: "gpt-relocate-failed",
+            label: "GPT move failed",
+            description: "After the finishing window the flash fails with [GPT_RELOCATE_FAILED].",
+            scenario: sd_with(FlashOutcome::GptRelocateFailed),
+        },
+        Preset {
             id: "auth-denied",
             label: "Authorization denied",
             description: "The system prompt is cancelled after 1.5 s.",

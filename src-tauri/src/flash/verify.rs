@@ -25,6 +25,10 @@ pub(crate) fn verify_cancelled_err() -> String {
     tagged(TAG_CANCELLED, VERIFY_CANCELLED)
 }
 
+pub(crate) fn is_verify_cancel(e: &str) -> bool {
+    e == verify_cancelled_err()
+}
+
 pub(crate) fn data_mismatch_err(offset: u64) -> String {
     tagged(
         TAG_VERIFY_MISMATCH,

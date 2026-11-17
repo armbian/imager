@@ -135,7 +135,7 @@ export const DEV_DEFAULT_PRESET_ID = 'clean';
 export const DEV_PRESET_GROUPS: { label: string; ids: string[] }[] = [
   { label: 'Off', ids: [DEV_DEFAULT_PRESET_ID] },
   { label: 'Devices', ids: ['sd-card', 'mixed-devices', 'read-only-sd', 'too-small', 'hot-plug'] },
-  { label: 'Flash', ids: ['write-error', 'verify-mismatch', 'unplug-mid-write', 'auth-denied', 'slow-flash'] },
+  { label: 'Flash', ids: ['write-error', 'verify-mismatch', 'unplug-mid-write', 'auth-denied', 'slow-flash', 'gpt-finalizing', 'gpt-relocate-skipped', 'gpt-fake-capacity', 'gpt-relocate-failed'] },
   { label: 'Qualcomm EDL', ids: ['edl-device', 'edl-unplug'] },
   { label: 'Network', ids: ['offline', 'slow-network', 'empty-lists', 'server-error', 'sha-mismatch'] },
 ];
@@ -152,6 +152,10 @@ export const DEV_PRESET_ICONS: Record<string, LucideIcon> = {
   'unplug-mid-write': LogOut,
   'auth-denied': ShieldX,
   'slow-flash': Gauge,
+  'gpt-finalizing': Gauge,
+  'gpt-relocate-skipped': TriangleAlert,
+  'gpt-fake-capacity': TriangleAlert,
+  'gpt-relocate-failed': Zap,
   'edl-device': Usb,
   'edl-unplug': Unplug,
   offline: WifiOff,
@@ -184,6 +188,10 @@ export const DEV_FLASH_OUTCOMES: DevOption<DevFlashOutcome>[] = [
   { value: 'verifyMismatch', label: 'Verify mismatch' },
   { value: 'unplug', label: 'Unplug' },
   { value: 'authDenied', label: 'Auth denied' },
+  { value: 'gptFinalizing', label: 'GPT finalizing' },
+  { value: 'gptRelocateSkipped', label: 'GPT not moved' },
+  { value: 'gptFakeCapacity', label: 'Fake capacity' },
+  { value: 'gptRelocateFailed', label: 'GPT move failed' },
 ];
 
 export const DEV_OUTCOMES_WITH_FAIL_POINT: readonly DevFlashOutcome[] = ['writeError', 'verifyMismatch', 'unplug'];

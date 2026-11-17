@@ -13,7 +13,11 @@ use std::sync::Arc;
 
 use crate::config;
 use crate::devices::{device_changed_error, FlashTarget, TAG_INVALID_PATH};
-use crate::flash::{open_image, reject_simulated, sync_device, unmount_device, FlashState};
+use crate::flash::gpt::DeviceGeometry;
+use crate::flash::{
+    finalize_gpt, may_finalize, open_image, reject_simulated, sync_device, unmount_device,
+    FileSectorDevice, FlashState,
+};
 use crate::utils::{bytes_to_gb, ProgressTracker};
 use crate::{log_debug, log_error, log_info};
 
@@ -243,7 +247,7 @@ pub fn quick_erase(device: &mut File, device_fd: i32) -> Result<(), String> {
 }
 
 // Size via ioctl: SEEK_END is not usable on rdisk.
-fn check_opened_device(device: &File, target: &FlashTarget) -> Result<(), String> {
+fn check_opened_device(device: &File, target: &FlashTarget) -> Result<DeviceGeometry, String> {
     let metadata = device
         .metadata()
         .map_err(|e| format!("Failed to stat device {}: {}", target.path(), e))?;
@@ -272,7 +276,10 @@ fn check_opened_device(device: &File, target: &FlashTarget) -> Result<(), String
     if size != target.size() {
         return Err(device_changed_error(target.path(), target.size(), size));
     }
-    Ok(())
+    Ok(DeviceGeometry {
+        size,
+        sector_size: u64::from(block_size),
+    })
 }
 
 /// Flash an image to a block device on macOS
@@ -312,13 +319,14 @@ pub async fn flash_image(
 
     // Delegate to an inner fn so we can always free the auth ref afterward.
     let result = match check_opened_device(&device, target) {
-        Ok(()) => {
+        Ok(geometry) => {
             do_flash_work(
                 &mut image_file,
                 device_path,
                 &mut device,
                 device_fd,
                 image_size,
+                geometry,
                 state,
                 verify,
             )
@@ -371,24 +379,31 @@ pub(crate) async fn flash_to_vdisk(
         image_path.display(),
         label
     );
+    let geometry = DeviceGeometry {
+        size: metadata.len(),
+        sector_size: SECTOR_SIZE as u64,
+    };
     do_flash_work(
         &mut image_file,
         label,
         &mut file,
         fd,
         image_size,
+        geometry,
         state,
         verify,
     )
     .await
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn do_flash_work(
     image_file: &mut File,
     device_path: &str,
     device: &mut File,
     device_fd: i32,
     image_size: u64,
+    geometry: DeviceGeometry,
     state: Arc<FlashState>,
     verify: bool,
 ) -> Result<(), String> {
@@ -478,11 +493,26 @@ async fn do_flash_work(
     crate::flash::fsync_checked(device_fd, written)?;
     sync_device(device_path);
 
-    // Verification reuses the same fd, so no extra auth prompt.
-    if verify {
+    // Verification and the GPT relocation reuse the same fd, so no extra auth prompt.
+    let verified = if verify {
         log_info!(MODULE, "Starting verification");
-        verify_written_data(image_file, device, device_fd, state.clone())?;
+        verify_written_data(image_file, device, device_fd, state.clone())
+    } else {
+        Ok(())
+    };
+    if !may_finalize(&verified) {
+        return verified;
     }
+
+    finalize_gpt(
+        &mut FileSectorDevice(device),
+        image_file,
+        image_size,
+        geometry,
+        &state,
+    )?;
+    sync_device(device_path);
+    verified?;
 
     log_info!(MODULE, "Flash complete!");
     Ok(())
@@ -729,6 +759,10 @@ mod tests {
             &mut file,
             fd,
             claimed,
+            DeviceGeometry {
+                size: 16 * 1024 * 1024,
+                sector_size: 512,
+            },
             Arc::new(FlashState::new()),
             false,
         )
@@ -739,5 +773,84 @@ mod tests {
             err,
             crate::flash::image_length_changed_err(image_len as u64, claimed)
         );
+    }
+
+    fn gpt_image(dir: &std::path::Path) -> (PathBuf, Vec<u8>) {
+        use crate::flash::gpt::test_support::{build_image, Layout};
+        let data = build_image(&Layout::uefi(16384));
+        let path = dir.join("uefi.img");
+        std::fs::write(&path, &data).unwrap();
+        (path, data)
+    }
+
+    fn read_gpt(disk: &std::path::Path) -> (gptman::GPT, gptman::GPTHeader) {
+        use std::io::{Seek, SeekFrom};
+        let mut f = File::open(disk).unwrap();
+        let gpt = gptman::GPT::read_from(&mut f, 512).unwrap();
+        f.seek(SeekFrom::Start(gpt.header.backup_lba * 512))
+            .unwrap();
+        let backup = gptman::GPTHeader::read_from(&mut f).unwrap();
+        (gpt, backup)
+    }
+
+    #[tokio::test]
+    async fn moves_the_backup_gpt_to_the_end_of_a_virtual_disk() {
+        for verify in [true, false] {
+            let tmp = tempfile::tempdir().unwrap();
+            let dir = tmp.path();
+            let (image, data) = gpt_image(dir);
+            let disk_len: u64 = 32 * 1024 * 1024;
+            let (disk, file) = vdisk(dir, disk_len);
+            let state = Arc::new(FlashState::new());
+
+            flash_to_vdisk(&image, "test", file, state.clone(), verify)
+                .await
+                .unwrap();
+
+            let n = disk_len / 512;
+            let (gpt, backup) = read_gpt(&disk);
+            assert_eq!(gpt.header.backup_lba, n - 1);
+            assert_eq!(gpt.header.last_usable_lba, n - 2 - 32);
+            assert_eq!(backup.primary_lba, n - 1);
+            assert_eq!(backup.partition_entry_lba, n - 1 - 32);
+            assert_eq!(state.warning(), None);
+            let written = std::fs::read(&disk).unwrap();
+            assert_eq!(written.len() as u64, disk_len);
+            assert_eq!(
+                &written[1024..data.len() - 512],
+                &data[1024..data.len() - 512]
+            );
+            assert!(written[data.len() - 512..data.len()]
+                .iter()
+                .all(|b| *b == 0));
+        }
+    }
+
+    #[tokio::test]
+    async fn a_failed_write_never_moves_the_gpt() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        let (image, data) = gpt_image(dir);
+        let (disk, mut file) = vdisk(dir, 32 * 1024 * 1024);
+        let fd = file.as_raw_fd();
+        let mut image_file = File::open(&image).unwrap();
+        let err = do_flash_work(
+            &mut image_file,
+            "test",
+            &mut file,
+            fd,
+            data.len() as u64 + 512,
+            DeviceGeometry {
+                size: 32 * 1024 * 1024,
+                sector_size: 512,
+            },
+            Arc::new(FlashState::new()),
+            true,
+        )
+        .await
+        .unwrap_err();
+        assert!(err.starts_with(crate::utils::TAG_IMAGE_INVALID), "{err}");
+        let written = std::fs::read(&disk).unwrap();
+        assert_eq!(&written[512..1024], &data[512..1024], "primary untouched");
     }
 }

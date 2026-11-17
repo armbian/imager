@@ -300,6 +300,7 @@ export const UI = {
     BUTTON: 16,
     CHEVRON: 14,
     UPDATE_ENTRY: 15,
+    CAVEAT: 15,
     ERROR_HERO: 72,
     UPLOAD_ERROR: 14,
   },

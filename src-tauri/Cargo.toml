@@ -52,9 +52,13 @@ sys-locale = "0.3"
 filetime = "0.2"
 # In-repo crate: writes the first-boot autoconfig file into an image's ext4 rootfs
 armbian-write-conf = { path = "../crates/armbian-write-conf" }
+# GPT header and entry array checksums for the backup GPT relocation
+crc32fast = "1.5.0"
 
 [dev-dependencies]
 tempfile = "3"
+# Parse-only oracle for the backup GPT relocation tests; never writes a device
+gptman = "3.1.1"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 # Linux-specific dependencies for block device access

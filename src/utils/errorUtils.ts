@@ -12,6 +12,17 @@ const DEVICE_TOO_SMALL_PATTERN = /\[DEVICE_TOO_SMALL:(\d+):(\d+)\]/;
 const QDL_ERROR_TAG = '[QDL_ERROR]';
 /** Twin of autoconfig::TAG_NOT_ARMBIAN in src-tauri/src/autoconfig.rs */
 const AUTOCONFIG_NOT_ARMBIAN_TAG = '[AUTOCONFIG_NOT_ARMBIAN]';
+/** Twins of TAG_CANCELLED (utils/errors.rs) and verify_cancelled_err() (flash/verify.rs) */
+const CANCELLED_TAG = '[CANCELLED]';
+const VERIFY_CANCELLED_ERROR = `${CANCELLED_TAG} Verification cancelled`;
+/** Twin of TAG_GPT_RELOCATE_FAILED in src-tauri/src/flash/gpt.rs */
+const GPT_RELOCATE_FAILED_TAG = '[GPT_RELOCATE_FAILED]';
+
+/** Twins of TAG_GPT_RELOCATE_SKIPPED and TAG_GPT_FAKE_CAPACITY in src-tauri/src/flash/gpt.rs */
+const FLASH_WARNING_KEYS = {
+  '[GPT_RELOCATE_SKIPPED]': 'flash.successHintGptSkipped',
+  '[GPT_FAKE_CAPACITY]': 'flash.successHintFakeCapacity',
+} as const;
 
 const DEVICE_ERROR_KEYS = {
   '[DEVICE_INVALID_PATH]': 'error.deviceInvalidPath',
@@ -26,7 +37,7 @@ const DEVICE_ERROR_KEYS = {
 /** Twins of TAG_SHA_MISMATCH (download.rs), TAG_VERIFY_* (flash/verify.rs), TAG_DECOMPRESS_FAILED (decompress.rs), TAG_CANCELLED and TAG_IMAGE_INVALID (utils/errors.rs) */
 const IMAGE_ERROR_KEYS = {
   // Only an EDL flash keeps its screen after Cancel, so a cancelled download or decompress lands here
-  '[CANCELLED]': 'error.qdlCancelled',
+  [CANCELLED_TAG]: 'error.qdlCancelled',
   '[SHA_MISMATCH]': 'error.shaMismatch',
   '[VERIFY_MISMATCH]': 'error.verifyMismatch',
   '[VERIFY_READ_FAILED]': 'error.verifyReadFailed',
@@ -58,13 +69,35 @@ export function isDeviceRefusalError(error: string): boolean {
   return DEVICE_TOO_SMALL_PATTERN.test(error) || findTaggedKey(error, DEVICE_ERROR_KEYS) !== undefined;
 }
 
+export function isCancelledError(error: string): boolean {
+  return error.includes(CANCELLED_TAG);
+}
+
+/** True when the read-back was cancelled; the backend only verifies an image that is fully written */
+export function isVerifyCancelledError(error: string): boolean {
+  return error.includes(VERIFY_CANCELLED_ERROR);
+}
+
+/** True when the image was written but moving its backup GPT failed; the image itself is not to blame */
+export function isGptRelocateFailedError(error: string): boolean {
+  return error.includes(GPT_RELOCATE_FAILED_TAG);
+}
+
+/** Map a tagged warning from a flash that still succeeded ([GPT_RELOCATE_SKIPPED], [GPT_FAKE_CAPACITY]) to its caveat */
+export function translateFlashWarning(warning: string, t: TFn): string {
+  const key = findTaggedKey(warning, FLASH_WARNING_KEYS);
+  return key ? t(key) : warning;
+}
+
 /** i18n key of a tagged image error, for callers that fall back to their own message instead of the raw string */
 export function imageErrorKey(error: unknown): string | undefined {
   return findTaggedKey(getErrorMessage(error, ''), IMAGE_ERROR_KEYS);
 }
 
-/** Map tagged backend flash errors ([AUTOCONFIG_NOT_ARMBIAN], [DEVICE_*], [FLASH_BUSY], [WRITE_FAILED:offset], image checks, [QDL_*]) to translated messages */
+/** Map tagged backend flash errors ([GPT_RELOCATE_FAILED], [AUTOCONFIG_NOT_ARMBIAN], [DEVICE_*], [FLASH_BUSY], [WRITE_FAILED:offset], image checks, [QDL_*]) to translated messages */
 export function translateFlashError(error: string, t: TFn): string {
+  // First, so a tag quoted in its detail never wins.
+  if (isGptRelocateFailedError(error)) return t('error.gptRelocateFailed');
   // Block and QDL flashes both refuse a profile this way; the UFS path wraps it in [QDL_AUTOCONFIG_FAILED].
   if (error.includes(AUTOCONFIG_NOT_ARMBIAN_TAG)) return t('error.autoconfigNotArmbian');
   const tooSmall = error.match(DEVICE_TOO_SMALL_PATTERN);

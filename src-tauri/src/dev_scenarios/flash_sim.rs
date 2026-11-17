@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::config::dev;
+use crate::flash::gpt::{TAG_GPT_FAKE_CAPACITY, TAG_GPT_RELOCATE_FAILED, TAG_GPT_RELOCATE_SKIPPED};
 use crate::flash::verify::{data_mismatch_err, verify_cancelled_err};
 use crate::flash::{write_failed_err, FlashState};
 use crate::qdl::flash::{check_cancelled, update_qdl_stage};
@@ -16,7 +17,7 @@ use crate::qdl::{
     STAGE_PARTITION_PREFIX, STAGE_RESETTING, STAGE_SAHARA, TAG_QDL_DISCONNECTED, TAG_QDL_ERROR,
     UFS_PARTITION_LABEL,
 };
-use crate::utils::MB;
+use crate::utils::{tagged, MB};
 
 use super::model::{FlashOutcome, FlashSim};
 
@@ -110,26 +111,51 @@ pub async fn simulate_block_flash(
         }
     }
 
-    if !verify {
-        return Ok(());
-    }
+    let verified = if verify {
+        state.is_verifying.store(true, Ordering::SeqCst);
+        state.verified_bytes.store(0, Ordering::SeqCst);
+        let verify_fail = (cfg.outcome == FlashOutcome::VerifyMismatch).then_some(fail_at);
+        match run_progress(
+            0,
+            image_size,
+            cfg.verify_mb_per_sec,
+            verify_fail,
+            &state.verified_bytes,
+            &state.is_cancelled,
+        )
+        .await
+        {
+            Ok(()) => Ok(()),
+            Err(Stop::Cancelled) => Err(verify_cancelled_err()),
+            Err(Stop::FailedAt(at)) => return Err(data_mismatch_err(at)),
+        }
+    } else {
+        Ok(())
+    };
 
-    state.is_verifying.store(true, Ordering::SeqCst);
-    state.verified_bytes.store(0, Ordering::SeqCst);
-    let verify_fail = (cfg.outcome == FlashOutcome::VerifyMismatch).then_some(fail_at);
-    match run_progress(
-        0,
-        image_size,
-        cfg.verify_mb_per_sec,
-        verify_fail,
-        &state.verified_bytes,
-        &state.is_cancelled,
-    )
-    .await
-    {
-        Ok(()) => Ok(()),
-        Err(Stop::Cancelled) => Err(verify_cancelled_err()),
-        Err(Stop::FailedAt(at)) => Err(data_mismatch_err(at)),
+    // Like the real writers: relocation runs after a passed, skipped or cancelled verify.
+    simulate_gpt_relocation(cfg, &state).await?;
+    verified
+}
+
+/// The backup GPT relocation as the writers report it; cancel is ignored inside the window.
+async fn simulate_gpt_relocation(cfg: &FlashSim, state: &FlashState) -> Result<(), String> {
+    let (warning, error) = match cfg.outcome {
+        FlashOutcome::GptFinalizing => (None, None),
+        FlashOutcome::GptRelocateSkipped => (Some(TAG_GPT_RELOCATE_SKIPPED), None),
+        FlashOutcome::GptFakeCapacity => (Some(TAG_GPT_FAKE_CAPACITY), None),
+        FlashOutcome::GptRelocateFailed => (None, Some(TAG_GPT_RELOCATE_FAILED)),
+        _ => return Ok(()),
+    };
+    state.is_finalizing.store(true, Ordering::SeqCst);
+    tokio::time::sleep(Duration::from_millis(dev::SIM_FINALIZE_MS)).await;
+    state.is_finalizing.store(false, Ordering::SeqCst);
+    if let Some(tag) = warning {
+        state.set_warning(Some(tagged(tag, dev::SIM_GPT_DETAIL)));
+    }
+    match error {
+        Some(tag) => Err(tagged(tag, dev::SIM_GPT_DETAIL)),
+        None => Ok(()),
     }
 }
 
@@ -287,6 +313,101 @@ mod tests {
         assert_eq!(state.written_bytes.load(Ordering::SeqCst), 8 * MB);
         let (result, _, _) = run(FlashOutcome::VerifyMismatch, false).await;
         assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn gpt_outcomes_finish_through_a_finalizing_window() {
+        for (outcome, warning, result) in [
+            (FlashOutcome::GptFinalizing, None, Ok(())),
+            (
+                FlashOutcome::GptRelocateSkipped,
+                Some("[GPT_RELOCATE_SKIPPED] sim"),
+                Ok(()),
+            ),
+            (
+                FlashOutcome::GptFakeCapacity,
+                Some("[GPT_FAKE_CAPACITY] sim"),
+                Ok(()),
+            ),
+            (
+                FlashOutcome::GptRelocateFailed,
+                None,
+                Err("[GPT_RELOCATE_FAILED] sim".to_string()),
+            ),
+        ] {
+            for verify in [true, false] {
+                let state = Arc::new(FlashState::new());
+                let task = {
+                    let state = state.clone();
+                    tokio::spawn(async move {
+                        simulate_block_flash(8 * MB, &sim(outcome), verify, state, || {}).await
+                    })
+                };
+                tokio::time::sleep(Duration::from_millis(dev::SIM_FINALIZE_MS / 2)).await;
+                assert!(state.is_finalizing.load(Ordering::SeqCst), "{outcome:?}");
+                assert_eq!(task.await.unwrap(), result, "{outcome:?}");
+                assert!(!state.is_finalizing.load(Ordering::SeqCst));
+                assert_eq!(state.warning().as_deref(), warning, "{outcome:?}");
+                assert_eq!(state.written_bytes.load(Ordering::SeqCst), 8 * MB);
+            }
+        }
+    }
+
+    async fn cancel_during_verify(outcome: FlashOutcome) -> (Result<(), String>, Duration) {
+        let state = Arc::new(FlashState::new());
+        let cfg = FlashSim {
+            verify_mb_per_sec: 1,
+            ..sim(outcome)
+        };
+        let task = {
+            let state = state.clone();
+            tokio::spawn(
+                async move { simulate_block_flash(8 * MB, &cfg, true, state, || {}).await },
+            )
+        };
+        while !state.is_verifying.load(Ordering::SeqCst) {
+            tokio::time::sleep(Duration::from_millis(dev::SIM_TICK_MS)).await;
+        }
+        let cancelled_at = std::time::Instant::now();
+        state.is_cancelled.store(true, Ordering::SeqCst);
+        let mut saw_finalizing = false;
+        while !task.is_finished() {
+            saw_finalizing |= state.is_finalizing.load(Ordering::SeqCst);
+            tokio::time::sleep(Duration::from_millis(dev::SIM_TICK_MS)).await;
+        }
+        assert!(saw_finalizing, "{outcome:?} skipped the finalizing window");
+        (task.await.unwrap(), cancelled_at.elapsed())
+    }
+
+    #[tokio::test]
+    async fn a_verify_cancel_still_finalizes_then_reports_the_cancel() {
+        let (result, elapsed) = cancel_during_verify(FlashOutcome::GptFinalizing).await;
+        assert_eq!(result.unwrap_err(), "[CANCELLED] Verification cancelled");
+        assert!(elapsed >= Duration::from_millis(dev::SIM_FINALIZE_MS));
+
+        let (result, _) = cancel_during_verify(FlashOutcome::GptRelocateFailed).await;
+        assert_eq!(result.unwrap_err(), "[GPT_RELOCATE_FAILED] sim");
+    }
+
+    #[tokio::test]
+    async fn plain_outcomes_skip_the_finalizing_window() {
+        let (result, state, _) = run(FlashOutcome::Success, true).await;
+        assert!(result.is_ok());
+        assert_eq!(state.warning(), None);
+
+        let state = Arc::new(FlashState::new());
+        state.is_cancelled.store(true, Ordering::SeqCst);
+        let started = std::time::Instant::now();
+        let result = simulate_block_flash(
+            8 * MB,
+            &sim(FlashOutcome::GptFinalizing),
+            true,
+            state.clone(),
+            || {},
+        )
+        .await;
+        assert_eq!(result.unwrap_err(), crate::flash::cancelled_err());
+        assert!(started.elapsed() < Duration::from_millis(dev::SIM_FINALIZE_MS));
     }
 
     #[tokio::test]

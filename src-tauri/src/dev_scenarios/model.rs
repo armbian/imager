@@ -58,6 +58,14 @@ pub enum FlashOutcome {
     VerifyMismatch,
     Unplug,
     AuthDenied,
+    /// Block flash only: the backup GPT relocation window, then success.
+    GptFinalizing,
+    /// Block flash only: relocation window, success, `[GPT_RELOCATE_SKIPPED]` warning.
+    GptRelocateSkipped,
+    /// Block flash only: relocation window, success, `[GPT_FAKE_CAPACITY]` warning.
+    GptFakeCapacity,
+    /// Block flash only: relocation window, then `[GPT_RELOCATE_FAILED]`.
+    GptRelocateFailed,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

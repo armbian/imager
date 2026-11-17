@@ -5,7 +5,7 @@ import { stagePhase, PHASE_ORDER, type FlashPhase, type FlashStage } from './Fla
 
 /** Active dot index for the current stage within the planned phases. */
 function activeIndex(stage: FlashStage, phases: FlashPhase[]): number {
-  if (stage === 'complete') return phases.length;
+  if (stage === 'complete' || stage === 'finalizing') return phases.length;
   const phase = stagePhase(stage);
   if (!phase) return 0;
   const idx = phases.indexOf(phase);

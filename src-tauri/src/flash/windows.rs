@@ -3,6 +3,7 @@
 
 //! Windows-specific flash implementation. Requires Administrator for raw disk access.
 
+use super::gpt::{DeviceGeometry, TAG_GPT_RELOCATE_SKIPPED};
 use super::verify::{
     data_mismatch_err, short_read_err, verify_cancelled_err, TAG_VERIFY_READ_FAILED,
 };
@@ -177,18 +178,142 @@ pub async fn flash_image(
 
     tracker.finish();
 
-    if verify {
+    let mut device = Some(device);
+    let verified = if verify {
         log_info!(MODULE, "Starting verification...");
-        drop(device);
+        drop(device.take());
         std::thread::sleep(std::time::Duration::from_millis(
             config::flash::UNMOUNT_DELAY_MS,
         ));
-        let device = open_device_for_read(device_path)?;
-        verify_with_sector_alignment(&mut image_file, device, state)?;
+        let reader = open_device_for_read(device_path)?;
+        verify_with_sector_alignment(&mut image_file, reader, state.clone())
+    } else {
+        Ok(())
+    };
+    if !super::may_finalize(&verified) {
+        return verified;
     }
+
+    // The volume locks are still held here; verify dropped the write handle, so reopen and re-check it.
+    let writer = match device {
+        Some(writer) => Ok((
+            writer,
+            DeviceGeometry {
+                size: opened_size,
+                sector_size: sector_size as u64,
+            },
+        )),
+        None => reopen_for_relocation(target, sector_size),
+    };
+    match writer {
+        Ok((writer, geometry)) => relocate_gpt(
+            &writer,
+            device_path,
+            &mut image_file,
+            image_size,
+            geometry,
+            &state,
+        )?,
+        Err(e) => warn_relocation_skipped(&state, e),
+    }
+    verified?;
 
     log_info!(MODULE, "Flash complete, releasing volume locks...");
     Ok(())
+}
+
+fn reopen_for_relocation(
+    target: &FlashTarget,
+    sector_size: usize,
+) -> Result<(std::fs::File, DeviceGeometry), String> {
+    let writer = open_device_for_write(target.path())?;
+    let (size, sector) = opened_device_geometry(&writer)?;
+    if size != target.size() {
+        return Err(device_changed_error(target.path(), target.size(), size));
+    }
+    if sector != sector_size as u64 {
+        return Err(format!(
+            "{:?} now reports {sector}-byte sectors, {sector_size} bytes were used for the write",
+            target.path()
+        ));
+    }
+    Ok((
+        writer,
+        DeviceGeometry {
+            size,
+            sector_size: sector,
+        },
+    ))
+}
+
+fn relocate_gpt(
+    writer: &std::fs::File,
+    device_path: &str,
+    image_file: &mut std::fs::File,
+    image_size: u64,
+    geometry: DeviceGeometry,
+    state: &FlashState,
+) -> Result<(), String> {
+    let reader = match open_device_for_read(device_path) {
+        Ok(reader) => reader,
+        Err(e) => {
+            warn_relocation_skipped(state, e);
+            return Ok(());
+        }
+    };
+    let mut dev = WindowsSectorDevice { writer, reader };
+    super::finalize_gpt(&mut dev, image_file, image_size, geometry, state)
+}
+
+fn warn_relocation_skipped(state: &FlashState, e: String) {
+    let e = tagged(TAG_GPT_RELOCATE_SKIPPED, e);
+    log_error!(MODULE, "Backup GPT not relocated: {}", e);
+    state.set_warning(Some(e));
+}
+
+/// Writes through the write-through handle; reads through a no-buffering handle so they reach the medium.
+struct WindowsSectorDevice<'a> {
+    writer: &'a std::fs::File,
+    reader: std::fs::File,
+}
+
+impl super::gpt::SectorDevice for WindowsSectorDevice<'_> {
+    fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> std::io::Result<()> {
+        use std::os::windows::fs::FileExt;
+        // FILE_FLAG_NO_BUFFERING needs a sector-aligned buffer address.
+        let mut aligned = super::AlignedBuf::new(buf.len(), config::flash::MAX_SECTOR_SIZE)?;
+        let mut done = 0;
+        while done < aligned.len() {
+            let n = self
+                .reader
+                .seek_read(&mut aligned[done..], offset + done as u64)?;
+            if n == 0 {
+                return Err(std::io::ErrorKind::UnexpectedEof.into());
+            }
+            done += n;
+        }
+        buf.copy_from_slice(&aligned);
+        Ok(())
+    }
+
+    fn write_at(&mut self, offset: u64, buf: &[u8]) -> std::io::Result<()> {
+        use std::os::windows::fs::FileExt;
+        let mut done = 0;
+        while done < buf.len() {
+            let n = self.writer.seek_write(&buf[done..], offset + done as u64)?;
+            if n == 0 {
+                return Err(std::io::ErrorKind::WriteZero.into());
+            }
+            done += n;
+        }
+        Ok(())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        let mut writer = self.writer;
+        writer.flush()?;
+        flush_device_buffers(self.writer).map_err(std::io::Error::other)
+    }
 }
 
 /// Extracts the disk number from a device path (e.g., `\\.\PhysicalDrive1` -> `1`).

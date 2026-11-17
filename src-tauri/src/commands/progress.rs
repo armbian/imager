@@ -40,6 +40,10 @@ pub struct FlashProgress {
     pub prep_stage: Option<&'static str>,
     /// A flash is waiting for the previous one to finish; every other field still describes that one
     pub is_waiting: bool,
+    /// The write is done and the backup GPT is being moved to the device end; cancel has no effect
+    pub is_finalizing: bool,
+    /// Tagged warning ([GPT_RELOCATE_SKIPPED], [GPT_FAKE_CAPACITY]) from a flash that still succeeded
+    pub warning: Option<String>,
 }
 
 /// Get current download progress
@@ -136,6 +140,8 @@ pub async fn get_flash_progress(state: State<'_, AppState>) -> Result<FlashProgr
         partitions_written,
         prep_stage: fs.prep_stage(),
         is_waiting,
+        is_finalizing: fs.is_finalizing.load(std::sync::atomic::Ordering::SeqCst),
+        warning: fs.warning(),
     })
 }
 
