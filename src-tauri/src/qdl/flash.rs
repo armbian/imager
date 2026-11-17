@@ -23,6 +23,7 @@ use qdl::{
 use xmltree::{Element, XMLNode};
 
 use super::extract::{resolve_flash_file, FIREHOSE_ELF, PATCH_XML, RAWPROGRAM_XML};
+use super::outcome::WriteFailure;
 use super::provision::ProvisionSource;
 use super::{
     QdlStorage, QDL_CANCELLED_ERROR, STAGE_COMPLETE, STAGE_CONFIGURING, STAGE_CONNECTING,
@@ -48,53 +49,52 @@ pub fn qdl_flash(
 
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
-    // Connect, upload the firehose programmer, and configure Firehose (eMMC defaults).
     let elf_path = flash_dir.join(FIREHOSE_ELF);
-    let mut device = connect_and_configure(device_path, &elf_path, QdlStorage::Emmc, &state)?;
+    let device = connect_and_configure(device_path, &elf_path, QdlStorage::Emmc, &state)?;
+    run_tar_session(device, flash_dir, extract_root, autoconfig.as_ref(), &state)
+}
 
-    // --- Autoconfig injection (still within the "configuring" stage) ---
-    // Inject first-boot preset into the extracted ext4 rootfs blob IN PLACE before Firehose reads it.
-    // Skipped silently when no profile selected or rootfs is not an injectable bare-ext4 image.
-    if let Some(cfg) = autoconfig.as_ref() {
-        check_cancelled(&state)?;
+fn run_tar_session<T: QdlReadWrite + ?Sized>(
+    mut device: QdlDevice<T>,
+    flash_dir: &Path,
+    extract_root: &Path,
+    autoconfig: Option<&crate::autoconfig::AutoconfigConfig>,
+    state: &Arc<FlashState>,
+) -> Result<(), String> {
+    // The rootfs is mutated in place before Firehose reads it; skipped when not injectable.
+    if let Some(cfg) = autoconfig {
+        check_cancelled(state)?;
         inject_autoconfig(flash_dir, extract_root, cfg)?;
     }
 
-    // --- Stage 4: Program partitions from rawprogram0.xml ---
-    check_cancelled(&state)?;
-    update_qdl_stage(&state, STAGE_FIREHOSE);
+    check_cancelled(state)?;
+    update_qdl_stage(state, STAGE_FIREHOSE);
 
-    program_from_xml(
+    let rawprogram_path = flash_dir.join(RAWPROGRAM_XML);
+    if let Err(failure) = program_from_xml(
         &mut device,
         &rawprogram_path,
         flash_dir,
         extract_root,
-        &state,
-    )?;
+        state,
+    ) {
+        if !failure.keep_armed {
+            device.reset_on_drop = false;
+        }
+        return Err(failure.message);
+    }
 
-    // --- Stage 5: Apply patches from patch0.xml ---
     let patch_path = flash_dir.join(PATCH_XML);
     if patch_path.exists() {
-        check_cancelled(&state)?;
-        update_qdl_stage(&state, STAGE_PATCHING);
+        check_cancelled(state)?;
+        update_qdl_stage(state, STAGE_PATCHING);
         log_info!("qdl::flash", "Applying patches from patch0.xml...");
         patch_from_xml(&mut device, &patch_path)?;
     }
 
-    // --- Stage 6: Reset device ---
-    update_qdl_stage(&state, STAGE_RESETTING);
-    log_info!("qdl::flash", "Resetting device...");
-
-    device.reset_on_drop = false;
-    firehose_reset(&mut device, &FirehoseResetMode::Reset, 0)
-        .map_err(|e| {
-            log_warn!("qdl::flash", "Device reset failed (non-fatal): {}", e);
-        })
-        .ok();
-
-    update_qdl_stage(&state, STAGE_COMPLETE);
+    check_cancelled_after_write(state)?;
+    reset_and_complete(&mut device, state);
     log_info!("qdl::flash", "QDL flash completed successfully");
-
     Ok(())
 }
 
@@ -112,18 +112,27 @@ pub fn qdl_flash_ufs(
 
     state.qdl.is_active.store(true, Ordering::SeqCst);
 
-    let mut device = connect_and_configure(device_path, elf_path, QdlStorage::Ufs, &state)?;
+    let device = connect_and_configure(device_path, elf_path, QdlStorage::Ufs, &state)?;
+    run_ufs_session(device, image_path, img_len, provision, &state)
+}
 
-    check_cancelled(&state)?;
-    update_qdl_stage(&state, STAGE_FIREHOSE);
+fn run_ufs_session<T: QdlReadWrite + ?Sized>(
+    mut device: QdlDevice<T>,
+    image_path: &Path,
+    img_len: u64,
+    provision: ProvisionSource,
+    state: &Arc<FlashState>,
+) -> Result<(), String> {
+    check_cancelled(state)?;
+    update_qdl_stage(state, STAGE_FIREHOSE);
 
-    let sector_size = QdlStorage::Ufs.sector_size();
+    let sector_size = device.fh_cfg.storage_sector_size;
     let num_sectors = raw_num_sectors(img_len, sector_size);
     let total_bytes = num_sectors as u64 * sector_size as u64;
     state.qdl.partitions_total.store(1, Ordering::SeqCst);
     state.total_bytes.store(total_bytes, Ordering::SeqCst);
     update_qdl_stage(
-        &state,
+        state,
         &format!("{STAGE_PARTITION_PREFIX}{UFS_PARTITION_LABEL}"),
     );
 
@@ -134,49 +143,57 @@ pub fn qdl_flash_ufs(
         num_sectors
     );
 
-    if let Err(e) = write_ufs_image(&mut device, image_path, num_sectors, &state) {
+    if let Err(failure) = write_ufs_image(&mut device, image_path, num_sectors, state) {
+        if !failure.needs_provisioning {
+            return Err(format!("Failed to write UFS image: {}", failure.message));
+        }
+        let e = failure.message;
         // A program NAK on UFS means the module has no LUN 0 (a brand-new, unprovisioned module):
         // provision it in-session, then retry the write once.
-        if e.contains("NAKed") {
-            match provision {
-                ProvisionSource::Ready(prov) => {
-                    check_cancelled(&state)?;
-                    update_qdl_stage(&state, STAGE_PROVISIONING);
-                    provision_ufs(&mut device, &prov)?;
-                    check_cancelled(&state)?;
-                    update_qdl_stage(&state, STAGE_FIREHOSE);
-                    state.written_bytes.store(0, Ordering::SeqCst);
-                    write_ufs_image(&mut device, image_path, num_sectors, &state).map_err(|e| {
-                        format!("Failed to write UFS image after provisioning: {e}")
-                    })?;
-                }
-                ProvisionSource::Absent => {
-                    return Err(format!("Failed to write UFS image: {e} The UFS module is likely unprovisioned (no LUN 0); provision it before flashing."));
-                }
-                ProvisionSource::Unavailable(reason) => {
-                    return Err(format!("Failed to write UFS image: {e} The module looks unprovisioned and auto-provisioning could not run: {reason}"));
+        match provision {
+            ProvisionSource::Ready(prov) => {
+                check_cancelled(state)?;
+                update_qdl_stage(state, STAGE_PROVISIONING);
+                provision_ufs(&mut device, &prov)?;
+                check_cancelled(state)?;
+                update_qdl_stage(state, STAGE_FIREHOSE);
+                state.written_bytes.store(0, Ordering::SeqCst);
+                if let Err(retry) = write_ufs_image(&mut device, image_path, num_sectors, state) {
+                    device.reset_on_drop = false;
+                    return Err(format!(
+                        "Failed to write UFS image after provisioning: {}",
+                        retry.message
+                    ));
                 }
             }
-        } else {
-            return Err(format!("Failed to write UFS image: {e}"));
+            ProvisionSource::Absent => {
+                return Err(format!("Failed to write UFS image: {e} The UFS module is likely unprovisioned (no LUN 0); provision it before flashing."));
+            }
+            ProvisionSource::Unavailable(reason) => {
+                return Err(format!("Failed to write UFS image: {e} The module looks unprovisioned and auto-provisioning could not run: {reason}"));
+            }
         }
     }
 
+    check_cancelled_after_write(state)?;
     state.qdl.partitions_written.store(1, Ordering::SeqCst);
     state.written_bytes.store(total_bytes, Ordering::SeqCst);
 
-    update_qdl_stage(&state, STAGE_RESETTING);
+    reset_and_complete(&mut device, state);
+    log_info!("qdl::flash", "QDL UFS flash completed successfully");
+    Ok(())
+}
+
+fn reset_and_complete<T: QdlReadWrite + ?Sized>(device: &mut QdlDevice<T>, state: &FlashState) {
+    update_qdl_stage(state, STAGE_RESETTING);
     log_info!("qdl::flash", "Resetting device...");
     device.reset_on_drop = false;
-    firehose_reset(&mut device, &FirehoseResetMode::Reset, 0)
+    firehose_reset(device, &FirehoseResetMode::Reset, 0)
         .map_err(|e| {
             log_warn!("qdl::flash", "Device reset failed (non-fatal): {}", e);
         })
         .ok();
-
-    update_qdl_stage(&state, STAGE_COMPLETE);
-    log_info!("qdl::flash", "QDL UFS flash completed successfully");
-    Ok(())
+    update_qdl_stage(state, STAGE_COMPLETE);
 }
 
 /// Sectors needed to hold `len` bytes, rounding the final partial sector up.
@@ -184,29 +201,43 @@ fn raw_num_sectors(len: u64, sector: usize) -> usize {
     len.div_ceil(sector as u64) as usize
 }
 
-/// Stream `image_path` to UFS LUN 0 sector 0. Returns the raw qdlrs error string on failure
-/// so the caller can branch on a `<program>` NAK (unprovisioned module).
-fn write_ufs_image(
-    device: &mut QdlDevice<dyn QdlReadWrite>,
+// A broken stream disarms the reset-on-drop.
+fn write_ufs_image<T: QdlReadWrite + ?Sized>(
+    device: &mut QdlDevice<T>,
     image_path: &Path,
     num_sectors: usize,
     state: &Arc<FlashState>,
-) -> Result<(), String> {
-    let file = fs::File::open(image_path).map_err(|e| format!("Failed to open image: {}", e))?;
+) -> Result<(), WriteFailure> {
+    let file = fs::File::open(image_path)
+        .map_err(|e| WriteFailure::before_write(format!("Failed to open image: {e}")))?;
     let progress_state = state.clone();
     let mut reader = ProgressReader::new(file, state.clone(), move |bytes_transferred| {
         progress_state
             .written_bytes
             .store(bytes_transferred, Ordering::SeqCst);
     });
-    firehose_program_storage(device, &mut reader, "system", num_sectors, 0, 0, "0")
-        .map_err(|e| e.to_string())
+    firehose_program_storage(
+        device,
+        &mut reader,
+        UFS_PARTITION_LABEL,
+        num_sectors,
+        0,
+        0,
+        "0",
+    )
+    .map_err(|e| {
+        let failure = WriteFailure::classify(e.as_ref());
+        if !failure.keep_armed {
+            device.reset_on_drop = false;
+        }
+        failure
+    })
 }
 
 /// Provision a blank UFS module in the current session from the qcombin `<ufs>` descriptor.
 /// Configures with SkipStorageInit (a blank module has no LUN to init), sends each `<ufs>`
 /// command, then re-initialises storage so the new LUN 0 is writable.
-fn provision_ufs(device: &mut QdlDevice<dyn QdlReadWrite>, xml_path: &Path) -> Result<(), String> {
+fn provision_ufs<C: QdlChan>(device: &mut C, xml_path: &Path) -> Result<(), String> {
     let commands = super::provision::parse_ufs_commands(xml_path)?;
     log_info!(
         "qdl::flash",
@@ -565,7 +596,7 @@ fn program_from_xml<T: QdlChan>(
     flash_dir: &Path,
     extract_root: &Path,
     state: &Arc<FlashState>,
-) -> Result<(), String> {
+) -> Result<(), WriteFailure> {
     let xml = parse_xml(xml_path)?;
 
     // Pre-count real program entries to size the progress total.
@@ -651,7 +682,7 @@ fn program_single_partition<T: QdlChan>(
     state: &Arc<FlashState>,
     bytes_written: &mut u64,
     partition_idx: &mut u64,
-) -> Result<(), String> {
+) -> Result<(), WriteFailure> {
     let filename = attrs.get("filename").map(|s| s.as_str()).unwrap_or("");
     let label = attrs.get("label").map(|s| s.as_str()).unwrap_or("");
     let num_sectors: usize = attrs
@@ -715,7 +746,6 @@ fn program_single_partition<T: QdlChan>(
         .map_err(|e| format!("Failed to seek in {}: {}", filename, e))?;
     }
 
-    // Wrap file in ProgressReader for real-time progress and mid-partition cancellation
     let base_bytes = *bytes_written;
     let progress_state = state.clone();
     let cancel_state = state.clone();
@@ -734,7 +764,16 @@ fn program_single_partition<T: QdlChan>(
         phys_part_idx,
         start_sector,
     )
-    .map_err(|e| format!("Failed to program partition {}: {}", display_label, e))?;
+    .map_err(|e| {
+        let failure = WriteFailure::classify(e.as_ref());
+        WriteFailure {
+            message: format!(
+                "Failed to program partition {display_label}: {}",
+                failure.message
+            ),
+            ..failure
+        }
+    })?;
 
     // Settle progress on the sector-count figure, matching the total_bytes math.
     *bytes_written += num_sectors as u64 * sector_size as u64;
@@ -831,8 +870,20 @@ pub(crate) fn check_cancelled(state: &FlashState) -> Result<(), String> {
     }
 }
 
-/// Read wrapper reporting progress and aborting on cancellation; counts requested
-/// buffer size (not bytes returned) so progress matches the sector-based totals.
+// A cancel after the last byte skips the normal reset: the drop sends the board back to EDL.
+fn check_cancelled_after_write(state: &FlashState) -> Result<(), String> {
+    if state.is_cancelled.load(Ordering::SeqCst) {
+        log_info!(
+            "qdl::flash",
+            "Operation cancelled by user after the image was fully written; the board is left in EDL"
+        );
+        Err(QDL_CANCELLED_ERROR.to_string())
+    } else {
+        Ok(())
+    }
+}
+
+// Fills the whole buffer: qdlrs sends every chunk at full size and ignores the returned count.
 struct ProgressReader<R: Read, F: FnMut(u64)> {
     inner: R,
     bytes_transferred: u64,
@@ -853,17 +904,27 @@ impl<R: Read, F: FnMut(u64)> ProgressReader<R, F> {
 
 impl<R: Read, F: FnMut(u64)> Read for ProgressReader<R, F> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        // Per-chunk cancellation check keeps cancel responsive mid-partition.
-        if self.state.is_cancelled.load(Ordering::SeqCst) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Interrupted,
-                "Operation cancelled by user",
-            ));
+        let mut filled = 0;
+        while filled < buf.len() {
+            if self.state.is_cancelled.load(Ordering::SeqCst) {
+                return Err(std::io::Error::other(QDL_CANCELLED_ERROR));
+            }
+            match self.inner.read(&mut buf[filled..]) {
+                Ok(0) => break,
+                Ok(n) => filled += n,
+                Err(e) if e.kind() == std::io::ErrorKind::Interrupted => continue,
+                Err(e) => return Err(e),
+            }
         }
-        let n = self.inner.read(buf)?;
+        // Progress counts what qdlrs sends per chunk, matching the sector-based totals.
         self.bytes_transferred += buf.len() as u64;
         (self.on_progress)(self.bytes_transferred);
-        Ok(n)
+        if filled == 0 {
+            return Ok(0);
+        }
+        // Zero padding only after EOF, the same bytes qdlrs sends from its zeroed buffer.
+        buf[filled..].fill(0);
+        Ok(buf.len())
     }
 }
 
@@ -1038,5 +1099,637 @@ mod tests {
         assert_eq!(raw_num_sectors(4097, 4096), 2);
         assert_eq!(raw_num_sectors(8192, 4096), 2);
         assert_eq!(raw_num_sectors(512, 512), 1);
+    }
+
+    mod session {
+        use super::super::super::outcome::settle;
+        use super::super::super::{
+            QDLRS_PROGRAM_NAK, QDLRS_RECEIVE_DATA, QDLRS_SEND_DATA, QDLRS_SEND_ZLP,
+            QDLRS_WRITE_OP_NAK, SECTOR_SIZE_EMMC, SECTOR_SIZE_UFS, TAG_QDL_DISCONNECTED,
+        };
+        use super::*;
+        use std::collections::VecDeque;
+        use std::io::{self, BufRead, Write};
+        use std::sync::Mutex;
+
+        type WriteLog = Arc<Mutex<Vec<Vec<u8>>>>;
+
+        const ACK: &[u8] =
+            br#"<?xml version="1.0" encoding="UTF-8" ?><data><response value="ACK" /></data>"#;
+        const NAK: &[u8] =
+            br#"<?xml version="1.0" encoding="UTF-8" ?><data><response value="NAK" /></data>"#;
+        const UFS_CHUNK: usize = 2 * SECTOR_SIZE_UFS;
+        const EMMC_CHUNK: usize = 2 * SECTOR_SIZE_EMMC;
+        const RESET_TO_EDL: &str = r#"<power value="reset_to_edl""#;
+        const NORMAL_RESET: &str = r#"<power value="reset""#;
+
+        /// Scripted EDL endpoint: one XML reply per Firehose read, TimedOut once the script ends.
+        struct MockUsb {
+            replies: VecDeque<Vec<u8>>,
+            current: Vec<u8>,
+            pos: usize,
+            log: WriteLog,
+            writes: usize,
+            fail_write: Option<(usize, io::ErrorKind)>,
+            cancel_on_write: Option<(usize, Arc<FlashState>)>,
+            served: usize,
+            cancel_on_reply: Option<(usize, Arc<FlashState>)>,
+        }
+
+        impl MockUsb {
+            fn new(replies: &[&[u8]], log: &WriteLog) -> Self {
+                Self {
+                    replies: replies.iter().map(|r| r.to_vec()).collect(),
+                    current: Vec::new(),
+                    pos: 0,
+                    log: log.clone(),
+                    writes: 0,
+                    fail_write: None,
+                    cancel_on_write: None,
+                    served: 0,
+                    cancel_on_reply: None,
+                }
+            }
+
+            fn cancel_on_reply(mut self, index: usize, state: &Arc<FlashState>) -> Self {
+                self.cancel_on_reply = Some((index, state.clone()));
+                self
+            }
+
+            fn fail_write(mut self, index: usize, kind: io::ErrorKind) -> Self {
+                self.fail_write = Some((index, kind));
+                self
+            }
+
+            fn cancel_on_write(mut self, index: usize, state: &Arc<FlashState>) -> Self {
+                self.cancel_on_write = Some((index, state.clone()));
+                self
+            }
+        }
+
+        impl Write for MockUsb {
+            fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+                let index = self.writes;
+                self.writes += 1;
+                if let Some((at, kind)) = self.fail_write {
+                    if at == index {
+                        return Err(io::Error::new(kind, "mock write failure"));
+                    }
+                }
+                self.log.lock().unwrap().push(buf.to_vec());
+                if let Some((at, state)) = &self.cancel_on_write {
+                    if *at == index {
+                        state.is_cancelled.store(true, Ordering::SeqCst);
+                    }
+                }
+                Ok(buf.len())
+            }
+
+            fn flush(&mut self) -> io::Result<()> {
+                Ok(())
+            }
+        }
+
+        impl Read for MockUsb {
+            fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
+                let available = self.fill_buf()?;
+                let n = available.len().min(out.len());
+                out[..n].copy_from_slice(&available[..n]);
+                self.consume(n);
+                Ok(n)
+            }
+        }
+
+        impl BufRead for MockUsb {
+            fn fill_buf(&mut self) -> io::Result<&[u8]> {
+                if self.pos >= self.current.len() {
+                    let Some(next) = self.replies.pop_front() else {
+                        return Err(io::Error::new(io::ErrorKind::TimedOut, "mock timeout"));
+                    };
+                    self.current = next;
+                    self.pos = 0;
+                    if let Some((at, state)) = &self.cancel_on_reply {
+                        if *at == self.served {
+                            state.is_cancelled.store(true, Ordering::SeqCst);
+                        }
+                    }
+                    self.served += 1;
+                }
+                Ok(&self.current[self.pos..])
+            }
+
+            fn consume(&mut self, amt: usize) {
+                self.pos = (self.pos + amt).min(self.current.len());
+            }
+        }
+
+        impl QdlReadWrite for MockUsb {}
+
+        fn device(mock: MockUsb, storage: QdlStorage, chunk: usize) -> QdlDevice<dyn QdlReadWrite> {
+            QdlDevice {
+                rw: Box::new(mock),
+                fh_cfg: FirehoseConfiguration {
+                    storage_type: storage.firehose_type(),
+                    storage_sector_size: storage.sector_size(),
+                    send_buffer_size: chunk,
+                    bypass_storage: false,
+                    backend: QdlBackend::Usb,
+                    skip_firehose_log: true,
+                    verbose_firehose: false,
+                    ..Default::default()
+                },
+                reset_on_drop: true,
+            }
+        }
+
+        fn count(log: &WriteLog, needle: &str) -> usize {
+            log.lock()
+                .unwrap()
+                .iter()
+                .filter(|w| w.windows(needle.len()).any(|win| win == needle.as_bytes()))
+                .count()
+        }
+
+        fn writes(log: &WriteLog) -> usize {
+            log.lock().unwrap().len()
+        }
+
+        fn stage(state: &FlashState) -> String {
+            state.qdl.stage.lock().unwrap().clone()
+        }
+
+        fn pattern(len: usize) -> Vec<u8> {
+            (0..len).map(|i| (i % 251) as u8).collect()
+        }
+
+        struct Ufs {
+            _dir: tempfile::TempDir,
+            image: PathBuf,
+            image_bytes: Vec<u8>,
+            provision: PathBuf,
+            log: WriteLog,
+            state: Arc<FlashState>,
+        }
+
+        // 18000 bytes = 5 UFS sectors: writes are #0 program, #1-#3 chunks, #4 ZLP.
+        fn ufs() -> Ufs {
+            let dir = tempfile::tempdir().unwrap();
+            let image = dir.path().join("image.img");
+            let image_bytes = pattern(18_000);
+            fs::write(&image, &image_bytes).unwrap();
+            let provision = dir.path().join("provision.xml");
+            fs::write(
+                &provision,
+                r#"<?xml version="1.0" ?><data><ufs bNumberLU="1" LUNum="0" commit="false"/><ufs LUNum="0" size_in_kb="0" commit="true"/></data>"#,
+            )
+            .unwrap();
+            Ufs {
+                _dir: dir,
+                image,
+                image_bytes,
+                provision,
+                log: Arc::new(Mutex::new(Vec::new())),
+                state: Arc::new(FlashState::new()),
+            }
+        }
+
+        impl Ufs {
+            fn mock(&self, replies: &[&[u8]]) -> MockUsb {
+                MockUsb::new(replies, &self.log)
+            }
+
+            fn run(&self, mock: MockUsb, ready: bool) -> Result<(), String> {
+                let provision = if ready {
+                    ProvisionSource::Ready(self.provision.clone())
+                } else {
+                    ProvisionSource::Absent
+                };
+                run_ufs_session(
+                    device(mock, QdlStorage::Ufs, UFS_CHUNK),
+                    &self.image,
+                    self.image_bytes.len() as u64,
+                    provision,
+                    &self.state,
+                )
+            }
+
+            fn writing_stage(&self) -> String {
+                format!("{STAGE_PARTITION_PREFIX}{UFS_PARTITION_LABEL}")
+            }
+        }
+
+        #[test]
+        fn a_cancel_mid_stream_stops_the_write_and_disarms() {
+            let rig = ufs();
+            let mock = rig.mock(&[ACK]).cancel_on_write(1, &rig.state);
+            let result = rig.run(mock, true);
+
+            assert!(result.is_err());
+            let cancelled = rig.state.is_cancelled.load(Ordering::SeqCst);
+            assert!(cancelled);
+            assert_eq!(
+                settle(result, cancelled),
+                Err(QDL_CANCELLED_ERROR.to_string())
+            );
+            let log = rig.log.lock().unwrap().clone();
+            assert_eq!(log.len(), 2, "program XML and the first chunk only");
+            assert!(String::from_utf8_lossy(&log[0]).contains("<program"));
+            assert_eq!(log[1], rig.image_bytes[..UFS_CHUNK]);
+            assert_eq!(count(&rig.log, "<power"), 0);
+            assert_eq!(stage(&rig.state), rig.writing_stage());
+        }
+
+        #[test]
+        fn a_failed_data_chunk_sends_nothing_more_and_never_provisions() {
+            for kind in [
+                io::ErrorKind::ConnectionAborted,
+                io::ErrorKind::Interrupted,
+                io::ErrorKind::TimedOut,
+                io::ErrorKind::Other,
+            ] {
+                let rig = ufs();
+                let mock = rig.mock(&[ACK, ACK, ACK]).fail_write(2, kind);
+                let err = rig.run(mock, true).unwrap_err();
+
+                assert_eq!(writes(&rig.log), 2, "{kind:?}");
+                assert_eq!(count(&rig.log, "<power"), 0, "{kind:?}");
+                assert_eq!(count(&rig.log, "<ufs"), 0, "{kind:?}");
+                assert_eq!(count(&rig.log, "<configure"), 0, "{kind:?}");
+                assert_eq!(stage(&rig.state), rig.writing_stage(), "{kind:?}");
+                assert!(err.contains(QDLRS_SEND_DATA), "{err}");
+                assert!(err.contains(TAG_QDL_DISCONNECTED), "{err}");
+                assert!(!err.contains(QDL_CANCELLED_ERROR), "{err}");
+            }
+        }
+
+        #[test]
+        fn a_failed_zlp_is_a_disconnect_and_disarms() {
+            let rig = ufs();
+            let mock = rig
+                .mock(&[ACK, ACK, ACK])
+                .fail_write(4, io::ErrorKind::Other);
+            let err = rig.run(mock, true).unwrap_err();
+
+            assert!(
+                err.contains(&format!("{TAG_QDL_DISCONNECTED} {QDLRS_SEND_ZLP}")),
+                "{err}"
+            );
+            assert_eq!(writes(&rig.log), 4);
+            assert_eq!(count(&rig.log, "<power"), 0);
+        }
+
+        #[test]
+        fn a_program_nak_provisions_then_writes_again() {
+            let rig = ufs();
+            let mock = rig.mock(&[NAK, ACK, ACK, ACK, ACK, ACK, ACK, ACK]);
+            rig.run(mock, true).unwrap();
+
+            assert_eq!(count(&rig.log, "<ufs "), 2);
+            assert_eq!(count(&rig.log, "<configure"), 2);
+            assert_eq!(count(&rig.log, "<program"), 2);
+            let log = rig.log.lock().unwrap().clone();
+            let first_ufs = log
+                .iter()
+                .position(|w| w.windows(5).any(|x| x == b"<ufs "))
+                .unwrap();
+            let last_program = log
+                .iter()
+                .rposition(|w| w.windows(8).any(|x| x == b"<program"))
+                .unwrap();
+            assert!(first_ufs < last_program);
+            assert_eq!(stage(&rig.state), STAGE_COMPLETE);
+        }
+
+        #[test]
+        fn a_cancel_at_the_program_nak_never_provisions() {
+            let rig = ufs();
+            let mock = rig
+                .mock(&[NAK, ACK, ACK, ACK, ACK, ACK, ACK, ACK])
+                .cancel_on_reply(0, &rig.state);
+            let err = rig.run(mock, true).unwrap_err();
+
+            assert_eq!(err, QDL_CANCELLED_ERROR);
+            assert_eq!(count(&rig.log, "<ufs"), 0);
+            assert_eq!(count(&rig.log, "<configure"), 0);
+            assert_eq!(stage(&rig.state), rig.writing_stage());
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 1);
+            assert_eq!(count(&rig.log, "<power"), 1);
+        }
+
+        #[test]
+        fn a_program_nak_without_a_descriptor_reports_unprovisioned_and_resets_to_edl() {
+            let rig = ufs();
+            let err = rig.run(rig.mock(&[NAK]), false).unwrap_err();
+
+            assert!(err.contains(QDLRS_PROGRAM_NAK), "{err}");
+            assert!(err.contains("unprovisioned"), "{err}");
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 1);
+            assert_eq!(count(&rig.log, "<power"), 1);
+            assert_eq!(writes(&rig.log), 2);
+        }
+
+        #[test]
+        fn an_end_of_write_nak_keeps_the_device_armed() {
+            let rig = ufs();
+            let err = rig.run(rig.mock(&[ACK, NAK, ACK]), true).unwrap_err();
+
+            assert!(err.contains(QDLRS_WRITE_OP_NAK), "{err}");
+            assert!(!err.contains(TAG_QDL_DISCONNECTED), "{err}");
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 1);
+            assert_eq!(count(&rig.log, "<power"), 1);
+            assert_eq!(count(&rig.log, "<ufs"), 0);
+        }
+
+        #[test]
+        fn a_failure_in_the_write_after_provisioning_disarms() {
+            // Writes: #0 program (NAK), #1-#4 provisioning, #5 program, #6 first chunk.
+            let rig = ufs();
+            let mock = rig
+                .mock(&[NAK, ACK, ACK, ACK, ACK, ACK])
+                .fail_write(6, io::ErrorKind::ConnectionAborted);
+            let err = rig.run(mock, true).unwrap_err();
+            assert!(err.contains("after provisioning"), "{err}");
+            assert!(err.contains(TAG_QDL_DISCONNECTED), "{err}");
+            assert_eq!(count(&rig.log, "<power"), 0);
+            assert_eq!(writes(&rig.log), 6);
+
+            let rig = ufs();
+            let err = rig
+                .run(rig.mock(&[NAK, ACK, ACK, ACK, ACK, NAK, ACK]), true)
+                .unwrap_err();
+            assert!(err.contains("after provisioning"), "{err}");
+            assert_eq!(count(&rig.log, "<ufs "), 2, "no second provisioning");
+            assert_eq!(count(&rig.log, "<program"), 2);
+            assert_eq!(count(&rig.log, "<power"), 0);
+        }
+
+        #[test]
+        fn a_completed_write_resets_and_completes() {
+            let rig = ufs();
+            rig.run(rig.mock(&[ACK, ACK, ACK]), true).unwrap();
+
+            let log = rig.log.lock().unwrap().clone();
+            let sent: Vec<u8> = log[1..4].concat();
+            let mut expected = rig.image_bytes.clone();
+            expected.resize(5 * SECTOR_SIZE_UFS, 0);
+            assert_eq!(sent, expected);
+            assert!(log[4].is_empty(), "ZLP");
+            assert_eq!(count(&rig.log, NORMAL_RESET), 1);
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 0);
+            assert_eq!(stage(&rig.state), STAGE_COMPLETE);
+            assert_eq!(
+                rig.state.written_bytes.load(Ordering::SeqCst),
+                expected.len() as u64
+            );
+        }
+
+        #[test]
+        fn a_cancel_after_the_last_chunk_leaves_the_board_in_edl() {
+            let rig = ufs();
+            let mock = rig.mock(&[ACK, ACK, ACK]).cancel_on_write(4, &rig.state);
+            let err = rig.run(mock, true).unwrap_err();
+
+            assert_eq!(err, QDL_CANCELLED_ERROR);
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 1);
+            assert_eq!(count(&rig.log, NORMAL_RESET), 0);
+            assert_ne!(stage(&rig.state), STAGE_COMPLETE);
+            assert_ne!(stage(&rig.state), STAGE_RESETTING);
+        }
+
+        struct Tar {
+            _dir: tempfile::TempDir,
+            root: PathBuf,
+            flash_dir: PathBuf,
+            log: WriteLog,
+            state: Arc<FlashState>,
+        }
+
+        // Each 2048-byte partition at 512-byte sectors: program, two chunks, ZLP (#0-#3 for the first).
+        fn tar(file: &str, with_patch: bool) -> Tar {
+            tar_with(&[(file, "boot")], with_patch)
+        }
+
+        fn tar_with(partitions: &[(&str, &str)], with_patch: bool) -> Tar {
+            let dir = tempfile::tempdir().unwrap();
+            let root = super::super::super::extract::extraction_dir(dir.path());
+            let flash_dir = root.join("flash");
+            fs::create_dir_all(&flash_dir).unwrap();
+            fs::write(flash_dir.join("boot.bin"), pattern(2048)).unwrap();
+            fs::write(flash_dir.join("second.bin"), pattern(2048)).unwrap();
+            let programs: String = partitions
+                .iter()
+                .map(|(file, label)| {
+                    format!(
+                        r#"<program SECTOR_SIZE_IN_BYTES="512" filename="{file}" label="{label}" num_partition_sectors="4" physical_partition_number="0" start_sector="0"/>"#
+                    )
+                })
+                .collect();
+            fs::write(
+                flash_dir.join(RAWPROGRAM_XML),
+                format!(r#"<?xml version="1.0" ?><data>{programs}</data>"#),
+            )
+            .unwrap();
+            if with_patch {
+                fs::write(
+                    flash_dir.join(PATCH_XML),
+                    r#"<?xml version="1.0" ?><data><patch SECTOR_SIZE_IN_BYTES="512" byte_offset="0" filename="DISK" physical_partition_number="0" size_in_bytes="8" start_sector="0" value="0"/></data>"#,
+                )
+                .unwrap();
+            }
+            Tar {
+                _dir: dir,
+                root,
+                flash_dir,
+                log: Arc::new(Mutex::new(Vec::new())),
+                state: Arc::new(FlashState::new()),
+            }
+        }
+
+        impl Tar {
+            fn run(&self, mock: MockUsb) -> Result<(), String> {
+                run_tar_session(
+                    device(mock, QdlStorage::Emmc, EMMC_CHUNK),
+                    &self.flash_dir,
+                    &self.root,
+                    None,
+                    &self.state,
+                )
+            }
+        }
+
+        #[test]
+        fn a_tar_partition_write_error_disarms() {
+            let rig = tar("boot.bin", true);
+            let mock = MockUsb::new(&[ACK, ACK, ACK], &rig.log)
+                .fail_write(1, io::ErrorKind::ConnectionAborted);
+            let err = rig.run(mock).unwrap_err();
+
+            assert!(err.starts_with("Failed to program partition boot"), "{err}");
+            assert!(err.contains(TAG_QDL_DISCONNECTED), "{err}");
+            assert_eq!(writes(&rig.log), 1);
+            assert_eq!(count(&rig.log, "<patch"), 0);
+            assert_eq!(count(&rig.log, "<power"), 0);
+        }
+
+        #[cfg(unix)]
+        #[test]
+        fn a_tar_open_failure_before_any_data_keeps_the_device_armed() {
+            // open(2) refuses a socket for root too, unlike a permission bit.
+            let rig = tar("boot.sock", true);
+            let _socket =
+                std::os::unix::net::UnixListener::bind(rig.flash_dir.join("boot.sock")).unwrap();
+            let err = rig.run(MockUsb::new(&[], &rig.log)).unwrap_err();
+
+            assert!(err.starts_with("Failed to open boot.sock"), "{err}");
+            assert_eq!(count(&rig.log, "<program"), 0);
+            assert_eq!(count(&rig.log, "<patch"), 0);
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 1);
+        }
+
+        #[test]
+        fn a_tar_missing_file_is_skipped_without_sending_data() {
+            let rig = tar("absent.bin", false);
+            rig.run(MockUsb::new(&[ACK], &rig.log)).unwrap();
+
+            assert_eq!(count(&rig.log, "<program"), 0);
+            assert_eq!(count(&rig.log, NORMAL_RESET), 1);
+            assert_eq!(stage(&rig.state), STAGE_COMPLETE);
+        }
+
+        #[test]
+        fn a_tar_cancel_after_the_last_partition_leaves_the_board_in_edl() {
+            let rig = tar("boot.bin", false);
+            let mock = MockUsb::new(&[ACK, ACK, ACK], &rig.log).cancel_on_write(3, &rig.state);
+            let err = rig.run(mock).unwrap_err();
+
+            assert_eq!(err, QDL_CANCELLED_ERROR);
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 1);
+            assert_eq!(count(&rig.log, NORMAL_RESET), 0);
+            assert_ne!(stage(&rig.state), STAGE_RESETTING);
+        }
+
+        #[test]
+        fn a_tar_program_nak_never_provisions_and_resets_to_edl() {
+            let rig = tar("boot.bin", true);
+            let err = rig.run(MockUsb::new(&[NAK], &rig.log)).unwrap_err();
+
+            assert!(err.starts_with("Failed to program partition boot"), "{err}");
+            assert!(err.contains(QDLRS_PROGRAM_NAK), "{err}");
+            assert_eq!(count(&rig.log, "<ufs"), 0);
+            assert_eq!(count(&rig.log, "<patch"), 0);
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 1);
+            assert_eq!(count(&rig.log, "<power"), 1);
+        }
+
+        #[test]
+        fn a_tar_cancel_between_partitions_never_starts_the_next_one() {
+            let rig = tar_with(&[("boot.bin", "boot"), ("second.bin", "second")], true);
+            let mock = MockUsb::new(&[ACK, ACK, ACK, ACK], &rig.log).cancel_on_write(3, &rig.state);
+            let err = rig.run(mock).unwrap_err();
+
+            assert_eq!(err, QDL_CANCELLED_ERROR);
+            assert_eq!(count(&rig.log, "<program"), 1);
+            assert_eq!(count(&rig.log, r#"label="second""#), 0);
+            assert_eq!(count(&rig.log, "<patch"), 0);
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 1);
+            assert_eq!(count(&rig.log, NORMAL_RESET), 0);
+            assert_ne!(stage(&rig.state), STAGE_COMPLETE);
+        }
+
+        #[test]
+        fn a_tar_patch_nak_stops_before_the_normal_reset() {
+            // Replies: program ACK, end-of-write ACK, patch NAK, ACK to the reset qdlrs sends on that NAK.
+            let rig = tar("boot.bin", true);
+            let err = rig
+                .run(MockUsb::new(&[ACK, ACK, NAK, ACK], &rig.log))
+                .unwrap_err();
+
+            assert!(err.starts_with("Patch command failed"), "{err}");
+            assert_eq!(count(&rig.log, "<patch"), 1);
+            assert_eq!(count(&rig.log, NORMAL_RESET), 0);
+            assert_eq!(stage(&rig.state), STAGE_PATCHING);
+            // One reset_to_edl from qdlrs on the NAK, one from the still-armed drop.
+            assert_eq!(count(&rig.log, RESET_TO_EDL), 2);
+        }
+
+        #[test]
+        fn the_receive_fragment_matches_the_crate_panic_text() {
+            let log: WriteLog = Arc::new(Mutex::new(Vec::new()));
+            let mut dev = device(MockUsb::new(&[ACK], &log), QdlStorage::Ufs, UFS_CHUNK);
+            dev.reset_on_drop = false;
+            let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(move || {
+                let _ = qdl::firehose_read_storage(&mut dev, &mut io::sink(), 1, 0, 0, 0);
+            }))
+            .unwrap_err();
+            let text = panic.downcast_ref::<String>().cloned().unwrap_or_default();
+            assert!(text.starts_with(QDLRS_RECEIVE_DATA), "{text}");
+            assert!(super::super::super::outcome::is_disconnect_panic(&text));
+        }
+
+        /// Hands out at most 3 bytes per call and an Interrupted error every fourth call.
+        struct ShortReader {
+            data: Vec<u8>,
+            pos: usize,
+            calls: usize,
+        }
+
+        impl Read for ShortReader {
+            fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+                self.calls += 1;
+                if self.calls.is_multiple_of(4) {
+                    return Err(io::Error::new(io::ErrorKind::Interrupted, "retry"));
+                }
+                let n = buf.len().min(3).min(self.data.len() - self.pos);
+                buf[..n].copy_from_slice(&self.data[self.pos..self.pos + n]);
+                self.pos += n;
+                Ok(n)
+            }
+        }
+
+        #[test]
+        fn short_reads_never_leave_a_gap_and_pad_only_after_eof() {
+            let source = pattern(10_000);
+            let state = Arc::new(FlashState::new());
+            let progress = Arc::new(std::sync::atomic::AtomicU64::new(0));
+            let seen = progress.clone();
+            let inner = ShortReader {
+                data: source.clone(),
+                pos: 0,
+                calls: 0,
+            };
+            let mut reader = ProgressReader::new(inner, state, move |n| {
+                seen.store(n, Ordering::SeqCst);
+            });
+
+            // Same shape as qdlrs: a fresh zeroed buffer per chunk, count ignored.
+            let mut out = Vec::new();
+            for _ in 0..3 {
+                let mut buf = vec![0u8; SECTOR_SIZE_UFS];
+                let _ = reader.read(&mut buf).unwrap();
+                out.extend_from_slice(&buf);
+            }
+            let mut expected = source;
+            expected.resize(3 * SECTOR_SIZE_UFS, 0);
+            assert_eq!(out, expected);
+            assert_eq!(progress.load(Ordering::SeqCst), out.len() as u64);
+
+            let mut buf = vec![0u8; SECTOR_SIZE_UFS];
+            assert_eq!(reader.read(&mut buf).unwrap(), 0);
+        }
+
+        #[test]
+        fn a_cancelled_reader_fails_with_the_cancel_text_not_interrupted() {
+            let state = Arc::new(FlashState::new());
+            state.is_cancelled.store(true, Ordering::SeqCst);
+            let inner = ShortReader {
+                data: pattern(64),
+                pos: 0,
+                calls: 3,
+            };
+            let mut reader = ProgressReader::new(inner, state, |_| {});
+            let err = reader.read(&mut [0u8; 16]).unwrap_err();
+            assert_eq!(err.to_string(), QDL_CANCELLED_ERROR);
+            assert_ne!(err.kind(), io::ErrorKind::Interrupted);
+        }
     }
 }

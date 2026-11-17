@@ -9,6 +9,7 @@ pub mod detect;
 pub mod extract;
 pub mod flash;
 pub mod loader;
+pub mod outcome;
 pub mod provision;
 pub mod registry;
 
@@ -29,10 +30,16 @@ pub const QDL_PATH_PREFIX: &str = "qdl://";
 pub const TAG_QDL_DEVICE_NOT_FOUND: &str = "[QDL_DEVICE_NOT_FOUND]";
 pub const TAG_QDL_MULTIPLE_DEVICES: &str = "[QDL_MULTIPLE_DEVICES]";
 pub const TAG_QDL_DISCONNECTED: &str = "[QDL_DISCONNECTED]";
-pub const TAG_QDL_CANCELLED: &str = "[QDL_CANCELLED]";
 pub const TAG_QDL_ERROR: &str = "[QDL_ERROR]";
 
 pub const QDL_CANCELLED_ERROR: &str = "QDL flash cancelled by user";
+
+// Mirror error text of the pinned qdl crate; the flash.rs mock-device tests fail if it drifts.
+pub const QDLRS_PROGRAM_NAK: &str = "<program> was NAKed";
+pub const QDLRS_WRITE_OP_NAK: &str = "Failed to complete 'write' op";
+pub const QDLRS_SEND_DATA: &str = "Error sending data";
+pub const QDLRS_SEND_ZLP: &str = "Error sending ZLP";
+pub const QDLRS_RECEIVE_DATA: &str = "Error receiving data";
 
 /// `FlashState.qdl.stage` values; twin of QDL_STAGE in src/config/constants.ts.
 pub const STAGE_CONNECTING: &str = "connecting";

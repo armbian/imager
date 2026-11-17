@@ -4,27 +4,59 @@
 //! Tauri command handlers for QDL (Qualcomm EDL) device detection and flashing.
 
 use std::path::PathBuf;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
 use tauri::State;
 
 use crate::autoconfig::{prepare_flash_copy, PrepError};
 use crate::flash::{reject_simulated, FlashSession, FlashState, SessionRefusal};
 use crate::qdl;
+use crate::qdl::outcome::{is_disconnect_panic, settle};
 use crate::qdl::QdlDevice;
 use crate::utils::{autoconfig_temp_dir, ensure_regular_nonempty, qdl_temp_dir};
 use crate::{log_error, log_info, log_warn};
 
 use super::state::AppState;
 
-/// Tag error codes so the frontend can map them to i18n keys.
+/// Tag a panicked flash task so the frontend can map it to an i18n key; a cancel is decided by `settle`.
 fn tag_join_error(e: tokio::task::JoinError) -> String {
     let msg = e.to_string();
-    if msg.contains("Error sending data") || msg.contains("Error receiving data") {
+    if is_disconnect_panic(&msg) {
         qdl::TAG_QDL_DISCONNECTED.to_string()
-    } else if msg.contains("cancelled") || msg.contains("Interrupted") {
-        qdl::TAG_QDL_CANCELLED.to_string()
     } else {
         format!("{} {}", qdl::TAG_QDL_ERROR, msg)
     }
+}
+
+fn settle_join_error(e: tokio::task::JoinError, flash_state: &FlashState) -> Result<(), String> {
+    settle(
+        Err(tag_join_error(e)),
+        flash_state.is_cancelled.load(Ordering::SeqCst),
+    )
+}
+
+// qdlrs is synchronous, so the flash runs off the async runtime.
+async fn run_flash_task<C, F>(
+    session: FlashSession,
+    cleanup: C,
+    flash_state: Arc<FlashState>,
+    flash: F,
+) -> Result<(), String>
+where
+    C: Send + 'static,
+    F: FnOnce(Arc<FlashState>) -> Result<(), String> + Send + 'static,
+{
+    let join_state = flash_state.clone();
+    tokio::task::spawn_blocking(move || {
+        let _session = session;
+        // Dropped before the session, panics included: the next flash may reuse what it holds.
+        let _cleanup = cleanup;
+        let result = flash(flash_state.clone());
+        // Read while the session is held: a Retry clears the flag once the slot frees.
+        settle(result, flash_state.is_cancelled.load(Ordering::SeqCst))
+    })
+    .await
+    .unwrap_or_else(|e| settle_join_error(e, &join_state))
 }
 
 struct ExtractionCleanup(PathBuf);
@@ -121,23 +153,13 @@ pub async fn flash_qdl_image(
         flash_dir.display()
     );
 
-    // qdlrs is synchronous, so run the flash off the async runtime.
-    let flash_dir_clone = flash_dir.clone();
     let extract_root = qdl::extract::extraction_dir(&extract_dir);
-    let result = tokio::task::spawn_blocking(move || {
-        let _session = session;
-        // Dropped before the session, panics included: the next flash extracts into the same directory.
-        let _extraction = ExtractionCleanup(extract_dir);
-        qdl::flash::qdl_flash(
-            &flash_dir_clone,
-            &extract_root,
-            &device_path,
-            autoconfig,
-            flash_state,
-        )
+    // The next flash extracts into the same directory.
+    let extraction = ExtractionCleanup(extract_dir);
+    let result = run_flash_task(session, extraction, flash_state, move |state| {
+        qdl::flash::qdl_flash(&flash_dir, &extract_root, &device_path, autoconfig, state)
     })
-    .await
-    .map_err(tag_join_error)?;
+    .await;
 
     match &result {
         Ok(()) => {
@@ -242,19 +264,10 @@ pub async fn flash_qdl_ufs_image(
         .as_ref()
         .map_or(image_path, |copy| copy.path().to_path_buf());
 
-    // qdlrs is synchronous, so run the flash off the async runtime.
-    let result = tokio::task::spawn_blocking(move || {
-        let _session = session;
-        qdl::flash::qdl_flash_ufs(
-            &write_path,
-            &loader_path,
-            &device_path,
-            provision,
-            flash_state,
-        )
+    let result = run_flash_task(session, (), flash_state, move |state| {
+        qdl::flash::qdl_flash_ufs(&write_path, &loader_path, &device_path, provision, state)
     })
-    .await
-    .map_err(tag_join_error)?;
+    .await;
 
     drop(working_copy);
 
@@ -297,5 +310,137 @@ mod tests {
         .unwrap();
 
         assert_eq!(next.await.unwrap(), (true, false));
+    }
+
+    const RAW_WRITE_ERROR: &str = "Failed to write UFS image: [QDL_DISCONNECTED] Error sending data for partition system: mock";
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn the_flash_task_settles_on_the_flag_read_inside_the_session() {
+        let state = Arc::new(FlashState::new());
+        let session = state.begin_session().await.unwrap();
+        // A Retry waiting for the slot clears the flag as soon as the session is released.
+        let retry = {
+            let state = state.clone();
+            tokio::spawn(async move { state.begin_session().await.map(drop).is_ok() })
+        };
+        let result = run_flash_task(session, (), state.clone(), |state| {
+            state.is_cancelled.store(true, Ordering::SeqCst);
+            Err(RAW_WRITE_ERROR.to_string())
+        })
+        .await;
+        assert_eq!(result, Err(qdl::QDL_CANCELLED_ERROR.to_string()));
+        assert!(retry.await.unwrap());
+
+        let state = Arc::new(FlashState::new());
+        let session = state.begin_session().await.unwrap();
+        let result = run_flash_task(session, (), state, |_| Err(RAW_WRITE_ERROR.to_string())).await;
+        assert_eq!(result, Err(RAW_WRITE_ERROR.to_string()));
+
+        let state = Arc::new(FlashState::new());
+        let session = state.begin_session().await.unwrap();
+        assert_eq!(run_flash_task(session, (), state, |_| Ok(())).await, Ok(()));
+    }
+
+    #[tokio::test]
+    async fn a_panicking_flash_task_goes_through_the_same_settle() {
+        let state = Arc::new(FlashState::new());
+        let session = state.begin_session().await.unwrap();
+        let result = run_flash_task(session, (), state.clone(), |_| {
+            expect_zlp();
+            Ok(())
+        })
+        .await;
+        assert_eq!(result, Err(qdl::TAG_QDL_DISCONNECTED.to_string()));
+
+        let session = state.begin_session().await.unwrap();
+        let result = run_flash_task(session, (), state.clone(), |state| {
+            state.is_cancelled.store(true, Ordering::SeqCst);
+            unwrap_interrupted();
+            Ok(())
+        })
+        .await;
+        assert_eq!(result, Err(qdl::QDL_CANCELLED_ERROR.to_string()));
+    }
+
+    #[tokio::test]
+    async fn the_flash_task_drops_the_extraction_before_the_session() {
+        let dir = tempfile::tempdir().unwrap();
+        let extract_dir = dir.path().join("qdl-extract");
+        std::fs::create_dir_all(extract_dir.join("flash")).unwrap();
+        let state = Arc::new(FlashState::new());
+        let session = state.begin_session().await.unwrap();
+        let next = {
+            let state = state.clone();
+            let extract_dir = extract_dir.clone();
+            tokio::spawn(async move {
+                let next = state.begin_session().await;
+                (next.is_ok(), extract_dir.exists())
+            })
+        };
+
+        let cleanup = ExtractionCleanup(extract_dir.clone());
+        let result = run_flash_task(session, cleanup, state, |_| {
+            std::thread::sleep(Duration::from_millis(300));
+            Ok(())
+        })
+        .await;
+
+        assert_eq!(result, Ok(()));
+        assert_eq!(next.await.unwrap(), (true, false));
+    }
+
+    #[tokio::test]
+    async fn only_panic_text_maps_the_receive_fragment_to_a_disconnect() {
+        let state = FlashState::new();
+        let receive = panicked(|| {
+            usb_transfer(std::io::ErrorKind::TimedOut, "timed out").expect("Error receiving data");
+        })
+        .await;
+        assert_eq!(
+            settle_join_error(receive, &state),
+            Err(qdl::TAG_QDL_DISCONNECTED.to_string())
+        );
+    }
+
+    async fn panicked(task: impl FnOnce() + Send + 'static) -> tokio::task::JoinError {
+        tokio::task::spawn_blocking(task).await.unwrap_err()
+    }
+
+    fn usb_transfer(kind: std::io::ErrorKind, text: &str) -> std::io::Result<usize> {
+        Err(std::io::Error::new(kind, text))
+    }
+
+    fn unwrap_interrupted() {
+        usb_transfer(std::io::ErrorKind::Interrupted, "transfer was cancelled").unwrap();
+    }
+
+    fn expect_zlp() {
+        usb_transfer(std::io::ErrorKind::ConnectionAborted, "device disconnected")
+            .expect("Error sending ZLP");
+    }
+
+    #[tokio::test]
+    async fn a_panicked_flash_task_is_tagged_and_only_the_flag_means_cancel() {
+        let state = FlashState::new();
+
+        let interrupted = settle_join_error(panicked(unwrap_interrupted).await, &state);
+        let err = interrupted.unwrap_err();
+        assert!(err.starts_with(qdl::TAG_QDL_ERROR), "{err}");
+        assert!(err.contains("Interrupted"), "{err}");
+
+        assert_eq!(
+            settle_join_error(panicked(expect_zlp).await, &state),
+            Err(qdl::TAG_QDL_DISCONNECTED.to_string())
+        );
+
+        state
+            .is_cancelled
+            .store(true, std::sync::atomic::Ordering::SeqCst);
+        for task in [unwrap_interrupted as fn(), expect_zlp] {
+            assert_eq!(
+                settle_join_error(panicked(task).await, &state),
+                Err(qdl::QDL_CANCELLED_ERROR.to_string())
+            );
+        }
     }
 }
