@@ -37,7 +37,7 @@
     "@tauri-apps/plugin-updater": "~2.14",
     "@types/qrcode": "^1.5.6",
     "ansi-to-html": "^0.7.0",
-    "i18next": "^25.7.2",
+    "i18next": "^27.2.7",
     "lucide-react": "^0.560.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.2",
